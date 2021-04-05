@@ -40,7 +40,7 @@ fn (mut r Reader) read_time() u64 {
 }
 
 [inline]
-fn (mut r Reader) read_int() int { //TODO //FIX ME
+fn (mut r Reader) read_int() int {
 	b := r.bytes[r.pos..r.pos+4]
 
 	_ = b[3] // bounds check

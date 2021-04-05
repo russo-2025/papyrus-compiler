@@ -121,7 +121,7 @@ fn (p PexFile) print_func(f Function, indentSize int) {
 	typ :=  p.get_string(f.info.return_type)
 	doc :=  p.get_string(f.info.docstring)
 	user_flags :=  "0x" + f.info.user_flags.hex()
-	//flags :=  "0x" + f.info.flags.hex()
+	flags :=  "0x" + f.info.flags.hex()
 
 	params_count := f.info.num_params
 	locals_count := f.info.num_locals
@@ -131,7 +131,7 @@ fn (p PexFile) print_func(f Function, indentSize int) {
 	println(tab + "typ: '$typ'")
 	println(tab + "doc: '$doc'")
 	println(tab + "user_flags: $user_flags")
-	//println(tab + "flags: $flags")
+	println(tab + "flags: $flags")
 	println(tab + "flags: `${p.get_formated_fn_flags(f)}`")
 	println(tab + "params count: '$params_count'")
 	

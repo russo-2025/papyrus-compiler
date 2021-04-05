@@ -27,11 +27,6 @@ fn new_builder(pref &pref.Preferences) Builder{
 	rdir := os.real_path(pref.out_dir[0])
 	compiled_dir := if os.is_dir(rdir) { rdir } else { os.dir(rdir) }
 	mut table := table.new_table()
-
-	if pref.mode != .compilebuiltin {
-		//table.register_builtin_papyrus_types()
-		//table.register_builtin_papyrus_functions()
-	}
 	
 	return Builder{
 		pref: pref

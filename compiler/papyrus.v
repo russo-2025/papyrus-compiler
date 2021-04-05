@@ -5,22 +5,12 @@ import builder
 import pref
 import pex
 
-// D:\_dev\v_lang\v.exe -cg  run "d:\_projects\papyrus\papyrus.v" 
-
-//-compile-builtin "D:\_projects\papyrus\compiler\builtin" "D:\_projects\papyrus\compiler\modules\p\table"
-//-read  "D:\_projects\papyrus\compiler\test-scripts\ABCD.pex"
-//-compile -nocache -input "D:\_projects\papyrus\compiler\test-scripts" -output "D:\_projects\papyrus\compiler\test-scripts"
-//-compile -nocache -input "D:\_projects\hive-workspace\skymp5-scripts-hive\Source" "D:\_projects\hive-workspace\skymp5-scripts\Source\Scripts" -output "D:\_projects\hive-workspace\skymp-server-lite\data\scripts"
-
 /*
-
 не работает:
 	- вызов функций с заданными через равно опциональными параметрами. ac.EquipItem(tool, abSilent = true)
 	- keyword parent
 	- states
 	- properties
-
-
 */
 
 fn main() {

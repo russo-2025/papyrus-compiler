@@ -255,15 +255,10 @@ fn (mut r Reader) read_instruction() ?Instruction{
 		.callmethod,
 		.callparent,
 		.callstatic {
-
-			//19 01 001A 01 001B 01 0010 03000000 01 03 000E3C16
-			//после кол кол ва аргументов идет еще одно число
-			//или сначала идет 03 потом кол во аргументов 00000001
-
-			r.read_byte() //<<<------wtf??
-			len = int(r.read_u32()) //TODO //FIX ME
-
-			//println("===== op: ${inst.op.hex()}, len: $len, wtf:$wtf, wtf-hex: 0x${wtf.hex()}")
+			
+			r.read_byte() //wtf??
+			len = int(r.read_u32())
+			
 			i = 0
 			for i < len{
 				inst.args << r.read_variable_data() or { return err }
@@ -310,11 +305,11 @@ fn (mut r Reader) read_variable_data() ?VariableData{
 		}
 
 		3 {//integer
-			data.integer = r.read_int() //TODO //FIXME
+			data.integer = r.read_int()
 		}
 
 		4 {//float
-			data.float = r.read_f32() //TODO //FIXME
+			data.float = r.read_f32()
 		}
 
 		5 {//bool
