@@ -488,8 +488,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
       if ((*args[1]).pArray != nullptr) {
-        if ((*args[0]).GetType() == VarValue::kType_Integer)
+        if ((*args[0]).GetType() == VarValue::kType_Integer) {
           *args[0] = VarValue((int32_t)(*args[1]).pArray->size());
+        } else if ((*args[0]).GetType() == VarValue::kType_Float) {
+          *args[0] = VarValue((double)(*args[1]).pArray->size());
+        }
       } else
         *args[0] = VarValue((int32_t)0);
       break;
