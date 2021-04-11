@@ -6,7 +6,7 @@ import papyrus.table
 
 pub fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.Expr{}
-	node = ast.EmptyExpr{}
+	node = ast.EmptyExpr{ pos:p.tok.position() }
 	
 	match p.tok.kind {
 		.key_new {

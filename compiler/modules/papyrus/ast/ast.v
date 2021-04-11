@@ -50,7 +50,7 @@ pub mut:
 }
 
 pub struct Return {
-pub:
+pub mut:
 	pos		token.Position
 	expr	Expr
 }

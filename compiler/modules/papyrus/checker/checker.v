@@ -81,7 +81,7 @@ fn (mut c Checker) get_type_name(typ table.Type) string {
 }
 
 fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
-	c.cur_fn = &node
+	c.cur_fn = node
 	c.fn_scope = node.scope
 
 	for param in node.params {
@@ -119,14 +119,36 @@ fn (mut c Checker) stmts(stmts []ast.Stmt) {
 }
 
 fn (mut c Checker) stmt(node ast.Stmt) {
-	//println(node.type_name())
 	match mut node {
 		ast.Return {
-			c.expr(node.expr)
+			typ := c.expr(node.expr)
+			
+			if c.valid_type(typ, c.cur_fn.return_type) {
+
+			}
+			else if c.can_cast(typ, c.cur_fn.return_type) {
+				new_expr := ast.CastExpr {
+					expr: node.expr
+					pos: node.expr.pos
+					type_name: c.get_type_name(c.cur_fn.return_type)
+					typ: c.cur_fn.return_type
+				}
+				
+				node.expr = new_expr
+			}
+			else {
+				type_name := c.get_type_name(typ)
+				fn_type_name := c.get_type_name(c.cur_fn.return_type)
+				c.error("expected to return a value with type `$fn_type_name` not `$type_name`", node.pos)
+			}
 		}
 		ast.If {
 			for branch in node.branches {
 				c.expr(branch.cond)
+			
+				if branch.cond is ast.EmptyExpr {
+					c.error("invalid condition in if statement",  node.pos)
+				}
 				
 				for b_stmt in branch.stmts {
 					c.stmt(b_stmt)
@@ -135,6 +157,10 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 		}
 		ast.While {
 			c.expr(node.cond)
+
+			if node.cond is ast.EmptyExpr {
+				c.error("invalid condition in while statement",  node.pos)
+			}
 
 			for w_stmt in node.stmts {
 				c.stmt(w_stmt)
@@ -151,7 +177,10 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			if node.left is ast.Ident || node.left is ast.IndexExpr {
 				left_type := c.expr(node.left)
 				mut right_type := c.expr(node.right)
-				
+
+				if node.right is ast.EmptyExpr {
+					c.error("invalid right exression in assignment",  node.pos)
+				}
 
 				node.typ = left_type
 
@@ -375,6 +404,10 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 	node.left_type = c.expr(node.left)
 	node.right_type = c.expr(node.right)
 
+	if node.right is ast.EmptyExpr {
+		c.error("invalid right operand in infix expression(`$node.op`)",  node.pos)
+	}
+
 	match node.op {
 		.plus {
 			if node.left_type == node.right_type {
@@ -588,6 +621,10 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 
 			node.right_type = c.expr(node.right)
 
+			if node.right is ast.EmptyExpr {
+				c.error("invalid right operand in prefix expression(`$node.op`)",  node.pos)
+			}
+
 			match node.op {
 				.not {
 					if node.right_type == table.bool_type {
@@ -622,6 +659,10 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			return node.right_type
 		}
 		ast.ParExpr {
+			if node.expr is ast.EmptyExpr {
+				c.error("invalid expression",  node.pos)
+			}
+
 			return c.expr(node.expr)
 		}
 		ast.NoneLiteral {
@@ -661,7 +702,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			index_type := c.expr(node.index)
 
 			if index_type != table.int_type {
-				c.error("index - not integer",  node.pos)
+				c.error("index can only be a number",  node.pos)
 			}
 
 			if node.left is ast.Ident {

@@ -211,9 +211,10 @@ fn (mut s Scanner) text_scan() token.Token {
 					}
 				}
 
-				comment := s.text[start+1..end-1]
+				comment := s.text[start+1..end]
 				len := comment.len + 2 + 1
 				s.pos += len
+				
 				return s.new_token(.comment, comment, len)
 			}
 			`;` {
@@ -232,6 +233,7 @@ fn (mut s Scanner) text_scan() token.Token {
 					comment := s.text[start+2..end-2]
 					len := comment.len + 4
 					s.pos += len
+
 					return s.new_token(.comment, comment, len)
 				}
 
