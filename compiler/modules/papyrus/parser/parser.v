@@ -318,7 +318,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					p.next()
 				}
 				mut cond := p.expr(0)
-				
+
 				if p.tok.kind == .rpar {
 					p.next()
 				}
@@ -397,9 +397,6 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					stmts: stmts
 				}
 			}
-			.key_self {
-				s << p.parse_expr_stmt()
-			}
 			.key_parent {
 				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
 			}
@@ -413,6 +410,19 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				else {
 					s << p.parse_expr_stmt()
 				}
+			}
+			.number,
+			.string,
+			.key_new,
+			.key_self,
+			.key_none,
+			.key_true,
+			.key_false,
+			.plus,
+			.minus,
+			.not,
+			.lpar {
+				s << p.parse_expr_stmt()
 			}
 			//типы перед переменными
 			.key_bool,
