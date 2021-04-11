@@ -85,7 +85,6 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 		return var_data
 	}
 	else if expr.op == .and {
-		//original
 		//opcode: 'assign', args: [ident(a), integer(1)]
 		//opcode: 'cmp_gt', args: [ident(::temp0), integer(1), integer(11)]
 		//opcode: 'cast', args: [ident(::temp0), ident(::temp0)]
@@ -95,14 +94,6 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 		//opcode: 'jmpf', args: [ident(::temp0), integer(3)]
 		//opcode: 'assign', args: [ident(a), integer(2)]
 		//opcode: 'jmp', args: [integer(1)]
-
-		//my
-		//opcode: 'assign', args: [ident(a), integer(1)]
-		//opcode: 'cmp_gt', args: [ident(::temp1), integer(1), integer(11)]
-		//opcode: 'jmpf', args: [ident(::temp1), integer(2)]
-		//opcode: 'cmp_gt', args: [ident(::temp1), integer(1), integer(12)]
-		//opcode: 'jmpf', args: [ident(::temp1), integer(2)]
-		//opcode: 'assign', args: [ident(a), integer(2)]
 		
 		mut var_data := g.get_operand_from_expr(&expr.left)
 		left_jmp_index := g.cur_fn.info.instructions.len
@@ -444,8 +435,10 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 			var_data = g.gen_array_get_element(&expr)
 		}
 		ast.CastExpr {
+			expr_data := g.get_operand_from_expr(&expr.expr)
+			g.free_temp(expr_data)
 			var_data = g.get_free_temp(&expr.typ)
-			g.gen_cast(var_data, g.get_operand_from_expr(&expr.expr))
+			g.gen_cast(var_data, expr_data)
 		}
 		ast.EmptyExpr {
 			var_data = pex.VariableData{ typ: 0 }
