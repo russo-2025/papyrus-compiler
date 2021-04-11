@@ -297,4 +297,17 @@ fn (p PexFile) print() {
 	}
 	println("\t")
 	print_end_block("Objects")
-} 
+}
+
+fn (p PexFile) print_functions_list() {
+	for object in p.objects {
+		for state in object.data.states {
+			for func in state.functions {
+				println(p.get_string(func.name))
+			}
+		}
+	}
+
+	println("\t")
+	print_end_block("Objects")
+}
