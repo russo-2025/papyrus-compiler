@@ -4,6 +4,7 @@ Function AddPerk(Perk akPerk) native
 Function RemovePerk(Perk akPerk) native
 bool Function HasPerk(Perk akPerk) native
 bool Function IsEquipped(Form akItem) native
+bool Function IsWeaponDrawn() native
 Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = false) native
 Function EquipItemEx(Form item, int equipSlot = 0, bool preventUnequip = false, bool equipSound = true) native
 Function UnequipItem(Form akItem, bool abPreventEquip = false, bool abSilent = false) native
