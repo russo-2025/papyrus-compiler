@@ -1,5 +1,6 @@
 module scanner
 
+import math.mathutil as mu
 import os
 import pref
 import papyrus.token
@@ -191,68 +192,67 @@ fn (mut s Scanner) text_scan() token.Token {
 			}
 			`{` {
 				start := s.pos
-				mut end := start 
+				start_line := s.line_nr
 				
 				if nextc == `}` {
 					s.pos += 2
 					continue
 				}
-
-				for j := start + 2; j < s.text.len; j++ {
-
+				for s.pos < s.text.len - 1 {
+					s.pos++
+						
 					if s.text[s.pos] == `\n` {
 						s.inc_line_number()
 						continue
 					}
 
-					if s.text[j] == `}` {
-						end = j
+					if s.text[s.pos] == `}` {
 						break
 					}
 				}
 
-				comment := s.text[start+1..end]
+				comment := s.text[start+1..s.pos]
+				s.pos++
 				len := comment.len + 2 + 1
-				s.pos += len
-				
-				return s.new_token(.comment, comment, len)
+				return s.new_multiline_token(.comment, comment, len, start_line)
 			}
 			`;` {
 				if nextc == `/` {
+					start_line := s.line_nr
 					start := s.pos
-					mut end := start
 
-					for j := start + 2; j < s.text.len; j++ {
+					s.pos++
 
-						if s.text[j] == `/` && s.text[j + 1] == `;` {
-							end = j + 2
+					for s.pos < s.text.len - 1 {
+						s.pos++
+							
+						if s.text[s.pos] == `\n` {
+							s.inc_line_number()
+							continue
+						}
+
+						if s.expect('/;', s.pos) {
 							break
 						}
 					}
 					
-					comment := s.text[start+2..end-2]
+					s.pos += 2
+					comment := s.text[start+2..s.pos-2]
 					len := comment.len + 4
-					s.pos += len
-
-					return s.new_token(.comment, comment, len)
+					return s.new_multiline_token(.comment, comment, len, start_line)
 				}
 
-				start := s.pos + 1
+				start := s.pos
 				s.ignore_line()
-				mut end := s.pos
+				
 				if s.text[s.pos - 1] == `\r` {
-					end--
-				}
-				else if s.pos < s.text.len {
-					// fix line_nr, \n was read; the comment is marked on the next line
 					s.pos--
 					s.line_nr--
 				}
 
-				comment := s.text[start..end]
-				len := comment.len
-				
-				return s.new_token(.comment, comment, len + 2)
+				comment := s.text[start+1..s.pos]
+
+				return s.new_token(.comment, comment, comment.len + 1)
 			}
 			`[` {
 				s.pos++
@@ -344,7 +344,7 @@ fn (mut s Scanner) eat_to_end_of_line() {
 
 [inline]
 fn (mut s Scanner) inc_line_number() {
-	s.last_nl_pos = s.pos
+	s.last_nl_pos = mu.min(s.text.len - 1, s.pos)
 	s.line_nr++
 	s.line_ends << s.pos
 
@@ -560,6 +560,17 @@ fn (mut s Scanner) ident_hex_number() string {
 
 	number := s.num_lit(start_pos, s.pos)
 	return number
+}
+
+[inline]
+fn (mut s Scanner) new_multiline_token(tok_kind token.Kind, lit string, len int, start_line int) token.Token {
+	return token.Token{
+		kind: tok_kind
+		lit: lit
+		line_nr: start_line + 1
+		pos: s.pos - len + 1
+		len: len
+	}
 }
 
 [inline]

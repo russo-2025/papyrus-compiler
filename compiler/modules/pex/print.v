@@ -307,7 +307,4 @@ fn (p PexFile) print_functions_list() {
 			}
 		}
 	}
-
-	println("\t")
-	print_end_block("Objects")
 }

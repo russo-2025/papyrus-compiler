@@ -102,5 +102,7 @@ pub mut:
 }
 
 pub struct Comment {
+pub:
 	text	string
+	pos		token.Position
 }

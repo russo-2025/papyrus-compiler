@@ -89,13 +89,25 @@ pub fn (mut p Parser) parse() ast.File {
 
 [inline]
 pub fn (mut p Parser) comment() ast.Comment {
-	node := ast.Comment{ text: p.tok.lit }
+	node := ast.Comment{
+		text: p.tok.lit,
+		pos: p.tok.position()
+	}
 	p.next()
 	return node
 }
 
 pub fn (mut p Parser) top_stmt() ast.TopStmt {
+	mut last_token_pos := 0
+
 	for {
+		if last_token_pos == p.tok.pos {
+			p.error("compiler bug: " + p.tok.kind.str() + ", " + "p.tok.lit")
+		}
+		else {
+			last_token_pos = p.tok.pos
+		}
+
 		//println("top_stmt for: " + p.tok.kind.str() + ", " + p.tok.lit)
 
 		match p.tok.kind {
