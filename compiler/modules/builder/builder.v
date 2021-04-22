@@ -68,14 +68,17 @@ pub fn compile(pref &pref.Preferences) {
 	mut b := new_builder(pref)
 	mut c := checker.new_checker(b.table, pref)
 
+	mut sw := time.new_stopwatch({})
+	sw.start()
+	print("parse builtin files: ")
 	b.load_builtin_files()
+	println('${f32(sw.elapsed().microseconds()) / 1000} ms')
 
 	print("input - ")
 	files := b.get_all_src_files()
 	println(files.len.str() + " files")
 
 	print("parse all files: ")
-	mut sw := time.new_stopwatch({})
 	sw.start()
 	parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
 	println('${f32(sw.elapsed().microseconds()) / 1000} ms')
