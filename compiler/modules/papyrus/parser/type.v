@@ -1,8 +1,8 @@
 module parser
 
-import papyrus.table
+import papyrus.ast
 
-pub fn (mut p Parser) get_parsed_type() table.Type {
+pub fn (mut p Parser) get_parsed_type() ast.Type {
 	if p.parsed_type == 0 {
 		panic("invalid type")
 	}
@@ -10,20 +10,20 @@ pub fn (mut p Parser) get_parsed_type() table.Type {
 	typ := p.parsed_type
 	p.parsed_type = 0
 
-	return table.new_type(typ)
+	return ast.new_type(typ)
 }
 
-pub fn (mut p Parser) parse_array_type(name string) table.Type {
+pub fn (mut p Parser) parse_array_type(name string) ast.Type {
 	mut idx := p.table.find_type_idx(name)
 	
 	if idx == 0 {
 		idx = p.table.add_placeholder_type(name)
 	}
 	
-	elem_type := table.new_type(idx)
+	elem_type := ast.new_type(idx)
 
 	idx = p.table.find_or_register_array(elem_type)
-	return table.new_type(idx)
+	return ast.new_type(idx)
 }
 
 pub fn (mut p Parser) parse_type() {
@@ -42,13 +42,13 @@ pub fn (mut p Parser) parse_type() {
 	mut idx := p.table.find_type_idx(name)
 	
 	if idx > 0 {
-		p.parsed_type = table.new_type(idx)
+		p.parsed_type = ast.new_type(idx)
 		return
 	}
 
 	idx = p.table.add_placeholder_type(name)
 
-	p.parsed_type = table.new_type(idx)
+	p.parsed_type = ast.new_type(idx)
 }
 
 pub fn (mut p Parser) next_is_type() bool {

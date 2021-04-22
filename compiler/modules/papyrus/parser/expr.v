@@ -2,7 +2,6 @@ module parser
 
 import papyrus.ast
 import papyrus.token
-import papyrus.table
 
 pub fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.Expr(ast.EmptyExpr{ pos:p.tok.position() })
@@ -125,7 +124,7 @@ pub fn (mut p Parser) new_expr() ast.Expr {
 	expr_len := p.expr(0)
 	p.check(.rsbr)
 
-	typ := table.new_type(p.table.find_or_register_array(elem_type))
+	typ := ast.new_type(p.table.find_or_register_array(elem_type))
 
 	return ast.ArrayInit {
 		elem_type: elem_type

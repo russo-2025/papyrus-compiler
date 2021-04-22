@@ -1,12 +1,11 @@
 module gen
 
 import papyrus.ast
-import papyrus.table
 import pex
 
 struct TempVariable {
 pub mut:
-	typ		table.Type
+	typ	 ast.Type
 	data	pex.VariableData
 	free	bool
 }
@@ -24,11 +23,11 @@ pub mut:
 	//массив временных переменных
 	temp_locals		[]TempVariable
 
-	table			&table.Table
+	table			&ast.Table
 	mod				string
 }
 
-pub fn gen(table &table.Table, file &ast.File) &pex.PexFile {
+pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{

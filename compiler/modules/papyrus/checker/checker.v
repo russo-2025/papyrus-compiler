@@ -2,7 +2,6 @@ module checker
 
 import papyrus.ast
 import pref
-import papyrus.table
 import papyrus.token
 import papyrus.errors
 import papyrus.util
@@ -10,7 +9,7 @@ import papyrus.util
 pub struct Checker {
 	pref			&pref.Preferences
 pub mut:
-	table			&table.Table
+	table			&ast.Table
 	file			&ast.File = 0
 	errors			[]errors.Error
 	warnings		[]errors.Warning
@@ -20,7 +19,7 @@ pub mut:
 	mod				string // current module name
 }
 
-pub fn new_checker(table &table.Table, pref &pref.Preferences) Checker {
+pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {
 	return Checker{
 		table: table
 		pref: pref
@@ -63,7 +62,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 		}
 		ast.PropertyDecl {
 			if c.type_is_valid(node.typ) {
-				c.table.register_field(table.Prop{
+				c.table.register_field(ast.Prop{
 					name: node.name
 					mod: c.mod
 					typ: node.typ
@@ -99,7 +98,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 	}
 }
 
-fn (mut c Checker) type_is_valid(typ table.Type) bool {
+fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	if typ == 0 {
 		return false
 	}
@@ -111,7 +110,7 @@ fn (mut c Checker) type_is_valid(typ table.Type) bool {
 	return true
 }
 
-fn (mut c Checker) get_type_name(typ table.Type) string {
+fn (mut c Checker) get_type_name(typ ast.Type) string {
 	assert typ != 0
 
 	return c.table.types[typ.idx()].name
@@ -279,10 +278,10 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 		
 		if node.assign.right is ast.EmptyExpr {
 			match node.typ {
-				table.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
-				table.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
-				table.string_type { node.assign.right = ast.StringLiteral{val:""} }
-				table.bool_type { node.assign.right = ast.BoolLiteral{val:"false"}}
+			 ast.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
+			 ast.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
+			 ast.string_type { node.assign.right = ast.StringLiteral{val:""} }
+			 ast.bool_type { node.assign.right = ast.BoolLiteral{val:"false"}}
 				else {}
 			}
 		}
@@ -297,7 +296,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 }
 
 //может ли тип t2 иметь значение с типом t1
-pub fn (mut c Checker) valid_type(t1 table.Type, t2 table.Type) bool {
+pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 	if t1 == t2 {
 		return true
 	}
@@ -322,7 +321,7 @@ pub fn (mut c Checker) valid_type(t1 table.Type, t2 table.Type) bool {
 }
 
 //можно ли кастануть тип t1 к типу t2
-pub fn (mut c Checker) can_cast(t1 table.Type, t2 table.Type) bool {
+pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 	s1 := c.table.get_type_symbol(t1)
 	s2 := c.table.get_type_symbol(t2)
 
@@ -389,7 +388,7 @@ pub fn (mut c Checker) can_cast(t1 table.Type, t2 table.Type) bool {
 	return false
 }
 
-pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type table.Type, to_type table.Type) &ast.Expr {
+pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) &ast.Expr {
 	if !c.can_cast(from_type, to_type) {
 		type_name := c.get_type_name(from_type)
 		to_type_name := c.get_type_name(to_type)
@@ -406,13 +405,13 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type table.Type, to_type
 	return &new_node
 }
 
-pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ table.Type) bool {
+pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ ast.Type) bool {
 	match op {
 		.plus {
 			match typ {
-				table.string_type,
-				table.float_type,
-				table.int_type {
+			 ast.string_type,
+			 ast.float_type,
+			 ast.int_type {
 					return true
 				}
 				else {
@@ -422,8 +421,8 @@ pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ table.Type) bool {
 		}
 		.minus, .mul, .div, .gt, .lt, .ge, .le {
 			match typ {
-				table.float_type,
-				table.int_type {
+			 ast.float_type,
+			 ast.int_type {
 					return true
 				}
 				else {
@@ -432,7 +431,7 @@ pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ table.Type) bool {
 			}
 		}
 		.mod {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return true
 			}
 			else {
@@ -448,7 +447,7 @@ pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ table.Type) bool {
 	return false
 }
 
-pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
+pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 	if !node.op.is_infix() {
 		c.error("invalid infix operator: `$node.op`",  node.pos)
 	}
@@ -464,46 +463,46 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 		.plus {
 			if node.left_type == node.right_type {
 				//check int, float, string
-				if node.left_type != table.int_type && node.left_type != table.float_type && node.left_type != table.string_type {
+				if node.left_type != ast.int_type && node.left_type != ast.float_type && node.left_type != ast.string_type {
 					type_name := c.get_type_name(node.left_type)
 					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
 				}
 				node.result_type = node.left_type
 			}
-			else if node.left_type == table.string_type || node.right_type == table.string_type {
-				node.result_type = table.string_type
+			else if node.left_type == ast.string_type || node.right_type == ast.string_type {
+				node.result_type = ast.string_type
 
-				if node.left_type == table.string_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.string_type)
-					node.right_type = table.string_type
+				if node.left_type == ast.string_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.string_type)
+					node.right_type = ast.string_type
 				}
-				else if node.right_type == table.string_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.string_type)
-					node.left_type = table.string_type
+				else if node.right_type == ast.string_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.string_type)
+					node.left_type = ast.string_type
 				}
 			}
-			else if node.left_type == table.float_type || node.right_type == table.float_type {
-				node.result_type = table.float_type
+			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
+				node.result_type = ast.float_type
 
-				if node.left_type == table.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.float_type)
-					node.right_type = table.float_type
+				if node.left_type == ast.float_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
+					node.right_type = ast.float_type
 				}
-				else if node.right_type == table.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.float_type)
-					node.left_type = table.float_type
+				else if node.right_type == ast.float_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
+					node.left_type = ast.float_type
 				}
 			}
 			else {
-				node.result_type = table.int_type
+				node.result_type = ast.int_type
 
-				if node.left_type == table.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.int_type)
-					node.right_type = table.int_type
+				if node.left_type == ast.int_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
+					node.right_type = ast.int_type
 				}
-				else if node.right_type == table.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.int_type)
-					node.left_type = table.int_type
+				else if node.right_type == ast.int_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
+					node.left_type = ast.int_type
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -514,34 +513,34 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 		.minus, .mul, .div {
 			if node.left_type == node.right_type {
 				//check left int, float
-				if node.left_type != table.int_type && node.left_type != table.float_type {
+				if node.left_type != ast.int_type && node.left_type != ast.float_type {
 					type_name := c.get_type_name(node.left_type)
 					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
 				}
 				node.result_type = node.left_type
 			}
-			else if node.left_type == table.float_type || node.right_type == table.float_type {
-				node.result_type = table.float_type
+			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
+				node.result_type = ast.float_type
 
-				if node.left_type == table.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.float_type)
-					node.right_type = table.float_type
+				if node.left_type == ast.float_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
+					node.right_type = ast.float_type
 				}
-				else if node.right_type == table.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.float_type)
-					node.left_type = table.float_type
+				else if node.right_type == ast.float_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
+					node.left_type = ast.float_type
 				}
 			}
 			else {
-				node.result_type = table.int_type
+				node.result_type = ast.int_type
 
-				if node.left_type == table.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.int_type)
-					node.right_type = table.int_type
+				if node.left_type == ast.int_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
+					node.right_type = ast.int_type
 				}
-				else if node.right_type == table.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.int_type)
-					node.left_type = table.int_type
+				else if node.right_type == ast.int_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
+					node.left_type = ast.int_type
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -550,33 +549,33 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 			}
 		}
 		.gt, .lt, .ge, .le {
-			node.result_type = table.bool_type
+			node.result_type = ast.bool_type
 
 			if node.left_type == node.right_type {
 				//check left int, float
-				if node.left_type != table.int_type && node.left_type != table.float_type {
+				if node.left_type != ast.int_type && node.left_type != ast.float_type {
 					type_name := c.get_type_name(node.left_type)
 					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
 				}
 			}
-			else if node.left_type == table.float_type || node.right_type == table.float_type {
-				if node.left_type == table.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.float_type)
-					node.right_type = table.float_type
+			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
+				if node.left_type == ast.float_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
+					node.right_type = ast.float_type
 				}
-				else if node.right_type == table.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.float_type)
-					node.left_type = table.float_type
+				else if node.right_type == ast.float_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
+					node.left_type = ast.float_type
 				}
 			}
 			else {
-				if node.left_type == table.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, table.int_type)
-					node.right_type = table.int_type
+				if node.left_type == ast.int_type {
+					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
+					node.right_type = ast.int_type
 				}
-				else if node.right_type == table.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, table.int_type)
-					node.left_type = table.int_type
+				else if node.right_type == ast.int_type {
+					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
+					node.left_type = ast.int_type
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -585,18 +584,18 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 			}
 		}
 		.mod {
-			node.result_type = table.int_type
+			node.result_type = ast.int_type
 
-			if node.left_type == table.int_type && node.right_type == table.int_type  {
+			if node.left_type == ast.int_type && node.right_type == ast.int_type  {
 
 			}
-			else if node.left_type == table.int_type {
-				node.right = c.cast_to_type(node.right, node.right_type, table.int_type)
-				node.right_type = table.int_type
+			else if node.left_type == ast.int_type {
+				node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
+				node.right_type = ast.int_type
 			}
-			else if node.right_type == table.int_type {
-				node.left = c.cast_to_type(node.left, node.left_type, table.int_type)
-				node.left_type = table.int_type
+			else if node.right_type == ast.int_type {
+				node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
+				node.left_type = ast.int_type
 			}
 			else {
 				ltype_name := c.get_type_name(node.left_type)
@@ -605,7 +604,7 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 			}
 		}
 		.eq, .ne {
-			node.result_type = table.bool_type
+			node.result_type = ast.bool_type
 
 			if node.left_type == node.right_type {}
 			else {
@@ -640,17 +639,17 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 			}
 		}
 		.and, .logical_or {
-			if node.left_type != table.bool_type {
-				node.left = c.cast_to_type(node.left, node.left_type, table.bool_type)
-				node.left_type = table.bool_type
+			if node.left_type != ast.bool_type {
+				node.left = c.cast_to_type(node.left, node.left_type, ast.bool_type)
+				node.left_type = ast.bool_type
 			}
 			
-			if node.right_type != table.bool_type {
-				node.right = c.cast_to_type(node.right, node.right_type, table.bool_type)
-				node.right_type = table.bool_type
+			if node.right_type != ast.bool_type {
+				node.right = c.cast_to_type(node.right, node.right_type, ast.bool_type)
+				node.right_type = ast.bool_type
 			}
 
-			node.result_type = table.bool_type
+			node.result_type = ast.bool_type
 		}
 		else {
 			panic("wtf ($node.op)")
@@ -660,7 +659,7 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) table.Type {
 	return node.result_type
 }
 
-pub fn (mut c Checker) expr(node ast.Expr) table.Type {
+pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 	
 	match mut node {
 		ast.InfixExpr {
@@ -679,18 +678,18 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 
 			match node.op {
 				.not {
-					if node.right_type == table.bool_type {
+					if node.right_type == ast.bool_type {
 
 					}
-					else if c.can_cast(node.right_type, table.bool_type) {
+					else if c.can_cast(node.right_type, ast.bool_type) {
 						new_expr := ast.CastExpr {
 							expr: node.right
 							pos: node.pos
-							type_name: c.get_type_name(table.bool_type)
-							typ: table.bool_type
+							type_name: c.get_type_name(ast.bool_type)
+							typ: ast.bool_type
 						}
 
-						node.right_type = table.bool_type
+						node.right_type = ast.bool_type
 						node.right = new_expr
 					}
 					else {
@@ -699,7 +698,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 					}
 				}
 				.minus {
-					if node.right_type != table.int_type && node.right_type != table.float_type {
+					if node.right_type != ast.int_type && node.right_type != ast.float_type {
 						type_name := c.get_type_name(node.right_type)
 						c.error("prefix operator: `-` not support type: `$type_name`",  node.pos)
 					}
@@ -718,19 +717,19 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			return c.expr(node.expr)
 		}
 		ast.NoneLiteral {
-			return table.none_type
+			return ast.none_type
 		}
 		ast.IntegerLiteral { 
-			return table.int_type
+			return ast.int_type
 		}
 		ast.FloatLiteral { 
-			return table.float_type
+			return ast.float_type
 		}
 		ast.BoolLiteral { 
-			return table.bool_type
+			return ast.bool_type
 		}
 		ast.StringLiteral {
-			return table.string_type
+			return ast.string_type
 		}
 		ast.Ident {
 			if obj := c.cur_scope.find_var(node.name) {
@@ -745,7 +744,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			}
 			else {
 				c.error("variable declaration not found: `$node.name`",  node.pos)
-				return table.none_type
+				return ast.none_type
 			}
 		}
 		ast.CallExpr {
@@ -757,7 +756,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 		ast.IndexExpr {
 			index_type := c.expr(node.index)
 
-			if index_type != table.int_type {
+			if index_type != ast.int_type {
 				c.error("index can only be a number",  node.pos)
 			}
 
@@ -768,11 +767,11 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 
 						sym := c.table.get_type_symbol(node.typ)
 						
-						if sym == 0 || sym.kind != .array || sym.info !is table.Array {
+						if sym == 0 || sym.kind != .array || sym.info !is ast.Array {
 							c.error("invalid type in index expression",  node.pos)
 						}
 						else {
-							info := c.table.get_type_symbol(node.typ).info as table.Array
+							info := c.table.get_type_symbol(node.typ).info as ast.Array
 							node.typ = info.elem_type
 							return info.elem_type
 						}
@@ -795,8 +794,8 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 					c.error("`.Length` property is only available for arrays",  node.pos)
 				}
 
-				node.typ = table.int_type
-				return table.int_type
+				node.typ = ast.int_type
+				return ast.int_type
 			}
 			else {
 				if f := c.table.find_field(sym.mod, node.field_name) {
@@ -825,7 +824,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			}
 		}
 		ast.EmptyExpr {
-			return table.none_type
+			return ast.none_type
 		}
 		ast.DefaultValue{
 			panic("===checker.v WTF expr()===")
@@ -836,13 +835,13 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 	panic("expression not processed in file: `$c.file.path`")
 }
 
-pub fn (mut c Checker) find_fn(typ table.Type, mod string, name string) ?table.Fn {
+pub fn (mut c Checker) find_fn(typ ast.Type, mod string, name string) ?ast.Fn {
 	if typ > 0 {
 		mut sym := c.table.get_type_symbol(typ)
 
 		if sym.kind == .array && name.to_lower() == "find" {
-			elem_type := (sym.info as table.Array).elem_type
-			return table.Fn{
+			elem_type := (sym.info as ast.Array).elem_type
+			return ast.Fn{
 				params: [
 					{
 						name: "value"
@@ -852,7 +851,7 @@ pub fn (mut c Checker) find_fn(typ table.Type, mod string, name string) ?table.F
 					},
 					{
 						name: "startIndex"
-						typ: table.int_type
+						typ: ast.int_type
 						is_optional: true
 						default_value: "0"
 					}
@@ -887,7 +886,7 @@ pub fn (mut c Checker) find_fn(typ table.Type, mod string, name string) ?table.F
 	return none
 }
 
-pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) table.Type {
+pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	mut left := c.mod
 	mut name := node.name
 	mut typ := 0
@@ -922,7 +921,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) table.Type {
 
 		if node.args.len > func.params.len {
 			c.error("function takes $func.params.len parameters not $node.args.len", node.pos)
-			return table.none_type
+			return ast.none_type
 		}
 
 		//добавляем параметры по умолчанию
@@ -932,34 +931,34 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) table.Type {
 				if func.params[i].is_optional {
 					func_arg_def_value := func.params[i].default_value
 					match func.params[i].typ {
-						table.int_type {
+					 ast.int_type {
 							node.args << ast.CallArg {
 								expr: ast.IntegerLiteral{ val: func_arg_def_value }
-								typ: table.int_type 
+								typ: ast.int_type 
 							}
 						}
-						table.float_type {
+					 ast.float_type {
 							node.args << ast.CallArg {
 								expr: ast.FloatLiteral{ val: func_arg_def_value }
-								typ: table.float_type 
+								typ: ast.float_type 
 							}
 						}
-						table.string_type {
+					 ast.string_type {
 							node.args << ast.CallArg {
 								expr: ast.StringLiteral{ val: func_arg_def_value }
-								typ: table.string_type 
+								typ: ast.string_type 
 							}
 						}
-						table.bool_type {
+					 ast.bool_type {
 							node.args << ast.CallArg {
 								expr: ast.BoolLiteral{ val: func_arg_def_value }
-								typ: table.bool_type
+								typ: ast.bool_type
 							}
 						}
-						table.none_type {
+					 ast.none_type {
 							node.args << ast.CallArg {
 								expr: ast.NoneLiteral{ val: "None" }
-								typ: table.none_type
+								typ: ast.none_type
 							}
 						}
 						else {
@@ -980,7 +979,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) table.Type {
 
 		if node.args.len != func.params.len {
 			c.error("function takes $func.params.len parameters not $node.args.len", node.pos)
-			return table.none_type
+			return ast.none_type
 		}
 
 		mut i := 0
@@ -1017,7 +1016,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) table.Type {
 		c.error("undefined function: " + left + "." + name,  node.pos)
 	}
 
-	return table.none_type
+	return ast.none_type
 }
 
 pub fn (mut c Checker) warn(message string, pos token.Position) {

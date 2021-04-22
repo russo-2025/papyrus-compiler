@@ -6,14 +6,13 @@ import os
 import pref
 import papyrus.ast
 import papyrus.util
-import papyrus.table
 
 pub struct Parser {
 	pref				&pref.Preferences
 mut:
 	path				string // "/home/user/hello.v"
 	last_mod_time		int
-	table				&table.Table
+	table				&ast.Table
 	scanner				&scanner.Scanner
 
 	prev_tok			token.Token
@@ -26,16 +25,16 @@ mut:
 	global_scope		&ast.Scope
 	
 	mod					string // имя текущего объекта
-	cur_object			table.Type //текущий объект
+	cur_object		 ast.Type //текущий объект
 
-	parsed_type			table.Type //спаршеный тип
+	parsed_type		 ast.Type //спаршеный тип
 }
 
 pub fn (mut p Parser) set_path(path string) {
 	p.path = path
 }
 
-pub fn parse_files(paths []string, table &table.Table, pref &pref.Preferences, global_scope &ast.Scope) []ast.File {
+pub fn parse_files(paths []string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) []ast.File {
 	mut files := []ast.File{}
 
 	for path in paths {
@@ -45,7 +44,7 @@ pub fn parse_files(paths []string, table &table.Table, pref &pref.Preferences, g
 	return files
 }
 
-pub fn parse_file(path string, table &table.Table, pref &pref.Preferences, global_scope &ast.Scope) ast.File {
+pub fn parse_file(path string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner_file(path, pref)
 		pref: pref
@@ -171,7 +170,7 @@ pub fn (mut p Parser) parse_flags() []token.Kind {
 
 pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	
-	mut typ := table.none_type
+	mut typ := ast.none_type
 	if p.parsed_type != 0 {
 		typ = p.get_parsed_type()
 	}
@@ -271,7 +270,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		kind: .script
 		name: name
 		mod: name
-		methods: []table.Fn{}
+		methods: []ast.Fn{}
 	})
 
 	return node

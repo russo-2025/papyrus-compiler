@@ -1,7 +1,6 @@
 module parser
 
 import papyrus.ast
-import papyrus.table
 import papyrus.token
 
 pub fn (mut p Parser) event_decl() ast.FnDecl {
@@ -25,7 +24,7 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 		pos: pos
 		params: params
 		stmts: stmts
-		return_type: table.none_type
+		return_type: ast.none_type
 		flags: []token.Kind{}
 		scope: scope
 		no_body: false
@@ -39,7 +38,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 
 	pos := p.tok.position()
 
-	mut return_type := table.none_type
+	mut return_type := ast.none_type
 
 	if p.parsed_type != 0 {
 		return_type = p.get_parsed_type()
@@ -64,7 +63,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	p.close_scope()
 	
 	if is_static {
-		p.table.register_fn(table.Fn{
+		p.table.register_fn(ast.Fn{
 			params: params
 			return_type: return_type
 			mod: p.mod
@@ -77,7 +76,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 		if p.cur_object == 0 {
 			panic("Compiler error")
 		}
-		p.table.types[p.cur_object.idx()].register_method(table.Fn{
+		p.table.types[p.cur_object.idx()].register_method(ast.Fn{
 			params: params
 			return_type: return_type
 			mod: p.mod
@@ -100,14 +99,14 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	}
 }
 
-fn (mut p Parser) fn_args() []table.Param {
+fn (mut p Parser) fn_args() []ast.Param {
 	p.check(.lpar)
 
-	mut args := []table.Param{}
+	mut args := []ast.Param{}
 
 	if p.tok.kind != .rpar {
 		for {
-			mut param := table.Param{}
+			mut param := ast.Param{}
 
 			p.parse_type()
 			param.typ = p.get_parsed_type()

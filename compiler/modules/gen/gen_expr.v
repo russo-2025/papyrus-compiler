@@ -2,11 +2,10 @@ module gen
 
 import papyrus.ast
 import pex
-import papyrus.table
 import papyrus.token
 
 [inline]
-fn (mut g Gen) get_free_temp(typ table.Type) pex.VariableData {
+fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableData {
 	assert typ != 0
 
 	mut i := 0
@@ -21,7 +20,7 @@ fn (mut g Gen) get_free_temp(typ table.Type) pex.VariableData {
 		i++
 	}
 
-	local_name := if typ != table.none_type { "::temp" + g.cur_fn.info.locals.len.str() } else { "::NoneVar" }
+	local_name := if typ != ast.none_type { "::temp" + g.cur_fn.info.locals.len.str() } else { "::NoneVar" }
 
 	data := pex.VariableData{
 		typ: 1
@@ -411,7 +410,7 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 		}
 		ast.IntegerLiteral {
 			if expr.val.starts_with("0x") {
-				var_data = g.get_free_temp(table.int_type)
+				var_data = g.get_free_temp(ast.int_type)
 
 				g.cur_fn.info.instructions << pex.Instruction{
 					op: byte(pex.OpCode.callstatic)
@@ -474,13 +473,13 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 
 
 [inline]
-fn (mut g Gen) get_prefix_opcode_operator(typ table.Type, kind token.Kind) pex.OpCode {
+fn (mut g Gen) get_prefix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCode {
 	match kind {
 		.minus {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return .ineg
 			}
-			else if typ == table.float_type {
+			else if typ == ast.float_type {
 				return .fneg
 			}
 			else {
@@ -497,16 +496,16 @@ fn (mut g Gen) get_prefix_opcode_operator(typ table.Type, kind token.Kind) pex.O
 }
 
 [inline]
-fn (mut g Gen) get_infix_opcode_operator(typ table.Type, kind token.Kind) pex.OpCode {
+fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCode {
 	match kind {
 		.plus {
-			if typ == table.string_type {
+			if typ == ast.string_type {
 				return .strcat
 			}
-			else if typ == table.int_type {
+			else if typ == ast.int_type {
 				return .iadd
 			}
-			else if typ == table.float_type {
+			else if typ == ast.float_type {
 				return .fadd
 			}
 			else {
@@ -514,10 +513,10 @@ fn (mut g Gen) get_infix_opcode_operator(typ table.Type, kind token.Kind) pex.Op
 			}
 		}
 		.minus {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return .isub
 			}
-			else if typ == table.float_type {
+			else if typ == ast.float_type {
 				return .fsub
 			}
 			else {
@@ -525,10 +524,10 @@ fn (mut g Gen) get_infix_opcode_operator(typ table.Type, kind token.Kind) pex.Op
 			}
 		}
 		.mul {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return .imul
 			}
-			else if typ == table.float_type {
+			else if typ == ast.float_type {
 				return .fmul
 			}
 			else {
@@ -536,10 +535,10 @@ fn (mut g Gen) get_infix_opcode_operator(typ table.Type, kind token.Kind) pex.Op
 			}
 		}
 		.div {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return .idiv
 			}
-			else if typ == table.float_type {
+			else if typ == ast.float_type {
 				return .fdiv
 			}
 			else {
@@ -547,7 +546,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ table.Type, kind token.Kind) pex.Op
 			}
 		}
 		.mod {
-			if typ == table.int_type {
+			if typ == ast.int_type {
 				return .imod
 			}
 			else {

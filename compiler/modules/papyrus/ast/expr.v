@@ -1,7 +1,7 @@
 module ast
 
 import papyrus.token
-import papyrus.table
+import papyrus.ast
 
 pub type Expr = InfixExpr | IntegerLiteral | FloatLiteral | BoolLiteral | StringLiteral | Ident | CallExpr | SelectorExpr | IndexExpr |
 	ParExpr | PrefixExpr | EmptyExpr | DefaultValue | ArrayInit | NoneLiteral | CastExpr
@@ -23,7 +23,7 @@ pub:
 	expr		Expr
 	type_name	string
 pub mut:
-	typ			table.Type
+	typ		 ast.Type
 }
 
 //задает значение вместо дефолтного при вызове функции
@@ -40,9 +40,9 @@ pub mut:
 	left        Expr
 	right       Expr
 	pos         token.Position
-	left_type	table.Type
-	right_type	table.Type
-	result_type	table.Type
+	left_type ast.Type
+	right_type ast.Type
+	result_type ast.Type
 }
 
 pub struct IntegerLiteral {
@@ -80,7 +80,7 @@ pub:
 	name	string
 	pos		token.Position
 pub mut:
-	typ		table.Type
+	typ	 ast.Type
 }
 
 pub struct CallArg {
@@ -88,7 +88,7 @@ pub:
 	pos		token.Position
 pub mut:
 	expr	Expr
-	typ		table.Type
+	typ	 ast.Type
 }
 
 pub struct CallExpr {
@@ -99,7 +99,7 @@ pub mut:
 	name			string // left.name()
 	args			[]CallArg
 	def_args		map[string]DefaultValue
-	return_type		table.Type
+	return_type	 ast.Type
 	is_static		bool
 }
 
@@ -109,7 +109,7 @@ pub mut:
 	pos			token.Position
 	expr		Expr // expr.field_name
 	field_name	string
-	typ			table.Type
+	typ		 ast.Type
 }
 
 //arr[1]
@@ -119,7 +119,7 @@ pub:
 	index	Expr
 	pos		token.Position
 pub mut:
-	typ		table.Type
+	typ	 ast.Type
 }
 
 pub struct ParExpr {
@@ -136,13 +136,13 @@ pub:
 pub mut:
 	right		Expr
 	//checker
-	right_type	table.Type
+	right_type ast.Type
 }
 
 pub struct ArrayInit {
 pub:
-	typ			table.Type
-	elem_type	table.Type
+	typ		 ast.Type
+	elem_type ast.Type
 	len			Expr
 	pos			token.Position
 }

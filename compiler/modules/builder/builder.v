@@ -8,7 +8,6 @@ import papyrus.ast
 import pref
 import papyrus.parser
 import papyrus.checker
-import papyrus.table
 import pex
 import gen
 
@@ -20,13 +19,13 @@ pub:
 	global_scope	&ast.Scope
 pub mut:
 	parsed_files	[]ast.File
-	table			&table.Table
+	table			&ast.Table
 }
 
 fn new_builder(pref &pref.Preferences) Builder{
 	rdir := os.real_path(pref.out_dir[0])
 	compiled_dir := if os.is_dir(rdir) { rdir } else { os.dir(rdir) }
-	mut table := table.new_table()
+	mut table := ast.new_table()
 	
 	return Builder{
 		pref: pref
