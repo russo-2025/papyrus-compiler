@@ -15,4 +15,9 @@ bool Function SetDisplayName(string name, bool force = false) Native
 Form Function GetBaseObject() Native
 Function SetPosition(float afX, float afY, float afZ) Native
 Function SetAngle(float afXAngle, float afYAngle, float afZAngle) Native
-
+Function DamageObject(float afDamage) Native
+Function ClearDestruction() Native
+bool Function IsInInterior() Native
+Cell Function GetParentCell() Native
+WorldSpace Function GetWorldSpace() Native
+Function SetScale(float afScale) native
