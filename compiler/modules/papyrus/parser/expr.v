@@ -5,8 +5,7 @@ import papyrus.token
 import papyrus.table
 
 pub fn (mut p Parser) expr(precedence int) ast.Expr {
-	mut node := ast.Expr{}
-	node = ast.EmptyExpr{ pos:p.tok.position() }
+	mut node := ast.Expr(ast.EmptyExpr{ pos:p.tok.position() })
 	
 	match p.tok.kind {
 		.key_new {
@@ -118,7 +117,8 @@ pub fn (mut p Parser) new_expr() ast.Expr {
 	pos := p.tok.position()
 	p.check(.key_new)
 
-	elem_type := p.parse_type()
+	p.parse_type()
+	elem_type := p.get_parsed_type()
 
 	p.check(.lsbr)
 
@@ -194,7 +194,7 @@ pub fn (mut p Parser) parse_number_literal() ast.Expr {
 		lit = "-" + lit
 	}
 
-	mut node := ast.Expr{}
+	mut node := ast.Expr(ast.EmptyExpr{})
 	if is_float {
 		node = ast.FloatLiteral{ val: lit, pos:pos }
 	}

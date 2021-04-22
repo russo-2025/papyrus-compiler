@@ -3,11 +3,11 @@ module ast
 import papyrus.table
 import papyrus.token
 
-pub type TopStmt = ScriptDecl | FnDecl | Comment
+pub type TopStmt = ScriptDecl | FnDecl | Comment | PropertyDecl | VarDecl
 pub type Stmt =  Return | If | While | ExprStmt | AssignStmt | VarDecl | Comment
 
 pub struct File {
-pub:
+pub mut:
 	path			string // '..../src/file.psc'
 	path_base		string // file.psc'
 	file_name		string // 'file'
@@ -36,8 +36,8 @@ pub mut:
 
 pub struct FnDecl {
 pub mut:
-	name            string
-	pos             token.Position
+	name			string
+	pos				token.Position
 	params			[]table.Param
 	
 	stmts			[]Stmt
@@ -47,6 +47,20 @@ pub mut:
 	no_body			bool
 	is_static		bool
 	is_event		bool
+}
+
+pub struct Empty {}
+pub type Handler = Empty | FnDecl
+
+pub struct PropertyDecl {
+pub mut:
+	name		string
+	pos			token.Position
+	typ			table.Type
+	flags		[]token.Kind
+	expr		Expr
+	read		Handler
+	write		Handler
 }
 
 pub struct Return {
@@ -95,10 +109,12 @@ pub mut:
 pub struct VarDecl {
 pub mut:
 	typ			table.Type
+	mod			string
 	name		string
-	//expr		Expr
 	assign		AssignStmt
 	pos			token.Position
+	flags		[]token.Kind
+	is_obj_var	bool
 }
 
 pub struct Comment {

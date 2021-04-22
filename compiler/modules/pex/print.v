@@ -48,35 +48,8 @@ pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
 	
 	mut i := 0
 	for i < inst.args.len {
-		arg := inst.args[i]
-
-		typ := "0x" + arg.typ.hex()
-
-		match arg.typ {
-			0 {
-				args += "none"
-			}
-			1 {
-				args += "ident(" + p.string_table[arg.string_id] + ")"
-			}
-			2 {
-				args += "string('" + p.string_table[arg.string_id] + "')"
-			}
-			3 {
-				args += "integer($arg.integer)"
-			}
-			4 {
-				args += "float($arg.float.str())"
-			}
-			5 {
-				args += "boolean($arg.boolean.hex())"
-			}
-			else {
-				data := "invalid type"
-				args += "data{ type: $typ, data: $data}"
-			}
-		}
-
+		args += p.get_variable_data(inst.args[i])
+		
 		if i < inst.args.len - 1 {
 			args += ", "
 		}
@@ -96,11 +69,11 @@ fn (p PexFile) print_variable_type(v VariableType, indentSize int) {
 	println(tab + "$typ $name")
 }
 
-fn (p PexFile) get_formated_fn_flags(f Function) string {
+fn (p PexFile) get_formated_fn_flags(info FunctionInfo) string {
 	mut str := ""
 
-	is_global := f.info.flags & 0b0001
-	in_native := f.info.flags & 0b0010
+	is_global := info.flags & 0b0001
+	in_native := info.flags & 0b0010
 
 	if is_global > 0 {
 		str += "global"
@@ -118,36 +91,43 @@ fn (p PexFile) print_func(f Function, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
 	name :=  p.get_string(f.name)
-	typ :=  p.get_string(f.info.return_type)
-	doc :=  p.get_string(f.info.docstring)
-	user_flags :=  "0x" + f.info.user_flags.hex()
-	flags :=  "0x" + f.info.flags.hex()
-
-	params_count := f.info.num_params
-	locals_count := f.info.num_locals
-	instructions_count := f.info.num_instructions
-
 	println(tab + "name: '$name'")
+	
+	p.print_func_info(f.info, indentSize)
+}
+
+fn (p PexFile) print_func_info(info FunctionInfo, indentSize int) {
+	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
+
+	typ :=  p.get_string(info.return_type)
+	doc :=  p.get_string(info.docstring)
+	user_flags :=  "0x" + info.user_flags.hex()
+	flags :=  "0x" + info.flags.hex()
+
+	params_count := info.num_params
+	locals_count := info.num_locals
+	instructions_count := info.num_instructions
+
 	println(tab + "typ: '$typ'")
 	println(tab + "doc: '$doc'")
 	println(tab + "user_flags: $user_flags")
 	println(tab + "flags: $flags")
-	println(tab + "flags: `${p.get_formated_fn_flags(f)}`")
+	println(tab + "flags: `${p.get_formated_fn_flags(info)}`")
 	println(tab + "params count: '$params_count'")
 	
-	for param in f.info.params {
+	for param in info.params {
 		p.print_variable_type(param, indentSize + 1)
 	}
 
 	println(tab + "locals count: '$locals_count'")
 	
-	for local in f.info.locals {
+	for local in info.locals {
 		p.print_variable_type(local, indentSize + 1)
 	}
 
 	println(tab + "instructions count: '$instructions_count'")
 	
-	for inst in f.info.instructions {
+	for inst in info.instructions {
 		p.print_instruction(inst, indentSize + 1)
 	}
 }
@@ -170,6 +150,89 @@ fn (p PexFile) print_state(st State, indentSize int){
 	}
 }
 
+fn (p PexFile) get_variable_data(v VariableData) string {
+	mut data_str := ""
+
+	match v.typ {
+		0 {
+			data_str = "none"
+		}
+		1 {
+			data_str = "ident(${p.string_table[v.string_id]})"
+		}
+		2 {
+			data_str = "string('${p.string_table[v.string_id]}')"
+		}
+		3 {
+			data_str = "integer(${v.integer.str()})"
+		}
+		4 {
+			data_str = "float(${v.float.str()})"
+		}
+		5 {
+			data_str = "boolean(${v.boolean.hex()})"
+		}
+		else {
+			panic("invalid data type")
+		}
+	}
+	
+	return data_str
+}
+
+fn (p PexFile) print_variable(v Variable, indentSize int) {
+	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
+
+	name := p.get_string(v.name)
+	type_name := p.get_string(v.type_name)
+	mut user_flags := if v.user_flags == 0 { "" } else { "0x" + v.user_flags.hex() }
+
+	if v.user_flags & 0b0010 != 0 {
+		user_flags = "Conditional"
+	}
+	
+	println(tab + "name: '$name'")
+	println(tab + "type name: '$type_name'")
+	println(tab + "user flags: '$user_flags'")
+	println(tab + "data: ${p.get_variable_data(v.data)}")
+}
+
+fn (p PexFile) print_property(prop Property, indentSize int) {
+	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
+
+	name := p.get_string(prop.name)
+	type_name := p.get_string(prop.typ)
+	docstring := p.get_string(prop.docstring)
+	user_flags := "0x" + prop.user_flags.hex()
+	flags := "0x" + prop.flags.hex()
+	auto_var_name := p.get_string(prop.auto_var_name)
+
+	println(tab + "name: '$name'")
+	println(tab + "type name: '$type_name'")
+	println(tab + "doc string: '$docstring'")
+	println(tab + "user flags: '$user_flags'")
+	println(tab + "flags: '$flags'")
+
+	is_autovar := (prop.flags & 0b0100) != 0
+	is_read := (prop.flags & 0b0001) != 0
+	is_write := (prop.flags & 0b0010) != 0
+
+	if is_autovar {
+		println(tab + "auto var name: '$auto_var_name'")
+	}
+
+	if is_read && !is_autovar {
+		println(tab + "read handler:")
+		p.print_func_info(prop.read_handler, indentSize + 1)
+	}
+
+	if is_write && !is_autovar {
+		println(tab + "write handler:")
+		p.print_func_info(prop.write_handler, indentSize + 1)
+	}
+
+}
+
 fn (p PexFile) print_object(obj Object, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 	
@@ -190,14 +253,29 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	println(tab + "doc: '$doc'")
 	println(tab + "user flags: $user_flags")
 	println(tab + "auto state name: '$auto_state_name'")
+	
 	println(tab + "variables count: '$vars_count'")
-	println(tab + "TODO: print variables")
+	println(tab + "variables:")
+	mut i := 0
+	for i < obj.data.num_variables {
+		p.print_variable(obj.data.variables[i], indentSize + 1)
+		println("")
+		i++
+	}
+
 	println(tab + "properties count: '$props_count'")
-	println(tab + "TODO: print properties")
+	println(tab + "properties: ")
+	i = 0
+	for i < obj.data.num_properties {
+		p.print_property(obj.data.properties[i], indentSize + 1)
+		println("")
+		i++
+	}
+	
 	println(tab + "states count: '$states_count'")
 	println(tab + "states:")
 	
-	mut i := 0
+	i = 0
 	for i < states_count {
 		p.print_state(obj.data.states[i], indentSize + 1)
 		i++
@@ -224,7 +302,7 @@ fn (p PexFile) get_formated_script_flags() string {
 	return str
 }
 
-fn (p PexFile) print() {
+pub fn (p PexFile) print() {
 	
 	print_start_block("Header")
 
@@ -299,7 +377,7 @@ fn (p PexFile) print() {
 	print_end_block("Objects")
 }
 
-fn (p PexFile) print_functions_list() {
+pub fn (p PexFile) print_functions_list() {
 	for object in p.objects {
 		for state in object.data.states {
 			for func in state.functions {

@@ -1,6 +1,7 @@
 module gen
 
 import papyrus.ast
+import papyrus.token
 import pex
 
 [inline]
@@ -70,7 +71,7 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 }
 
 [inline]
-fn (mut g Gen) fn_decl(node &ast.FnDecl) {
+fn (mut g Gen) gen_fn(node &ast.FnDecl) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
 		info: pex.FunctionInfo{
@@ -120,17 +121,13 @@ fn (mut g Gen) fn_decl(node &ast.FnDecl) {
 	f.info.num_locals = u16(f.info.locals.len)
 	f.info.num_instructions = u16(f.info.instructions.len)
 
-	g.pex.objects[0].data.states[0].num_functions++
-	g.pex.objects[0].data.states[0].functions << f
+	return &f
+}
 
-	/*
-	println("")	
-	println("function $node.name:")	
-	for inst in f.info.instructions {
-		g.pex.print_instruction(inst, 1)
-	}
-	println("")
-	*/
+[inline]
+fn (mut g Gen) fn_decl(node &ast.FnDecl) {
+	g.pex.objects[0].data.states[0].num_functions++
+	g.pex.objects[0].data.states[0].functions << g.gen_fn(node)
 }
 
 [inline]
@@ -165,6 +162,26 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 			args: [ left_data, index_data, right_data ]
 		}
 	}
+	else if stmt.left is ast.SelectorExpr {
+		//opcode: 'propset', args: [ident(myProperty), ident(arg), ident(::temp0)]
+
+		expr_data := g.get_operand_from_expr(&stmt.left.expr)
+		g.free_temp(expr_data)
+
+		//значение
+		right_data := g.get_operand_from_expr(&stmt.right)
+		g.free_temp(right_data)
+
+		//добавляем инструкцию в функцию
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: byte(pex.OpCode.propset)
+			args: [
+				pex.VariableData{ typ: 1, string_id: g.gen_string_ref(stmt.left.field_name) },
+				expr_data,
+				right_data
+			]
+		}
+	}
 	else {
 		panic("Gen assign stmt TODO")
 	}
@@ -172,15 +189,110 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 
 [inline]
 fn (mut g Gen) var_decl(stmt &ast.VarDecl) {
+	assert stmt.assign.right !is ast.EmptyExpr
 
-	g.cur_fn.info.locals << pex.VariableType{
-		name: g.gen_string_ref(stmt.name)
-		typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+	if stmt.is_obj_var {
+		mut user_flags := u32(0)
+
+		if token.Kind.key_conditional in stmt.flags {
+			user_flags |= 0b0010
+		}
+
+		g.cur_obj.data.variables << pex.Variable{
+			name: g.gen_string_ref(stmt.name)
+			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+			user_flags: user_flags
+			data: g.get_operand_from_expr(&stmt.assign.right)
+		}
+
+		g.cur_obj.data.num_variables++
 	}
+	else {
+		g.cur_fn.info.locals << pex.VariableType{
+			name: g.gen_string_ref(stmt.name)
+			typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+		}
 
-	if stmt.assign.right !is ast.NoneLiteral{
 		g.assign(stmt.assign)
 	}
+}
+ 
+[inline]
+fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
+	
+	mut prop := pex.Property{
+		name: g.gen_string_ref(stmt.name)
+		typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+		docstring: g.gen_string_ref("")
+		user_flags: 0
+		flags: 0
+		auto_var_name: 0
+	}
+
+	mut is_auto := false
+	mut is_autoread := false
+
+	for flag in stmt.flags {
+		match flag {
+			.key_auto {
+				is_auto = true
+			}
+			.key_readonly {
+				is_autoread = true
+			}
+			else{}
+		}
+	}
+
+	if is_auto {
+		prop.flags |= 0b0111
+
+		var_name := "::" + stmt.name + "_var"
+
+		prop.auto_var_name = g.gen_string_ref(var_name)
+/*
+		mut expr := g.get_operand_from_expr(&stmt.expr)
+
+		g.cur_obj.data.variables << pex.Variable{
+			name: g.gen_string_ref(var_name)
+			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+			data: g.get_operand_from_expr(&stmt.expr)
+		}
+
+		g.cur_obj.data.num_variables++
+*/
+	}
+	else if is_autoread {
+		prop.flags |= 0b0001
+		prop.read_handler = pex.FunctionInfo{
+			return_type: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+			docstring: g.gen_string_ref("")
+			user_flags: 0
+			flags: 0
+
+			num_instructions: 1
+			instructions: [
+				pex.Instruction{
+					op: byte(pex.OpCode.ret)
+					args: [g.get_operand_from_expr(&stmt.expr)]
+				}
+			]
+		}
+	}
+	else {
+		if stmt.read is ast.FnDecl {
+			prop.flags |= 0b0001
+			prop.read_handler = g.gen_fn(stmt.read).info
+		}
+
+		if stmt.write is ast.FnDecl {
+			prop.flags |= 0b0010
+			prop.write_handler = g.gen_fn(stmt.write).info
+		}
+	}
+	
+	g.cur_obj.data.properties << prop
+	g.cur_obj.data.num_properties++
 }
 
 [inline]
@@ -225,6 +337,8 @@ fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
 
 	g.pex.objects << obj
 	g.pex.object_count++
+
+	g.cur_obj = &g.pex.objects[g.pex.objects.len-1]
 
 	g.pex.user_flags << pex.UserFlag{
 		name_index: g.gen_string_ref("hidden")

@@ -114,16 +114,23 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 	w.write_u32(obj.data.user_flags)
 	w.write_string_ref(obj.data.auto_state_name)
 
-	w.write_u16(0)//obj.data.num_variables
-	//TODO write vars
+	//write variables
+	assert obj.data.num_variables == obj.data.variables.len
+	w.write_int_to_u16(obj.data.variables.len)
+	for var in obj.data.variables {
+		w.write_variable(var)
+	}
 
-	w.write_u16(0)//obj.data.num_properties
-	//TODO write properties
+	//write properties
+	assert obj.data.num_properties == obj.data.properties.len
+	w.write_int_to_u16(obj.data.properties.len)
+	for prop in obj.data.properties {
+		w.write_property(prop)
+	}
 
+	//write states
 	assert obj.data.num_states == obj.data.states.len
-
 	w.write_u16(obj.data.num_states)
-	
 	for state in obj.data.states {
 		w.write_state(state)
 	}
@@ -148,36 +155,39 @@ fn (mut w Writer) write_state(state pex.State) {
 	}
 }
 
-fn (mut w Writer) write_function(func pex.Function) {
-	w.write_string_ref(func.name)
+[inline]
+fn (mut w Writer) write_function_info(info pex.FunctionInfo) {
+	w.write_string_ref(info.return_type)
+	w.write_string_ref(info.docstring)
 
-	w.write_string_ref(func.info.return_type)
-	w.write_string_ref(func.info.docstring)
+	w.write_u32(info.user_flags)
+	w.write_byte(info.flags)
 
-	w.write_u32(func.info.user_flags)
-	w.write_byte(func.info.flags)
-
-	assert func.info.num_params == func.info.params.len
-	w.write_u16(func.info.num_params)
+	assert info.num_params == info.params.len
+	w.write_u16(info.num_params)
 	
-	for param in func.info.params {
+	for param in info.params {
 		w.write_variable_type(param)
 	}
 
-	assert func.info.num_locals == func.info.locals.len
-	w.write_u16(func.info.num_locals)
+	assert info.num_locals == info.locals.len
+	w.write_u16(info.num_locals)
 
-	for local in func.info.locals {
+	for local in info.locals {
 		w.write_variable_type(local)
 	}
 
-	assert func.info.num_instructions == func.info.instructions.len
-	w.write_u16(func.info.num_instructions)
+	assert info.num_instructions == info.instructions.len
+	w.write_u16(info.num_instructions)
 
-	for inst in func.info.instructions {
+	for inst in info.instructions {
 		w.write_instruction(inst)
 	}
+}
 
+fn (mut w Writer) write_function(func pex.Function) {
+	w.write_string_ref(func.name)
+	w.write_function_info(func.info)
 }
 
 [inline]
@@ -189,6 +199,35 @@ fn (mut w Writer) write_instruction(inst pex.Instruction) {
 		arg := inst.args[i]
 		w.write_variable_data(arg)
 		i++
+	}
+}
+
+[inline]
+fn (mut w Writer) write_variable(var pex.Variable) {
+	w.write_string_ref(var.name)
+	w.write_string_ref(var.type_name)
+	w.write_u32(var.user_flags)
+	w.write_variable_data(var.data)
+}
+
+[inline]
+fn (mut w Writer) write_property(prop pex.Property) {
+	w.write_string_ref(prop.name)
+	w.write_string_ref(prop.typ)
+	w.write_string_ref(prop.docstring)
+	w.write_u32(prop.user_flags)
+	w.write_byte(prop.flags)
+
+	if prop.flags & 0b0100 != 0 {
+		w.write_string_ref(prop.auto_var_name)
+	}
+	else {
+		if prop.flags & 0b0001 != 0 {
+			w.write_function_info(prop.read_handler)
+		}
+		if prop.flags & 0b0010 != 0 {
+			w.write_function_info(prop.write_handler)
+		}
 	}
 }
 

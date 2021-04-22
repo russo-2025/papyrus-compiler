@@ -36,18 +36,28 @@ pub fn new_scope(parent &Scope, start_pos int) &Scope {
 
 pub fn (s &Scope) find(name string) ?ScopeObject {
 	lname := name.to_lower()
-	if lname in s.objects {
-		return s.objects[lname]
-	}
+	
+	mut sc := s
+	for {
+		if lname in sc.objects {
+			return sc.objects[lname]
+		}
 
+		if sc.parent != 0 {
+			sc = sc.parent
+			continue
+		}
+
+		break
+	}
+	
 	return none
 }
 
-pub fn (s &Scope) find_var(name string) ?&ScopeVar {
-	
+pub fn (s &Scope) find_var(name string) ?ScopeVar {
 	if obj := s.find(name.to_lower()) {
 		match obj {
-			ScopeVar { return &obj }
+			ScopeVar { return obj }
 			else {}
 		}
 	}

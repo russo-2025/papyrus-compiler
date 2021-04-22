@@ -16,7 +16,7 @@ pub mut:
 	warnings		[]errors.Warning
 
 	cur_fn			&ast.FnDecl = 0
-	fn_scope		&ast.Scope = voidptr(0)
+	cur_scope		&ast.Scope = voidptr(0)
 	mod				string // current module name
 }
 
@@ -29,7 +29,6 @@ pub fn new_checker(table &table.Table, pref &pref.Preferences) Checker {
 }
 
 pub fn (mut c Checker) check_files(ast_files []ast.File) {
-
 	for i in 0 .. ast_files.len {
 		file := unsafe { &ast_files[i] }
 		c.check(file)
@@ -38,6 +37,7 @@ pub fn (mut c Checker) check_files(ast_files []ast.File) {
 
 pub fn (mut c Checker) check(ast_file &ast.File) {
 	c.file = ast_file
+	c.cur_scope = c.file.scope
 
 	for stmt in ast_file.stmts {
 		c.top_stmt(stmt)
@@ -57,6 +57,43 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)
+		}
+		ast.VarDecl {
+			c.var_decl(mut node)
+		}
+		ast.PropertyDecl {
+			if c.type_is_valid(node.typ) {
+				c.table.register_field(table.Prop{
+					name: node.name
+					mod: c.mod
+					typ: node.typ
+				})
+
+				if token.Kind.key_auto in node.flags {
+					c.file.stmts << ast.VarDecl {
+						typ: node.typ
+						mod: c.mod
+						name: "::" + node.name + "_var"
+						assign: {
+							op: token.Kind.assign
+							pos: node.pos
+							left: ast.Ident{
+								name: node.name
+								pos: node.pos
+								typ: node.typ
+							}
+							right: node.expr
+							typ: node.typ
+						}
+						pos: node.pos
+						flags: []
+						is_obj_var: true
+					}
+				}
+			}
+			else {
+				c.error("invalid type in property declaration", node.pos)
+			}
 		}
 		ast.Comment {}
 	}
@@ -82,11 +119,11 @@ fn (mut c Checker) get_type_name(typ table.Type) string {
 
 fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.cur_fn = node
-	c.fn_scope = node.scope
+	c.cur_scope = node.scope
 
 	for param in node.params {
 		if c.type_is_valid(param.typ) {
-			c.fn_scope.register(ast.ScopeVar{
+			c.cur_scope.register(ast.ScopeVar{
 				name: param.name
 				typ: param.typ
 				is_used: false
@@ -102,13 +139,15 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		self_typ := c.table.find_type_idx(c.mod)
 		assert self_typ != 0
 
-		c.fn_scope.register(ast.ScopeVar{
+		c.cur_scope.register(ast.ScopeVar{
 			name: "self"
 			typ: self_typ
 		})
 	}
 
 	c.stmts(node.stmts)
+
+	c.cur_scope = c.file.scope
 }
 
 fn (mut c Checker) stmts(stmts []ast.Stmt) {
@@ -174,10 +213,9 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 				c.error("invalid assign operator: `$node.op`",  node.pos)
 			}
 
-			if node.left is ast.Ident || node.left is ast.IndexExpr {
+			if node.left is ast.Ident || node.left is ast.IndexExpr || node.left is ast.SelectorExpr {
 				left_type := c.expr(node.left)
 				mut right_type := c.expr(node.right)
-
 				if node.right is ast.EmptyExpr {
 					c.error("invalid right exression in assignment",  node.pos)
 				}
@@ -220,27 +258,41 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 				}
 			}
 			else {
-				c.error('left-side expression can only be an identificator(`varName1`) or index expression(`arr[1]`).', node.pos)
+				c.error('invalid left-side expression in assignment', node.pos)
 			}
 		}
 		ast.VarDecl {
-			if c.type_is_valid(node.typ) {
-				c.fn_scope.register(ast.ScopeVar{
-					name: node.name
-					typ: node.typ
-					pos: node.pos
-					is_used: false
-				})
-				
-				if node.assign.right !is ast.NoneLiteral {
-					c.stmt(node.assign)
-				}
-			}
-			else {
-				c.error("nvalid type in variable declaration", node.pos)
-			}
+			c.var_decl(mut node)
 		}
 		ast.Comment {}
+	}
+}
+
+pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
+	if c.type_is_valid(node.typ) {
+		c.cur_scope.register(ast.ScopeVar{
+			name: node.name
+			typ: node.typ
+			pos: node.pos
+			is_used: false
+		})
+		
+		if node.assign.right is ast.EmptyExpr {
+			match node.typ {
+				table.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
+				table.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
+				table.string_type { node.assign.right = ast.StringLiteral{val:""} }
+				table.bool_type { node.assign.right = ast.BoolLiteral{val:"false"}}
+				else {}
+			}
+		}
+		
+		if node.assign.right !is ast.EmptyExpr {
+			c.stmt(node.assign)
+		}
+	}
+	else {
+		c.error("invalid type in variable declaration", node.pos)
 	}
 }
 
@@ -681,11 +733,15 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			return table.string_type
 		}
 		ast.Ident {
-			if obj := c.fn_scope.find_var(node.name) {
+			if obj := c.cur_scope.find_var(node.name) {
 				if node.pos.pos >= obj.pos.pos {
 					node.typ = obj.typ
 					return obj.typ
 				}
+			}
+			else if obj := c.table.find_field(c.mod, node.name){
+				node.typ = obj.typ
+				return obj.typ
 			}
 			else {
 				c.error("variable declaration not found: `$node.name`",  node.pos)
@@ -706,13 +762,12 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			}
 
 			if node.left is ast.Ident {
-				if obj := c.fn_scope.find_var(node.left.name) {
+				if obj := c.cur_scope.find_var(node.left.name) {
 					if node.pos.pos > obj.pos.pos + obj.pos.len {
 						node.typ = obj.typ
 
 						sym := c.table.get_type_symbol(node.typ)
 						
-						//println(sym)
 						if sym == 0 || sym.kind != .array || sym.info !is table.Array {
 							c.error("invalid type in index expression",  node.pos)
 						}
@@ -733,10 +788,9 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 		}
 		ast.SelectorExpr {
 			node.typ = c.expr(node.expr)
+			sym := c.table.get_type_symbol(node.typ)
 
 			if node.field_name.to_lower() == "length" {
-				sym := c.table.get_type_symbol(node.typ)
-
 				if sym == 0 || sym.kind != .array {
 					c.error("`.Length` property is only available for arrays",  node.pos)
 				}
@@ -745,8 +799,12 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 				return table.int_type
 			}
 			else {
-				c.error("only `.Length` property is available",  node.pos)
-				return table.none_type
+				if f := c.table.find_field(sym.mod, node.field_name) {
+					return f.typ
+				}
+				else {
+					c.error("`${sym.mod}.${node.field_name}` property declaration not found", node.pos)
+				}
 			}
 			
 			return node.typ
@@ -770,7 +828,7 @@ pub fn (mut c Checker) expr(node ast.Expr) table.Type {
 			return table.none_type
 		}
 		ast.DefaultValue{
-			panic("===checker.v WARNING expr()===")
+			panic("===checker.v WTF expr()===")
 		}
 	}
 

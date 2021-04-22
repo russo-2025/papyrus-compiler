@@ -12,6 +12,7 @@ pub struct Parser {
 	pref				&pref.Preferences
 mut:
 	path				string // "/home/user/hello.v"
+	last_mod_time		int
 	table				&table.Table
 	scanner				&scanner.Scanner
 
@@ -24,11 +25,10 @@ mut:
 	scope				&ast.Scope
 	global_scope		&ast.Scope
 	
-	mod					string // имя текущего скрипта
-	cur_type			table.Type //спаршеный тип TODO: почему их 2
-	parsed_type			table.Type //спаршеный тип
+	mod					string // имя текущего объекта
+	cur_object			table.Type //текущий объект
 
-	last_mod_time		int
+	parsed_type			table.Type //спаршеный тип
 }
 
 pub fn (mut p Parser) set_path(path string) {
@@ -74,7 +74,12 @@ pub fn (mut p Parser) parse() ast.File {
 			break
 		}
 
-		stmts << p.top_stmt()
+		if stmt := p.top_stmt() {
+			stmts << stmt
+		}
+		else {
+			panic("qweasdf")
+		}
 	}
 
 	return ast.File{
@@ -97,12 +102,12 @@ pub fn (mut p Parser) comment() ast.Comment {
 	return node
 }
 
-pub fn (mut p Parser) top_stmt() ast.TopStmt {
+pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 	mut last_token_pos := 0
 
 	for {
 		if last_token_pos == p.tok.pos {
-			p.error("compiler bug: " + p.tok.kind.str() + ", " + "p.tok.lit")
+			p.error("compiler bug(top stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
 		}
 		else {
 			last_token_pos = p.tok.pos
@@ -116,23 +121,18 @@ pub fn (mut p Parser) top_stmt() ast.TopStmt {
 			}
 			.name {
 				if p.next_is_type() {
-					p.parsed_type = p.parse_type()
+					p.parse_type()
 					continue
+				}
+				else if p.parsed_type != 0 {
+					return p.var_decl(true)
 				}
 			}
 			.key_bool,
 			.key_int,
 			.key_string,
 			.key_float {
-				p.parsed_type = p.parse_type()
-			}
-			.key_hidden,
-			.key_conditional,
-			.key_auto,
-			.key_readonly,
-			.key_native,
-			.key_global {
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				p.parse_type()
 			}
 			.key_event {
 				return p.event_decl()
@@ -140,10 +140,10 @@ pub fn (mut p Parser) top_stmt() ast.TopStmt {
 			.key_function {
 				return p.fn_decl()
 			}
-			.key_state {
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
-			}
 			.key_property {
+				return p.property_decl()
+			}
+			.key_state {
 				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
 			}
 			else {
@@ -152,7 +152,83 @@ pub fn (mut p Parser) top_stmt() ast.TopStmt {
 		}
 	}
 
-	return ast.TopStmt{}
+	return none
+}
+
+[inline]
+pub fn (mut p Parser) parse_flags() []token.Kind {
+	mut flags := []token.Kind{}
+	for p.tok.kind.is_flag() {
+		if p.tok.kind !in flags {
+			flags << p.tok.kind
+		}
+		
+		p.next()
+	}
+
+	return flags
+}
+
+pub fn (mut p Parser) property_decl() ast.PropertyDecl {
+	
+	mut typ := table.none_type
+	if p.parsed_type != 0 {
+		typ = p.get_parsed_type()
+	}
+	
+	pos := p.tok.position()
+	p.check(.key_property)
+	name := p.check_name()
+	mut expr := ast.Expr(ast.EmptyExpr{})
+
+	if p.tok.kind == .assign {
+		p.next()
+		expr = p.expr(0)
+	}
+
+	flags := p.parse_flags()
+
+	no_body := token.Kind.key_auto in flags || token.Kind.key_readonly in flags
+
+	mut node := ast.PropertyDecl {
+		typ: typ
+		pos: pos
+		name: name
+		flags: flags
+		expr: expr
+		read: &ast.Empty{}
+		write: &ast.Empty{}
+	}
+
+	if !no_body {
+		
+		if p.next_is_type() {
+			p.parse_type()
+		}
+		handler_1 := p.fn_decl()
+		
+		if p.next_is_type() {
+			p.parse_type()
+		}
+		handler_2 := p.fn_decl()
+
+		name1 := handler_1.name.to_lower()
+		name2 := handler_2.name.to_lower()
+		
+		if (name1 != "get" && name1 != "set") || (name2 != "get" && name2 != "set") || name1 == name2 {
+			p.error("invalid name read/write handlers")
+		}
+
+		read := if name1 == "get" { &handler_1 } else { &handler_2 }
+		write := if name1 == "set" { &handler_1 } else { &handler_2 }
+		
+		p.check(.key_endproperty)
+		
+		node.read = read
+		node.write = write
+	}
+
+	return node
 }
 
 pub fn (mut p Parser) script_decl() ast.ScriptDecl {
@@ -187,16 +263,10 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 			parent_idx = p.table.add_placeholder_type(node.parent_name)
 		}
 	}
-
-	for p.tok.kind.is_flag() {
-		if p.tok.kind !in node.flags {
-			node.flags << p.tok.kind
-		}
-		
-		p.next()
-	}
 	
-	p.cur_type = p.table.register_type_symbol({
+	node.flags = p.parse_flags()
+	
+	p.cur_object = p.table.register_type_symbol({
 		parent_idx: parent_idx
 		kind: .script
 		name: name
@@ -268,25 +338,26 @@ pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 }
 
 [inline]
-pub fn (mut p Parser) var_decl() ast.VarDecl {
+pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
 	
 	mut pos := p.tok.position()
-	
-	typ := p.parse_type()
+
+	typ := p.get_parsed_type()
 
 	name := p.check_name()
-	mut expr := ast.Expr{}
-	expr = ast.NoneLiteral{val: "None"}
+	mut expr := ast.Expr(ast.EmptyExpr{})
 
 	if p.tok.kind == .assign {
 		p.next()
 		expr = p.expr(0)
 	}
 
+	flags := p.parse_flags()
 	pos = pos.extend(p.prev_tok.position())
 
 	return  ast.VarDecl{
 		typ: typ
+		mod: p.mod
 		name: name
 		assign: {
 			op: token.Kind.assign
@@ -297,16 +368,29 @@ pub fn (mut p Parser) var_decl() ast.VarDecl {
 				typ: typ
 			}
 			right: expr
+			typ: typ
 		}
+		flags: flags
 		pos: pos
+		is_obj_var: is_obj_var
 	}
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {
+	mut last_token_pos := 0
+
 	mut s := []ast.Stmt{}
 
 	for {
+		if last_token_pos == p.tok.pos {
+			p.error("compiler bug(stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
+		}
+		else {
+			last_token_pos = p.tok.pos
+		}
+
 		//println("stmt for: " + p.tok.kind.str() + ", " + p.tok.lit)
+
 		match p.tok.kind {
 			.comment {
 				s << p.comment()
@@ -413,11 +497,12 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
 			}
 			.name {
-				if p.peek_tok.kind == .name {
-					s << p.var_decl()
+				if p.next_is_type() {
+					p.parse_type()
+					continue
 				}
-				else if p.peek_tok.kind == .lsbr && p.peek_tok2.kind == .rsbr && p.peek_tok3.kind == .name {
-					s << p.var_decl()
+				else if p.parsed_type != 0 {
+					s << p.var_decl(false)
 				}
 				else {
 					s << p.parse_expr_stmt()
@@ -441,7 +526,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 			.key_int,
 			.key_string,
 			.key_float {
-				s << p.var_decl()
+				p.parse_type()
 			}
 			.key_endfunction,
 			.key_endwhile,

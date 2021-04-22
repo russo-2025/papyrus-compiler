@@ -37,6 +37,12 @@ pub fn gen_builtin_module(path string, table &table.Table, parser_files []ast.Fi
 	for pfile in parser_files {
 		for stmt in pfile.stmts {
 			match stmt {
+				ast.VarDecl {
+					panic("TODO")
+				}
+				ast.PropertyDecl {
+					panic("TODO")
+				}
 				ast.FnDecl {
 					b.write_builtin_fn(stmt)
 				}

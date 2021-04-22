@@ -343,11 +343,11 @@ fn (mut g Gen) gen_array_get_element(expr &ast.IndexExpr) pex.VariableData {
 }
 
 [inline]
-fn (mut g Gen) gen_array_length(expr &ast.SelectorExpr) pex.VariableData {
-	//opcode: 'array_length', args: [ident(::temp1), ident(myArray)]
+fn (mut g Gen) gen_selector(expr &ast.SelectorExpr) pex.VariableData {
 
 	if expr.field_name.to_lower() == "length" {
-		
+		//opcode: 'array_length', args: [ident(::temp1), ident(myArray)]
+
 		expr_data := g.get_operand_from_expr(&expr.expr)
 		g.free_temp(expr_data)
 
@@ -362,8 +362,29 @@ fn (mut g Gen) gen_array_length(expr &ast.SelectorExpr) pex.VariableData {
 
 		return var_data
 	}
+	else {
+		//opcode: 'propget', args: [ident(myProperty), ident(arg), ident(::temp0)]
 
-	panic("WTF")
+		expr_data := g.get_operand_from_expr(&expr.expr)
+		g.free_temp(expr_data)
+
+		//переменная для результата
+		var_data := g.get_free_temp(expr.typ)
+
+		//добавляем инструкцию в функцию
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: byte(pex.OpCode.propget)
+			args: [
+				pex.VariableData{ typ: 1, string_id: g.gen_string_ref(expr.field_name) },
+				expr_data,
+				var_data
+			]
+		}
+
+		return var_data
+	}
+
+	panic("wtf")
 }
 
 fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
@@ -429,7 +450,7 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 			var_data = g.gen_array_init(&expr)
 		}
 		ast.SelectorExpr {
-			var_data = g.gen_array_length(&expr)
+			var_data = g.gen_selector(&expr)
 		}
 		ast.IndexExpr {
 			var_data = g.gen_array_get_element(&expr)

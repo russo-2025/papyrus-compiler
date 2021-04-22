@@ -187,7 +187,7 @@ fn (mut r Reader) read_property() ?Property{
 	p.docstring = r.read_u16()
 	p.user_flags = r.read_u32()
 	p.flags = r.read_byte()
-	
+/*
 	if (p.flags & 4) != 0 { //need test
 		p.auto_var_name = r.read_u16()
 	}
@@ -197,6 +197,18 @@ fn (mut r Reader) read_property() ?Property{
 	}
 	if (p.flags & 6) == 2 { //need test
 		p.write_handler = r.read_function() or { return err }
+	}
+*/
+	if p.flags & 0b0100 != 0 {
+		p.auto_var_name = r.read_u16()
+	}
+	else {
+		if p.flags & 0b0001 != 0 {
+			p.read_handler = r.read_function() or { return err }
+		}
+		if p.flags & 0b0010 != 0 {
+			p.write_handler = r.read_function() or { return err }
+		}
 	}
 	
 	return p

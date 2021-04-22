@@ -87,7 +87,7 @@ fn (mut r Reader) read_byte() byte {
 
 [inline]
 fn (mut w Writer) write_int_to_u16(v int) {
-	assert v <= 0xFFFF
+	assert u32(v) <= 0xFFFF
 
 	w.bytes << byte(v>>int(8))
 	w.bytes << byte(v)

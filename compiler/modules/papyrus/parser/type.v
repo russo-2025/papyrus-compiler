@@ -26,7 +26,7 @@ pub fn (mut p Parser) parse_array_type(name string) table.Type {
 	return table.new_type(idx)
 }
 
-pub fn (mut p Parser) parse_type() table.Type {
+pub fn (mut p Parser) parse_type() {
 	mut name := p.tok.lit
 	p.next()
 
@@ -35,48 +35,68 @@ pub fn (mut p Parser) parse_type() table.Type {
 		p.next()
 		p.next()
 		
-		return p.parse_array_type(name)
+		p.parsed_type = p.parse_array_type(name)
+		return
 	}
 
 	mut idx := p.table.find_type_idx(name)
 	
 	if idx > 0 {
-		return table.new_type(idx)
+		p.parsed_type = table.new_type(idx)
+		return
 	}
 
 	idx = p.table.add_placeholder_type(name)
 
-	return table.new_type(idx)
+	p.parsed_type = table.new_type(idx)
 }
 
 pub fn (mut p Parser) next_is_type() bool {
+	/*
+	.name .key_function
+	.name .key_event
+	.name .key_property
+	.name .name
+	.name .lsbr .rsbr .key_function
+	.name .lsbr .rsbr .key_event
+	.name .lsbr .rsbr .key_property
+	.name .lsbr .rsbr .name
+	*/
+
 	if p.tok.kind.is_type() {
 		return true
 	}
 	
-	if p.tok.kind == .name {
-		if p.peek_tok.kind == .key_function {
+	if p.tok.kind != .name {
+		return false
+	}
+
+	match p.peek_tok.kind {
+		.key_function,
+		.key_event,
+		.key_property,
+		.name {
 			return true
 		}
-
-		if p.peek_tok.kind == .key_event {
-			return true
-		}
-
-		if p.peek_tok.kind == .name {
-			return true
-		}
-
-		if p.peek_tok.kind == .lsbr {
-			if p.peek_tok2.kind == .rsbr {
-				if p.peek_tok3.kind  == .key_function {
+		.lsbr {
+			if p.peek_tok2.kind != .rsbr {
+				return false
+			}
+			
+			match p.peek_tok3.kind {
+				.key_function,
+				.key_event,
+				.key_property,
+				.name {
 					return true
 				}
-
-				if p.peek_tok3.kind  == .key_event {
-					return true
+				else {
+					return false
 				}
 			}
+		}
+		else {
+			return false
 		}
 	}
 

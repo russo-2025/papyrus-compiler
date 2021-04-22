@@ -9,11 +9,13 @@ import pex
 не работает:
 	- вызов функций с заданными через равно опциональными параметрами. ac.EquipItem(tool, abSilent = true)
 	- keyword parent
-	- states
-	- properties
+	- object states
+	- object variables
+	- object properties
 */
 
 fn main() {
+
 	prefs := pref.parse_args()
 
 	mut sw := time.new_stopwatch({})

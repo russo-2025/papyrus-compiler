@@ -193,7 +193,7 @@ pub mut:
 pub struct Function {
 pub mut:
 	name	u16	//Index(base 0) into string table
-	info		FunctionInfo
+	info	FunctionInfo
 }
 
 pub struct FunctionInfo {

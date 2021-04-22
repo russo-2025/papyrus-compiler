@@ -6,6 +6,7 @@ pub mut:
 	type_idxs	map[string]int
 
 	fns			map[string]Fn
+	fields		map[string]Field
 	modules		[]string
 }
 
@@ -18,6 +19,15 @@ pub mut:
 	
 }
 
+pub type Field = Prop
+
+pub struct Prop {
+pub:
+	name	string
+	mod		string
+	typ		Type
+}
+	
 pub struct Fn {
 pub:
 	params			[]Param
@@ -45,6 +55,18 @@ pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
 	return t
+}
+
+pub fn (t &Table) find_field(mod string, name string) ?Field {
+	f := t.fields[mod.to_lower() + "." + name.to_lower()]
+	if f.name.str != 0 {
+		return f
+	}
+	return none
+}
+
+pub fn (mut t Table) register_field(f Field) {
+	t.fields[f.mod.to_lower() + "." + f.name.to_lower()] = f
 }
 
 pub fn (t &Table) find_fn(mod string, name string) ?Fn {

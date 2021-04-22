@@ -18,8 +18,8 @@ pub mut:
 	
 	string_table	map[string]u16
 	
-	//текущая генерируемая функция
-	cur_fn			&pex.Function = 0
+	cur_obj		&pex.Object = 0 //текущий генерируемый объект
+	cur_fn		&pex.Function = 0 //текущая генерируемая функция
 
 	//массив временных переменных
 	temp_locals		[]TempVariable
@@ -52,6 +52,7 @@ pub fn gen(table &table.Table, file &ast.File) &pex.PexFile {
 
 		table: table
 		cur_fn: &pex.Function{}
+		cur_obj: &pex.Object{}
 	}
 	
 	g.gen_objects()
@@ -63,10 +64,16 @@ fn (mut g Gen) gen_objects() {
 	for stmt in g.file.stmts {
 		match stmt {
 			ast.ScriptDecl {
-				g.script_decl(ast.ScriptDecl{...stmt})
+				g.script_decl(stmt)
 			}
 			ast.FnDecl {
-				g.fn_decl(ast.FnDecl{...stmt})
+				g.fn_decl(stmt)
+			}
+			ast.VarDecl {
+				g.var_decl(stmt)
+			}
+			ast.PropertyDecl {
+				g.prop_decl(stmt)
 			}
 			ast.Comment {
 				//skip
