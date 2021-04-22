@@ -248,19 +248,7 @@ fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
 		prop.flags |= 0b0111
 
 		var_name := "::" + stmt.name + "_var"
-
 		prop.auto_var_name = g.gen_string_ref(var_name)
-/*
-		mut expr := g.get_operand_from_expr(&stmt.expr)
-
-		g.cur_obj.data.variables << pex.Variable{
-			name: g.gen_string_ref(var_name)
-			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
-			data: g.get_operand_from_expr(&stmt.expr)
-		}
-
-		g.cur_obj.data.num_variables++
-*/
 	}
 	else if is_autoread {
 		prop.flags |= 0b0001

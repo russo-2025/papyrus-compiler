@@ -39,25 +39,6 @@ fn new_builder(pref &pref.Preferences) Builder{
 	}
 }
 
-pub fn compile_builtin_files(pref &pref.Preferences) {
-	mut b := new_builder(pref)
-	mut c := checker.new_checker(b.table, pref)
-
-	println("get files")
-	files := b.get_all_src_files()
-
-	println("parse files")
-	parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
-
-	println("check files")
-	c.check_files(parsed_files)
-
-	if c.errors.len == 0 {
-		println("convert builtin files to module")
-		gen.gen_builtin_module(pref.out_dir[0], b.table, parsed_files)
-	}
-}
-
 pub fn compile(pref &pref.Preferences) {
 	os.is_writable_folder(pref.paths[0]) or {
 		// An early error here, is better than an unclear C error later:

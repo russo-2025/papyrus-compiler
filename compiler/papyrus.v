@@ -10,8 +10,6 @@ import pex
 	- вызов функций с заданными через равно опциональными параметрами. ac.EquipItem(tool, abSilent = true)
 	- keyword parent
 	- object states
-	- object variables
-	- object properties
 */
 
 fn main() {
@@ -27,9 +25,6 @@ fn main() {
 		}
 		.read {
 			pex.read(prefs.paths[0])
-		}
-		.compilebuiltin {
-			builder.compile_builtin_files(prefs)
 		}
 	}
 
