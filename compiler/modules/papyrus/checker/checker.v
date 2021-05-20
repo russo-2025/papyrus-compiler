@@ -909,11 +909,6 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		panic("wtf")
 	}
 
-	mut type_name := "unknown type"
-	if typ > 0 {
-		type_name = c.get_type_name(typ)
-	}
-
 	if func := c.find_fn(typ, left, name) {
 		node.mod = func.mod
 		node.return_type = func.return_type

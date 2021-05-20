@@ -85,6 +85,7 @@ pub fn (mut p Parser) parse() ast.File {
 		path: p.path
 		path_base: os.base(p.path)
 		file_name: os.base(p.path).all_before_last(".")
+		mod: p.mod
 		stmts: stmts
 		scope: p.scope
 		last_mod_time: os.file_last_mod_unix(p.path)

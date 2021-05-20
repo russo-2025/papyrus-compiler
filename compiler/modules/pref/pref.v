@@ -2,7 +2,7 @@ module pref
 
 import os
 
-enum Mods {
+pub enum Mods {
 	compile
 	read
 }
@@ -102,6 +102,23 @@ pub fn parse_args() Preferences {
 	}
 
 	return p
+}
+
+pub fn should_compile_filtered_files(dir string, files_ []string) []string {
+	mut files := files_.clone()
+	files.sort()
+
+	mut all_v_files := []string{}
+
+	for file in files {
+		if !file.ends_with('.psc') {
+			continue
+		}
+
+		all_v_files << os.join_path(dir, file)
+	}
+
+	return all_v_files
 }
 
 fn error(msg string) {

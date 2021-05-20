@@ -11,6 +11,7 @@ pub mut:
 	path			string // '..../src/file.psc'
 	path_base		string // file.psc'
 	file_name		string // 'file'
+	mod				string
 	stmts			[]TopStmt
 	scope			&Scope
 	last_mod_time	int
@@ -108,7 +109,7 @@ pub mut:
 
 pub struct VarDecl {
 pub mut:
-	typ		 ast.Type
+	typ			ast.Type
 	mod			string
 	name		string
 	assign		AssignStmt

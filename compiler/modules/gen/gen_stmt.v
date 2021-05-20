@@ -326,7 +326,9 @@ fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
 	g.pex.objects << obj
 	g.pex.object_count++
 
-	g.cur_obj = &g.pex.objects[g.pex.objects.len-1]
+	unsafe {
+		g.cur_obj = &g.pex.objects[g.pex.objects.len-1]
+	}
 
 	g.pex.user_flags << pex.UserFlag{
 		name_index: g.gen_string_ref("hidden")
