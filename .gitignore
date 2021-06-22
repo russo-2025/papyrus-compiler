@@ -1,0 +1,9 @@
+.vscode/**
+.papyrus/*
+bin/**
+test-scripts/**
+TODO.txt
+*.ppj
+*.psc
+papyrus-project.json
+compile hive project.bat
