@@ -9,7 +9,7 @@
 
 ### Building
 
-1. ```build prod.bat```
+1. ```build compiler prod.bat```
 
 ### Usage
 
