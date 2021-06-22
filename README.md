@@ -1,6 +1,8 @@
 
 ## Compiler
 
+Сreated exclusively for use with [Skymp VM](https://github.com/skyrim-multiplayer/skymp5-server/tree/master/scamp_native/papyrus_vm_lib) (not tested in Skyrim)
+
 ### Prerequisites
 
 * [V compiler](https://github.com/vlang/v/releases)
