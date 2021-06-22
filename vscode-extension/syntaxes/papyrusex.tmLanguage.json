@@ -1,0 +1,171 @@
+{
+	"name": "PapyrusEx",
+	"scopeName": "source.papyrus",
+	"patterns": [
+		{
+			"include": "#script-decl"
+		},
+		{
+			"include": "#func-decl"
+		},
+		{
+			"include": "#literals"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#as-expr"
+		},
+		{
+			"include": "#new-expr"
+		},
+		{
+			"include": "#assign"
+		}
+	],
+	"repository": {
+		"script-decl": {
+			"name": "meta",
+			"begin": "(?i)^\\s*(scriptname)\\s+(\\w+)(\\s+(extends)\\s+(\\w+))?",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.other"
+				},
+				"2": {
+					"name": "entity.name.type"
+				},
+				"4":
+				{
+					"name": "keyword.other"
+				},
+				"5":
+				{
+					"name": "entity.other.inherited-class"
+				}
+			},
+			"end": "\n",
+			"patterns": [
+				{
+					"match": "(?i)(conditional|default|hidden|native|const)",
+					"name": "keyword.language"
+				}
+			]
+		},
+		"func-decl": {
+			"name": "meta",
+			"match": "(?i)^\\s*(\\w+\\[?\\]?)?\\s*(function|event)\\s+(\\w*)\\s*\\((.*)?\\)",
+			"captures": {
+				"1":
+				{
+					"name": "entity.name.type"
+				},
+				"2":
+				{
+					"name": "keyword.other"
+				},
+				"3":
+				{
+					"name": "entity.name.function"
+				},
+				"4":
+				{
+					"patterns": [
+						{
+							"match": "\\s*(\\w+\\[?\\]?)\\s+(\\w+)\\s*,?",
+							"captures":{
+								"1": {
+									"name": "entity.name.type"
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"literals": {
+			"patterns": [
+				{
+					"begin": "\"",
+					"end": "\"",
+					"name": "string.quoted.double"
+				},
+				{
+					"begin": "'",
+					"end": "'",
+					"name": "string.quoted.single"
+				},
+				{
+					"match": "\\b(?i:(\\d+\\.\\d*(e[\\-\\+]?\\d+)?))(?=[^a-zA-Z_])",
+					"name": "constant.numeric"
+				},
+				{
+					"match": "\\b(0[xX][0-9ABCDEF]+)",
+					"name": "constant.numeric"
+				},
+				{
+					"match": "\\b([1-9]+[0-9]*|0)",
+					"name": "constant.numeric"
+				},
+				{
+					"match": "(?i)\\b(true|false|none)\\b",
+					"name": "constant.language"
+				}
+			]
+		},
+		"assign": {
+			"patterns": [
+				{
+					"match": "(?i)^\\s*(\\w+\\[?\\]?)\\s+(\\w+)\\s+(\/=|\\*=|\\+=|-=|%=|=)",
+					"captures":{
+						"1": {
+							"name": "entity.name.type"
+						}
+					}
+				}
+			]
+		},
+		"as-expr": {
+			"patterns": [
+				{
+					"match": "(?i)\\b(as)\\s+(\\w+\\[?\\]?)",
+					"captures":{
+						"1": {
+							"name": "keyword.other"
+						},
+						"2": {
+							"name": "entity.name.type"
+						}
+					}
+				}
+			]
+		},
+		"new-expr": {
+			"patterns": [
+				{
+					"match": "(?i)\\b(new)\\s+(\\w+)\\[",
+					"captures":{
+						"1": {
+							"name": "keyword.other"
+						},
+						"2": {
+							"name": "entity.name.type"
+						}
+					}
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control",
+					"match": "(?i)\\b(if|elseif|else|endif|while|endwhile|return)\\b"
+				},
+				{
+					"name": "keyword.other",
+					"match": "(?i)\\b(none|self|parent|endfunction|endevent|native|global|hidden|autoreadonly|auto)\\b"
+				}
+			]
+		}
+	}
+}

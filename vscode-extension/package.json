@@ -1,0 +1,89 @@
+{
+    "name": "papyrusex",
+    "displayName": "PapyrusEx",
+    "description": "Description",
+    "version": "0.0.1",
+    "publisher": "russo-2025",
+    "repository": "https://github.com/russo-2025",
+    "engines": {
+        "vscode": "^1.54.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Other"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.testPapyrus",
+                "title": "test papyrus"
+            }
+        ],
+        "languages": [
+            {
+                "id": "papyrusex",
+                "aliases": [
+                    "PapyrusEx",
+                    "papyrusex",
+                    "Papyrus",
+                    "papyrus"
+                ],
+                "extensions": [
+                    ".psc"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "papyrusex",
+                "scopeName": "source.papyrus",
+                "path": "./syntaxes/papyrusex.tmLanguage.json"
+            }
+        ],
+        "configuration": {
+            "title": "PapyrusEx",
+            "properties": {
+                "papyrusex.pls.enable": {
+                    "scope": "resource",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enables the language server. (alpha)"
+                },
+                "papyrusex.pls.customPath": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "",
+                    "description": "Custom path to the PLS (Papyrus Language Server) executable. Restart is required to take effect."
+                }
+            }
+        }
+    },
+    "activationEvents": [
+        "onLanguage:papyrusex",
+        "workspaceContains:**/*.psc",
+        "onCommand:extension.helloWorld",
+        "*"
+    ],
+    "main": "./out/extension.js",
+    "dependencies": {
+        "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^13.13.38",
+        "@types/vscode": "^1.40.0",
+        "chokidar": "^3.5.1",
+        "markdownlint-cli": "^0.20.0",
+        "ts-loader": "^8.0.18",
+        "typescript": "^4.2.3",
+        "vsce": "^1.87.0",
+        "webpack": "^5.28.0",
+        "webpack-cli": "^4.5.0"
+    },
+    "scripts": {
+        "vscode:prepublish": "webpack --mode production",
+        "package": "vsce package",
+        "webpack": "webpack --mode development",
+        "webpack-dev": "webpack --mode development --watch"
+    }
+}
