@@ -1,7 +1,7 @@
 
 ## Compiler
 
-Сreated exclusively for use with [Skymp VM](https://github.com/skyrim-multiplayer/skymp5-server/tree/master/scamp_native/papyrus_vm_lib) (not tested in Skyrim)
+The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v), for use with [Skymp VM](https://github.com/skyrim-multiplayer/skymp5-server/tree/master/scamp_native/papyrus_vm_lib) (Not tested in Skyrim)
 
 ### Prerequisites
 
@@ -9,7 +9,7 @@
 
 ### Building
 
-1. ```build compiler prod.bat```
+1. ```build prod.bat```
 
 ### Usage
 
