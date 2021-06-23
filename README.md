@@ -9,7 +9,7 @@ The Papyrus compiler is based on the [V language compiler](https://github.com/vl
 
 ### Building
 
-1. ```build prod.bat```
+1. ```build compiler prod.bat```
 
 ### Usage
 
