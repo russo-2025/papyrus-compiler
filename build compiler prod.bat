@@ -1,2 +1,2 @@
-v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -path "@vlib|@vmodules|modules" "compiler"
+v -cc msvc -m64 -os windows -showcc -o "bin\papyrus.exe" -prod -compress -path "@vlib|@vmodules|modules" "compiler"
 pause
