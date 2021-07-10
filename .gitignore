@@ -2,6 +2,7 @@
 *.ppj
 bin/*.papyrus
 bin/*.exe
+bin/*.pdb
 test-files/**
 TODO.txt
 papyrus-project.json
