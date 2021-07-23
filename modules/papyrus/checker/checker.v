@@ -57,6 +57,12 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 		}
 		ast.StateDecl {
 			panic("STATE SUPPORT TODO")
+
+			mut i := 0
+			for i < node.fns.len {
+				c.fn_decl(mut node.fns[i])
+				i++
+			}
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)

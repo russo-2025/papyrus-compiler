@@ -211,10 +211,19 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	p.cur_state_name = name
 	
 	mut fns := []ast.FnDecl{}
+	
+	mut last_token_pos := 0
 
 	for {
 		if p.tok.kind == .key_endstate {
 			break
+		}
+
+		if last_token_pos == p.tok.pos {
+			p.error("compiler bug(state): " + p.tok.kind.str() + ", " + "$p.tok.lit")
+		}
+		else {
+			last_token_pos = p.tok.pos
 		}
 
 		match p.tok.kind {
