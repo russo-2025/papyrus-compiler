@@ -32,8 +32,8 @@ mut:
 	
 	used_indents		[]string
 
-	mod					string // current object name
-	cur_state_name		string // current state name
+	cur_obj_name		string 
+	cur_state_name		string = default_state_name
 	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
@@ -111,7 +111,7 @@ pub fn (mut p Parser) parse() &ast.File {
 		path: p.path
 		path_base: os.base(p.path)
 		file_name: os.base(p.path).all_before_last(".")
-		mod: p.mod
+		obj_name: p.cur_obj_name
 		stmts: stmts
 		imports: p.imports
 		scope: p.scope
@@ -207,10 +207,11 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	p.check(.key_state)
 
 	name := p.check_name()
+
 	p.cur_state_name = name
 	
 	mut fns := []ast.FnDecl{}
-/*
+
 	for {
 		if p.tok.kind == .key_endstate {
 			break
@@ -238,10 +239,10 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 			}
 		}
 	}
-*/
+
 	p.check(.key_endstate)
 	
-	p.cur_state_name = name
+	p.cur_state_name = default_state_name
 	
 	return ast.StateDecl {
 		pos: pos
@@ -320,7 +321,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 
 	name := p.check_name()
 
-	p.mod = name
+	p.cur_obj_name = name
 	p.table.register_module(name)
 
 	mut node := ast.ScriptDecl{
@@ -438,7 +439,7 @@ pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
 
 	return  ast.VarDecl{
 		typ: typ
-		mod: p.mod
+		mod: p.cur_obj_name
 		name: name
 		assign: {
 			op: token.Kind.assign

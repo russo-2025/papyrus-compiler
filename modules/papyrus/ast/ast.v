@@ -12,7 +12,7 @@ pub mut:
 	path			string // '..../src/file.psc'
 	path_base		string // file.psc'
 	file_name		string // 'file'
-	mod				string
+	obj_name		string
 	stmts			[]TopStmt
 	imports			[]string
 	scope			&Scope
@@ -26,7 +26,7 @@ pub fn (f &File) free() {
 		f.path.free()
 		f.path_base.free()
 		f.file_name.free()
-		f.mod.free()
+		f.obj_name.free()
 		f.stmts.free()
 		f.imports.free()
 		f.scope.free()

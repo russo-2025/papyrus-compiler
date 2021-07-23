@@ -60,7 +60,8 @@ pub struct Fn {
 pub:
 	params			[]Param
 	return_type		Type
-	mod				string
+	obj_name		string
+	state_name		string
 pub mut:
 	name			string
 	sname			string
@@ -106,7 +107,7 @@ pub fn (t &Table) find_fn(mod string, name string) ?Fn {
 }
 
 pub fn (mut t Table) register_fn(new_fn Fn) {
-	t.fns[new_fn.mod.to_lower() + "." + new_fn.name.to_lower()] = new_fn
+	t.fns[new_fn.obj_name.to_lower() + "." + new_fn.name.to_lower()] = new_fn
 }
 
 pub fn (mut t Table) add_placeholder_type(name string) int {

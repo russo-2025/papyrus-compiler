@@ -66,20 +66,21 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 		p.table.register_fn(ast.Fn{
 			params: params
 			return_type: return_type
-			mod: p.mod
+			state_name: p.cur_state_name
+			obj_name: p.cur_obj_name
 			name: name
 			sname: name.to_lower()
 			is_static: true
 		})
 	}
 	else {
-		if p.cur_object == 0 {
-			panic("Compiler error")
-		}
+		assert p.cur_object != 0
+
 		p.table.types[p.cur_object.idx()].register_method(ast.Fn{
 			params: params
 			return_type: return_type
-			mod: p.mod
+			state_name: p.cur_state_name
+			obj_name: p.cur_obj_name
 			name: name
 			sname: name.to_lower()
 			is_static: false

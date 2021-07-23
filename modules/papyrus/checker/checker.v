@@ -865,7 +865,7 @@ pub fn (mut c Checker) find_fn(typ ast.Type, mod string, name string) ?ast.Fn {
 					}
 				]
 				return_type: elem_type
-				mod: 'builtin'
+				obj_name: 'builtin'
 				name: name
 				sname: name.to_lower()
 				is_static: false
@@ -918,7 +918,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	}
 
 	if func := c.find_fn(typ, left, name) {
-		node.mod = func.mod
+		node.mod = func.obj_name
 		node.return_type = func.return_type
 		node.is_static = func.is_static
 
