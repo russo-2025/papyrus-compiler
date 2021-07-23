@@ -3,6 +3,7 @@
 bin/*.papyrus
 bin/*.exe
 bin/*.pdb
+bin/*.ilk
 test-files/**
 TODO.txt
 papyrus-project.json
