@@ -3,7 +3,7 @@ module ast
 import papyrus.ast
 import papyrus.token
 
-pub type TopStmt = ScriptDecl | FnDecl | Comment | PropertyDecl | VarDecl
+pub type TopStmt = ScriptDecl | FnDecl | Comment | PropertyDecl | VarDecl | StateDecl
 pub type Stmt =  Return | If | While | ExprStmt | AssignStmt | VarDecl | Comment
 
 [heap]
@@ -45,6 +45,13 @@ pub mut:
 	flags			[]token.Kind
 }
 
+pub struct StateDecl {
+pub mut:
+	pos		token.Position
+	name	string
+	fns		[]FnDecl
+}
+
 pub struct FnArg {
 pub mut:
 	name			string
@@ -59,7 +66,7 @@ pub mut:
 	params			[]ast.Param
 	
 	stmts			[]Stmt
-	return_type	 ast.Type
+	return_type		ast.Type
 	flags			[]token.Kind
 	scope			&Scope
 	no_body			bool

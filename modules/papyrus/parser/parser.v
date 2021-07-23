@@ -7,6 +7,10 @@ import pref
 import papyrus.ast
 import papyrus.util
 
+const (
+	default_state_name = ""
+)
+
 pub struct Parser {
 	pref				&pref.Preferences
 mut:
@@ -28,8 +32,9 @@ mut:
 	
 	used_indents		[]string
 
-	mod					string // имя текущего объекта
-	cur_object			ast.Type //текущий объект
+	mod					string // current object name
+	cur_state_name		string // current state name
+	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
 }
@@ -172,7 +177,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 				return p.property_decl()
 			}
 			.key_state {
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				return p.state_decl()
 			}
 			else {
 				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
@@ -195,6 +200,54 @@ pub fn (mut p Parser) parse_flags() []token.Kind {
 	}
 
 	return flags
+}
+
+pub fn (mut p Parser) state_decl() ast.StateDecl {
+	pos := p.tok.position()
+	p.check(.key_state)
+
+	name := p.check_name()
+	p.cur_state_name = name
+	
+	mut fns := []ast.FnDecl{}
+/*
+	for {
+		if p.tok.kind == .key_endstate {
+			break
+		}
+
+		match p.tok.kind {
+			.name {
+				if !p.next_is_type() {
+					p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				}
+				
+				p.parse_type()
+			}
+			.key_bool,
+			.key_int,
+			.key_string,
+			.key_float {
+				p.parse_type()
+			}
+			.key_function {
+				fns << p.fn_decl()
+			}
+			else {
+				p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+			}
+		}
+	}
+*/
+	p.check(.key_endstate)
+	
+	p.cur_state_name = name
+	
+	return ast.StateDecl {
+		pos: pos
+		name: name
+		fns: fns
+	}
 }
 
 pub fn (mut p Parser) property_decl() ast.PropertyDecl {

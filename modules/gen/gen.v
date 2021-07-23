@@ -65,6 +65,9 @@ fn (mut g Gen) gen_objects() {
 			ast.ScriptDecl {
 				g.script_decl(stmt)
 			}
+			ast.StateDecl {
+				panic("STATE SUPPORT TODO")
+			}
 			ast.FnDecl {
 				g.fn_decl(stmt)
 			}
