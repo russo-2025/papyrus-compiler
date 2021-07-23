@@ -79,6 +79,10 @@ pub fn parse_args() Preferences {
 	
 	mut p := Preferences{}
 
+	if os.args.len <= 1 {
+		error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
+	}
+
 	args := os.args[1..]
 
 	match args[0] {
