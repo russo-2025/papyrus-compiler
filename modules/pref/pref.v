@@ -20,58 +20,61 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 	if args.len < 3  {
 		error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
 	}
-	
-	p.mode = .compile
+
 	mut i := 1
 
-	if args[i] == "-nocache" {
-		p.no_cache = true
-		i++
-	}
-
-	if args[i] == "-input" {
-		i++
-		
-		for i < args.len {
-			path := args[i]
-
-			if !os.is_dir(path) {
-				error("invalid input path: '$path'")
+	for i < args.len {
+		match args[i] {
+			"-nocache" {
+				p.no_cache = true
+				i++
+				continue
 			}
+			"-input" {
+				i++
+				
+				for i < args.len {
+					if args[i].starts_with("-") {
+						i--
+						break
+					}
 
-			p.paths << path
+					path := args[i]
+					
+					if !os.is_dir(path) {
+						error("invalid input path: '$path'")
+					}
 
-			i++
-			if args[i] == "-output" {
-				break
+					p.paths << path
+
+					i++
+				}
+			}
+			"-output" {
+				i++
+				
+				for i < args.len {
+					if args[i].starts_with("-") {
+						break
+					}
+
+					path := args[i]
+
+					if !os.is_dir(path) {
+						error("invalid output path: '$path'")
+					}
+
+					p.out_dir << path
+
+					i++
+				}
+			}
+			else {
+				error("invalid argument `${args[i]}`")
 			}
 		}
-	}
-	else {
-		error("err -input")
-	}
 
-	if args[i] == "-output" {
 		i++
-		
-		for i < args.len {
-			if args[i].starts_with("-") {
-				break
-			}
-
-			path := args[i]
-
-			if !os.is_dir(path) {
-				error("invalid output path: '$path'")
-			}
-
-			p.out_dir << path
-
-			i++
-		}
-	}
-	else {
-		error("err -output")
 	}
 }
 
@@ -87,18 +90,15 @@ pub fn parse_args() Preferences {
 
 	match args[0] {
 		"-compile" {
+			p.mode = .compile
 			p.parse_compile_args(args)
 		}
 		"-read" {
 			if args.len < 2 {
 				error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
 			}
+
 			p.mode = .read
-
-			if !os.is_file(args[1]) {
-				error("invalid file path: '${args[1]}'")
-			}
-
 			p.paths << args[1]
 		}
 		else {
