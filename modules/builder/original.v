@@ -4,6 +4,8 @@ import os
 
 import pref
 
+//https://www.creationkit.com/index.php?title=Papyrus_Compiler_Reference
+
 struct BuilderOrigin {
 mut:
 	builtin_path	string
@@ -56,20 +58,7 @@ fn (mut b BuilderOrigin) set_output_path(path string) {
 	b.output_path = real_path
 }
 
-/*
-
--i="D:\_projects\skymp5-papyrus\bin\builtin"
--i="D:\_projects\hive-workspace\scripts\Custom"
--i="D:\_projects\hive-workspace\scripts\Custom\Debug"
--i="D:\_projects\hive-workspace\scripts\Custom\FrontCommands"
--i="D:\_projects\hive-workspace\scripts\Custom\Profession"
--i="D:\_projects\hive-workspace\scripts\Custom\Systems"
--i="D:\_projects\hive-workspace\scripts\Custom\Test"
-
-*/
-
 fn (mut b BuilderOrigin) run() {
-	//<PapyrusCompiler.exe> <folder> -i="<scripts folder>" -o="Data\Scripts" -f="TESV_Papyrus_Flags.flg"
 	compiler_path := os.real_path('./Original Compiler/PapyrusCompiler.exe')
 	flags_file_path := os.real_path('./Original Compiler/TESV_Papyrus_Flags.flg')
 
@@ -91,12 +80,11 @@ fn (mut b BuilderOrigin) run() {
 		println(res)
 	}
 
-
-/*
+	/*
 	cmd := '"$compiler_path" "D:\\_projects\\hive-workspace\\scripts\\GM\\M.psc" -quiet $all_inputs -o="$b.output_path" -f="$flags_file_path"'
 	res := os.system(cmd)
 	println(res)
-*/
+	*/
 }
 
 pub fn compile_original(pref &pref.Preferences) {
