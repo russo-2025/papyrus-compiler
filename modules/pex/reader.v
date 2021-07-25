@@ -14,9 +14,23 @@ pub fn read(path string) &PexFile {
 
 	mut f := PexFile{}
 
+	real_path := os.real_path(path)
+
+	if !os.is_file(real_path) {
+		eprintln("invalid file path: `$real_path`")
+		exit(1)
+	}
+
+	if os.file_ext(real_path) != ".pex" {
+		eprintln("unexpected file extension `*${os.file_ext(real_path)}` , expecting `*.pex`")
+		exit(1)
+	}
+
+	println("read file: `${os.real_path(path)}`")
+	
 	mut r := Reader{
 		path:	path
-		bytes:	os.read_bytes(path) or { return &PexFile{} }
+		bytes:	os.read_bytes(os.real_path(path)) or { return &PexFile{} }
 		pex:	&f
 	}
 	
