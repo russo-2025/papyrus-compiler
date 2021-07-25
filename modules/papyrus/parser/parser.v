@@ -7,10 +7,6 @@ import pref
 import papyrus.ast
 import papyrus.util
 
-const (
-	default_state_name = ""
-)
-
 pub struct Parser {
 	pref				&pref.Preferences
 mut:
@@ -33,7 +29,7 @@ mut:
 	used_indents		[]string
 
 	cur_obj_name		string 
-	cur_state_name		string = default_state_name
+	cur_state_name		string = token.default_state_name
 	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
@@ -251,7 +247,7 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 
 	p.check(.key_endstate)
 	
-	p.cur_state_name = default_state_name
+	p.cur_state_name = token.default_state_name
 	
 	return ast.StateDecl {
 		pos: pos
@@ -637,6 +633,11 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 	}
 
 	return s
+}
+
+[inline]
+pub fn (p Parser) is_state() bool {
+	return p.cur_state_name != token.default_state_name
 }
 
 [inline]

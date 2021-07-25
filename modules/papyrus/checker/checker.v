@@ -18,6 +18,7 @@ pub mut:
 	cur_fn			&ast.FnDecl = 0
 	cur_scope		&ast.Scope = voidptr(0)
 	cur_obj_name	string
+	cur_state_name	string
 }
 
 pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {
@@ -265,7 +266,12 @@ pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.
 	return none
 }
 
-pub fn (mut c Checker) warn(message string, pos token.Position) {
+[inline]
+pub fn (c Checker) is_state() bool {
+	return c.cur_state_name != token.default_state_name
+}
+
+pub fn (c Checker) warn(message string, pos token.Position) {
 	eprintln("Checker warning: " + message)
 }
 

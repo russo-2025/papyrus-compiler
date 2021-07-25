@@ -16,10 +16,15 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 		}
 		ast.StateDecl {
 			mut i := 0
+			
+			c.cur_state_name = node.name
+
 			for i < node.fns.len {
 				c.fn_decl(mut node.fns[i])
 				i++
 			}
+
+			c.cur_state_name = token.default_state_name
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)
@@ -187,6 +192,9 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		c.cur_fn = node
 	}
 
+	self_typ := c.table.find_type_idx(c.cur_obj_name)
+	assert self_typ != 0
+
 	c.cur_scope = node.scope
 
 	for param in node.params {
@@ -204,8 +212,6 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	}
 	
 	if token.Kind.key_global !in node.flags {
-		self_typ := c.table.find_type_idx(c.cur_obj_name)
-		assert self_typ != 0
 
 		c.cur_scope.register(ast.ScopeVar{
 			name: "self"
@@ -214,6 +220,17 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	}
 
 	c.stmts(node.stmts)
+
+	if c.is_state() {
+		if func := c.find_fn(self_typ, c.cur_obj_name, node.name) {
+			//проверка функции на эквивалентность оригиналу
+
+			//а может быть лучше сделать проверку при регистрации функции?
+		}
+		else {
+			//error
+		}
+	}
 
 	c.cur_scope = c.file.scope
 }
@@ -229,10 +246,10 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 		
 		if node.assign.right is ast.EmptyExpr {
 			match node.typ {
-			 ast.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
-			 ast.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
-			 ast.string_type { node.assign.right = ast.StringLiteral{val:""} }
-			 ast.bool_type { node.assign.right = ast.BoolLiteral{val:"false"}}
+				ast.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
+				ast.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
+				ast.string_type { node.assign.right = ast.StringLiteral{val:""} }
+				ast.bool_type { node.assign.right = ast.BoolLiteral{val:"false"}}
 				else {}
 			}
 		}

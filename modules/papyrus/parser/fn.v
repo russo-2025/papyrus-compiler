@@ -62,29 +62,31 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 	
-	if is_static {
-		p.table.register_fn(ast.Fn{
-			params: params
-			return_type: return_type
-			state_name: p.cur_state_name
-			obj_name: p.cur_obj_name
-			name: name
-			sname: name.to_lower()
-			is_static: true
-		})
-	}
-	else {
-		assert p.cur_object != 0
+	if !p.is_state() {
+		if is_static {
+			p.table.register_fn(ast.Fn{
+				params: params
+				return_type: return_type
+				state_name: p.cur_state_name
+				obj_name: p.cur_obj_name
+				name: name
+				sname: name.to_lower()
+				is_static: true
+			})
+		}
+		else {
+			assert p.cur_object != 0
 
-		p.table.types[p.cur_object.idx()].register_method(ast.Fn{
-			params: params
-			return_type: return_type
-			state_name: p.cur_state_name
-			obj_name: p.cur_obj_name
-			name: name
-			sname: name.to_lower()
-			is_static: false
-		})
+			p.table.types[p.cur_object.idx()].register_method(ast.Fn{
+				params: params
+				return_type: return_type
+				state_name: p.cur_state_name
+				obj_name: p.cur_obj_name
+				name: name
+				sname: name.to_lower()
+				is_static: false
+			})
+		}
 	}
 
 	return ast.FnDecl{
