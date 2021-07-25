@@ -17,7 +17,7 @@ pub mut:
 
 	cur_fn			&ast.FnDecl = 0
 	cur_scope		&ast.Scope = voidptr(0)
-	mod				string // current module name
+	cur_obj_name	string
 }
 
 pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {
@@ -214,7 +214,7 @@ pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ ast.Type) bool {
 	return false
 }
 
-pub fn (mut c Checker) find_fn(typ ast.Type, mod string, name string) ?ast.Fn {
+pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.Fn {
 	if typ > 0 {
 		mut sym := c.table.get_type_symbol(typ)
 
@@ -256,8 +256,8 @@ pub fn (mut c Checker) find_fn(typ ast.Type, mod string, name string) ?ast.Fn {
 		}
 	}
 
-	if c.table.has_module(mod) {
-		if func := c.table.find_fn(mod, name) {
+	if c.table.has_module(obj_name) {
+		if func := c.table.find_fn(obj_name, name) {
 			return func
 		}
 	}

@@ -12,7 +12,7 @@ pub mut:
 	kind		Kind
 	name		string
 	methods		[]Fn
-	mod			string
+	obj_name	string
 }
 
 pub struct EmptyInfo {}
@@ -65,40 +65,40 @@ pub fn (mut t Table) register_builtin_type_symbols() {
 	// reserve index 0 so nothing can go there
 	// save index check, 0 will mean not found
 	t.register_type_symbol(kind: .placeholder, name: 'reserved_0')		//0
-	t.register_type_symbol(kind: .none_, name: 'None', mod: 'builtin')	//1
-	t.register_type_symbol(kind: .int, name: 'Int', mod: 'builtin')		//2
-	t.register_type_symbol(kind: .float, name: 'Float', mod: 'builtin')	//3
-	t.register_type_symbol(kind: .string, name: 'String', mod: 'builtin')	//4
-	t.register_type_symbol(kind: .bool, name: 'Bool', mod: 'builtin')		//5
-	t.register_type_symbol(kind: .array, name: 'Array', mod: 'builtin')		//6
+	t.register_type_symbol(kind: .none_, name: 'None', obj_name: 'builtin')	//1
+	t.register_type_symbol(kind: .int, name: 'Int', obj_name: 'builtin')		//2
+	t.register_type_symbol(kind: .float, name: 'Float', obj_name: 'builtin')	//3
+	t.register_type_symbol(kind: .string, name: 'String', obj_name: 'builtin')	//4
+	t.register_type_symbol(kind: .bool, name: 'Bool', obj_name: 'builtin')		//5
+	t.register_type_symbol(kind: .array, name: 'Array', obj_name: 'builtin')		//6
 
 	t.register_type_symbol({ //7
 		parent_idx: array_type
 		info: Array { elem_type: string_type}
 		kind: .array
 		name: 'String[]'
-		mod: 'builtin'
+		obj_name: 'builtin'
 	})
 	t.register_type_symbol({ //8
 		parent_idx: array_type
 		info: Array { elem_type: int_type}
 		kind: .array
 		name: 'Int[]'
-		mod: 'builtin'
+		obj_name: 'builtin'
 	})
 	t.register_type_symbol({ //9
 		parent_idx: array_type
 		info: Array { elem_type: float_type}
 		kind: .array
 		name: 'Float[]'
-		mod: 'builtin'
+		obj_name: 'builtin'
 	})
 	t.register_type_symbol({ //10
 		parent_idx: array_type
 		info: Array { elem_type: bool_type}
 		kind: .array
 		name: 'Bool[]'
-		mod: 'builtin'
+		obj_name: 'builtin'
 	})
 }
 
@@ -168,7 +168,7 @@ pub fn (mut t TypeSymbol) register_method(new_fn Fn) int {
 	// returns a method index, stored in the ast.FnDecl
 	// for faster lookup in the checker's fn_decl method
 	// println('reg me $new_fn.name nr_args=$new_fn.args.len')
-	//println("register method: $new_fn.mod . $new_fn.name, $new_fn.is_static, $new_fn.return_type")
+	//println("register method: $new_fn.obj_name . $new_fn.name, $new_fn.is_static, $new_fn.return_type")
 	
 	t.methods << new_fn
 	

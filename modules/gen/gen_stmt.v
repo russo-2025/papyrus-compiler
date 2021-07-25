@@ -286,7 +286,7 @@ fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
 [inline]
 fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
 	
-	g.mod = s.name
+	g.cur_obj_name = s.name
 
 	mut obj := pex.Object {
 		name_index: g.gen_string_ref(s.name)

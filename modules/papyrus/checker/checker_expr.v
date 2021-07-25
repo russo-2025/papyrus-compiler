@@ -82,7 +82,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 				}
 			}
 			//wtf
-			/*else if obj := c.table.find_field(c.mod, node.name){
+			/*else if obj := c.table.find_field(c.cur_obj_name, node.name){
 				node.typ = obj.typ
 				return obj.typ
 			}*/
@@ -142,11 +142,11 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 				return ast.int_type
 			}
 			else {
-				if f := c.table.find_field(sym.mod, node.field_name) {
+				if f := c.table.find_field(sym.obj_name, node.field_name) {
 					return f.typ
 				}
 				else {
-					c.error("`${sym.mod}.${node.field_name}` property declaration not found", node.pos)
+					c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
 				}
 			}
 			
@@ -392,12 +392,12 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 }
 
 pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
-	mut left := c.mod
+	mut left := c.cur_obj_name
 	mut name := node.name
 	mut typ := 0
 
 	if node.left is ast.EmptyExpr {
-		left = c.mod
+		left = c.cur_obj_name
 	}
 	else if node.left is ast.Ident && c.table.has_module((node.left as ast.Ident).name) {
 		left = (node.left as ast.Ident).name
@@ -415,7 +415,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	}
 
 	if func := c.find_fn(typ, left, name) {
-		node.mod = func.obj_name
+		node.obj_name = func.obj_name
 		node.return_type = func.return_type
 		node.is_static = func.is_static
 

@@ -51,9 +51,9 @@ pub type Field = Prop
 
 pub struct Prop {
 pub:
-	name	string
-	mod		string
-	typ		Type
+	name		string
+	obj_name	string
+	typ			Type
 }
 	
 pub struct Fn {
@@ -86,8 +86,8 @@ pub fn new_table() &Table {
 	return t
 }
 
-pub fn (t &Table) find_field(mod string, name string) ?Field {
-	f := t.fields[mod.to_lower() + "." + name.to_lower()]
+pub fn (t &Table) find_field(obj_name string, name string) ?Field {
+	f := t.fields[obj_name.to_lower() + "." + name.to_lower()]
 	if f.name.str != 0 {
 		return f
 	}
@@ -95,11 +95,11 @@ pub fn (t &Table) find_field(mod string, name string) ?Field {
 }
 
 pub fn (mut t Table) register_field(f Field) {
-	t.fields[f.mod.to_lower() + "." + f.name.to_lower()] = f
+	t.fields[f.obj_name.to_lower() + "." + f.name.to_lower()] = f
 }
 
-pub fn (t &Table) find_fn(mod string, name string) ?Fn {
-	f := t.fns[mod.to_lower() + "." + name.to_lower()]
+pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
+	f := t.fns[obj_name.to_lower() + "." + name.to_lower()]
 	if f.name.str != 0 {
 		return f
 	}

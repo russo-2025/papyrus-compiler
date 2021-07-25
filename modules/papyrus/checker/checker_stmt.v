@@ -6,7 +6,7 @@ import papyrus.token
 fn (mut c Checker) top_stmt(node ast.TopStmt) {
 	match mut node {
 		ast.ScriptDecl {
-			c.mod = node.name
+			c.cur_obj_name = node.name
 
 			if node.parent_name != "" {
 				if !c.table.known_type(node.parent_name) {
@@ -15,8 +15,6 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 			}
 		}
 		ast.StateDecl {
-			panic("STATE SUPPORT TODO")
-
 			mut i := 0
 			for i < node.fns.len {
 				c.fn_decl(mut node.fns[i])
@@ -33,14 +31,14 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 			if c.type_is_valid(node.typ) {
 				c.table.register_field(ast.Prop{
 					name: node.name
-					mod: c.mod
+					obj_name: c.cur_obj_name
 					typ: node.typ
 				})
 
 				if token.Kind.key_auto in node.flags {
 					c.file.stmts << ast.VarDecl {
 						typ: node.typ
-						mod: c.mod
+						obj_name: c.cur_obj_name
 						name: "::" + node.name + "_var"
 						assign: {
 							op: token.Kind.assign
@@ -206,7 +204,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	}
 	
 	if token.Kind.key_global !in node.flags {
-		self_typ := c.table.find_type_idx(c.mod)
+		self_typ := c.table.find_type_idx(c.cur_obj_name)
 		assert self_typ != 0
 
 		c.cur_scope.register(ast.ScopeVar{

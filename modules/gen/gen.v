@@ -17,14 +17,12 @@ pub mut:
 	
 	string_table	map[string]u16
 	
-	cur_obj		&pex.Object = 0 //текущий генерируемый объект
-	cur_fn		&pex.Function = 0 //текущая генерируемая функция
-
-	//массив временных переменных
-	temp_locals		[]TempVariable
+	temp_locals		[]TempVariable //массив временных переменных
 
 	table			&ast.Table
-	mod				string
+	cur_obj			&pex.Object = 0
+	cur_obj_name	string
+	cur_fn			&pex.Function = 0
 }
 
 pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {

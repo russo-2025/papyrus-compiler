@@ -194,7 +194,7 @@ fn (mut g Gen) gen_call_expr(expr &ast.CallExpr) pex.VariableData {
 		//имя скрипта
 		args << pex.VariableData{
 			typ: 1
-			string_id: g.gen_string_ref(expr.mod.to_lower())
+			string_id: g.gen_string_ref(expr.obj_name.to_lower())
 		}
 		//имя функции
 		args << pex.VariableData{

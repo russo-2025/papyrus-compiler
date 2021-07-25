@@ -96,7 +96,7 @@ pub struct CallExpr {
 pub mut:
 	pos				token.Position
 	left			Expr // `user` in `user.register()`
-	mod				string // mod.name()
+	obj_name		string // obj_name.name()
 	name			string // left.name()
 	args			[]CallArg
 	def_args		map[string]DefaultValue

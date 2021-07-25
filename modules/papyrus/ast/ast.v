@@ -134,7 +134,7 @@ pub mut:
 pub struct VarDecl {
 pub mut:
 	typ			ast.Type
-	mod			string
+	obj_name	string
 	name		string
 	assign		AssignStmt
 	pos			token.Position

@@ -361,7 +361,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		parent_idx: parent_idx
 		kind: .script
 		name: name
-		mod: name
+		obj_name: name
 		methods: []ast.Fn{}
 	})
 
@@ -448,7 +448,7 @@ pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
 
 	return  ast.VarDecl{
 		typ: typ
-		mod: p.cur_obj_name
+		obj_name: p.cur_obj_name
 		name: name
 		assign: {
 			op: token.Kind.assign
