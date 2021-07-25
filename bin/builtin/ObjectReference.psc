@@ -7,7 +7,6 @@ Function RemoveItem(Form akItemToRemove, int aiCount = 1, bool abSilent = false,
 int Function GetItemCount(Form akItem) Native
 ObjectReference Function PlaceAtMe(Form akFormToPlace, int aiCount = 1, bool abForcePersist = false, bool abInitiallyDisabled = false) Native
 int Function GetCurrentDestructionStage() Native
-int Function GetItemCount(Form akItem) Native
 Form[] Function GetContainerForms() Native
 string Function GetDisplayName() Native
 Function Disable(bool abFadeOut = False) Native
