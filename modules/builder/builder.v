@@ -1,7 +1,6 @@
 module builder
 
 import os
-
 import time
 
 import papyrus.ast
@@ -55,7 +54,7 @@ pub fn compile(pref &pref.Preferences) {
 	println('${f32(sw.elapsed().microseconds()) / 1000} ms')
 
 	print("input - ")
-	files := b.get_all_src_files()
+	files := get_all_src_files(b.pref.paths)
 	println(files.len.str() + " files")
 
 	print("parse all files: ")
@@ -109,14 +108,11 @@ fn (mut b Builder) load_builtin_files()  {
 	}
 }
 
-pub fn (b Builder) get_all_src_files() []string {
+pub fn get_all_src_files(paths []string) []string {
 	mut files := []string{}
 
-	mut i := 0
-	for i < b.pref.paths.len {
-		path := b.pref.paths[i]
+	for path in paths {
 		files << os.walk_ext(path, ".psc")
-		i++
 	}
 
 	return files

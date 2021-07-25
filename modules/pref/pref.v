@@ -2,8 +2,9 @@ module pref
 
 import os
 
-pub enum Mods {
+pub enum RunMode {
 	compile
+	compile_original
 	read
 }
 
@@ -12,7 +13,7 @@ pub struct Preferences {
 pub mut:
 	paths		[]string	//папки с файлами для компиляции
 	out_dir		[]string	//папки для результата
-	mode		Mods
+	mode		RunMode
 	no_cache	bool
 }
 
@@ -89,6 +90,10 @@ pub fn parse_args() Preferences {
 	args := os.args[1..]
 
 	match args[0] {
+		"-compile-original" {
+			p.mode = .compile_original
+			p.parse_compile_args(args)
+		}
 		"-compile" {
 			p.mode = .compile
 			p.parse_compile_args(args)
