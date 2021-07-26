@@ -31,6 +31,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				i++
 				continue
 			}
+			"-i",
 			"-input" {
 				i++
 				
@@ -40,7 +41,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 						break
 					}
 
-					path := args[i]
+					path := os.real_path(args[i])
 					
 					if !os.is_dir(path) {
 						error("invalid input path: '$path'")
@@ -51,6 +52,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 					i++
 				}
 			}
+			"-o",
 			"-output" {
 				i++
 				
@@ -59,7 +61,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 						break
 					}
 
-					path := args[i]
+					path := os.real_path(args[i])
 
 					if !os.is_dir(path) {
 						error("invalid output path: '$path'")
@@ -104,7 +106,7 @@ pub fn parse_args() Preferences {
 			}
 
 			p.mode = .read
-			p.paths << args[1]
+			p.paths << os.real_path(args[1])
 		}
 		else {
 			error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")

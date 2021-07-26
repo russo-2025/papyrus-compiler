@@ -28,34 +28,28 @@ fn walk(parent_path string) []string {
 } 
 
 fn (mut b BuilderOrigin) add_input_path(path string) {
-	real_path := os.real_path(path)
-
-	if !os.is_dir(real_path) {
-		panic('invalid input path \n`$path` -> `$real_path`')
+	if !os.is_dir(path) {
+		panic('invalid input path \n`$path`')
 	}
 
-	b.input_paths << real_path
-	b.input_paths << walk(real_path)
+	b.input_paths << path
+	b.input_paths << walk(path)
 }
 
 fn (mut b BuilderOrigin) set_builtin_path(path string) {
-	real_path := os.real_path(path)
-
-	if !os.is_dir(real_path) {
-		panic('invalid builtin path \n`$path` -> `$real_path`')
+	if !os.is_dir(path) {
+		panic('invalid builtin path \n`$path`')
 	}
 
-	b.builtin_path = real_path
+	b.builtin_path = path
 }
 
 fn (mut b BuilderOrigin) set_output_path(path string) {
-	real_path := os.real_path(path)
-
-	if !os.is_dir(real_path) {
-		panic('invalid output path \n`$path` -> `$real_path`')
+	if !os.is_dir(path) {
+		panic('invalid output path \n`$path`')
 	}
 
-	b.output_path = real_path
+	b.output_path = path
 }
 
 fn (mut b BuilderOrigin) run() {

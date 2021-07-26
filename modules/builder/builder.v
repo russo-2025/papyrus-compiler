@@ -22,7 +22,7 @@ pub mut:
 }
 
 fn new_builder(pref &pref.Preferences) Builder{
-	rdir := os.real_path(pref.out_dir[0])
+	rdir := pref.out_dir[0]
 	compiled_dir := if os.is_dir(rdir) { rdir } else { os.dir(rdir) }
 	mut table := ast.new_table()
 	

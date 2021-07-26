@@ -27,7 +27,7 @@ fn main() {
 			builder.compile(prefs)
 		}
 		.read {
-			pex.read(prefs.paths[0])
+			pex.read(prefs)
 		}
 	}
 

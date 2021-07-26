@@ -2,6 +2,8 @@ module pex
 
 import os
 
+import pref
+
 struct Reader{
 pub mut:
 	path	string
@@ -10,27 +12,26 @@ pub mut:
 	pex		&PexFile
 }
 
-pub fn read(path string) &PexFile {
-
+pub fn read(pref &pref.Preferences) &PexFile {
 	mut f := PexFile{}
 
-	real_path := os.real_path(path)
+	path := pref.paths[0]
 
-	if !os.is_file(real_path) {
-		eprintln("invalid file path: `$real_path`")
+	if !os.is_file(path) {
+		eprintln("invalid file path: `$path`")
 		exit(1)
 	}
 
-	if os.file_ext(real_path) != ".pex" {
-		eprintln("unexpected file extension `*${os.file_ext(real_path)}` , expecting `*.pex`")
+	if os.file_ext(path) != ".pex" {
+		eprintln("unexpected file extension `*${os.file_ext(path)}` , expecting `*.pex`")
 		exit(1)
 	}
 
-	println("read file: `${os.real_path(path)}`")
+	println("read file: `$path`")
 	
 	mut r := Reader{
 		path:	path
-		bytes:	os.read_bytes(os.real_path(path)) or { return &PexFile{} }
+		bytes:	os.read_bytes(path) or { return &PexFile{} }
 		pex:	&f
 	}
 	
