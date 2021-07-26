@@ -47,6 +47,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 						error("invalid input path: '$path'")
 					}
 
+					if path in p.paths {
+						error("path already exists: '$path'")
+					}
+
 					p.paths << path
 
 					i++
@@ -65,6 +69,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 
 					if !os.is_dir(path) {
 						error("invalid output path: '$path'")
+					}
+
+					if path in p.out_dir {
+						error("path already exists: '$path'")
 					}
 
 					p.out_dir << path
