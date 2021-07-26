@@ -231,28 +231,29 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
 			}
 
-			if node.params.len != func.params.len {
-				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+			if node.params.len == func.params.len {
+				mut i := 0
+				for i < node.params.len {
+					node_param := node.params[i]
+					func_param := func.params[i]
+
+					if node_param.typ != func_param.typ {
+						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+					}
+
+					if node_param.is_optional != func_param.is_optional {
+						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+					}
+
+					if node_param.default_value != func_param.default_value {
+						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+					}
+
+					i++
+				}
 			}
-			
-			mut i := 0
-			for i < node.params.len {
-				node_param := node.params[i]
-				func_param := func.params[i]
-
-				if node_param.typ != func_param.typ {
-					c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
-				}
-
-				if node_param.is_optional != func_param.is_optional {
-					c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
-				}
-
-				if node_param.default_value != func_param.default_value {
-					c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
-				}
-
-				i++
+			else {
+				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
 			}
 		}
 		else {
