@@ -159,7 +159,7 @@ pub fn (mut t Table) register_type_symbol(typ TypeSymbol) int {
 				//panic("WARNING: $typ.name, $existing_idx")
 				//return -1
 
-				println("Warning: override type - table.register_type_symbol()")
+				panic("Warning: override type - table.register_type_symbol()")
 				return existing_idx
 			}
 		}
