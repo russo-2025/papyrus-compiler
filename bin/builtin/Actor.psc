@@ -26,5 +26,7 @@ Function RestoreActorValue(string asValueName, float afAmount) native
 Function RestoreAV(string asValueName, float afAmount)  native
 Function SetOutfit(Outfit akOutfit, bool abSleepOutfit = false) native
 Function SetRace(Race akRace = None) native
+Race Function GetRace() native
 
-bool Function IsDead() Native
+
+bool Function IsDead() native
