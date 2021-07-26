@@ -87,10 +87,12 @@ pub fn new_table() &Table {
 }
 
 pub fn (t &Table) find_field(obj_name string, name string) ?Field {
-	f := t.fields[obj_name.to_lower() + "." + name.to_lower()]
-	if f.name.str != 0 {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if f := t.fields[key] {
 		return f
 	}
+	
 	return none
 }
 
@@ -99,10 +101,12 @@ pub fn (mut t Table) register_field(f Field) {
 }
 
 pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
-	f := t.fns[obj_name.to_lower() + "." + name.to_lower()]
-	if f.name.str != 0 {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if f := t.fns[key] {
 		return f
 	}
+	
 	return none
 }
 
