@@ -62,6 +62,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				
 				for i < args.len {
 					if args[i].starts_with("-") {
+						i--
 						break
 					}
 
