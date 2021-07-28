@@ -129,11 +129,10 @@ fn read_cache(path string) &CacheFile {
 	return &cache
 }
 
-fn write_cache(path string cache &CacheFile) {
-	file := os.create(path) or { panic(err) }
+fn write_cache(path string, cache &CacheFile) {
+	mut file := os.create(path) or { panic(err) }
 	file.write_struct(cache) or { panic(err) }
 	file.close()
-	return &cache
 }
 
 fn (mut b Builder) is_outdated(pfile &ast.File) bool {

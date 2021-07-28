@@ -68,14 +68,13 @@ fn (mut b BuilderOrigin) run() {
 	for path in b.input_paths {
 		cmd := '"$compiler_exe_path" "$path" -all -quiet $all_inputs -o="$b.output_path" -f="$compiler_flags_path"'
 		res := os.system(cmd)
-		println(res)
+		if res == 0 {
+			println('successfully')
+		}
+		else {
+			println('failed')
+		}
 	}
-
-	/*
-	cmd := '"$compiler_exe_path" "D:\\_projects\\hive-workspace\\scripts\\GM\\M.psc" -quiet $all_inputs -o="$b.output_path" -f="$compiler_flags_path"'
-	res := os.system(cmd)
-	println(res)
-	*/
 }
 
 pub fn compile_original(pref &pref.Preferences) {
