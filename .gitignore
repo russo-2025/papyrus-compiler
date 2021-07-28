@@ -1,5 +1,4 @@
 .vscode/**
-*.ppj
 bin/*.papyrus
 bin/*.exe
 bin/*.pdb
