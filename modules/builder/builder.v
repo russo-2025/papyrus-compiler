@@ -98,10 +98,10 @@ pub fn compile(pref &pref.Preferences) {
 }
 
 fn (mut b Builder) load_builtin_files()  {
-	path := os.dir(os.args[0]) + "\\builtin"
+	path := os.join_path(os.dir(os.args[0]), "builtin")
 	
 	if os.is_dir(path) {
-		files := os.walk_ext(os.dir(os.args[0]) + "\\builtin", ".psc")
+		files := os.walk_ext(os.join_path(os.dir(os.args[0]), "builtin"), ".psc")
 		parser.parse_files(files, b.table, b.pref, b.global_scope)
 	}
 	else {
