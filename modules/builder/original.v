@@ -78,16 +78,20 @@ fn (mut b BuilderOrigin) run() {
 }
 
 pub fn compile_original(pref &pref.Preferences) {
+	$if windows {
+		mut b := BuilderOrigin{}
+		
+		b.set_builtin_path(builtin_path)
 
-	mut b := BuilderOrigin{}
-	
-	b.set_builtin_path(builtin_path)
+		for path in pref.paths {
+			b.add_input_path(path)
+		}
 
-	for path in pref.paths {
-		b.add_input_path(path)
+		b.set_output_path(pref.out_dir[0])
+
+		b.run()
 	}
-
-	b.set_output_path(pref.out_dir[0])
-
-	b.run()
+	$else {
+		println("Original compiler is only available on Windows OS")
+	}
 }
