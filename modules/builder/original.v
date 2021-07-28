@@ -53,9 +53,6 @@ fn (mut b BuilderOrigin) set_output_path(path string) {
 }
 
 fn (mut b BuilderOrigin) run() {
-	compiler_path := os.real_path('./Original Compiler/PapyrusCompiler.exe')
-	flags_file_path := os.real_path('./Original Compiler/TESV_Papyrus_Flags.flg')
-
 	mut all_inputs := ""
 
 	all_inputs += '-i="'
@@ -69,13 +66,13 @@ fn (mut b BuilderOrigin) run() {
 	all_inputs = all_inputs[..all_inputs.len-1] + '"'
 
 	for path in b.input_paths {
-		cmd := '"$compiler_path" "$path" -all -quiet $all_inputs -o="$b.output_path" -f="$flags_file_path"'
+		cmd := '"$compiler_exe_path" "$path" -all -quiet $all_inputs -o="$b.output_path" -f="$compiler_flags_path"'
 		res := os.system(cmd)
 		println(res)
 	}
 
 	/*
-	cmd := '"$compiler_path" "D:\\_projects\\hive-workspace\\scripts\\GM\\M.psc" -quiet $all_inputs -o="$b.output_path" -f="$flags_file_path"'
+	cmd := '"$compiler_exe_path" "D:\\_projects\\hive-workspace\\scripts\\GM\\M.psc" -quiet $all_inputs -o="$b.output_path" -f="$compiler_flags_path"'
 	res := os.system(cmd)
 	println(res)
 	*/
@@ -85,7 +82,7 @@ pub fn compile_original(pref &pref.Preferences) {
 
 	mut b := BuilderOrigin{}
 	
-	b.set_builtin_path('./builtin')
+	b.set_builtin_path(builtin_path)
 
 	for path in pref.paths {
 		b.add_input_path(path)
