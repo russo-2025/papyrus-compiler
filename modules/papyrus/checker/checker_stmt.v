@@ -7,6 +7,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 	match mut node {
 		ast.ScriptDecl {
 			c.cur_obj_name = node.name
+			c.cur_obj = c.table.find_type_idx(node.name)
 
 			if node.parent_name != "" {
 				if !c.table.known_type(node.parent_name) {
@@ -24,6 +25,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 				i++
 			}
 
+			c.temp_state_fns = map{}
 			c.cur_state_name = token.default_state_name
 		}
 		ast.FnDecl {
@@ -222,6 +224,13 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.stmts(node.stmts)
 
 	if c.is_state() {
+		if !c.temp_state_fns[node.name] {
+			c.temp_state_fns[node.name] = true
+		}
+		else {
+			c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
+		}
+
 		if func := c.find_fn(self_typ, c.cur_obj_name, node.name) {
 			if node.is_static != func.is_static {
 				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
@@ -258,6 +267,22 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 		else {
 			c.error('function $node.name cannot be defined in state $c.cur_state_name without also being defined in the empty state', node.pos)
+		}
+	}
+	else {
+		if node.is_static {
+			if func := c.table.find_fn(c.cur_obj_name, node.name) {
+				if node.pos != func.pos {
+					c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
+				} 
+			}
+		}
+		else {
+			if func := c.table.get_type_symbol(c.cur_obj).find_method(node.name) {
+				if node.pos != func.pos {
+					c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
+				} 
+			}
 		}
 	}
 

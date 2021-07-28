@@ -18,7 +18,10 @@ pub mut:
 	cur_fn			&ast.FnDecl = 0
 	cur_scope		&ast.Scope = voidptr(0)
 	cur_obj_name	string
+	cur_obj			ast.Type
 	cur_state_name	string
+
+	temp_state_fns	map[string]bool
 }
 
 pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {

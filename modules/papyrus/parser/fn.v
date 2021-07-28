@@ -64,36 +64,35 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	
 	if !p.is_state() {
 		if is_static {
-			if _ := p.table.find_fn(p.cur_obj_name, name) {
-				p.error_with_pos("function with this name already exists: ${p.cur_obj_name}.${name}", pos)
+			if _ := p.table.find_fn(p.cur_obj_name, name) {}
+			else {
+				p.table.register_fn(ast.Fn{
+					pos: pos
+					params: params
+					return_type: return_type
+					state_name: p.cur_state_name
+					obj_name: p.cur_obj_name
+					name: name
+					sname: name.to_lower()
+					is_static: true
+				})
 			}
-
-			p.table.register_fn(ast.Fn{
-				params: params
-				return_type: return_type
-				state_name: p.cur_state_name
-				obj_name: p.cur_obj_name
-				name: name
-				sname: name.to_lower()
-				is_static: true
-			})
 		}
 		else {
 			mut sym := p.table.get_type_symbol(p.cur_object)
-
-			if sym.has_method(name) {
-				p.error_with_pos("function with this name already exists: ${p.cur_obj_name}.${name}", pos)
+			
+			if !sym.has_method(name) {
+				sym.register_method(ast.Fn{
+					pos: pos
+					params: params
+					return_type: return_type
+					state_name: p.cur_state_name
+					obj_name: p.cur_obj_name
+					name: name
+					sname: name.to_lower()
+					is_static: false
+				})
 			}
-
-			sym.register_method(ast.Fn{
-				params: params
-				return_type: return_type
-				state_name: p.cur_state_name
-				obj_name: p.cur_obj_name
-				name: name
-				sname: name.to_lower()
-				is_static: false
-			})
 		}
 	}
 

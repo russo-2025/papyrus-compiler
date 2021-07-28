@@ -1,5 +1,7 @@
 module ast
 
+import papyrus.token
+
 [heap]
 pub struct Table {
 pub mut:
@@ -62,6 +64,7 @@ pub:
 	return_type		Type
 	obj_name		string
 	state_name		string
+	pos				token.Position
 pub mut:
 	name			string
 	sname			string

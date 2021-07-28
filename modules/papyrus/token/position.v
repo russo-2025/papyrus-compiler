@@ -9,6 +9,14 @@ pub mut:
 	last_line int // the line number where the ast object ends (used by vfmt)
 }
 
+fn (a Position) == (b Position) bool {
+	if a.len != b.len || a.line_nr != b.line_nr || a.pos != b.pos || a.last_line != b.last_line {
+		return false
+	}
+
+	return true
+}
+
 pub fn (pos Position) str() string {
 	return 'Position{ line_nr: $pos.line_nr, pos: $pos.pos, len: $pos.len }'
 }
