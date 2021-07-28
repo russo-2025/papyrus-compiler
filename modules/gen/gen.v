@@ -1,6 +1,7 @@
 module gen
 
 import papyrus.ast
+import papyrus.token
 import pex
 
 struct TempVariable {
@@ -20,9 +21,15 @@ pub mut:
 	temp_locals		[]TempVariable //массив временных переменных
 
 	table			&ast.Table
+	
 	cur_obj			&pex.Object = 0
-	cur_obj_name	string
+	cur_state		&pex.State = 0
 	cur_fn			&pex.Function = 0
+
+	default_obj		&pex.Object = 0
+	default_state	&pex.State = 0
+
+	cur_obj_name	string
 }
 
 pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {
@@ -39,17 +46,22 @@ pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {
 			user_name: "Yurnero"
 			machine_name: "DESKTOP-7NV0EKV"
 
-			string_table: []string{}
+			//string_table: []string{}
 
-			has_debug_info: 0
+			//has_debug_info: 0
 
-			user_flags: []pex.UserFlag{}
-			objects: []pex.Object{}
+			//user_flags: []pex.UserFlag{}
+			//objects: []pex.Object{}
 		}
 
 		table: table
-		cur_fn: &pex.Function{}
-		cur_obj: &pex.Object{}
+		
+		//cur_obj: &pex.Object{}
+		//cur_state: &pex.State{}
+		//cur_fn: &pex.Function{}
+
+		//default_obj: &pex.Object{}
+		//default_state: &pex.State{}
 	}
 	
 	g.gen_objects()
@@ -64,7 +76,7 @@ fn (mut g Gen) gen_objects() {
 				g.script_decl(stmt)
 			}
 			ast.StateDecl {
-				panic("STATE SUPPORT TODO")
+				g.state_decl(stmt)
 			}
 			ast.FnDecl {
 				g.fn_decl(stmt)
@@ -80,8 +92,6 @@ fn (mut g Gen) gen_objects() {
 			}
 		}
 	}
-	
-	g.add_default_functions_to_state(mut &g.pex.objects[0].data.states[0])
 }
 
 fn (mut g Gen) stmt(stmt ast.Stmt) {
@@ -137,14 +147,34 @@ fn (mut g Gen) gen_string_ref(str string) u16 {
 	}
 }
 
-fn (mut g Gen) gen_default_state() pex.State {
-	mut state := pex.State {
-		name: g.gen_string_ref("")
+fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
+	return &pex.Object {
+		name_index: g.gen_string_ref(name)
+		size: 0
+		data: pex.ObjectData {
+				parent_class_name: g.gen_string_ref(parent_name)
+				docstring: g.gen_string_ref("")
+				user_flags: 0
+				auto_state_name: g.gen_string_ref(token.default_state_name)
+				
+				num_variables: 0
+				variables: []pex.Variable{}
+				
+				num_properties: 0
+				properties: []pex.Property{}
+				
+				num_states: 0
+				states: []pex.State{}
+		}
+	}
+}
+
+fn (mut g Gen) create_state(name string) &pex.State {
+	return &pex.State {
+		name: g.gen_string_ref(name)
 		num_functions: 0
 		functions: []pex.Function{}
 	}
-
-	return state
 }
 
 fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {

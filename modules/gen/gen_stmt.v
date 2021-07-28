@@ -5,6 +5,69 @@ import papyrus.token
 import pex
 
 [inline]
+fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
+	mut obj := g.create_obj(s.name, s.parent_name)
+
+	g.pex.objects << obj
+	g.pex.object_count++
+	
+	g.cur_obj = &g.pex.objects[g.pex.objects.len - 1]
+	g.default_obj = g.cur_obj
+
+	g.cur_obj_name = s.name
+	
+	for flag in s.flags {
+		if flag == .key_hidden {
+			g.cur_obj.data.user_flags |= 0b0001
+		}
+		else if flag == .key_conditional {
+			g.cur_obj.data.user_flags |= 0b0010
+		}
+		else {
+			panic("invalid flag: `${flag.str()}`")
+		}
+	}
+
+	mut state := g.create_state(token.default_state_name)
+
+	g.cur_obj.data.states << state
+	g.cur_obj.data.num_states++
+
+	g.cur_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
+	g.default_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
+	
+	g.add_default_functions_to_state(mut g.default_state)
+
+	g.pex.user_flags << pex.UserFlag{
+		name_index: g.gen_string_ref("hidden")
+		flag_index: 0
+	}
+	g.pex.user_flag_count++
+
+	g.pex.user_flags << pex.UserFlag{
+		name_index: g.gen_string_ref("conditional")
+		flag_index: 1
+	}
+	g.pex.user_flag_count++
+}
+
+[inline]
+fn (mut g Gen) state_decl(s &ast.StateDecl) {
+	mut state := g.create_state(s.name)
+
+	g.cur_obj.data.states << state
+	g.cur_obj.data.num_states++
+
+	g.cur_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
+	
+	for func in s.fns {
+		g.fn_decl(&func)
+	}
+	
+	g.cur_state = g.default_state
+}
+
+[inline]
 fn (mut g Gen) if_stmt(s &ast.If) {
 	//opcode: 'assign', args: [ident(ff), integer(11)]
 	//opcode: 'jmpf', args: [integer(1), integer(3)]
@@ -126,8 +189,8 @@ fn (mut g Gen) gen_fn(node &ast.FnDecl) &pex.Function {
 
 [inline]
 fn (mut g Gen) fn_decl(node &ast.FnDecl) {
-	g.pex.objects[0].data.states[0].num_functions++
-	g.pex.objects[0].data.states[0].functions << g.gen_fn(node)
+	g.cur_state.num_functions++
+	g.cur_state.functions << g.gen_fn(node)
 }
 
 [inline]
@@ -281,66 +344,6 @@ fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
 	
 	g.cur_obj.data.properties << prop
 	g.cur_obj.data.num_properties++
-}
-
-[inline]
-fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
-	
-	g.cur_obj_name = s.name
-
-	mut obj := pex.Object {
-		name_index: g.gen_string_ref(s.name)
-		size: 0
-		data: pex.ObjectData {
-				parent_class_name: g.gen_string_ref(s.parent_name)
-				docstring: g.gen_string_ref("")
-				user_flags: 0
-				auto_state_name: g.gen_string_ref("")
-				
-				num_variables: 0
-				variables: []pex.Variable{}
-				
-				num_properties: 0
-				properties: []pex.Property{}
-				
-				num_states: 0
-				states: []pex.State{}
-		}
-	}
-
-	for flag in s.flags {
-		if flag == .key_hidden {
-			obj.data.user_flags |= 0b0001
-		}
-		else if flag == .key_conditional {
-			obj.data.user_flags |= 0b0010
-		}
-		else {
-			panic("invalid flag: `${flag.str()}`")
-		}
-	}
-
-	obj.data.states << g.gen_default_state()
-	obj.data.num_states++
-
-	g.pex.objects << obj
-	g.pex.object_count++
-
-	unsafe {
-		g.cur_obj = &g.pex.objects[g.pex.objects.len-1]
-	}
-
-	g.pex.user_flags << pex.UserFlag{
-		name_index: g.gen_string_ref("hidden")
-		flag_index: 0
-	}
-	g.pex.user_flag_count++
-
-	g.pex.user_flags << pex.UserFlag{
-		name_index: g.gen_string_ref("conditional")
-		flag_index: 1
-	}
-	g.pex.user_flag_count++
 }
 
 [inline]
