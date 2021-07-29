@@ -304,21 +304,6 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 			is_used: false
 		})
 		
-		if node.assign.right is ast.EmptyExpr {
-			match node.typ {
-				ast.int_type { node.assign.right = ast.IntegerLiteral{val:"0"} }
-				ast.float_type { node.assign.right = ast.FloatLiteral{val:"0"} }
-				ast.string_type { node.assign.right = ast.StringLiteral{val:""} }
-				ast.bool_type { node.assign.right = ast.BoolLiteral{val:"False"}}
-				else {
-					sym := c.table.get_type_symbol(node.typ)
-					if sym.kind == .script {
-						node.assign.right = ast.NoneLiteral{val:"None"}
-					}
-				}
-			}
-		}
-
 		if node.assign.right !is ast.EmptyExpr {
 			c.stmt(node.assign)
 		}

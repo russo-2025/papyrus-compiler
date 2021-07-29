@@ -81,11 +81,10 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 					return obj.typ
 				}
 			}
-			//wtf
-			/*else if obj := c.table.find_field(c.cur_obj_name, node.name){
+			else if obj := c.table.find_field(c.cur_obj_name, node.name){
 				node.typ = obj.typ
 				return obj.typ
-			}*/
+			}
 			else {
 				c.error("variable declaration not found: `$node.name`",  node.pos)
 				return ast.none_type
@@ -340,28 +339,9 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 
 			if node.left_type == node.right_type {}
 			else {
-				ls := c.table.get_type_symbol(node.left_type)
-				rs := c.table.get_type_symbol(node.right_type)
-				
-				if ls.kind == .script || rs.kind == .script {
-					if ls.kind == .script {
-						node.right = c.cast_to_type(node.right, node.right_type, node.left_type)
-						node.right_type = node.left_type
-					}
-					else if rs.kind == .script {
-						node.left = c.cast_to_type(node.left, node.left_type, node.right_type)
-						node.left_type = node.right_type
-					}
-				}
-				else if ls.kind == .array || rs.kind == .array {
-					if ls.kind == .array {
-						node.right = c.cast_to_type(node.right, node.right_type, node.left_type)
-						node.right_type = node.left_type
-					}
-					else if rs.kind == .array {
-						node.left = c.cast_to_type(node.left, node.left_type, node.right_type)
-						node.left_type = node.right_type
-					}
+				if c.can_cast(node.right_type, node.left_type) {
+					node.right = c.cast_to_type(node.right, node.right_type, node.left_type)
+					node.right_type = node.left_type
 				}
 				else {
 					ltype_name := c.get_type_name(node.left_type)

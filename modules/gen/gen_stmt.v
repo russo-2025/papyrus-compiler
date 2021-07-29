@@ -195,6 +195,9 @@ fn (mut g Gen) fn_decl(node &ast.FnDecl) {
 
 [inline]
 fn (mut g Gen) assign(stmt &ast.AssignStmt) {
+	if stmt.right is ast.EmptyExpr {
+		return
+	}
 
 	if stmt.left is ast.Ident {
 		//opcode: 'assign', args: [ident(::temp1), integer(111)]
@@ -252,8 +255,6 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 
 [inline]
 fn (mut g Gen) var_decl(stmt &ast.VarDecl) {
-	assert stmt.assign.right !is ast.EmptyExpr
-
 	if stmt.is_obj_var {
 		mut user_flags := u32(0)
 
