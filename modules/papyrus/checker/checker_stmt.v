@@ -270,7 +270,9 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 			}
 		}
 		else {
-			c.error('function $node.name cannot be defined in state $c.cur_state_name without also being defined in the empty state', node.pos)
+			if !node.is_event {
+				c.error('function $node.name cannot be defined in state $c.cur_state_name without also being defined in the empty state', node.pos)
+			}
 		}
 	}
 	else {

@@ -239,6 +239,9 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 			.key_function {
 				fns << p.fn_decl()
 			}
+			.key_event {
+				fns << p.event_decl()
+			}
 			else {
 				p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
 			}
