@@ -5,13 +5,6 @@ import builder
 import pref
 import pex
 
-/*
-не работает:
-	- вызов функций с заданными через равно опциональными параметрами. ac.EquipItem(tool, abSilent = true)
-	- keyword parent
-	- object states
-*/
-
 fn main() {
 
 	prefs := pref.parse_args()
