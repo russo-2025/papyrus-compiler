@@ -11,10 +11,11 @@ pub enum RunMode {
 [heap]
 pub struct Preferences {
 pub mut:
-	paths		[]string	//папки с файлами для компиляции
-	out_dir		[]string	//папки для результата
-	mode		RunMode
-	no_cache	bool
+	paths				[]string	//папки с файлами для компиляции
+	out_dir				[]string	//папки для результата
+	mode				RunMode
+	no_cache			bool
+	crutches_enabled	bool
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
@@ -26,11 +27,6 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 
 	for i < args.len {
 		match args[i] {
-			"-nocache" {
-				p.no_cache = true
-				i++
-				continue
-			}
 			"-i",
 			"-input" {
 				i++
@@ -80,6 +76,12 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 
 					i++
 				}
+			}
+			"-nocache" {
+				p.no_cache = true
+			}
+			"-crutches" {
+				p.crutches_enabled = true
 			}
 			else {
 				error("invalid argument `${args[i]}`")

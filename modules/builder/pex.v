@@ -47,7 +47,7 @@ pub fn compile(pref &pref.Preferences) {
 	}
 
 	mut b := new_builder(pref)
-	mut c := checker.new_checker(b.table, pref)
+	mut c := checker.new_checker(b.table, b.pref)
 
 	//mut sw := time.new_stopwatch({})
 	
@@ -76,7 +76,7 @@ pub fn compile(pref &pref.Preferences) {
 			if b.is_outdated(pfile) {
 				b.start_timer('gen file `$pfile.path`')
 
-				pex_file := gen.gen(b.table, pfile)
+				pex_file := gen.gen(pfile, b.table, b.pref)
 				output_file_name := pfile.file_name + ".pex"
 				output_file_path := os.join_path(b.output_dir, output_file_name)
 				pex.write(output_file_path, pex_file)

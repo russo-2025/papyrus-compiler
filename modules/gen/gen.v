@@ -3,6 +3,7 @@ module gen
 import papyrus.ast
 import papyrus.token
 import pex
+import pref
 
 struct TempVariable {
 pub mut:
@@ -21,6 +22,7 @@ pub mut:
 	temp_locals		[]TempVariable //массив временных переменных
 
 	table			&ast.Table
+	pref			&pref.Preferences
 	
 	cur_obj			&pex.Object = 0
 	cur_state		&pex.State = 0
@@ -32,7 +34,7 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {
+pub fn gen(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFile {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -55,6 +57,7 @@ pub fn gen(table &ast.Table, file &ast.File) &pex.PexFile {
 		}
 
 		table: table
+		pref: pref
 		
 		//cur_obj: &pex.Object{}
 		//cur_state: &pex.State{}
