@@ -2,9 +2,13 @@ module pref
 
 import os
 
+pub enum Backend {
+	pex
+	original
+}
+
 pub enum RunMode {
 	compile
-	compile_original
 	read
 }
 
@@ -13,12 +17,16 @@ pub struct Preferences {
 pub mut:
 	paths				[]string	//папки с файлами для компиляции
 	out_dir				[]string	//папки для результата
-	mode				RunMode
+	mode				RunMode = .compile
+	backend				Backend = .pex
 	no_cache			bool
 	crutches_enabled	bool
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
+	p.mode = .compile
+	p.backend = .pex
+
 	if args.len < 3  {
 		error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
 	}
@@ -83,6 +91,9 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			"-crutches" {
 				p.crutches_enabled = true
 			}
+			"-original" {
+				p.backend = .original
+			}
 			else {
 				error("invalid argument `${args[i]}`")
 			}
@@ -103,10 +114,6 @@ pub fn parse_args() Preferences {
 	args := os.args[1..]
 
 	match args[0] {
-		"-compile-original" {
-			p.mode = .compile_original
-			p.parse_compile_args(args)
-		}
 		"-compile" {
 			p.mode = .compile
 			p.parse_compile_args(args)

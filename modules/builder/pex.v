@@ -39,7 +39,7 @@ fn new_builder(pref &pref.Preferences) Builder{
 	}
 }
 
-pub fn compile(pref &pref.Preferences) {
+fn compile_pex(pref &pref.Preferences) {
 	os.is_writable_folder(pref.paths[0]) or {
 		// An early error here, is better than an unclear C error later:
 		//verror(err.msg)

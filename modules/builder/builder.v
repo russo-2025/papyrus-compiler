@@ -2,6 +2,8 @@ module builder
 
 import os
 
+import pref
+
 const (
 	builtin_path = os.real_path('./builtin')
 	cache_path = os.real_path('./.papyrus')
@@ -9,7 +11,7 @@ const (
 	compiler_flags_path = os.real_path('./Original Compiler/TESV_Papyrus_Flags.flg')
 )
 
-pub fn get_all_src_files(paths []string) []string {
+fn get_all_src_files(paths []string) []string {
 	mut files := []string{}
 
 	for path in paths {
@@ -17,4 +19,15 @@ pub fn get_all_src_files(paths []string) []string {
 	}
 
 	return files
+}
+
+pub fn compile(pref &pref.Preferences) {
+	match pref.backend {
+		.pex {
+			compile_pex(pref)
+		}
+		.original {
+			compile_original(pref)
+		}
+	}
 }

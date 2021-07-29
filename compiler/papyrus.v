@@ -13,9 +13,6 @@ fn main() {
 	sw.start()
 
 	match prefs.mode {
-		.compile_original {
-			builder.compile_original(prefs)
-		}
 		.compile {
 			builder.compile(prefs)
 		}

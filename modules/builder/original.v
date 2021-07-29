@@ -77,7 +77,7 @@ fn (mut b BuilderOrigin) run() {
 	}
 }
 
-pub fn compile_original(pref &pref.Preferences) {
+fn compile_original(pref &pref.Preferences) {
 	$if windows {
 		mut b := BuilderOrigin{}
 		
