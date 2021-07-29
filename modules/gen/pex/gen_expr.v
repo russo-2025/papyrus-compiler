@@ -1,4 +1,4 @@
-module gen
+module pex
 
 import papyrus.ast
 import pex

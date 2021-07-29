@@ -8,7 +8,7 @@ import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 import pex
-import gen
+import gen.pex as gen_pex
 
 struct Builder {
 mut:
@@ -76,7 +76,7 @@ fn compile_pex(pref &pref.Preferences) {
 			if b.is_outdated(pfile) {
 				b.start_timer('gen file `$pfile.path`')
 
-				pex_file := gen.gen(pfile, b.table, b.pref)
+				pex_file := gen_pex.gen(pfile, b.table, b.pref)
 				output_file_name := pfile.file_name + ".pex"
 				output_file_path := os.join_path(b.output_dir, output_file_name)
 				pex.write(output_file_path, pex_file)

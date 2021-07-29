@@ -6,7 +6,6 @@ import pref
 import pex
 
 fn main() {
-
 	prefs := pref.parse_args()
 
 	mut sw := time.new_stopwatch({})
