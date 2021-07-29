@@ -10,6 +10,7 @@ pub fn (mut p Parser) expr(precedence int) ast.Expr {
 		.key_new {
 			node = p.new_expr()
 		}
+		.key_parent,
 		.key_self {
 			pos := p.tok.position()
 			name := p.tok.lit

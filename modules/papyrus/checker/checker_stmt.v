@@ -7,6 +7,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 	match mut node {
 		ast.ScriptDecl {
 			c.cur_obj_name = node.name
+			c.cur_parent_obj_name = node.parent_name
 			c.cur_obj = c.table.find_type_idx(node.name)
 
 			if node.parent_name != "" {
@@ -194,9 +195,6 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		c.cur_fn = node
 	}
 
-	self_typ := c.table.find_type_idx(c.cur_obj_name)
-	assert self_typ != 0
-
 	c.cur_scope = node.scope
 
 	for param in node.params {
@@ -214,11 +212,17 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	}
 	
 	if token.Kind.key_global !in node.flags {
-
 		c.cur_scope.register(ast.ScopeVar{
 			name: "self"
-			typ: self_typ
+			typ: c.cur_obj
 		})
+
+		if c.cur_parent_obj_name != "" {
+			c.cur_scope.register(ast.ScopeVar{
+				name: "parent"
+				typ: c.table.find_type_idx(c.cur_parent_obj_name)
+			})
+		}
 	}
 
 	c.stmts(node.stmts)
@@ -231,7 +235,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 			c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
 		}
 
-		if func := c.find_fn(self_typ, c.cur_obj_name, node.name) {
+		if func := c.find_fn(c.cur_obj, c.cur_obj_name, node.name) {
 			if node.is_static != func.is_static {
 				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
 			}

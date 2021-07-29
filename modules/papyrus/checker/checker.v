@@ -8,20 +8,21 @@ import papyrus.util
 
 [heap]
 pub struct Checker {
-	pref			&pref.Preferences
+	pref				&pref.Preferences
 pub mut:
-	table			&ast.Table
-	file			&ast.File = 0
-	errors			[]errors.Error
-	warnings		[]errors.Warning
+	table				&ast.Table
+	file				&ast.File = 0
+	errors				[]errors.Error
+	warnings			[]errors.Warning
 
-	cur_fn			&ast.FnDecl = 0
-	cur_scope		&ast.Scope = voidptr(0)
-	cur_obj_name	string
-	cur_obj			ast.Type
-	cur_state_name	string
+	cur_fn				&ast.FnDecl = 0
+	cur_scope			&ast.Scope = voidptr(0)
+	cur_obj_name		string
+	cur_parent_obj_name	string
+	cur_obj				ast.Type
+	cur_state_name		string
 
-	temp_state_fns	map[string]bool
+	temp_state_fns		map[string]bool
 }
 
 pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {

@@ -580,9 +580,6 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					stmts: stmts
 				}
 			}
-			.key_parent {
-				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
-			}
 			.name {
 				if p.next_is_type() {
 					p.parse_type()
@@ -599,6 +596,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 			.string,
 			.key_new,
 			.key_self,
+			.key_parent,
 			.key_none,
 			.key_true,
 			.key_false,
