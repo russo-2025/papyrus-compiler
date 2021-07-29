@@ -223,28 +223,35 @@ pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.
 	if typ > 0 {
 		mut sym := c.table.get_type_symbol(typ)
 
-		if sym.kind == .array && name.to_lower() == "find" {
-			elem_type := (sym.info as ast.Array).elem_type
-			return ast.Fn{
-				params: [
-					{
-						name: "value"
-						typ: elem_type
-						is_optional: false
-						default_value: ""
-					},
-					{
-						name: "startIndex"
-						typ: ast.int_type
-						is_optional: true
-						default_value: "0"
-					}
-				]
-				return_type: elem_type
-				obj_name: 'builtin'
-				name: name
-				sname: name.to_lower()
-				is_static: false
+		if sym.kind == .array {
+			//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
+			//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
+			
+			lname := name.to_lower()
+			if lname == "find" || lname == "rfind" {
+				elem_type := (sym.info as ast.Array).elem_type
+				
+				return ast.Fn{
+					params: [
+						{
+							name: "value"
+							typ: elem_type
+							is_optional: false
+							default_value: ""
+						},
+						{
+							name: "startIndex"
+							typ: ast.int_type
+							is_optional: true
+							default_value: if lname == "find" { "0" } else { "-1" }
+						}
+					]
+					return_type: ast.int_type
+					obj_name: 'builtin'
+					name: name
+					sname: name.to_lower()
+					is_static: false
+				}
 			}
 		}
 
@@ -261,9 +268,38 @@ pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.
 		}
 	}
 
-	if c.table.has_module(obj_name) {
+	if sym := c.table.find_type(obj_name) {
 		if func := c.table.find_fn(obj_name, name) {
 			return func
+		}
+
+		if func := sym.find_method(name) {
+			return func
+		}
+
+		if name.to_lower() == 'getstate' {
+			return ast.Fn{
+				return_type: ast.string_type
+				obj_name: c.cur_obj_name
+				name: 'GetState'
+				sname: 'getstate'
+				is_static: false
+			}
+		}
+		else if name.to_lower() == 'gotostate' {
+			return ast.Fn{
+				params: [
+					{
+						name: "name"
+						typ: ast.string_type
+					}
+				]
+				return_type: ast.none_type
+				obj_name: c.cur_obj_name
+				name: 'GoToState'
+				sname: 'gotostate'
+				is_static: false
+			}
 		}
 	}
 

@@ -281,8 +281,9 @@ fn (mut g Gen) gen_call_expr(expr &ast.CallExpr) pex.VariableData {
 	//opcode: 'callmethod', args: [ident(Bar), ident(arg), ident(::NoneVar)]
 	//opcode: 'callmethod', args: [ident(Foo), ident(a), ident(::NoneVar), integer(123)]
 	//opcode: 'callparent', args: [ident(Foo), ident(::NoneVar), integer(123)]
+	lname := expr.name.to_lower()
 
-	if expr.name.to_lower() == "find" {
+	if lname == "find" || lname == "rfind"  {
 		return g.gen_array_find_element(expr)
 	}
 
@@ -318,7 +319,9 @@ fn (mut g Gen) gen_array_init(expr &ast.ArrayInit) pex.VariableData {
 
 [inline]
 fn (mut g Gen) gen_array_find_element(expr &ast.CallExpr) pex.VariableData {
-	assert expr.name.to_lower() == "find"
+	lname := expr.name.to_lower()
+	
+	assert lname == "find" || lname == "rfind" 
 	assert expr.args.len == 2
 
 	//массив для поиска
@@ -336,7 +339,7 @@ fn (mut g Gen) gen_array_find_element(expr &ast.CallExpr) pex.VariableData {
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.array_findelement)
+		op: if lname == 'find' { byte(pex.OpCode.array_findelement) } else { byte(pex.OpCode.array_rfindelement) }
 		args: [left, var_data, value_data, start_index_data]
 	}
 	return var_data
