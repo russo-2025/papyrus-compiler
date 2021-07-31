@@ -22,12 +22,15 @@ fn get_all_src_files(paths []string) []string {
 }
 
 pub fn compile(pref &pref.Preferences) {
+	if pref.backend == .original {
+		compile_original(pref)
+		return
+	}
+
 	match pref.backend {
 		.pex {
 			compile_pex(pref)
 		}
-		.original {
-			compile_original(pref)
-		}
+		else {}
 	}
 }
