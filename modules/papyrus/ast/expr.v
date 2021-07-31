@@ -23,7 +23,7 @@ pub:
 	expr		Expr
 	type_name	string
 pub mut:
-	typ		 ast.Type
+	typ			ast.Type
 }
 
 //задает значение вместо дефолтного при вызове функции
@@ -41,15 +41,15 @@ pub mut:
 	left        Expr
 	right       Expr
 	pos         token.Position
-	left_type ast.Type
-	right_type ast.Type
+	left_type	ast.Type
+	right_type	ast.Type
 	result_type ast.Type
 }
 
 pub struct IntegerLiteral {
 pub:
-	pos  token.Position
-	val string
+	pos		token.Position
+	val		string
 }
 
 pub struct NoneLiteral {
@@ -60,8 +60,8 @@ pub:
 
 pub struct FloatLiteral {
 pub:
-	pos  token.Position
-	val string
+	pos		token.Position
+	val		string
 }
 
 pub struct StringLiteral {
@@ -81,7 +81,7 @@ pub:
 	name	string
 	pos		token.Position
 pub mut:
-	typ	 ast.Type
+	typ		ast.Type
 }
 
 pub struct CallArg {
@@ -89,7 +89,7 @@ pub:
 	pos		token.Position
 pub mut:
 	expr	Expr
-	typ	 ast.Type
+	typ		ast.Type
 }
 
 pub struct CallExpr {
@@ -100,7 +100,7 @@ pub mut:
 	name			string // left.name()
 	args			[]CallArg
 	def_args		map[string]DefaultValue
-	return_type	 ast.Type
+	return_type		ast.Type
 	is_static		bool
 }
 
@@ -110,7 +110,7 @@ pub mut:
 	pos			token.Position
 	expr		Expr // expr.field_name
 	field_name	string
-	typ		 ast.Type
+	typ			ast.Type
 }
 
 //arr[1]
@@ -120,7 +120,7 @@ pub:
 	index	Expr
 	pos		token.Position
 pub mut:
-	typ	 ast.Type
+	typ		ast.Type
 }
 
 pub struct ParExpr {
@@ -137,13 +137,13 @@ pub:
 pub mut:
 	right		Expr
 	//checker
-	right_type ast.Type
+	right_type	ast.Type
 }
 
 pub struct ArrayInit {
 pub:
-	typ		 ast.Type
-	elem_type ast.Type
+	typ			ast.Type
+	elem_type	ast.Type
 	len			Expr
 	pos			token.Position
 }

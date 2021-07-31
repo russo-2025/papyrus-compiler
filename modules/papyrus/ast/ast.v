@@ -55,7 +55,7 @@ pub mut:
 pub struct FnArg {
 pub mut:
 	name			string
-	typ			 ast.Type
+	typ				ast.Type
 	default_value	Expr
 }
 
@@ -81,7 +81,7 @@ pub struct PropertyDecl {
 pub mut:
 	name		string
 	pos			token.Position
-	typ		 ast.Type
+	typ			ast.Type
 	flags		[]token.Kind
 	expr		Expr
 	read		Handler
@@ -128,7 +128,7 @@ pub mut:
 	op			token.Kind
 	right		Expr
 	left		Expr
-	typ		 ast.Type	
+	typ			ast.Type	
 }
 
 pub struct VarDecl {
