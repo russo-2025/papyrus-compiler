@@ -34,7 +34,7 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFile {
+pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref.Preferences) {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -68,7 +68,8 @@ pub fn gen(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFil
 	}
 	
 	g.gen_objects()
-	return g.pex
+
+	pex.write(output_file_path, g.pex)
 }
 
 fn (mut g Gen) gen_objects() {
