@@ -7,4 +7,5 @@ test-files/**
 TODO.txt
 papyrus-project.json
 compile hive project.bat
+compile vm tests.bat
 compile test scripts.bat
