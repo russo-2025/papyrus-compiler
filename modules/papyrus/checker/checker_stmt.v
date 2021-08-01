@@ -111,9 +111,11 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 					c.error("invalid condition in if statement",  node.pos)
 				}
 				
+				c.cur_scope = branch.scope
 				for b_stmt in branch.stmts {
 					c.stmt(b_stmt)
 				}
+				c.cur_scope = c.cur_scope.parent
 			}
 		}
 		ast.While {
@@ -123,9 +125,13 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 				c.error("invalid condition in while statement",  node.pos)
 			}
 
+			c.cur_scope = node.scope
+			
 			for w_stmt in node.stmts {
 				c.stmt(w_stmt)
 			}
+
+			c.cur_scope = c.cur_scope.parent
 		}
 		ast.ExprStmt {
 			c.expr(node.expr)
@@ -196,6 +202,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	}
 
 	c.cur_scope = node.scope
+	c.inside_fn = true
 
 	for param in node.params {
 		if c.type_is_valid(param.typ) {
@@ -291,24 +298,32 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 			}
 		}
 	}
-
-	c.cur_scope = c.file.scope
+	
+	c.inside_fn = false
+	c.cur_scope = c.cur_scope.parent
 }
 
 pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
-	if c.type_is_valid(node.typ) {
-		c.cur_scope.register(ast.ScopeVar{
-			name: node.name
-			typ: node.typ
-			pos: node.pos
-			is_used: false
-		})
-		
-		if node.assign.right !is ast.EmptyExpr {
-			c.stmt(node.assign)
+	if !c.type_is_valid(node.typ) {
+		c.error("invalid type in variable declaration", node.pos)
+		return
+	}
+
+	if obj := c.cur_scope.find_var(node.name) {
+		if node.pos.pos >= obj.pos.pos {
+			c.error("variable with name `$node.name` already exists", node.pos)
+			return
 		}
 	}
-	else {
-		c.error("invalid type in variable declaration", node.pos)
+
+	c.cur_scope.register(ast.ScopeVar{
+		name: node.name
+		typ: node.typ
+		pos: node.pos
+		is_used: false
+	})
+	
+	if node.assign.right !is ast.EmptyExpr {
+		c.stmt(node.assign)
 	}
 }

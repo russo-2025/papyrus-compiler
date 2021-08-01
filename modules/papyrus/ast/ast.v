@@ -99,6 +99,7 @@ pub:
 	cond		Expr
 	pos			token.Position
 	stmts		[]Stmt
+	scope		&Scope
 }
 
 pub struct If {
@@ -113,6 +114,7 @@ pub:
 	pos		token.Position
 	cond	Expr
 	stmts	[]Stmt
+	scope	&Scope
 }
 
 pub struct ExprStmt {
@@ -128,7 +130,7 @@ pub mut:
 	op			token.Kind
 	right		Expr
 	left		Expr
-	typ			ast.Type	
+	typ		 	ast.Type
 }
 
 pub struct VarDecl {

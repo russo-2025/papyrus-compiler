@@ -509,12 +509,17 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					p.next()
 				}
 
+				
+				p.open_scope()
 				mut stmts := p.stmts()
+				mut scope := p.scope
+				p.close_scope()
 
 				branches << ast.IfBranch{
 					pos: pos
 					cond: cond
 					stmts: stmts
+					scope: scope
 				}
 
 				for p.tok.kind != .key_endif && p.tok.kind != .key_else {
@@ -529,12 +534,17 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					if p.tok.kind == .rpar {
 						p.next()
 					}
+
+					p.open_scope()
 					stmts = p.stmts()
+					scope = p.scope
+					p.close_scope()
 
 					branches << ast.IfBranch{
 						pos: pos
 						cond: cond
 						stmts: stmts
+						scope: scope
 					}
 				}
 
@@ -544,12 +554,17 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					has_else = true
 					pos = p.tok.position()
 					p.next()
+
+					p.open_scope()
 					stmts = p.stmts()
+					scope = p.scope
+					p.close_scope()
 
 					branches << ast.IfBranch{
 						pos: pos
 						cond: ast.BoolLiteral { val: "true" }
 						stmts: stmts
+						scope: scope
 					}
 				}
 
@@ -573,7 +588,11 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				if p.tok.kind == .rpar {
 					p.next()
 				}
+				
+				p.open_scope()
 				mut stmts := p.stmts()
+				scope := p.scope
+				p.close_scope()
 
 				p.check(.key_endwhile)
 				
@@ -581,6 +600,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					pos: pos
 					cond: cond
 					stmts: stmts
+					scope: scope
 				}
 			}
 			.name {
