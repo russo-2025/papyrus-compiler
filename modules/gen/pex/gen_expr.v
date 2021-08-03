@@ -431,32 +431,27 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 			return pex.VariableData{ typ: 0 }
 		}
 		ast.IntegerLiteral {
-			if g.pref.crutches_enabled {
-				if expr.val.starts_with("0x") {
-					var_data = g.get_free_temp(ast.int_type)
+			if g.pref.crutches_enabled && expr.val.starts_with("0x") {
+				var_data = g.get_free_temp(ast.int_type)
 
-					g.cur_fn.info.instructions << pex.Instruction{
-						op: byte(pex.OpCode.callstatic)
-						args: [
-							pex.VariableData{
-								typ: 1
-								string_id: g.gen_string_ref("m")
-							},
-							pex.VariableData{
-								typ: 1
-								string_id: g.gen_string_ref("StringToInt")
-							}
-							var_data,
-							pex.VariableData{ typ:3, integer: 1},
-							pex.VariableData{
-								typ: 2
-								string_id: g.gen_string_ref(expr.val)
-							}
-						]
-					}
-				}
-				else {
-					return pex.VariableData{ typ: 3, integer: expr.val.int() }
+				g.cur_fn.info.instructions << pex.Instruction{
+					op: byte(pex.OpCode.callstatic)
+					args: [
+						pex.VariableData{
+							typ: 1
+							string_id: g.gen_string_ref("m")
+						},
+						pex.VariableData{
+							typ: 1
+							string_id: g.gen_string_ref("StringToInt")
+						}
+						var_data,
+						pex.VariableData{ typ:3, integer: 1},
+						pex.VariableData{
+							typ: 2
+							string_id: g.gen_string_ref(expr.val)
+						}
+					]
 				}
 			}
 			else {
