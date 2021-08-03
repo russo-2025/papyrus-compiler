@@ -5,6 +5,7 @@ bin/*.pdb
 bin/*.ilk
 test-files/**
 TODO.txt
+CHANGELOG.txt
 papyrus-project.json
 compile hive project.bat
 compile vm tests.bat
