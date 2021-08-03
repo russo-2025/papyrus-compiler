@@ -98,6 +98,7 @@ fn compile_pex(parsed_files []ast.File, table &ast.Table, pref &pref.Preferences
 		if is_outdated(pfile, pref) {
 			output_file_name := pfile.file_name + ".pex"
 			output_file_path := os.join_path(pref.out_dir[0], output_file_name)
+			println('gen `$output_file_name`')
 			gen_pex.gen(pfile, output_file_path, table, pref)
 			
 			if pref.out_dir.len > 1 {
