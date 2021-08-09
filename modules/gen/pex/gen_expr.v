@@ -173,85 +173,29 @@ fn (mut g Gen) gen_prefix_operator(expr ast.PrefixExpr) pex.VariableData {
 	return var_data
 }
 
-[inline]
-fn (mut g Gen) gen_callstatic(expr &ast.CallExpr) pex.VariableData {
+fn (mut g Gen) gen_call(calltype pex.OpCode, expr &ast.CallExpr) pex.VariableData {
 	var_data := g.get_free_temp(expr.return_type)
 	mut args := []pex.VariableData{}
 
-	//имя скрипта
-	args << pex.VariableData{
-		typ: 1
-		string_id: g.gen_string_ref(expr.obj_name.to_lower())
+	if calltype == .callstatic {
+		//имя скрипта
+		args << pex.VariableData{
+			typ: 1
+			string_id: g.gen_string_ref(expr.obj_name.to_lower())
+		}
 	}
+
 	//имя функции
 	args << pex.VariableData{
 		typ: 1
 		string_id: g.gen_string_ref(expr.name)
 	}
-	//переменная для результата
-	args << var_data
 
-	//кол-во дополнительных параметров
-	args << pex.VariableData{ typ:3, integer: expr.args.len}
-
-	//аргументы функции
-	for fn_arg in expr.args {
-		args << g.get_operand_from_expr(&fn_arg.expr)
-		g.free_temp(args.last())
-	}
-	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.callstatic)
-		args: args
-	}
-
-	return var_data
-}
-
-[inline]
-fn (mut g Gen) gen_callmethod(expr &ast.CallExpr) pex.VariableData {
-	var_data := g.get_free_temp(expr.return_type)
-	mut args := []pex.VariableData{}
-	
-	//имя функции
-	args << pex.VariableData{
-		typ: 1
-		string_id: g.gen_string_ref(expr.name)
-	}
-	//у кого вызывать метод
-	left := g.get_operand_from_expr(&expr.left)
-	args << left
-	g.free_temp(left)
-	//переменная для результата
-	args << var_data
-	
-	//кол-во дополнительных параметров
-	args << pex.VariableData{ typ:3, integer: expr.args.len}
-
-	//аргументы функции
-	for fn_arg in expr.args {
-		args << g.get_operand_from_expr(&fn_arg.expr)
-		g.free_temp(args.last())
-	}
-	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.callmethod)
-		args: args
-	}
-
-	return var_data
-}
-
-
-[inline]
-fn (mut g Gen) gen_callparent(expr &ast.CallExpr) pex.VariableData {
-	var_data := g.get_free_temp(expr.return_type)
-	mut args := []pex.VariableData{}
-
-	//имя функции
-	args << pex.VariableData{
-		typ: 1
-		string_id: g.gen_string_ref(expr.name)
+	if calltype == .callmethod {
+		//у кого вызывать метод
+		left := g.get_operand_from_expr(&expr.left)
+		args << left
+		g.free_temp(left)
 	}
 
 	//переменная для результата
@@ -260,15 +204,22 @@ fn (mut g Gen) gen_callparent(expr &ast.CallExpr) pex.VariableData {
 	//кол-во дополнительных параметров
 	args << pex.VariableData{ typ:3, integer: expr.args.len}
 
+	mut vars := []pex.VariableData{}
+
 	//аргументы функции
 	for fn_arg in expr.args {
 		args << g.get_operand_from_expr(&fn_arg.expr)
-		g.free_temp(args.last())
+		vars << args.last()
+	}
+
+	//помечаем переменные как свободные
+	for var in vars {
+		g.free_temp(var)
 	}
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.callparent)
+		op: byte(calltype)
 		args: args
 	}
 
@@ -281,6 +232,7 @@ fn (mut g Gen) gen_call_expr(expr &ast.CallExpr) pex.VariableData {
 	//opcode: 'callmethod', args: [ident(Bar), ident(arg), ident(::NoneVar)]
 	//opcode: 'callmethod', args: [ident(Foo), ident(a), ident(::NoneVar), integer(123)]
 	//opcode: 'callparent', args: [ident(Foo), ident(::NoneVar), integer(123)]
+
 	lname := expr.name.to_lower()
 
 	if lname == "find" || lname == "rfind"  {
@@ -288,16 +240,16 @@ fn (mut g Gen) gen_call_expr(expr &ast.CallExpr) pex.VariableData {
 	}
 
 	if expr.is_static {
-		return g.gen_callstatic(expr)
+		return g.gen_call(.callmethod, expr)
 	}
 	else {
 		if expr.left is ast.Ident {
 			if expr.left.name.to_lower() == "parent" {
-				return g.gen_callparent(expr)
+				return g.gen_call(.callparent, expr)
 			}
 		}
 
-		return g.gen_callmethod(expr)
+		return g.gen_call(.callmethod, expr)
 	}
 }
 
