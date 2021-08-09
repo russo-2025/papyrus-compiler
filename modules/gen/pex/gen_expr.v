@@ -173,6 +173,7 @@ fn (mut g Gen) gen_prefix_operator(expr ast.PrefixExpr) pex.VariableData {
 	return var_data
 }
 
+[inline]
 fn (mut g Gen) gen_call(calltype pex.OpCode, expr &ast.CallExpr) pex.VariableData {
 	var_data := g.get_free_temp(expr.return_type)
 	mut args := []pex.VariableData{}
