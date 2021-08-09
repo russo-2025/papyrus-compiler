@@ -240,7 +240,7 @@ fn (mut g Gen) gen_call_expr(expr &ast.CallExpr) pex.VariableData {
 	}
 
 	if expr.is_static {
-		return g.gen_call(.callmethod, expr)
+		return g.gen_call(.callstatic, expr)
 	}
 	else {
 		if expr.left is ast.Ident {
