@@ -62,7 +62,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 	
-	if !p.is_state() {
+	if !p.is_state() && !p.inside_property {
 		if is_static {
 			if _ := p.table.find_fn(p.cur_obj_name, name) {}
 			else {

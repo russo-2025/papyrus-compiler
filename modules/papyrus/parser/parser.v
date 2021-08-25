@@ -27,6 +27,8 @@ mut:
 	global_scope		&ast.Scope
 	
 	used_indents		[]string
+	
+	inside_property		bool
 
 	cur_obj_name		string 
 	cur_state_name		string = token.default_state_name
@@ -260,8 +262,10 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 }
 
 pub fn (mut p Parser) property_decl() ast.PropertyDecl {
-	
+	p.inside_property = true
+
 	mut typ := ast.none_type
+
 	if p.parsed_type != 0 {
 		typ = p.get_parsed_type()
 	}
@@ -291,32 +295,48 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	}
 
 	if !no_body {
-		
-		if p.next_is_type() {
-			p.parse_type()
-		}
-		handler_1 := p.fn_decl()
-		
-		if p.next_is_type() {
-			p.parse_type()
-		}
-		handler_2 := p.fn_decl()
 
-		name1 := handler_1.name.to_lower()
-		name2 := handler_2.name.to_lower()
-		
-		if (name1 != "get" && name1 != "set") || (name2 != "get" && name2 != "set") || name1 == name2 {
-			p.error("invalid name read/write handlers")
-		}
+		mut i := 0
 
-		read := if name1 == "get" { &handler_1 } else { &handler_2 }
-		write := if name1 == "set" { &handler_1 } else { &handler_2 }
+		for i < 2 {
+			if p.tok.kind == .key_endproperty {
+				break
+			}
+
+			if p.next_is_type() {
+				p.parse_type()
+			}
+
+			handler := p.fn_decl()
+			handler_name := handler.name.to_lower()
+
+			if handler_name == "set" {
+				node.write = &handler
+			}
+			else if handler_name == "get" {
+				node.read = &handler
+			}
+			else {
+				p.error_with_pos("invalid function name: $handler_name, expected `get` or `set`", handler.pos)
+			}
+		}
 		
 		p.check(.key_endproperty)
-		
-		node.read = read
-		node.write = write
 	}
+
+	p.inside_property = false
+	
+	auto_var_name := "::" + node.name + "_var"
+	
+	node.auto_var_name = auto_var_name
+
+	p.table.register_field(ast.Prop{
+		name: node.name
+		obj_name: p.cur_obj_name
+		auto_var_name: auto_var_name
+		flags: flags
+		typ: node.typ
+	})
 
 	return node
 }

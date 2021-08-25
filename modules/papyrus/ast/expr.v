@@ -78,10 +78,11 @@ pub:
 
 pub struct Ident {
 pub:
-	name	string
-	pos		token.Position
+	name		string
+	pos			token.Position
 pub mut:
-	typ		ast.Type
+	typ			ast.Type
+	is_property	bool
 }
 
 pub struct CallArg {

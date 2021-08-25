@@ -200,6 +200,31 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 	}
 
 	if stmt.left is ast.Ident {
+		mut name := stmt.left.name
+
+		if f := g.table.find_field(g.cur_obj_name, name) {
+			if token.Kind.key_auto in f.flags {
+				name = f.auto_var_name
+			}
+			else {
+				//значение
+				right_data := g.get_operand_from_expr(&stmt.right)
+				g.free_temp(right_data)
+
+				//добавляем инструкцию в функцию
+				g.cur_fn.info.instructions << pex.Instruction{
+					op: byte(pex.OpCode.propset)
+					args: [
+						pex.VariableData{ typ: 1, string_id: g.gen_string_ref(name) },
+						pex.VariableData{ typ: 1, string_id: g.gen_string_ref("self") },
+						right_data
+					]
+				}
+
+				return
+			}
+		}
+
 		//opcode: 'assign', args: [ident(::temp1), integer(111)]
 		var_data := g.get_operand_from_expr(&stmt.right)
 		g.free_temp(var_data)
@@ -209,7 +234,7 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 			args: [
 				pex.VariableData{
 					typ: 1
-					string_id: g.gen_string_ref(stmt.left.name)
+					string_id: g.gen_string_ref(name)
 				}, 
 				var_data 
 			]

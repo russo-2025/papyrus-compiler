@@ -7,7 +7,7 @@ import pref
 
 struct TempVariable {
 pub mut:
-	typ	 ast.Type
+	typ		ast.Type
 	data	pex.VariableData
 	free	bool
 }

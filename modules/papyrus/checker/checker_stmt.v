@@ -37,17 +37,22 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 		}
 		ast.PropertyDecl {
 			if c.type_is_valid(node.typ) {
-				c.table.register_field(ast.Prop{
-					name: node.name
-					obj_name: c.cur_obj_name
-					typ: node.typ
-				})
+
+				c.inside_property = true
+
+				if node.read is ast.FnDecl {
+					c.top_stmt(node.read as ast.FnDecl)
+				}
+
+				if node.write is ast.FnDecl {
+					c.top_stmt(node.write as ast.FnDecl)
+				}
 
 				if token.Kind.key_auto in node.flags {
 					c.file.stmts << ast.VarDecl {
 						typ: node.typ
 						obj_name: c.cur_obj_name
-						name: "::" + node.name + "_var"
+						name: node.auto_var_name
 						assign: ast.AssignStmt{
 							op: token.Kind.assign
 							pos: node.pos
@@ -64,6 +69,8 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 						is_obj_var: true
 					}
 				}
+				
+				c.inside_property = false
 			}
 			else {
 				c.error("invalid type in property declaration", node.pos)
@@ -236,7 +243,9 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 
 	if c.is_state() {
 		if !c.temp_state_fns[node.name] {
-			c.temp_state_fns[node.name] = true
+			if !c.inside_property {
+				c.temp_state_fns[node.name] = true
+			}
 		}
 		else {
 			c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)

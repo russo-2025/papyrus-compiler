@@ -16,6 +16,7 @@ pub mut:
 	warnings			[]errors.Warning
 
 	inside_fn			bool
+	inside_property		bool
 	cur_fn				&ast.FnDecl = 0
 	cur_scope			&ast.Scope = voidptr(0)
 	cur_obj_name		string

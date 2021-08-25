@@ -83,6 +83,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			}
 			else if obj := c.table.find_field(c.cur_obj_name, node.name){
 				node.typ = obj.typ
+				node.is_property = true
 				return obj.typ
 			}
 			else {

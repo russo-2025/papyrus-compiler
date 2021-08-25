@@ -145,6 +145,10 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 	g.free_temp(left_data)
 	g.free_temp(right_data)
 
+	if expr.result_type == 0 {
+		println(expr)
+	}
+
 	var_data := g.get_free_temp(expr.result_type)
 
 	g.cur_fn.info.instructions << pex.Instruction{
@@ -336,29 +340,26 @@ fn (mut g Gen) gen_selector(expr &ast.SelectorExpr) pex.VariableData {
 
 		return var_data
 	}
-	else {
-		//opcode: 'propget', args: [ident(myProperty), ident(arg), ident(::temp0)]
+	
+	//opcode: 'propget', args: [ident(myProperty), ident(arg), ident(::temp0)]
 
-		expr_data := g.get_operand_from_expr(&expr.expr)
-		g.free_temp(expr_data)
+	expr_data := g.get_operand_from_expr(&expr.expr)
+	g.free_temp(expr_data)
 
-		//переменная для результата
-		var_data := g.get_free_temp(expr.typ)
+	//переменная для результата
+	var_data := g.get_free_temp(expr.typ)
 
-		//добавляем инструкцию в функцию
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.propget)
-			args: [
-				pex.VariableData{ typ: 1, string_id: g.gen_string_ref(expr.field_name) },
-				expr_data,
-				var_data
-			]
-		}
-
-		return var_data
+	//добавляем инструкцию в функцию
+	g.cur_fn.info.instructions << pex.Instruction{
+		op: byte(pex.OpCode.propget)
+		args: [
+			pex.VariableData{ typ: 1, string_id: g.gen_string_ref(expr.field_name) },
+			expr_data,
+			var_data
+		]
 	}
 
-	panic("wtf")
+	return var_data
 }
 
 fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
@@ -378,6 +379,25 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 			var_data = g.gen_prefix_operator(&expr)
 		}
 		ast.Ident {
+			if expr.is_property {
+				if f := g.table.find_field(g.cur_obj_name, expr.name) {
+					
+					if token.Kind.key_auto in f.flags {
+						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(f.auto_var_name) }
+					}
+
+					return g.gen_selector(&ast.SelectorExpr{
+						expr: ast.Ident {
+							name: 'self'
+							typ: ast.Type(g.table.find_type_idx(g.cur_obj_name))
+						}
+						field_name: expr.name
+						typ: f.typ
+					})
+				}
+
+			}
+
 			return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(expr.name) }
 		}
 		ast.NoneLiteral {
