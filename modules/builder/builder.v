@@ -109,7 +109,7 @@ fn compile_pex(parsed_files []ast.File, table &ast.Table, pref &pref.Preferences
 }
 
 fn (mut b Builder) start_timer(name string) {
-	b.timers[name] = time.new_stopwatch({})
+	b.timers[name] = time.new_stopwatch()
 }
 
 fn (mut b Builder) print_timer(name string) {

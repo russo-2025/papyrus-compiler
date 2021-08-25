@@ -234,13 +234,13 @@ pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.
 				
 				return ast.Fn{
 					params: [
-						{
+						ast.Param{
 							name: "value"
 							typ: elem_type
 							is_optional: false
 							default_value: ""
 						},
-						{
+						ast.Param{
 							name: "startIndex"
 							typ: ast.int_type
 							is_optional: true
@@ -290,7 +290,7 @@ pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.
 		else if name.to_lower() == 'gotostate' {
 			return ast.Fn{
 				params: [
-					{
+					ast.Param{
 						name: "name"
 						typ: ast.string_type
 					}

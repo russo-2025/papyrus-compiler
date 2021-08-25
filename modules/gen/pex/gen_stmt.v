@@ -121,7 +121,7 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 		if !s.has_else || i < s.branches.len - 1 {
 			//добавляем относительный индекс
 			index := jmp_to_next_ids[jmp_to_next_ids.len - 1]
-			g.cur_fn.info.instructions[index].args << { typ: 3, integer: g.cur_fn.info.instructions.len - index }
+			g.cur_fn.info.instructions[index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - index }
 		}
 
 		i++
@@ -129,7 +129,7 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 
 	//добавляем относительный индекс у прыжков в конец условия
 	for index in jmp_to_end_ids {
-		g.cur_fn.info.instructions[index].args << { typ: 3, integer: g.cur_fn.info.instructions.len - index }
+		g.cur_fn.info.instructions[index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - index }
 	}
 }
 
@@ -380,9 +380,9 @@ fn (mut g Gen) while_stmt(s &ast.While) {
 
 	g.cur_fn.info.instructions << pex.Instruction{
 		op: byte(pex.OpCode.jmp)
-		args: [ { typ: 3, integer: start_index - g.cur_fn.info.instructions.len } ]
+		args: [ pex.VariableData{ typ: 3, integer: start_index - g.cur_fn.info.instructions.len } ]
 	}
 	g.cur_fn.info.num_instructions++
 
-	g.cur_fn.info.instructions[jmpf_index].args << { typ: 3, integer: g.cur_fn.info.instructions.len - jmpf_index }
+	g.cur_fn.info.instructions[jmpf_index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - jmpf_index }
 }

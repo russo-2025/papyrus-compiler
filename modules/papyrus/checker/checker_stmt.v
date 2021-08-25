@@ -26,7 +26,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 				i++
 			}
 
-			c.temp_state_fns = map{}
+			c.temp_state_fns = map[string]bool{}
 			c.cur_state_name = token.default_state_name
 		}
 		ast.FnDecl {
@@ -48,7 +48,7 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 						typ: node.typ
 						obj_name: c.cur_obj_name
 						name: "::" + node.name + "_var"
-						assign: {
+						assign: ast.AssignStmt{
 							op: token.Kind.assign
 							pos: node.pos
 							left: ast.Ident{

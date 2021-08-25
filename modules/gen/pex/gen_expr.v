@@ -104,7 +104,7 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 		g.free_temp(var_data)
 		var_data = g.get_operand_from_expr(&expr.right)
 
-		g.cur_fn.info.instructions[left_jmp_index].args << { typ: 3, integer: g.cur_fn.info.instructions.len - left_jmp_index }
+		g.cur_fn.info.instructions[left_jmp_index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - left_jmp_index }
 		
 		return var_data
 	}
@@ -129,7 +129,7 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 		g.free_temp(var_data)
 		var_data = g.get_operand_from_expr(&expr.right)
 
-		g.cur_fn.info.instructions[left_jmp_index].args << { typ: 3, integer: g.cur_fn.info.instructions.len - left_jmp_index }
+		g.cur_fn.info.instructions[left_jmp_index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - left_jmp_index }
 		
 		return var_data
 	}

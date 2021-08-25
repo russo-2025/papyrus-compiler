@@ -8,7 +8,7 @@ import pex
 fn main() {
 	prefs := pref.parse_args()
 
-	mut sw := time.new_stopwatch({})
+	mut sw := time.new_stopwatch()
 	sw.start()
 
 	match prefs.mode {

@@ -72,34 +72,34 @@ pub fn (mut t Table) register_builtin_type_symbols() {
 	t.register_type_symbol(kind: .bool, name: 'Bool', obj_name: 'builtin')		//5
 	t.register_type_symbol(kind: .array, name: 'Array', obj_name: 'builtin')		//6
 
-	t.register_type_symbol({ //7
+	t.register_type_symbol( //7
 		parent_idx: array_type
 		info: Array { elem_type: string_type}
 		kind: .array
 		name: 'String[]'
 		obj_name: 'builtin'
-	})
-	t.register_type_symbol({ //8
+	)
+	t.register_type_symbol( //8
 		parent_idx: array_type
 		info: Array { elem_type: int_type}
 		kind: .array
 		name: 'Int[]'
 		obj_name: 'builtin'
-	})
-	t.register_type_symbol({ //9
+	)
+	t.register_type_symbol( //9
 		parent_idx: array_type
 		info: Array { elem_type: float_type}
 		kind: .array
 		name: 'Float[]'
 		obj_name: 'builtin'
-	})
-	t.register_type_symbol({ //10
+	)
+	t.register_type_symbol( //10
 		parent_idx: array_type
 		info: Array { elem_type: bool_type}
 		kind: .array
 		name: 'Bool[]'
 		obj_name: 'builtin'
-	})
+	)
 }
 
 pub fn (k Kind) str() string {

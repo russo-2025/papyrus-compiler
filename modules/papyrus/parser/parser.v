@@ -356,13 +356,13 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 	
 	node.flags = p.parse_flags()
 	
-	p.cur_object = p.table.register_type_symbol({
+	p.cur_object = p.table.register_type_symbol(
 		parent_idx: parent_idx
 		kind: .script
 		name: name
 		obj_name: name
 		methods: []ast.Fn{}
-	})
+	)
 
 	return node
 }
@@ -449,7 +449,7 @@ pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
 		typ: typ
 		obj_name: p.cur_obj_name
 		name: name
-		assign: {
+		assign: ast.AssignStmt{
 			op: token.Kind.assign
 			pos: pos
 			left: ast.Ident{
