@@ -221,90 +221,94 @@ pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ ast.Type) bool {
 	return false
 }
 
-pub fn (mut c Checker) find_fn(typ ast.Type, obj_name string, name string) ?ast.Fn {
-	if typ > 0 {
-		mut sym := c.table.get_type_symbol(typ)
+pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?ast.Fn {
+	mut typ := a_typ
 
-		if sym.kind == .array {
-			//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
-			//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
-			
-			lname := name.to_lower()
-			if lname == "find" || lname == "rfind" {
-				elem_type := (sym.info as ast.Array).elem_type
-				
-				return ast.Fn{
-					params: [
-						ast.Param{
-							name: "value"
-							typ: elem_type
-							is_optional: false
-							default_value: ""
-						},
-						ast.Param{
-							name: "startIndex"
-							typ: ast.int_type
-							is_optional: true
-							default_value: if lname == "find" { "0" } else { "-1" }
-						}
-					]
-					return_type: ast.int_type
-					obj_name: 'builtin'
-					name: name
-					sname: name.to_lower()
-					is_static: false
-				}
-			}
-		}
-
-		for sym != 0 {
-			if func := sym.find_method(name) {
-				return func
-			}
-			
-			if sym.parent_idx == 0 {
-				break
-			}
-
-			sym = c.table.get_type_symbol(sym.parent_idx)
-		}
+	if typ == 0 {
+		typ = c.table.find_type_idx(obj_name)
 	}
 
-	if sym := c.table.find_type(obj_name) {
-		if func := c.table.find_fn(obj_name, name) {
+	if func := c.table.find_fn(obj_name, name) {
+		return func
+	}
+
+	if typ == 0 {
+		return none
+	}
+	
+	mut sym := c.table.get_type_symbol(typ)
+
+	mut tsym := sym
+	for {
+		if func := tsym.find_method(name) {
 			return func
 		}
 
-		if func := sym.find_method(name) {
-			return func
+		if tsym.parent_idx > 0 {
+			tsym = c.table.get_type_symbol(tsym.parent_idx)
+			continue
 		}
 
-		if name.to_lower() == 'getstate' {
-			return ast.Fn{
-				return_type: ast.string_type
-				obj_name: c.cur_obj_name
-				name: 'GetState'
-				sname: 'getstate'
-				is_static: false
-			}
-		}
-		else if name.to_lower() == 'gotostate' {
+		break
+	}
+
+	if sym.kind == .array {
+		//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
+		//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
+		
+		lname := name.to_lower()
+		if lname == "find" || lname == "rfind" {
+			elem_type := (sym.info as ast.Array).elem_type
+			
 			return ast.Fn{
 				params: [
 					ast.Param{
-						name: "name"
-						typ: ast.string_type
+						name: "value"
+						typ: elem_type
+						is_optional: false
+						default_value: ""
+					},
+					ast.Param{
+						name: "startIndex"
+						typ: ast.int_type
+						is_optional: true
+						default_value: if lname == "find" { "0" } else { "-1" }
 					}
 				]
-				return_type: ast.none_type
-				obj_name: c.cur_obj_name
-				name: 'GoToState'
-				sname: 'gotostate'
+				return_type: ast.int_type
+				obj_name: 'builtin'
+				name: name
+				sname: name.to_lower()
 				is_static: false
 			}
 		}
 	}
-
+	
+	if name.to_lower() == 'getstate' {
+		return ast.Fn{
+			return_type: ast.string_type
+			obj_name: c.cur_obj_name
+			name: 'GetState'
+			sname: 'getstate'
+			is_static: false
+		}
+	}
+	else if name.to_lower() == 'gotostate' {
+		return ast.Fn{
+			params: [
+				ast.Param{
+					name: "name"
+					typ: ast.string_type
+				}
+			]
+			return_type: ast.none_type
+			obj_name: c.cur_obj_name
+			name: 'GoToState'
+			sname: 'gotostate'
+			is_static: false
+		}
+	}
+	
 	return none
 }
 
