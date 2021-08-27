@@ -133,10 +133,7 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 		
 		return var_data
 	}
-
-	/*if expr.left_type == 0 {
-		println(expr)
-	}*/
+	
 	mut op := g.get_infix_opcode_operator(expr.left_type, expr.op)
 
 	left_data := g.get_operand_from_expr(&expr.left)
@@ -144,10 +141,6 @@ fn (mut g Gen) gen_infix_operator(expr &ast.InfixExpr) pex.VariableData {
 
 	g.free_temp(left_data)
 	g.free_temp(right_data)
-
-	if expr.result_type == 0 {
-		println(expr)
-	}
 
 	var_data := g.get_free_temp(expr.result_type)
 
