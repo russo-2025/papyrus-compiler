@@ -1,1 +1,0 @@
-# PapyrusEx Readme

@@ -1,12 +1,9 @@
-.vscode/**
 bin/*.papyrus
 bin/*.exe
 bin/*.pdb
 bin/*.ilk
 test-files/**
 TODO.txt
-CHANGELOG.txt
-papyrus-project.json
 compile hive project.bat
 compile vm tests.bat
 compile test scripts.bat

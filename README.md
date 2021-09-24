@@ -1,4 +1,3 @@
-
 ## Compiler
 
 The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v), for use with [Skymp VM](https://github.com/skyrim-multiplayer/skymp/tree/main/skymp5-server/cpp/papyrus_vm_lib) (Not tested in Skyrim)
@@ -22,9 +21,3 @@ compile:
 read/print pex file:
 
 ```papyrus -read "...\ABCD.pex"```
-
-## VSCode extension
-WIP
-
-## Language server
-WIP
