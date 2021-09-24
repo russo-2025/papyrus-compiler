@@ -13,7 +13,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
 ```
 -compile			`papyrus -compile [build flags]`
 -read				read the`. pex ' file and outputs the result to the console
-					`papyrus -read "path-to-file.pex"`
+				`papyrus -read "path-to-file.pex"`
 ```
 
 ### Build flags:
@@ -21,9 +21,9 @@ papyrus -read "../test-files/compiled/ABCD.pex"
 -i, -input			folder with files(*.psc) to compile
 -o, -output			folder for compiled files(*.pex)
 -nocache			by default, the compiler checks the file modification date and compiles 
-					the file if it has changed. `-nocache` flag disables this behavior.
+				the file if it has changed. `-nocache` flag disables this behavior.
 -crutches			replaces the hex number by calling the function `M.StringToInt`
-					`0xFF` -> `M.StringToInt("0xFF")`
+				`0xFF` -> `M.StringToInt("0xFF")`
 -original			compiles files using a standard compiler
-					(only the `-i` and `-o` flags are available)
+				(only the `-i` and `-o` flags are available)
 ```
