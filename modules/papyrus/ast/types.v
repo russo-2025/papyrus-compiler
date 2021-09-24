@@ -39,25 +39,15 @@ pub const (
 	string_type_idx = 4
 	bool_type_idx = 5
 	array_type_idx = 6
-
-	form_type_idx = 7
-	obj_ref_type_idx = 8
-	actor_type_idx = 9
-	game_type_idx = 10
-	actor_value_info_type_idx = 11
-	weapon_type_idx = 12
-	debug_type_idx = 13
-	utility_type_idx = 14
-	string_util_type_idx = 15
 )
 
 pub const (
-	none_type          = new_type(none_type_idx)	//1
-	int_type          = new_type(int_type_idx)		//2
-	float_type          = new_type(float_type_idx)	//3
-	string_type          = new_type(string_type_idx)//4
-	bool_type          = new_type(bool_type_idx)	//5
-	array_type          = new_type(array_type_idx)	//6
+	none_type		= new_type(none_type_idx)	//1
+	int_type		= new_type(int_type_idx)	//2
+	float_type		= new_type(float_type_idx)	//3
+	string_type		= new_type(string_type_idx)	//4
+	bool_type		= new_type(bool_type_idx)	//5
+	array_type		= new_type(array_type_idx)	//6
 )
 
 
