@@ -95,6 +95,10 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			return c.call_expr(mut node)
 		}
 		ast.ArrayInit {
+
+			if node.len.type_name() != "papyrus.ast.IntegerLiteral" {
+				c.error("index can only be a literal integer: " + node.len.type_name(),  node.pos)
+			}
 			return node.typ
 		}
 		ast.IndexExpr {

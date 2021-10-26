@@ -520,14 +520,10 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				mut pos := p.tok.position()
 				p.next()
 				
-				if p.tok.kind == .lpar {
-					p.next()
-				}
+				
 				mut cond := p.expr(0)
 
-				if p.tok.kind == .rpar {
-					p.next()
-				}
+
 
 				
 				p.open_scope()
@@ -546,14 +542,10 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					pos = p.tok.position()
 					p.check(.key_elseif)
 					
-					if p.tok.kind == .lpar {
-						p.next()
-					}
+					
 					cond = p.expr(0)
 					
-					if p.tok.kind == .rpar {
-						p.next()
-					}
+					
 
 					p.open_scope()
 					stmts = p.stmts()
@@ -600,14 +592,10 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				mut pos := p.tok.position()
 				p.next()
 				//p.check(.lpar)
-				if p.tok.kind == .lpar {
-					p.next()
-				}
+				
 				mut cond := p.expr(0)
 				//p.check(.rpar)
-				if p.tok.kind == .rpar {
-					p.next()
-				}
+				
 				
 				p.open_scope()
 				mut stmts := p.stmts()

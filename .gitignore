@@ -7,3 +7,4 @@ TODO.txt
 compile RH project.bat
 compile vm tests.bat
 compile test scripts.bat
+*.bat
