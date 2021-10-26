@@ -98,6 +98,11 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 
 			if node.len.type_name() != "papyrus.ast.IntegerLiteral" {
 				c.error("index can only be a literal integer: " + node.len.type_name(),  node.pos)
+			} else{
+				length := (node.len as ast.IntegerLiteral).val.f32()
+				if (length < 1) || (length > 128){
+					c.error("index out of range (1-128)",  node.pos)
+				}
 			}
 			return node.typ
 		}
