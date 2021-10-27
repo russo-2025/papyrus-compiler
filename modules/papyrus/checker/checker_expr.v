@@ -140,7 +140,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 		}
 		ast.SelectorExpr {
 			node.typ = c.expr(node.expr)
-			sym := c.table.get_type_symbol(node.typ)
+			mut sym := c.table.get_type_symbol(node.typ)
 
 			if node.field_name.to_lower() == "length" {
 				if sym == 0 || sym.kind != .array {
@@ -155,6 +155,18 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 					return f.typ
 				}
 				else {
+					for {
+						if f := c.table.find_field(sym.obj_name, node.field_name) {
+							return f.typ
+						}
+
+						if sym.parent_idx > 0 {
+							sym = c.table.get_type_symbol(sym.parent_idx)
+							continue
+						}
+
+						break
+					}
 					c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
 				}
 			}
