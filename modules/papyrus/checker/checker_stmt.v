@@ -197,6 +197,19 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			}
 		}
 		ast.VarDecl {
+			left_type := node.typ
+			mut right_type := c.expr(node.assign.right)
+
+			if left_type == right_type {}
+			else if c.can_cast(right_type, left_type) {
+				node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
+			}
+			else {
+				ltype_name := c.get_type_name(left_type)
+				rtype_name := c.get_type_name(right_type)
+				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+			}
+
 			c.var_decl(mut node)
 		}
 		ast.Comment {}

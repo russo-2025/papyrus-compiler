@@ -59,8 +59,8 @@ fn (mut g Gen) free_temp(v pex.VariableData) {
 	}
 }
 
-//v1 то к чему преобразовать и куда положить результат
-//v2 что преобразовать
+//v1 what to convert to and where to put the result
+//v2 what to convert
 [inline]
 fn (mut g Gen) gen_cast(v1 pex.VariableData, v2 pex.VariableData) {
 	g.cur_fn.info.instructions << pex.Instruction{
@@ -452,8 +452,8 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 		ast.EmptyExpr {
 			var_data = pex.VariableData{ typ: 0 }
 		}
-		ast.DefaultValue{
-			panic("WTF")
+		else {
+			panic("Unknown expression")
 		}
 	}
 
