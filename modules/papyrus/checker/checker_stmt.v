@@ -346,6 +346,11 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	})
 	
 	if node.assign.right !is ast.EmptyExpr {
-		c.stmt(node.assign)
+		left_type := node.typ
+		mut right_type := c.expr(node.assign.right)
+			if left_type != right_type {
+				c.error("Can only initialize member variables to same-type literals", node.pos)
+			}
+			c.stmt(node.assign)
 	}
 }
