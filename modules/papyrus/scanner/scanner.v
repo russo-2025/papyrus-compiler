@@ -73,20 +73,13 @@ fn (mut s Scanner) text_scan() token.Token {
 			return s.end_of_file()
 		}
 
-		mut c := s.text[s.pos]
-		for c == `\\`{
+		for s.text[s.pos] == `\\`{
 			s.pos++ 
 			s.skip_whitespace()
-			c = s.text[s.pos]
 		}
-		nextc := s.look_ahead(1)
 
-		for c == `\\`{
-			eprintln(c)
-			s.pos++ 
-			s.skip_whitespace()
-			c = s.text[s.pos]
-		}
+		c := s.text[s.pos]
+		nextc := s.look_ahead(1)
 
 		//name or keyword
 		if util.is_name_char(c) {
@@ -110,8 +103,6 @@ fn (mut s Scanner) text_scan() token.Token {
 			num := s.ident_number()
 			return s.new_token(.number, num, num.len)
 		}
-
-
 
 		match c {
 			`\'`, 
