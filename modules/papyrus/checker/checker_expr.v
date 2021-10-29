@@ -167,7 +167,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 
 						break
 					}
-					
+
 					c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
 				}
 			}
@@ -413,9 +413,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		typ = c.expr(node.left)
 	}
 
-	if left == "" {
-		panic("wtf")
-	}
+	assert left == ""
 
 	if func := c.find_fn(typ, left, name) {
 		node.obj_name = func.obj_name
