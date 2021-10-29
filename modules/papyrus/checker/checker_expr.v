@@ -167,6 +167,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 
 						break
 					}
+					
 					c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
 				}
 			}

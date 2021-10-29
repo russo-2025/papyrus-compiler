@@ -65,19 +65,12 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 
 [inline]
 fn (c Checker) get_type_kind(typ ast.Type) ast.Kind {
-	return c.get_type(typ).kind
+	return c.table.get_type_symbol(typ).kind
 }
 
 [inline]
 fn (c Checker) get_type_name(typ ast.Type) string {
-	return c.get_type(typ).name
-}
-
-[inline]
-fn (c Checker) get_type(typ ast.Type) &ast.TypeSymbol {
-	assert typ != 0
-
-	return &c.table.types[typ.idx()]
+	return c.table.get_type_symbol(typ).name
 }
 
 //может ли тип t2 иметь значение с типом t1
