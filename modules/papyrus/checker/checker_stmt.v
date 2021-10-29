@@ -197,6 +197,10 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			}
 		}
 		ast.VarDecl {
+			if node.assign.right is ast.EmptyExpr {
+				node.assign.right = c.get_default_value(node.typ)
+			}
+
 			left_type := node.typ
 			mut right_type := c.expr(node.assign.right)
 
