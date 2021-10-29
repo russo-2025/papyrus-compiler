@@ -95,15 +95,15 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			return c.call_expr(mut node)
 		}
 		ast.ArrayInit {
-
-			if node.len.type_name() != "papyrus.ast.IntegerLiteral" {
-				c.error("size can only be a literal integer: " + node.len.type_name(),  node.pos)
-			} else{
-				length := (node.len as ast.IntegerLiteral).val.f32()
-				if (length < 1) || (length > 128){
+			if node.len is ast.IntegerLiteral {
+				length := node.len.val.int()
+				if length < 1 || length > 128 {
 					c.error("size out of possible range (1-128), use papyrusutil or something similar for larger arrays",  node.pos)
 				}
+			} else {
+				c.error("size can only be a literal integer: " + node.len.type_name(),  node.pos)
 			}
+
 			return node.typ
 		}
 		ast.IndexExpr {
