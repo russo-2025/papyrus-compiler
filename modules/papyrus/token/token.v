@@ -269,15 +269,15 @@ pub fn (kind Kind) is_assign() bool {
 
 pub enum Precedence {
 	lowest
-	cond // OR or AND
 	assign // =
-	eq // == or !=
-	sum // + - | ^
-	product // * / << >> &
+	cond // OR AND
+	eq // == !=
+	sum // + -
+	product // * /
 	prefix // -X or !X
 	cast
-	call // func(X) or foo.method(X)
-	index // array[index], map[key]
+	call // func(X)
+	index // array[index]
 }
 
 pub fn build_precedences() []Precedence {
@@ -292,9 +292,12 @@ pub fn build_precedences() []Precedence {
 	p[Kind.div] = 	.product
 	p[Kind.mod] = 	.product
 
-	// && || !
+	// && ||
 	p[Kind.and]			=	.cond
 	p[Kind.logical_or]	=	.cond
+
+	// !
+	p[Kind.not]	=	.prefix
 
 	//.
 	p[Kind.dot]			=	 .call

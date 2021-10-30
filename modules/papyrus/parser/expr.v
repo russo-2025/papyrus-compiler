@@ -78,7 +78,7 @@ pub fn (mut p Parser) expr(precedence int) ast.Expr {
 pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	mut node := left
 
-	for precedence < p.tok.precedence() {
+	for p.tok.precedence() > precedence {
 		if p.tok.kind == .dot {
 			node = p.dot_expr(node)
 		}
