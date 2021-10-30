@@ -285,7 +285,7 @@ pub fn build_precedences() []Precedence {
 	
 	// + - * / %
 	p[Kind.plus] = 	.sum
-	p[Kind.minus] = 	.sum
+	p[Kind.minus] = .sum
 	p[Kind.mul] = 	.product
 	p[Kind.div] = 	.product
 	p[Kind.mod] = 	.product

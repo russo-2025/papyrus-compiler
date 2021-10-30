@@ -11,33 +11,6 @@ pub mut:
 	fns			map[string]Fn
 	fields		map[string]Field
 	modules		[]string
-	
-	panic_handler    FnPanicHandler = default_table_panic_handler
-	panic_userdata   voidptr        = voidptr(0) // can be used to pass arbitrary data to panic_handler;
-	panic_npanics    int
-}
-
-[unsafe]
-pub fn (t &Table) free() {
-	unsafe {
-		t.types.free()
-		t.type_idxs.free()
-		t.fns.free()
-		t.fields.free()
-		t.modules.free()
-	}
-}
-
-pub type FnPanicHandler = fn (&Table, string)
-
-fn default_table_panic_handler(t &Table, message string) {
-	panic(message)
-}
-
-pub fn (t &Table) panic(message string) {
-	mut mt := unsafe { &Table(t) }
-	mt.panic_npanics++
-	t.panic_handler(t, message)
 }
 
 pub struct Param {
