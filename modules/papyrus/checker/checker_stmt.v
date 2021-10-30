@@ -197,19 +197,6 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			}
 		}
 		ast.VarDecl {
-			left_type := node.typ
-			mut right_type := c.expr(node.assign.right)
-
-			if left_type == right_type {}
-			else if c.can_cast(right_type, left_type) {
-				node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
-			}
-			else {
-				ltype_name := c.get_type_name(left_type)
-				rtype_name := c.get_type_name(right_type)
-				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
-			}
-
 			c.var_decl(mut node)
 		}
 		ast.Comment {}
@@ -326,6 +313,23 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 }
 
 pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
+	if node.assign.right is ast.EmptyExpr {
+		node.assign.right = c.get_default_value(node.typ)
+	}
+
+	left_type := node.typ
+	mut right_type := c.expr(node.assign.right)
+
+	if left_type == right_type {}
+	else if c.can_cast(right_type, left_type) {
+		node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
+	}
+	else {
+		ltype_name := c.get_type_name(left_type)
+		rtype_name := c.get_type_name(right_type)
+		c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+	}
+
 	if !c.type_is_valid(node.typ) {
 		c.error("invalid type in variable declaration", node.pos)
 		return
@@ -345,12 +349,5 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 		is_used: false
 	})
 	
-	if node.assign.right !is ast.EmptyExpr {
-		left_type := node.typ
-		mut right_type := c.expr(node.assign.right)
-			if left_type != right_type {
-				c.error("Can only initialize member variables to same-type literals", node.pos)
-			}
-			c.stmt(node.assign)
-	}
+	c.stmt(node.assign)
 }

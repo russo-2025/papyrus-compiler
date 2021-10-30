@@ -78,7 +78,7 @@ pub fn (mut p Parser) expr(precedence int) ast.Expr {
 pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	mut node := left
 
-	for precedence < p.tok.precedence() {
+	for p.tok.precedence() > precedence {
 		if p.tok.kind == .dot {
 			node = p.dot_expr(node)
 		}
@@ -214,7 +214,7 @@ pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 
 	if p.tok.kind == .lpar {
 		p.next()
-		args := p.call_args()
+		args, redefined_args := p.call_args()
 		p.check(.rpar)
 
 		end_pos := p.prev_tok.position()
@@ -224,6 +224,7 @@ pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 			left: left
 			name: field_name
 			args: args
+			redefined_args: redefined_args
 			pos: pos
 		}
 	}
@@ -308,7 +309,7 @@ pub fn (mut p Parser) name_expr() ast.Expr {
 		p.next()
 		//left := p.parse_ident()
 		p.check(.lpar)
-		args := p.call_args()
+		args, redefined_args := p.call_args()
 		p.check(.rpar)
 
 		end_pos := p.prev_tok.position()
@@ -318,6 +319,7 @@ pub fn (mut p Parser) name_expr() ast.Expr {
 			left: ast.EmptyExpr{}
 			name: name
 			args: args
+			redefined_args: redefined_args
 			pos: pos
 		}
 	}

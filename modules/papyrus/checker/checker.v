@@ -63,10 +63,14 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	return true
 }
 
-fn (mut c Checker) get_type_name(typ ast.Type) string {
-	assert typ != 0
+[inline]
+fn (c Checker) get_type_kind(typ ast.Type) ast.Kind {
+	return c.table.get_type_symbol(typ).kind
+}
 
-	return c.table.types[typ.idx()].name
+[inline]
+fn (c Checker) get_type_name(typ ast.Type) string {
+	return c.table.get_type_symbol(typ).name
 }
 
 //может ли тип t2 иметь значение с типом t1
@@ -310,6 +314,32 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 	}
 	
 	return none
+}
+
+[inline]
+pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
+	match c.get_type_kind(typ) {
+		.int {
+			return ast.IntegerLiteral{ val: "0" }
+		}
+		.float {
+			return ast.FloatLiteral{ val: "0.0" }
+		}
+		.string {
+			return ast.StringLiteral{ val: "" }
+		}
+		.bool {
+			return ast.BoolLiteral{ val: "False" }
+		}
+		.array,
+		.script {
+			return ast.NoneLiteral{ val: "None" }
+		}
+		.none_,
+		.placeholder {
+			panic("invalid typ")
+		}
+	}
 }
 
 [inline]

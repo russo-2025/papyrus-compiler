@@ -106,6 +106,7 @@ pub enum Kind {
 	key_none
 	key_parent
 	key_scriptname
+	key_scriptplus
 	key_extends
 	key_self
 
@@ -204,6 +205,7 @@ fn build_token_str() []string {
 	s[Kind.key_property] = 'property'
 	s[Kind.key_return] = 'return'
 	s[Kind.key_scriptname] = 'scriptname'
+	s[Kind.key_scriptplus] = 'scriptplus'
 	s[Kind.key_self] = 'self'
 	s[Kind.key_state] = 'state'
 	s[Kind.key_string] = 'string'
@@ -267,15 +269,15 @@ pub fn (kind Kind) is_assign() bool {
 
 pub enum Precedence {
 	lowest
-	cond // OR or AND
 	assign // =
-	eq // == or !=
-	sum // + - | ^
-	product // * / << >> &
+	cond // OR AND
+	eq // == !=
+	sum // + -
+	product // * /
 	prefix // -X or !X
 	cast
-	call // func(X) or foo.method(X)
-	index // array[index], map[key]
+	call // func(X)
+	index // array[index]
 }
 
 pub fn build_precedences() []Precedence {
@@ -285,14 +287,17 @@ pub fn build_precedences() []Precedence {
 	
 	// + - * / %
 	p[Kind.plus] = 	.sum
-	p[Kind.minus] = 	.sum
+	p[Kind.minus] = .sum
 	p[Kind.mul] = 	.product
 	p[Kind.div] = 	.product
 	p[Kind.mod] = 	.product
 
-	// && || !
+	// && ||
 	p[Kind.and]			=	.cond
 	p[Kind.logical_or]	=	.cond
+
+	// !
+	p[Kind.not]	=	.prefix
 
 	//.
 	p[Kind.dot]			=	 .call
