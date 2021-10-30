@@ -84,20 +84,6 @@ pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 		}
 		else if p.tok.kind == .lsbr {
 			node = p.index_expr(node)
-
-			//функция в массиве
-			/*
-			if p.tok.kind == .lpar && p.tok.line_nr == p.prev_tok.line_nr && node is ast.IndexExpr {
-				p.next() // (
-				pos := p.tok.position()
-				args := p.call_args()
-				p.check(.rpar) // )
-				node = ast.CallExpr{
-					pos: pos
-					left: node
-					args: args
-				}
-			}*/
 		}
 		else if p.tok.kind == .key_as {
 			node = p.cast_expr(node)
