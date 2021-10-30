@@ -35,6 +35,7 @@ mut:
 	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
+	is_extended_lang	bool
 }
 
 pub fn (mut p Parser) set_path(path string) {
@@ -302,7 +303,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 			if p.tok.kind == .comment {
 				p.next()
 			}
-			
+
 			if p.tok.kind == .key_endproperty {
 				break
 			}
@@ -349,7 +350,16 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 	
 	pos := p.tok.position()
 
-	p.check(.key_scriptname)
+	if p.tok.kind == .key_scriptname {
+		p.next()
+	}
+	else if p.tok.kind == .key_scriptplus {
+		p.next()
+		p.is_extended_lang = true
+	}
+	else {
+		p.error('unexpected `$p.tok.lit`, expecting `scriptname` or `scriptplus`')
+	}
 
 	name := p.check_name()
 
@@ -666,6 +676,13 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 	}
 
 	return s
+}
+
+[inline]
+pub fn (mut p Parser) check_extended_lang() {
+	if !p.is_extended_lang {
+		p.error("This feature is only available in p++")
+	}
 }
 
 [inline]

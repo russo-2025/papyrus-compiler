@@ -106,6 +106,7 @@ pub enum Kind {
 	key_none
 	key_parent
 	key_scriptname
+	key_scriptplus
 	key_extends
 	key_self
 
@@ -204,6 +205,7 @@ fn build_token_str() []string {
 	s[Kind.key_property] = 'property'
 	s[Kind.key_return] = 'return'
 	s[Kind.key_scriptname] = 'scriptname'
+	s[Kind.key_scriptplus] = 'scriptplus'
 	s[Kind.key_self] = 'self'
 	s[Kind.key_state] = 'state'
 	s[Kind.key_string] = 'string'
