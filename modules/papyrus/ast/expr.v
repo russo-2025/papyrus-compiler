@@ -4,7 +4,7 @@ import papyrus.token
 import papyrus.ast
 
 pub type Expr = InfixExpr | IntegerLiteral | FloatLiteral | BoolLiteral | StringLiteral | Ident | CallExpr | SelectorExpr | IndexExpr |
-	ParExpr | PrefixExpr | EmptyExpr | DefaultValue | ArrayInit | NoneLiteral | CastExpr
+	ParExpr | PrefixExpr | EmptyExpr | ArrayInit | NoneLiteral | CastExpr
 
 
 
@@ -24,14 +24,6 @@ pub:
 	type_name	string
 pub mut:
 	typ			ast.Type
-}
-
-//задает значение вместо дефолтного при вызове функции
-pub struct DefaultValue {
-pub:
-	name	string
-	expr	Expr
-	pos		token.Position
 }
 
 [heap]
@@ -85,6 +77,15 @@ pub mut:
 	is_property	bool
 }
 
+pub struct RedefinedOptionalArg {
+pub:
+	name	string
+	expr	Expr
+	pos		token.Position
+pub mut:
+	is_used	bool // used to search for unused redefined optional arguments
+}
+
 pub struct CallArg {
 pub:
 	pos		token.Position
@@ -100,7 +101,7 @@ pub mut:
 	obj_name		string // obj_name.name()
 	name			string // left.name()
 	args			[]CallArg
-	def_args		map[string]DefaultValue
+	redefined_args	map[string]RedefinedOptionalArg // redefined optional arguments
 	return_type		ast.Type
 	is_static		bool
 }
@@ -153,7 +154,7 @@ pub fn (expr Expr) position() token.Position {
 	// all uncommented have to be implemented
 	match expr {
 		CallExpr, FloatLiteral, Ident, IndexExpr, IntegerLiteral, BoolLiteral,
-		SelectorExpr, StringLiteral, ParExpr, PrefixExpr, DefaultValue, ArrayInit, NoneLiteral, CastExpr {
+		SelectorExpr, StringLiteral, ParExpr, PrefixExpr, ArrayInit, NoneLiteral, CastExpr {
 			return expr.pos
 		}
 		InfixExpr {

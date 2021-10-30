@@ -452,9 +452,6 @@ fn (mut g Gen) get_operand_from_expr(expr &ast.Expr) pex.VariableData {
 		ast.EmptyExpr {
 			var_data = pex.VariableData{ typ: 0 }
 		}
-		else {
-			panic("Unknown expression")
-		}
 	}
 
 	return var_data

@@ -156,54 +156,63 @@ fn (mut p Parser) fn_args() []ast.Param {
 	return args
 }
 
-pub fn (mut p Parser) call_args() []ast.CallArg {
+pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOptionalArg) {
 
 	mut args := []ast.CallArg{}
+	mut redefined_args := map[string]ast.RedefinedOptionalArg{}
+
 	start_pos := p.tok.position()
+	
+	mut args_is_ended := false
 
 	for p.tok.kind != .rpar {
 		if p.tok.kind == .eof {
 			p.error_with_pos('unexpected eof reached, while parsing call argument', start_pos)
-			return []
 		}
 
 		arg_start_pos := p.tok.position()
 
-		/*if p.tok.kind == .name && p.peek_tok.kind == .assign {
+		if p.tok.kind == .name && p.peek_tok.kind == .assign {
+			args_is_ended = true
+
 			name := p.check_name()
-			p.next()
+			p.check(.assign)
 			expr := p.expr(0)
 			pos := arg_start_pos.extend(p.prev_tok.position())
-			args << ast.CallArg{
-				expr: ast.DefaultValue{
-					name: name
-					expr: expr
-					pos: pos
-				}
+			
+			if name in redefined_args {
+				p.error('a parameter named `$name` has already been set') // уже присутствует
+			}
+
+			redefined_args[name.to_lower()] = ast.RedefinedOptionalArg{
+				name: name
+				expr: expr
 				pos: pos
 			}
 		}
-		else {*/
+		else {
+			if args_is_ended {
+				p.error("parameter is expected in the format 'name = value`") // ожидается параметр в формате `name = value`
+			}
+
 			e := p.expr(0)
 			pos := arg_start_pos.extend(p.prev_tok.position())
 			args << ast.CallArg{
 				expr: e
 				pos: pos
 			}
-		//}
+		}
 
-		match p.tok.kind {
-			.rpar {
-				break
-			}
-			.comma {
-				p.next()
-			}
-			else {
-				p.error('unexpected `$p.tok.kind.str()`, expecting `)` or `,`')
-			}
+		if p.tok.kind == .rpar {
+			break
+		}
+
+		p.check(.comma)
+
+		if p.tok.kind == .rpar {
+			p.error('unexpected end of arguments `$p.tok.lit`')
 		}
 	}
 
-	return args
+	return args, redefined_args
 }

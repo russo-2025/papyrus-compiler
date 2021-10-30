@@ -228,7 +228,7 @@ pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 
 	if p.tok.kind == .lpar {
 		p.next()
-		args := p.call_args()
+		args, redefined_args := p.call_args()
 		p.check(.rpar)
 
 		end_pos := p.prev_tok.position()
@@ -238,6 +238,7 @@ pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 			left: left
 			name: field_name
 			args: args
+			redefined_args: redefined_args
 			pos: pos
 		}
 	}
@@ -322,7 +323,7 @@ pub fn (mut p Parser) name_expr() ast.Expr {
 		p.next()
 		//left := p.parse_ident()
 		p.check(.lpar)
-		args := p.call_args()
+		args, redefined_args := p.call_args()
 		p.check(.rpar)
 
 		end_pos := p.prev_tok.position()
@@ -332,6 +333,7 @@ pub fn (mut p Parser) name_expr() ast.Expr {
 			left: ast.EmptyExpr{}
 			name: name
 			args: args
+			redefined_args: redefined_args
 			pos: pos
 		}
 	}

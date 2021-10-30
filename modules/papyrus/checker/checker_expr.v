@@ -192,9 +192,6 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 		ast.EmptyExpr {
 			return ast.none_type
 		}
-		ast.DefaultValue{
-			panic("===checker.v WTF expr()===")
-		}
 	}
 
 	eprintln(node)
@@ -413,7 +410,10 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		typ = c.expr(node.left)
 	}
 
-	assert left == ""
+	if left == '' {
+		println(node)
+		assert left == ""
+	}
 
 	if func := c.find_fn(typ, left, name) {
 		node.obj_name = func.obj_name
@@ -425,56 +425,79 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 			return ast.none_type
 		}
 
-		//добавляем параметры по умолчанию
+		//adding optional parameters
 		if node.args.len < func.params.len {
 			mut i := node.args.len
 			for i < func.params.len {
-				if func.params[i].is_optional {
-					func_arg_def_value := func.params[i].default_value
-					match func.params[i].typ {
-					 ast.int_type {
-							node.args << ast.CallArg {
-								expr: ast.IntegerLiteral{ val: func_arg_def_value }
-								typ: ast.int_type 
-							}
-						}
-					 ast.float_type {
-							node.args << ast.CallArg {
-								expr: ast.FloatLiteral{ val: func_arg_def_value }
-								typ: ast.float_type 
-							}
-						}
-					 ast.string_type {
-							node.args << ast.CallArg {
-								expr: ast.StringLiteral{ val: func_arg_def_value }
-								typ: ast.string_type 
-							}
-						}
-					 ast.bool_type {
-							node.args << ast.CallArg {
-								expr: ast.BoolLiteral{ val: func_arg_def_value }
-								typ: ast.bool_type
-							}
-						}
-					 ast.none_type {
-							node.args << ast.CallArg {
-								expr: ast.NoneLiteral{ val: "None" }
-								typ: ast.none_type
-							}
-						}
-						else {
-							node.args << ast.CallArg {
-								expr: ast.NoneLiteral{ val: "None" }
-								typ: func.params[i].typ
-							}
-						}
-					}
-				}
-				else {
+				param := func.params[i]
+
+				if !param.is_optional {
 					break
 				}
 
+				lname := param.name.to_lower()
+				if lname in node.redefined_args {
+					r_arg := node.redefined_args[lname]
+
+					node.args << ast.CallArg {
+						expr: r_arg.expr
+						typ: c.expr(r_arg.expr)
+						pos: r_arg.pos
+					}
+
+					node.redefined_args[lname].is_used = true
+
+					i++
+					continue
+				}
+
+				value := param.default_value
+				match param.typ {
+					ast.int_type {
+						node.args << ast.CallArg {
+							expr: ast.IntegerLiteral{ val: value }
+							typ: ast.int_type 
+						}
+					}
+					ast.float_type {
+						node.args << ast.CallArg {
+							expr: ast.FloatLiteral{ val: value }
+							typ: ast.float_type 
+						}
+					}
+					ast.string_type {
+						node.args << ast.CallArg {
+							expr: ast.StringLiteral{ val: value }
+							typ: ast.string_type 
+						}
+					}
+					ast.bool_type {
+						node.args << ast.CallArg {
+							expr: ast.BoolLiteral{ val: value }
+							typ: ast.bool_type
+						}
+					}
+					ast.none_type {
+						node.args << ast.CallArg {
+							expr: ast.NoneLiteral{ val: "None" }
+							typ: ast.none_type
+						}
+					}
+					else {
+						node.args << ast.CallArg {
+							expr: ast.NoneLiteral{ val: "None" }
+							typ: func.params[i].typ
+						}
+					}
+				}
+
 				i++
+			}
+	
+			for _, value in node.redefined_args {
+				if !value.is_used {
+					c.error('optional argument named `$value.name` not found', value.pos)
+				}
 			}
 		}
 
@@ -489,9 +512,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 			node.args[i].typ = arg_typ
 			func_arg_type := func.params[i].typ
 			
-			if arg_typ == func_arg_type || (func.params[i].is_optional && c.valid_type(arg_typ, func_arg_type)) {
-
-			}
+			if arg_typ == func_arg_type || (func.params[i].is_optional && c.valid_type(arg_typ, func_arg_type)) {}
 			else if c.can_cast(arg_typ, func_arg_type) {
 				new_expr := ast.CastExpr {
 					expr: node.args[i].expr
