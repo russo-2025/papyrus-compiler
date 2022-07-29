@@ -8,7 +8,7 @@ The Papyrus compiler is based on the [V language compiler](https://github.com/vl
 
 ## Building
 
-1. ```build compiler prod.bat```
+1. ```v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused -path "@vlib|@vmodules|modules" "compiler"```
 
 ## Usage
 
