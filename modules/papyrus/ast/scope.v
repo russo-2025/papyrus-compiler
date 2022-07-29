@@ -28,17 +28,6 @@ pub mut:
 	is_used		bool
 }
 
-[unsafe]
-pub fn (s &Scope) free() {
-	unsafe {
-		s.objects.free()
-		for child in s.children {
-			child.free()
-		}
-		s.children.free()
-	}
-}
-
 pub fn new_scope(parent &Scope, start_pos int) &Scope {
 	return &Scope{
 		parent: parent
