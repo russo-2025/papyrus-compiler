@@ -11,7 +11,7 @@ pub struct Parser {
 	pref				&pref.Preferences
 mut:
 	path				string // "/home/user/hello.v"
-	last_mod_time		int
+	last_mod_time		i64
 	table				&ast.Table
 	scanner				&scanner.Scanner
 

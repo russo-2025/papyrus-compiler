@@ -16,7 +16,7 @@ pub mut:
 	stmts			[]TopStmt
 	imports			[]string
 	scope			&Scope
-	last_mod_time	int
+	last_mod_time	i64
 	used_indents	[]string
 }
 

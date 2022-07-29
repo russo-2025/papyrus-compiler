@@ -7,7 +7,7 @@ import papyrus.ast
 
 struct CacheFile {
 pub mut:
-	last_mod_time	int
+	last_mod_time	i64
 }
 
 fn read_cache(path string) &CacheFile {
