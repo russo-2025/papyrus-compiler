@@ -2,6 +2,7 @@ bin/*.papyrus
 bin/*.exe
 bin/*.pdb
 bin/*.ilk
+bin/*.rar
 test-files/**
 TODO.txt
 compile RH project.bat
