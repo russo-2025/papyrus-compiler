@@ -20,20 +20,6 @@ pub mut:
 	used_indents	[]string
 }
 
-[unsafe]
-pub fn (f &File) free() {
-	unsafe {
-		f.path.free()
-		f.path_base.free()
-		f.file_name.free()
-		f.obj_name.free()
-		f.stmts.free()
-		f.imports.free()
-		f.scope.free()
-		f.used_indents.free()
-	}
-}
-
 pub struct ScriptDecl {
 pub mut:
 	pos				token.Position
