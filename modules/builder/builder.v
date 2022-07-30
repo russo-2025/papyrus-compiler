@@ -67,11 +67,11 @@ pub fn compile(pref &pref.Preferences) {
 	b.print_timer('find source files')
 
 	b.start_timer('parse files')
-	parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
+	mut parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
 	b.print_timer('parse files')
 
 	b.start_timer('check files')
-	c.check_files(parsed_files)
+	c.check_files(mut parsed_files)
 	b.print_timer('check files')
 
 	if !os.exists(cache_path) {

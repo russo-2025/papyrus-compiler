@@ -1,6 +1,6 @@
 module scanner
 
-import math.mathutil as mu
+import math
 import os
 import pref
 import papyrus.token
@@ -357,7 +357,7 @@ fn (mut s Scanner) eat_to_end_of_line() {
 
 [inline]
 fn (mut s Scanner) inc_line_number() {
-	s.last_nl_pos = mu.min(s.text.len - 1, s.pos)
+	s.last_nl_pos = math.min(s.text.len - 1, s.pos)
 	s.line_nr++
 	s.line_ends << s.pos
 

@@ -7,7 +7,7 @@ import pref
 struct Reader{
 pub mut:
 	path	string
-	bytes	[]byte
+	bytes	[]u8
 	pos		int
 	pex		&PexFile
 }
@@ -63,15 +63,15 @@ pub fn read(pref &pref.Preferences) &PexFile {
 			mut d := DebugFunction{}
 
 			d.object_name_index = r.read_string_ref() or {
-				r.error(err.msg)
+				r.error(err.msg())
 				return r.pex
 			}
 			d.state_name_index = r.read_string_ref() or {
-				r.error(err.msg)
+				r.error(err.msg())
 				return r.pex
 			}
 			d.function_name_index = r.read_string_ref() or {
-				r.error(err.msg)
+				r.error(err.msg())
 				return r.pex
 			}
 			d.function_type = r.read_byte()
@@ -93,7 +93,7 @@ pub fn read(pref &pref.Preferences) &PexFile {
 	i = 0
 	for i < f.user_flag_count{
 		name_index := r.read_string_ref() or {
-			r.error(err.msg)
+			r.error(err.msg())
 			return r.pex
 		}
 		flag_index := r.read_byte()
@@ -111,7 +111,7 @@ pub fn read(pref &pref.Preferences) &PexFile {
 	i = 0
 	for i < f.object_count{
 		f.objects << r.read_object() or {
-			r.error(err.msg)
+			r.error(err.msg())
 			return r.pex
 		}
 		i++

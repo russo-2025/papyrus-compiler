@@ -3,7 +3,7 @@ module checker
 import papyrus.ast
 import papyrus.token
 
-fn (mut c Checker) top_stmt(node ast.TopStmt) {
+fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 	match mut node {
 		ast.ScriptDecl {
 			c.cur_obj_name = node.name
@@ -40,12 +40,12 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 
 				c.inside_property = true
 
-				if node.read is ast.FnDecl {
-					c.top_stmt(node.read as ast.FnDecl)
+				if mut node.read is ast.FnDecl {
+					c.top_stmt(mut &node.read)
 				}
 
-				if node.write is ast.FnDecl {
-					c.top_stmt(node.write as ast.FnDecl)
+				if mut node.write is ast.FnDecl {
+					c.top_stmt(mut &node.write)
 				}
 
 				if token.Kind.key_auto in node.flags {
@@ -80,16 +80,16 @@ fn (mut c Checker) top_stmt(node ast.TopStmt) {
 	}
 }
 
-fn (mut c Checker) stmts(stmts []ast.Stmt) {
+fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
 
-	for stmt in stmts {
-		c.stmt(stmt)
+	for mut stmt in stmts {
+		c.stmt(mut stmt)
 	}
 }
-fn (mut c Checker) stmt(node ast.Stmt) {
+fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.Return {
-			typ := c.expr(node.expr)
+			typ := c.expr(mut node.expr)
 			
 			if c.valid_type(typ, c.cur_fn.return_type) {
 
@@ -111,22 +111,22 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			}
 		}
 		ast.If {
-			for branch in node.branches {
-				c.expr(branch.cond)
+			for mut branch in node.branches {
+				c.expr(mut branch.cond)
 			
 				if branch.cond is ast.EmptyExpr {
 					c.error("invalid condition in if statement",  node.pos)
 				}
 				
 				c.cur_scope = branch.scope
-				for b_stmt in branch.stmts {
-					c.stmt(b_stmt)
+				for mut b_stmt in branch.stmts {
+					c.stmt(mut b_stmt)
 				}
 				c.cur_scope = c.cur_scope.parent
 			}
 		}
 		ast.While {
-			c.expr(node.cond)
+			c.expr(mut node.cond)
 
 			if node.cond is ast.EmptyExpr {
 				c.error("invalid condition in while statement",  node.pos)
@@ -134,14 +134,14 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 
 			c.cur_scope = node.scope
 			
-			for w_stmt in node.stmts {
-				c.stmt(w_stmt)
+			for mut w_stmt in node.stmts {
+				c.stmt(mut w_stmt)
 			}
 
 			c.cur_scope = c.cur_scope.parent
 		}
 		ast.ExprStmt {
-			c.expr(node.expr)
+			c.expr(mut node.expr)
 		}
 		ast.AssignStmt {
 			if !node.op.is_assign() {
@@ -149,8 +149,8 @@ fn (mut c Checker) stmt(node ast.Stmt) {
 			}
 
 			if node.left is ast.Ident || node.left is ast.IndexExpr || node.left is ast.SelectorExpr {
-				left_type := c.expr(node.left)
-				mut right_type := c.expr(node.right)
+				left_type := c.expr(mut node.left)
+				mut right_type := c.expr(mut node.right)
 				if node.right is ast.EmptyExpr {
 					c.error("invalid right exression in assignment",  node.pos)
 				}
@@ -239,7 +239,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 	}
 
-	c.stmts(node.stmts)
+	c.stmts(mut node.stmts)
 
 	if c.is_state() {
 		if !c.temp_state_fns[node.name] {
@@ -318,7 +318,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	}
 
 	left_type := node.typ
-	mut right_type := c.expr(node.assign.right)
+	mut right_type := c.expr(mut node.assign.right)
 
 	if left_type == right_type {}
 	else if c.can_cast(right_type, left_type) {
@@ -349,5 +349,5 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 		is_used: false
 	})
 	
-	c.stmt(node.assign)
+	c.stmt(mut node.assign)
 }

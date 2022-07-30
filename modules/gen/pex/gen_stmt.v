@@ -5,7 +5,7 @@ import papyrus.token
 import pex
 
 [inline]
-fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
+fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	mut obj := g.create_obj(s.name, s.parent_name)
 
 	g.pex.objects << obj
@@ -52,7 +52,7 @@ fn (mut g Gen) script_decl(s &ast.ScriptDecl) {
 }
 
 [inline]
-fn (mut g Gen) state_decl(s &ast.StateDecl) {
+fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	mut state := g.create_state(s.name)
 
 	g.cur_obj.data.states << state
@@ -60,15 +60,15 @@ fn (mut g Gen) state_decl(s &ast.StateDecl) {
 
 	g.cur_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
 	
-	for func in s.fns {
-		g.fn_decl(&func)
+	for mut func in s.fns {
+		g.fn_decl(mut &func)
 	}
 	
 	g.cur_state = g.default_state
 }
 
 [inline]
-fn (mut g Gen) if_stmt(s &ast.If) {
+fn (mut g Gen) if_stmt(mut s &ast.If) {
 	//opcode: 'assign', args: [ident(ff), integer(11)]
 	//opcode: 'jmpf', args: [integer(1), integer(3)]
 	//opcode: 'assign', args: [ident(ff), integer(22)]
@@ -85,12 +85,12 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 
 	mut i := 0
 	for i < s.branches.len {
-		b := s.branches[i]
+		mut b := s.branches[i]
 		
 		//если это не последний else то добавляем jmpf
 		if !s.has_else || i < s.branches.len - 1 {
 			//условие
-			var_data := g.get_operand_from_expr(&b.cond)
+			var_data := g.get_operand_from_expr(mut &b.cond)
 			g.free_temp(var_data)
 			//добавляем индекс jmpf в массив(для добавления относительной позиции)
 			jmp_to_next_ids << g.cur_fn.info.instructions.len
@@ -102,8 +102,8 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 			g.cur_fn.info.num_instructions++
 		}
 		//выполняем блок
-		for stmt in b.stmts {
-			g.stmt(stmt)
+		for mut stmt in b.stmts {
+			g.stmt(mut stmt)
 		}
 		//если элемент не последний
 		if i != s.branches.len - 1 {
@@ -134,7 +134,7 @@ fn (mut g Gen) if_stmt(s &ast.If) {
 }
 
 [inline]
-fn (mut g Gen) gen_fn(node &ast.FnDecl) &pex.Function {
+fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
 		info: pex.FunctionInfo{
@@ -176,8 +176,8 @@ fn (mut g Gen) gen_fn(node &ast.FnDecl) &pex.Function {
 		}
 	}
 
-	for stmt in node.stmts {
-		g.stmt(stmt)
+	for mut stmt in node.stmts {
+		g.stmt(mut stmt)
 	}
 	
 	f.info.num_params = u16(f.info.params.len)
@@ -188,18 +188,18 @@ fn (mut g Gen) gen_fn(node &ast.FnDecl) &pex.Function {
 }
 
 [inline]
-fn (mut g Gen) fn_decl(node &ast.FnDecl) {
+fn (mut g Gen) fn_decl(mut node &ast.FnDecl) {
 	g.cur_state.num_functions++
-	g.cur_state.functions << g.gen_fn(node)
+	g.cur_state.functions << g.gen_fn(mut node)
 }
 
 [inline]
-fn (mut g Gen) assign(stmt &ast.AssignStmt) {
+fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	if stmt.right is ast.EmptyExpr {
 		return
 	}
 
-	if stmt.left is ast.Ident {
+	if mut stmt.left is ast.Ident {
 		mut name := stmt.left.name
 
 		if f := g.table.find_field(g.cur_obj_name, name) {
@@ -208,7 +208,7 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 			}
 			else {
 				//значение
-				right_data := g.get_operand_from_expr(&stmt.right)
+				right_data := g.get_operand_from_expr(mut &stmt.right)
 				g.free_temp(right_data)
 
 				//добавляем инструкцию в функцию
@@ -226,7 +226,7 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 		}
 
 		//opcode: 'assign', args: [ident(::temp1), integer(111)]
-		var_data := g.get_operand_from_expr(&stmt.right)
+		var_data := g.get_operand_from_expr(mut &stmt.right)
 		g.free_temp(var_data)
 
 		g.cur_fn.info.instructions << pex.Instruction{
@@ -240,11 +240,11 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 			]
 		}
 	}
-	else if stmt.left is ast.IndexExpr {
+	else if mut stmt.left is ast.IndexExpr {
 		//opcode: 'array_setelement', args: [ident(arr), integer(0), ident(::temp1)]
-		left_data := g.get_operand_from_expr(&stmt.left.left)
-		index_data := g.get_operand_from_expr(&stmt.left.index)
-		right_data := g.get_operand_from_expr(&stmt.right)
+		left_data := g.get_operand_from_expr(mut &stmt.left.left)
+		index_data := g.get_operand_from_expr(mut &stmt.left.index)
+		right_data := g.get_operand_from_expr(mut &stmt.right)
 		g.free_temp(index_data)
 		g.free_temp(right_data)
 
@@ -253,14 +253,14 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 			args: [ left_data, index_data, right_data ]
 		}
 	}
-	else if stmt.left is ast.SelectorExpr {
+	else if mut stmt.left is ast.SelectorExpr {
 		//opcode: 'propset', args: [ident(myProperty), ident(arg), ident(::temp0)]
 
-		expr_data := g.get_operand_from_expr(&stmt.left.expr)
+		expr_data := g.get_operand_from_expr(mut &stmt.left.expr)
 		g.free_temp(expr_data)
 
 		//значение
-		right_data := g.get_operand_from_expr(&stmt.right)
+		right_data := g.get_operand_from_expr(mut &stmt.right)
 		g.free_temp(right_data)
 
 		//добавляем инструкцию в функцию
@@ -279,7 +279,7 @@ fn (mut g Gen) assign(stmt &ast.AssignStmt) {
 }
 
 [inline]
-fn (mut g Gen) var_decl(stmt &ast.VarDecl) {
+fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 	if stmt.is_obj_var {
 		mut user_flags := u32(0)
 
@@ -291,7 +291,7 @@ fn (mut g Gen) var_decl(stmt &ast.VarDecl) {
 			name: g.gen_string_ref(stmt.name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 			user_flags: user_flags
-			data: g.get_operand_from_expr(&stmt.assign.right)
+			data: g.get_operand_from_expr(mut &stmt.assign.right)
 		}
 
 		g.cur_obj.data.num_variables++
@@ -302,12 +302,12 @@ fn (mut g Gen) var_decl(stmt &ast.VarDecl) {
 			typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 		}
 
-		g.assign(stmt.assign)
+		g.assign(mut stmt.assign)
 	}
 }
  
 [inline]
-fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
+fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	
 	mut prop := pex.Property{
 		name: g.gen_string_ref(stmt.name)
@@ -351,20 +351,20 @@ fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
 			instructions: [
 				pex.Instruction{
 					op: byte(pex.OpCode.ret)
-					args: [g.get_operand_from_expr(&stmt.expr)]
+					args: [g.get_operand_from_expr(mut &stmt.expr)]
 				}
 			]
 		}
 	}
 	else {
-		if stmt.read is ast.FnDecl {
+		if mut stmt.read is ast.FnDecl {
 			prop.flags |= 0b0001
-			prop.read_handler = g.gen_fn(stmt.read).info
+			prop.read_handler = g.gen_fn(mut stmt.read).info
 		}
 
-		if stmt.write is ast.FnDecl {
+		if mut stmt.write is ast.FnDecl {
 			prop.flags |= 0b0010
-			prop.write_handler = g.gen_fn(stmt.write).info
+			prop.write_handler = g.gen_fn(mut stmt.write).info
 		}
 	}
 	
@@ -373,7 +373,7 @@ fn (mut g Gen) prop_decl(stmt &ast.PropertyDecl) {
 }
 
 [inline]
-fn (mut g Gen) while_stmt(s &ast.While) {
+fn (mut g Gen) while_stmt(mut s &ast.While) {
 	//original
 	//opcode: 'assign', args: [ident(ff), integer(0)]
 	//opcode: 'assign', args: [ident(i), integer(0)]
@@ -387,7 +387,7 @@ fn (mut g Gen) while_stmt(s &ast.While) {
 	
 	start_index := g.cur_fn.info.instructions.len
 
-	var_data := g.get_operand_from_expr(&s.cond)
+	var_data := g.get_operand_from_expr(mut &s.cond)
 
 	jmpf_index := g.cur_fn.info.instructions.len
 
@@ -399,8 +399,8 @@ fn (mut g Gen) while_stmt(s &ast.While) {
 
 	g.free_temp(var_data)
 
-	for stmt in s.stmts {
-		g.stmt(stmt)
+	for mut stmt in s.stmts {
+		g.stmt(mut stmt)
 	}
 
 	g.cur_fn.info.instructions << pex.Instruction{

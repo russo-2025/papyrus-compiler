@@ -10,14 +10,14 @@ pub mut:
 	path	string
 	pex		&PexFile
 	file	os.File
-	bytes	[]byte
+	bytes	[]u8
 }
 
 pub fn write(path string, pex &PexFile) {
 	mut w := Writer{
 		path:	path
 		pex:	pex
-		bytes: 	[]byte{}
+		bytes: 	[]u8{}
 		file: os.create(path) or { panic(err) }
 	}
 	
@@ -137,10 +137,10 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 
 	//write object size
 	size := w.bytes.len - start_pos
-	w.bytes[start_pos] = byte(size>>u32(24))
-	w.bytes[start_pos + 1] = byte(size>>u32(16))
-	w.bytes[start_pos + 2] = byte(size>>u32(8))
-	w.bytes[start_pos + 3] = byte(size)
+	w.bytes[start_pos] = u8(size>>u32(24))
+	w.bytes[start_pos + 1] = u8(size>>u32(16))
+	w.bytes[start_pos + 2] = u8(size>>u32(8))
+	w.bytes[start_pos + 3] = u8(size)
 }
 
 fn (mut w Writer) write_state(state pex.State) {

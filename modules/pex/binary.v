@@ -9,7 +9,7 @@ union FloatCast {
 
 [inline]
 fn (mut r Reader) read_string() string {
-	mut buf := []byte{}
+	mut buf := []u8{}
 	mut len := int(r.read_u16())
 	len += r.pos
 
@@ -20,7 +20,7 @@ fn (mut r Reader) read_string() string {
 	
 	buf << 0x00
 
-	return string(buf)
+	return buf.bytestr()
 }
 
 [inline]
@@ -89,14 +89,14 @@ fn (mut r Reader) read_byte() byte {
 fn (mut w Writer) write_int_to_u16(v int) {
 	assert u32(v) <= 0xFFFF
 
-	w.bytes << byte(v>>int(8))
-	w.bytes << byte(v)
+	w.bytes << u8(v>>int(8))
+	w.bytes << u8(v)
 }
 
 [inline]
 fn (mut w Writer) write_u16(v u16) {
-	w.bytes << byte(v>>u16(8))
-	w.bytes << byte(v)
+	w.bytes << u8(v>>u16(8))
+	w.bytes << u8(v)
 }
 
 [inline]
@@ -112,27 +112,27 @@ fn (mut w Writer) write_int(v int) {
 
 [inline]
 fn (mut w Writer) write_u32(v u32) {
-	w.bytes << byte(v>>u32(24))
-	w.bytes << byte(v>>u32(16))
-	w.bytes << byte(v>>u32(8))
-	w.bytes << byte(v)
+	w.bytes << u8(v>>u32(24))
+	w.bytes << u8(v>>u32(16))
+	w.bytes << u8(v>>u32(8))
+	w.bytes << u8(v)
 }
 
 [inline]
 fn (mut w Writer) write_u64(v u64) {
-	w.bytes << byte(v>>u64(56))
-	w.bytes << byte(v>>u64(48))
-	w.bytes << byte(v>>u64(40))
-	w.bytes << byte(v>>u64(32))
-	w.bytes << byte(v>>u64(24))
-	w.bytes << byte(v>>u64(16))
-	w.bytes << byte(v>>u64(8))
-	w.bytes << byte(v)
+	w.bytes << u8(v>>u64(56))
+	w.bytes << u8(v>>u64(48))
+	w.bytes << u8(v>>u64(40))
+	w.bytes << u8(v>>u64(32))
+	w.bytes << u8(v>>u64(24))
+	w.bytes << u8(v>>u64(16))
+	w.bytes << u8(v>>u64(8))
+	w.bytes << u8(v)
 }
 
 [inline]
 fn (mut w Writer) write_byte(v byte) {
-	w.bytes << byte(v)
+	w.bytes << u8(v)
 }
 
 [inline]

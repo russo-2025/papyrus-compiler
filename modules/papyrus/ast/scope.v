@@ -35,17 +35,17 @@ pub fn new_scope(parent &Scope, start_pos int) &Scope {
 	}
 }
 
-pub fn (s &Scope) find(name string) ?ScopeObject {
+pub fn (mut s Scope) find(name string) ?ScopeObject {
 	lname := name.to_lower()
 	
-	mut sc := s
+	mut current_scope := &s
 	for {
-		if lname in sc.objects {
-			return sc.objects[lname]
+		if lname in current_scope.objects {
+			return current_scope.objects[lname] or { panic('key not found') }
 		}
 
-		if sc.parent != 0 {
-			sc = sc.parent
+		if !isnil(current_scope.parent) {
+			current_scope = current_scope.parent
 			continue
 		}
 
@@ -55,7 +55,7 @@ pub fn (s &Scope) find(name string) ?ScopeObject {
 	return none
 }
 
-pub fn (s &Scope) find_var(name string) ?ScopeVar {
+pub fn (mut s Scope) find_var(name string) ?ScopeVar {
 	if obj := s.find(name.to_lower()) {
 		match obj {
 			ScopeVar { return obj }

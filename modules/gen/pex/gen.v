@@ -14,8 +14,8 @@ pub mut:
 
 struct Gen {
 pub mut:
-	file	&ast.File = 0
-	pex		&pex.PexFile = 0
+	file	&ast.File = unsafe{ 0 }
+	pex		&pex.PexFile = unsafe{ 0 }
 	
 	string_table	map[string]u16
 	
@@ -24,12 +24,12 @@ pub mut:
 	table			&ast.Table
 	pref			&pref.Preferences
 	
-	cur_obj			&pex.Object = 0
-	cur_state		&pex.State = 0
-	cur_fn			&pex.Function = 0
+	cur_obj			&pex.Object = unsafe{ 0 }
+	cur_state		&pex.State = unsafe{ 0 }
+	cur_fn			&pex.Function = unsafe{ 0 }
 
-	default_obj		&pex.Object = 0
-	default_state	&pex.State = 0
+	default_obj		&pex.Object = unsafe{ 0 }
+	default_state	&pex.State = unsafe{ 0 }
 
 	cur_obj_name	string
 }
@@ -74,22 +74,22 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 
 fn (mut g Gen) gen_objects() {
 	
-	for stmt in g.file.stmts {
-		match stmt {
+	for mut stmt in g.file.stmts {
+		match mut stmt {
 			ast.ScriptDecl {
-				g.script_decl(stmt)
+				g.script_decl(mut stmt)
 			}
 			ast.StateDecl {
-				g.state_decl(stmt)
+				g.state_decl(mut stmt)
 			}
 			ast.FnDecl {
-				g.fn_decl(stmt)
+				g.fn_decl(mut stmt)
 			}
 			ast.VarDecl {
-				g.var_decl(stmt)
+				g.var_decl(mut stmt)
 			}
 			ast.PropertyDecl {
-				g.prop_decl(stmt)
+				g.prop_decl(mut stmt)
 			}
 			ast.Comment {
 				//skip
@@ -98,10 +98,10 @@ fn (mut g Gen) gen_objects() {
 	}
 }
 
-fn (mut g Gen) stmt(stmt ast.Stmt) {
-	match stmt {
+fn (mut g Gen) stmt(mut stmt ast.Stmt) {
+	match mut stmt {
 		ast.Return {
-			var_data := g.get_operand_from_expr(&stmt.expr)
+			var_data := g.get_operand_from_expr(mut &stmt.expr)
 			
 			g.free_temp(var_data)
 
@@ -111,20 +111,20 @@ fn (mut g Gen) stmt(stmt ast.Stmt) {
 			}
 		}
 		ast.If {
-			g.if_stmt(stmt)
+			g.if_stmt(mut stmt)
 		}
 		ast.While {
-			g.while_stmt(stmt)
+			g.while_stmt(mut stmt)
 		}
 		ast.ExprStmt {
-			var_data := g.get_operand_from_expr(&stmt.expr)
+			var_data := g.get_operand_from_expr(mut &stmt.expr)
 			g.free_temp(var_data)
 		}
 		ast.AssignStmt {
-			g.assign(stmt)
+			g.assign(mut stmt)
 		}
 		ast.VarDecl {
-			g.var_decl(stmt)
+			g.var_decl(mut stmt)
 		}
 		ast.Comment {}
 	}

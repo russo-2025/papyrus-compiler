@@ -20,9 +20,9 @@ pub fn (e EmptyExpr) str() string {
 pub struct CastExpr {
 pub:
 	pos			token.Position
-	expr		Expr
 	type_name	string
 pub mut:
+	expr		Expr
 	typ			ast.Type
 }
 
@@ -80,9 +80,9 @@ pub mut:
 pub struct RedefinedOptionalArg {
 pub:
 	name	string
-	expr	Expr
 	pos		token.Position
 pub mut:
+	expr	Expr
 	is_used	bool // used to search for unused redefined optional arguments
 }
 
@@ -118,17 +118,18 @@ pub mut:
 //arr[1]
 pub struct IndexExpr {
 pub:
-	left	Expr
-	index	Expr
 	pos		token.Position
 pub mut:
+	left	Expr
+	index	Expr
 	typ		ast.Type
 }
 
 pub struct ParExpr {
 pub:
-	expr Expr
 	pos  token.Position
+pub mut:
+	expr Expr
 }
 
 // See: token.Kind.is_prefix
@@ -146,8 +147,9 @@ pub struct ArrayInit {
 pub:
 	typ			ast.Type
 	elem_type	ast.Type
-	len			Expr
 	pos			token.Position
+pub mut:
+	len			Expr
 }
 
 pub fn (expr Expr) is_literal() bool {

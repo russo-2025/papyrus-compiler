@@ -11,13 +11,13 @@ pub struct Checker {
 	pref				&pref.Preferences
 pub mut:
 	table				&ast.Table
-	file				&ast.File = 0
+	file				&ast.File = unsafe { 0 }
 	errors				[]errors.Error
 	warnings			[]errors.Warning
 
 	inside_fn			bool
 	inside_property		bool
-	cur_fn				&ast.FnDecl = 0
+	cur_fn				&ast.FnDecl = unsafe { 0 }
 	cur_scope			&ast.Scope = voidptr(0)
 	cur_obj_name		string
 	cur_parent_obj_name	string
@@ -35,19 +35,19 @@ pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {
 	}
 }
 
-pub fn (mut c Checker) check_files(ast_files []ast.File) {
+pub fn (mut c Checker) check_files(mut ast_files []ast.File) {
 	for i in 0 .. ast_files.len {
-		file := unsafe { &ast_files[i] }
-		c.check(file)
+		mut file := unsafe { &ast_files[i] }
+		c.check(mut file)
 	}
 }
 
-pub fn (mut c Checker) check(ast_file &ast.File) {
+pub fn (mut c Checker) check(mut ast_file &ast.File) {
 	c.file = ast_file
 	c.cur_scope = c.file.scope
 
-	for stmt in ast_file.stmts {
-		c.top_stmt(stmt)
+	for mut stmt in ast_file.stmts {
+		c.top_stmt(mut stmt)
 	}
 }
 
@@ -82,7 +82,7 @@ pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 	s1 := c.table.get_type_symbol(t1)
 	s2 := c.table.get_type_symbol(t2)
 
-	if s1 == 0 || s2 == 0 {
+	if isnil(s1) || isnil(s2) {
 		return false
 	}
 	
@@ -103,7 +103,7 @@ pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 	s1 := c.table.get_type_symbol(t1)
 	s2 := c.table.get_type_symbol(t2)
 
-	if s1 == 0 || s2 == 0 {
+	if isnil(s1) || isnil(s2) {
 		return false
 	}
 

@@ -97,10 +97,11 @@ pub mut:
 
 pub struct IfBranch {
 pub:
-	cond		Expr
 	pos			token.Position
 	stmts		[]Stmt
 	scope		&Scope
+pub mut:
+	cond		Expr
 }
 
 pub struct If {
@@ -113,15 +114,17 @@ pub:
 pub struct While {
 pub:
 	pos		token.Position
-	cond	Expr
 	stmts	[]Stmt
 	scope	&Scope
+pub mut:
+	cond	Expr
 }
 
 pub struct ExprStmt {
 pub:
-	expr     Expr
 	pos      token.Position
+pub mut:
+	expr     Expr
 }
 
 pub struct AssignStmt {

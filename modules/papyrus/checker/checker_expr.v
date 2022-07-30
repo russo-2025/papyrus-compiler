@@ -2,7 +2,7 @@ module checker
 
 import papyrus.ast
 
-pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
+pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	
 	match mut node {
 		ast.InfixExpr {
@@ -13,7 +13,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 				c.error("invalid prefix operator: `$node.op`",  node.pos)
 			}
 
-			node.right_type = c.expr(node.right)
+			node.right_type = c.expr(mut node.right)
 
 			if node.right is ast.EmptyExpr {
 				c.error("invalid right operand in prefix expression(`$node.op`)",  node.pos)
@@ -57,7 +57,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 				c.error("invalid expression",  node.pos)
 			}
 
-			return c.expr(node.expr)
+			return c.expr(mut node.expr)
 		}
 		ast.NoneLiteral {
 			return ast.none_type
@@ -95,7 +95,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			return c.call_expr(mut node)
 		}
 		ast.ArrayInit {
-			if node.len is ast.IntegerLiteral {
+			if mut node.len is ast.IntegerLiteral {
 				length := node.len.val.int()
 				if length < 1 || length > 128 {
 					c.error("size out of possible range (1-128), use papyrusutil or something similar for larger arrays",  node.pos)
@@ -107,20 +107,20 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			return node.typ
 		}
 		ast.IndexExpr {
-			index_type := c.expr(node.index)
+			index_type := c.expr(mut node.index)
 
 			if index_type != ast.int_type {
 				c.error("index can only be a number",  node.pos)
 			}
 
-			if node.left is ast.Ident {
+			if mut node.left is ast.Ident {
 				if obj := c.cur_scope.find_var(node.left.name) {
 					if node.pos.pos > obj.pos.pos + obj.pos.len {
 						node.typ = obj.typ
 
 						sym := c.table.get_type_symbol(node.typ)
 						
-						if sym == 0 || sym.kind != .array || sym.info !is ast.Array {
+						if isnil(sym) || sym.kind != .array || sym.info !is ast.Array {
 							c.error("invalid type in index expression",  node.pos)
 						}
 						else {
@@ -139,11 +139,11 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			}
 		}
 		ast.SelectorExpr {
-			node.typ = c.expr(node.expr)
+			node.typ = c.expr(mut node.expr)
 			mut sym := c.table.get_type_symbol(node.typ)
 
 			if node.field_name.to_lower() == "length" {
-				if sym == 0 || sym.kind != .array {
+				if isnil(sym)|| sym.kind != .array {
 					c.error("`.Length` property is only available for arrays",  node.pos)
 				}
 
@@ -175,7 +175,7 @@ pub fn (mut c Checker) expr(node ast.Expr) ast.Type {
 			return node.typ
 		}
 		ast.CastExpr {
-			expr_type := c.expr(node.expr)
+			expr_type := c.expr(mut node.expr)
 
 			idx := c.table.find_type_idx(node.type_name)
 			if idx > 0 {
@@ -203,8 +203,8 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 		c.error("invalid infix operator: `$node.op`",  node.pos)
 	}
 
-	node.left_type = c.expr(node.left)
-	node.right_type = c.expr(node.right)
+	node.left_type = c.expr(mut node.left)
+	node.right_type = c.expr(mut node.right)
 
 	if node.right is ast.EmptyExpr {
 		c.error("invalid right operand in infix expression(`$node.op`)",  node.pos)
@@ -407,7 +407,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		if node.left is ast.Ident {
 			left = (node.left as ast.Ident).name
 		}
-		typ = c.expr(node.left)
+		typ = c.expr(mut node.left)
 	}
 
 	if left == '' {
@@ -437,11 +437,11 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 
 				lname := param.name.to_lower()
 				if lname in node.redefined_args {
-					r_arg := node.redefined_args[lname]
+					mut r_arg := &(node.redefined_args[lname])
 
 					node.args << ast.CallArg {
 						expr: r_arg.expr
-						typ: c.expr(r_arg.expr)
+						typ: c.expr(mut r_arg.expr)
 						pos: r_arg.pos
 					}
 
@@ -508,7 +508,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 
 		mut i := 0
 		for i < node.args.len {
-			arg_typ := c.expr(node.args[i].expr)
+			arg_typ := c.expr(mut node.args[i].expr)
 			node.args[i].typ = arg_typ
 			func_arg_type := func.params[i].typ
 			
