@@ -126,3 +126,12 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] multi line
   - [ ] documentation comments
 - [ ] Line Terminators `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
+
+## Links to similar projects
+
+- [Caprica](https://github.com/Orvid/Caprica)
+A compiler for the Papyrus scripting language used by the Creation Engine.
+- [Champollion](https://github.com/Orvid/Champollion)
+A PEX to Papyrus Decompiler for Fallout 4
+- [PapyrusDotNet](https://github.com/zerratar/PapyrusDotNet)
+PapyrusDotNet - A .NET Papyrus Compiler for Fallout 4 and Skyrim
