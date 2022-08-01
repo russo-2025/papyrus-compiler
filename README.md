@@ -121,7 +121,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] getting current state `GetState`
   - [ ] effect of states on functions and events???
 - [ ] Imports [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
-- [ ] Comments
+- [x] Comments
   - [x] single line
   - [x] multi line
   - [ ] documentation comments
