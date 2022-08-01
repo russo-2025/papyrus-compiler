@@ -77,7 +77,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] object variables
   - [x] function variables
   - [x] default values
-- [ ] Arrays [docs 1](https://www.creationkit.com/index.php?title=Array_Reference) [docs 2](https://www.creationkit.com/index.php?title=Arrays_(Papyrus))
+- [x] Arrays [docs 1](https://www.creationkit.com/index.php?title=Array_Reference) [docs 2](https://www.creationkit.com/index.php?title=Arrays_(Papyrus))
   - [x] declaration
   - [x] constructor
   - [x] length
@@ -86,7 +86,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [ ] casting??? [docs](https://www.creationkit.com/index.php?title=Arrays_(Papyrus)#Casting_Arrays)
   - [ ] `MyObjectArray[iElement].Disable()`???
 - [x] `if` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
-- [ ] `while` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
+- [x] `while` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
   - [ ] Variable Lifetime??? [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_and_Variable_Lifetime)
 - [x] Functions [docs](https://www.creationkit.com/index.php?title=Function_Reference)
   - [x] declaration
@@ -99,11 +99,11 @@ papyrus -read "../test-files/compiled/ABCD.pex"
     - [x] global
   - [x] default value `Function IncrementValue(int howMuch = 1)` `CallFunc(5.0, 2.4, d = 2.0)`
   - [x] `return`
-- [ ] Events [docs](https://www.creationkit.com/index.php?title=Events_Reference)
+- [x] Events [docs](https://www.creationkit.com/index.php?title=Events_Reference)
   - [x] declaration
   - [x] special variables (`Self`, `Parent`) 
   - [ ] calling???
-- [ ] Properties [docs](https://www.creationkit.com/index.php?title=Property_Reference)
+- [x] Properties [docs](https://www.creationkit.com/index.php?title=Property_Reference)
   - [x] declaration
   - [x] read only
   - [x] assign
@@ -112,7 +112,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
     - [ ] Conditional
     - [x] Auto
     - [x] AutoReadOnly
-- [ ] States [docs](https://www.creationkit.com/index.php?title=State_Reference)
+- [x] States [docs](https://www.creationkit.com/index.php?title=State_Reference)
   - [x] declaration
   - [ ] flag `auto` ...
   - [x] empty state (default)
