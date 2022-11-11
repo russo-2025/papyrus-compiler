@@ -270,7 +270,7 @@ fn (mut r Reader) read_instruction() ?Instruction{
 		return error("invalid opcode: 0x" + inst.op.hex())
 	}
 
-	mut len := get_count_arguments(OpCode(inst.op))
+	mut len := get_count_arguments(unsafe { OpCode(inst.op) })
 
 	mut i := 0
 	for i < len{
@@ -278,7 +278,7 @@ fn (mut r Reader) read_instruction() ?Instruction{
 		i++
 	}
 
-	match OpCode(inst.op){
+	match unsafe { OpCode(inst.op) } {
 		.callmethod,
 		.callparent,
 		.callstatic {

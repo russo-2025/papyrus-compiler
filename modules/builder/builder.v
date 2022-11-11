@@ -51,7 +51,7 @@ pub fn compile(pref &pref.Preferences) {
 		return
 	}
 
-	os.is_writable_folder(pref.paths[0]) or {
+	os.ensure_folder_is_writable(pref.paths[0]) or {
 		panic(err)
 	}
 

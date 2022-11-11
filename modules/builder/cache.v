@@ -13,7 +13,7 @@ pub mut:
 fn read_cache(path string) &CacheFile {
 	mut file := os.open(path) or { panic(err) }
 	mut cache := CacheFile{}
-	file.read_struct(cache) or { panic(err) }
+	file.read_struct(mut cache) or { panic(err) }
 	file.close()
 	return &cache
 }

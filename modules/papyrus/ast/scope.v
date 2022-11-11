@@ -38,7 +38,7 @@ pub fn new_scope(parent &Scope, start_pos int) &Scope {
 pub fn (mut s Scope) find(name string) ?ScopeObject {
 	lname := name.to_lower()
 	
-	mut current_scope := &s
+	mut current_scope := &Scope(&s)
 	for {
 		if lname in current_scope.objects {
 			return current_scope.objects[lname] or { panic('key not found') }
