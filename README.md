@@ -16,7 +16,7 @@ v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused -p
 
 ```papyrus [command] [flags]```
 
-### Examples:
+#### Examples:
 
 ```
 papyrus -compile -nocache -i "../test-files/compiler" -o "../test-files/compiled"
@@ -24,7 +24,7 @@ papyrus -compile -nocache -crutches -i "../../RH-workspace/scripts" -o ""../../R
 papyrus -read "../test-files/compiled/ABCD.pex"
 ```
 
-### Commands:
+#### Commands:
 
 ```
 -compile        `papyrus -compile [build flags]`
@@ -33,7 +33,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
                     `papyrus -read "path-to-file.pex"`
 ```
 
-### Flags:
+#### Flags:
 
 ```
 -i, -input			folder with files(*.psc) to compile
@@ -50,20 +50,16 @@ papyrus -read "../test-files/compiled/ABCD.pex"
 			        	(only the `-i` and `-o` flags are available)
 ```
 
-## List of language syntax features
+## List of supported language features
 
 - [x] Script header line
-  - [x] extends
+  - [x] `Extends`
   - [x] flags
 - [x] Literals [docs](https://www.creationkit.com/index.php?title=Literals_Reference)
   - [x] boolean
   - [x] integer
   - [x] float
   - [x] string
-    - [ ] `\n` Newline
-    - [ ] `\t` Tab
-    - [ ] `\\` Backslash
-    - [ ] `\"` Double quote
   - [x] none
 - [x] Operators [docs](https://www.creationkit.com/index.php?title=Operator_Reference)
   - [x] `= += -= *= /= %=`
@@ -91,13 +87,10 @@ papyrus -read "../test-files/compiled/ABCD.pex"
 - [x] Functions [docs](https://www.creationkit.com/index.php?title=Function_Reference)
   - [x] declaration
   - [x] flags
-    - [x] global
-    - [x] native
+    - [x] `Global`
+    - [x] `Native`
   - [x] special variables (`Self`, `Parent`)
-  - [x] calling
-    - [x] method
-    - [x] global
-  - [x] default value `Function IncrementValue(int howMuch = 1)` `CallFunc(5.0, 2.4, d = 2.0)`
+  - [x] default arguments `Function IncrementValue(int howMuch = 1)` `CallFunc(5.0, 2.4, d = 2.0)`
   - [x] `return`
 - [x] Events [docs](https://www.creationkit.com/index.php?title=Events_Reference)
   - [x] declaration
@@ -107,15 +100,15 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] declaration
   - [x] read only
   - [x] assign
-  - [ ] flags
-    - [ ] Hidden
-    - [ ] Conditional
-    - [x] Auto
-    - [x] AutoReadOnly
+  - [x] flags
+    - [ ] `Hidden`
+    - [ ] `Conditional`
+    - [x] `Auto`
+    - [x] `AutoReadOnly`
 - [x] States [docs](https://www.creationkit.com/index.php?title=State_Reference)
   - [x] declaration
   - [ ] flag `auto` ...
-  - [x] empty state (default)
+  - [x] empty state (default state)
   - [x] `OnBeginState`
   - [x] switching states `GotoState`
   - [x] getting current state `GetState`
@@ -125,7 +118,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] single line
   - [x] multi line
   - [ ] documentation comments
-- [ ] Line Terminators `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
+- [x] Line Terminators `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
 
 ## Links to similar projects
 
