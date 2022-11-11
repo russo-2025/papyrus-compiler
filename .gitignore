@@ -5,8 +5,5 @@ bin/*.ilk
 bin/*.rar
 test-files/**
 TODO.txt
-compile RH project.bat
-compile vm tests.bat
-compile test scripts.bat
 *.bat
 vls.log
