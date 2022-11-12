@@ -9,7 +9,7 @@ The Papyrus compiler is based on the [V language compiler](https://github.com/vl
 ## Building
 
 ```bash
-v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused -path "@vlib|@vmodules|modules" "compiler"
+v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused "compiler"
 ```
 
 ## Usage
