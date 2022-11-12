@@ -38,10 +38,6 @@ mut:
 	is_extended_lang	bool
 }
 
-pub fn (mut p Parser) set_path(path string) {
-	p.path = path
-}
-
 pub fn parse_files(paths []string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) []ast.File {
 	mut files := []ast.File{}
 
@@ -117,6 +113,10 @@ pub fn (mut p Parser) parse() &ast.File {
 		last_mod_time: os.file_last_mod_unix(p.path)
 		used_indents: p.used_indents
 	}
+}
+
+pub fn (mut p Parser) set_path(path string) {
+	p.path = path
 }
 
 [inline]
@@ -715,7 +715,6 @@ pub fn (mut p Parser) error(s string) {
 }
 
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
-
 	ferror := util.formatted_error('parser error:', s, p.path, pos)
 	eprintln(ferror)
 	exit(1)
