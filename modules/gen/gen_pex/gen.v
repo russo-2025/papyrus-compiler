@@ -1,4 +1,4 @@
-module pex
+module gen_pex
 
 import papyrus.ast
 import papyrus.token
@@ -26,7 +26,7 @@ pub mut:
 	
 	cur_obj			&pex.Object = unsafe{ 0 }
 	cur_state		&pex.State = unsafe{ 0 }
-	cur_fn			&pex.Function = unsafe{ 0 }
+	cur_fn			&pex.Function = unsafe{ voidptr(0) }
 
 	default_obj		&pex.Object = unsafe{ 0 }
 	default_state	&pex.State = unsafe{ 0 }

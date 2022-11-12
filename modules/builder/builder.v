@@ -7,7 +7,7 @@ import pref
 import papyrus.ast
 import papyrus.parser
 import papyrus.checker
-import gen.pex as gen_pex
+import gen.gen_pex
 
 const (
 	builtin_path = os.real_path('./builtin')
