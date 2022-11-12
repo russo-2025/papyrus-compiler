@@ -120,8 +120,10 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [ ] documentation comments
 - [x] Line Terminators `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
 
-## Links to similar projects
+## Links
 
+- [Creation Kit Papyrus Reference](https://www.creationkit.com/index.php?title=Category:Papyrus)
+- [Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format)
 - [Caprica](https://github.com/Orvid/Caprica)
 A compiler for the Papyrus scripting language used by the Creation Engine.
 - [Champollion](https://github.com/Orvid/Champollion)
