@@ -33,7 +33,7 @@ fn (mut w Writer) write_pex() {
 	w.write_byte(w.pex.major_version)
 	w.write_byte(w.pex.minor_version)
 	w.write_u16(w.pex.game_id)
-	w.write_u64(w.pex.compilation_time)
+	w.write_i64(w.pex.compilation_time)
 	
 	w.write_string(w.pex.src_file_name)
 	w.write_string(w.pex.user_name)
@@ -51,7 +51,7 @@ fn (mut w Writer) write_pex() {
 
 	//debug info обязательна?!
 	w.write_byte(1)
-	w.write_u64(1616261626)
+	w.write_i64(1616261626)
 
 	mut debug_fns := []DebugFunction{}
 

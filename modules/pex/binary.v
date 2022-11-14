@@ -35,8 +35,8 @@ fn (mut r Reader) read_string_ref() ?u16 {
 }
 
 [inline]
-fn (mut r Reader) read_time() u64 {
-	return r.read_u64()
+fn (mut r Reader) read_time() i64 {
+	return r.read_i64()
 }
 
 [inline]
@@ -58,10 +58,10 @@ fn (mut r Reader) read_f32() f32 {
 }
 
 [inline]
-fn (mut r Reader) read_u64() u64 {
+fn (mut r Reader) read_i64() i64 {
 	val := binary.big_endian_u64(r.bytes[r.pos..r.pos+8])
 	r.pos += 8
-	return val
+	return i64(val)
 }
 
 [inline]
@@ -119,14 +119,14 @@ fn (mut w Writer) write_u32(v u32) {
 }
 
 [inline]
-fn (mut w Writer) write_u64(v u64) {
-	w.bytes << u8(v>>u64(56))
-	w.bytes << u8(v>>u64(48))
-	w.bytes << u8(v>>u64(40))
-	w.bytes << u8(v>>u64(32))
-	w.bytes << u8(v>>u64(24))
-	w.bytes << u8(v>>u64(16))
-	w.bytes << u8(v>>u64(8))
+fn (mut w Writer) write_i64(v i64) {
+	w.bytes << u8(v>>i64(56))
+	w.bytes << u8(v>>i64(48))
+	w.bytes << u8(v>>i64(40))
+	w.bytes << u8(v>>i64(32))
+	w.bytes << u8(v>>i64(24))
+	w.bytes << u8(v>>i64(16))
+	w.bytes << u8(v>>i64(8))
 	w.bytes << u8(v)
 }
 

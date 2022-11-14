@@ -222,19 +222,6 @@ pub mut:
 	args	[]VariableData	//[changes depending on opcode]	Length is dependent on opcode, also varargs
 }
 
-pub struct PexHeader {
-pub mut:
-	magic_number		u32		// 0xFA57C0DE (FASTCODE?)
-	major_version		byte	// 3
-	minor_version		byte	// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
-	game_id				u16		// 1 = Skyrim?
-	compilation_time	u64		// the compilation time
-	
-	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
-	user_name			string	// Username used to compile the script
-	machine_name		string	// Machine name used to compile the script
-}
-
 [heap]
 pub struct PexFile {
 pub mut:
@@ -242,7 +229,7 @@ pub mut:
 	major_version		byte	// 3
 	minor_version		byte	// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
 	game_id				u16		// 1 = Skyrim?
-	compilation_time	u64		// the compilation time
+	compilation_time	i64
 	
 	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
 	user_name			string	// Username used to compile the script
@@ -254,7 +241,7 @@ pub mut:
 
 	//Debug Info
 	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
-	modification_time 	u64 // time_t
+	modification_time 	i64 // time_t
 	function_count		u16
 	functions			[]DebugFunction
 

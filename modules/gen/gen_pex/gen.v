@@ -5,6 +5,9 @@ import papyrus.token
 import pex
 import pref
 
+import os
+import time
+
 struct TempVariable {
 pub mut:
 	typ		ast.Type
@@ -42,29 +45,14 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 			major_version: 3
 			minor_version: 2
 			game_id: 1
-			compilation_time: 1616248665
-			
+			compilation_time: time.utc().unix_time()
 			src_file_name: file.path_base
-			user_name: "Yurnero"
-			machine_name: "DESKTOP-7NV0EKV"
-
-			//string_table: []string{}
-
-			//has_debug_info: 0
-
-			//user_flags: []pex.UserFlag{}
-			//objects: []pex.Object{}
+			user_name: os.loginname()
+			machine_name: os.hostname()
 		}
 
 		table: table
 		pref: pref
-		
-		//cur_obj: &pex.Object{}
-		//cur_state: &pex.State{}
-		//cur_fn: &pex.Function{}
-
-		//default_obj: &pex.Object{}
-		//default_state: &pex.State{}
 	}
 	
 	g.gen_objects()
@@ -73,7 +61,6 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 }
 
 fn (mut g Gen) gen_objects() {
-	
 	for mut stmt in g.file.stmts {
 		match mut stmt {
 			ast.ScriptDecl {
@@ -132,7 +119,6 @@ fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 
 [inline]
 fn (mut g Gen) gen_string_ref(str string) u16 {
-	
 	mut index := u16(0)
 
 	if str in g.string_table {
@@ -182,7 +168,6 @@ fn (mut g Gen) create_state(name string) &pex.State {
 }
 
 fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
-
 	//GetState
 	state.functions << pex.Function{
 		name: g.gen_string_ref("GetState")
