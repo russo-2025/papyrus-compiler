@@ -60,6 +60,29 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 	pex.write(output_file_path, g.pex)
 }
 
+pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFile {
+	mut g := Gen{
+		file: file
+		pex: &pex.PexFile{
+			magic_number: 0xFA57C0DE
+			major_version: 3
+			minor_version: 2
+			game_id: 1
+			compilation_time: time.utc().unix_time()
+			src_file_name: file.path_base
+			user_name: os.loginname()
+			machine_name: os.hostname()
+		}
+
+		table: table
+		pref: pref
+	}
+	
+	g.gen_objects()
+
+	return g.pex
+}
+
 fn (mut g Gen) gen_objects() {
 	for mut stmt in g.file.stmts {
 		match mut stmt {

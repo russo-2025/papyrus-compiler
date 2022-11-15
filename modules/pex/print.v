@@ -13,10 +13,6 @@ fn print_end_block(name string) {
 	println("==============================")
 }
 
-fn (p PexFile) get_string(i int) string {
-	return p.string_table[i]
-}
-
 fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 

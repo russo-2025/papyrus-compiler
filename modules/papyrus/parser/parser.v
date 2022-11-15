@@ -65,7 +65,7 @@ pub fn parse_file(path string, table &ast.Table, pref &pref.Preferences, global_
 	return p.parse()
 }
 
-pub fn parse_text(text string, path string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_text(text string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner(text, pref)
 		pref: pref
@@ -77,7 +77,7 @@ pub fn parse_text(text string, path string, table &ast.Table, pref &pref.Prefere
 		table: table
 	}
 
-	p.set_path(path)
+	p.set_path('::in-memory::')
 
 	return p.parse()
 }

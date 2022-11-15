@@ -312,3 +312,63 @@ fn get_count_arguments(op OpCode) int {
 		}
 	}
 }
+
+fn (p PexFile) get_string(i int) string {
+	assert i < p.string_table.len
+	assert i < p.string_table_count
+	return p.string_table[i]
+}
+
+fn (p PexFile) get_object_by_name(name string) ?&Object {
+	for i := 0; i < p.objects.len; i++ {
+		obj_name := p.get_string(p.objects[i].name_index)
+		
+		if name == obj_name {
+			return unsafe { &p.objects[i] }
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) get_state(obj &Object, name string) ?&State {
+	for i := 0; i < obj.data.states.len; i++ {
+		state_name := p.get_string(obj.data.states[i].name)
+		if state_name == name {
+			return unsafe { &obj.data.states[i] }
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) get_default_state(obj &Object) ?&State {
+	default_state_name := p.get_string(obj.data.auto_state_name)
+
+	for i := 0; i < obj.data.states.len; i++ {
+		state_name := p.get_string(obj.data.states[i].name)
+		if state_name == default_state_name {
+			return unsafe { &obj.data.states[i] }
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) get_function(state &State, name string) ?&Function {
+	for i := 0; i < state.functions.len; i++ {
+		state_name := p.get_string(state.functions[i].name)
+		if state_name == name {
+			return unsafe { &state.functions[i] }
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) find_function(obj_name string, func_name string) ?&Function {
+	obj := p.get_object_by_name(obj_name) or { return none }
+	default_state := p.get_default_state(obj) or { return none }
+	func := p.get_function(default_state, func_name) or { return none }
+	return func
+}
