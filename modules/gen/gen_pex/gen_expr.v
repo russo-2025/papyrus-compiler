@@ -179,7 +179,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 		//имя скрипта
 		args << pex.VariableData{
 			typ: 1
-			string_id: g.gen_string_ref(expr.obj_name.to_lower())
+			string_id: g.gen_string_ref(expr.obj_name)
 		}
 	}
 
@@ -191,16 +191,27 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 
 	if calltype == .callmethod {
 		//у кого вызывать метод
-		left := g.get_operand_from_expr(mut &expr.left)
-		args << left
-		g.free_temp(left)
+
+		left := expr.left
+
+		if left is ast.EmptyExpr {
+			args << pex.VariableData{
+				typ: 1
+				string_id:  g.gen_string_ref("self")
+			}
+		}
+		else {
+			left_obj := g.get_operand_from_expr(mut &expr.left)
+			args << left_obj
+			g.free_temp(left_obj)
+		}
 	}
 
 	//переменная для результата
 	args << var_data
 
 	//кол-во дополнительных параметров
-	args << pex.VariableData{ typ:3, integer: expr.args.len}
+	args << pex.VariableData{ typ:3, integer: expr.args.len }
 
 	mut vars := []pex.VariableData{}
 
@@ -450,7 +461,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 			g.gen_cast(var_data, expr_data)
 		}
 		ast.EmptyExpr {
-			var_data = pex.VariableData{ typ: 0 }
+			panic("wtf") //var_data = pex.VariableData{ typ: 0 }
 		}
 	}
 
