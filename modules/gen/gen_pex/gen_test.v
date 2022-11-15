@@ -6,13 +6,18 @@ import gen_pex
 import pref
 
 fn compile(src string) &pex.PexFile {
+	parent_src :=
+		"Scriptname CDFG\n" +
+		"Function ParentFoz(int n1, int n2)\n" +
+		"EndFunction"
+
 	full_src :=
-		"Scriptname ABCD\n" +
+		"Scriptname ABCD extends CDFG\n" +
 		"Function Foo(int n1, int n2) global\n" +
 		"EndFunction\n" +
 		"Function Foz(int n1, int n2)\n" +
 		"EndFunction\n" +
-		"Function Bar(string v)\n" +
+		"Function Bar(string v, ABCD obj)\n" +
 		"$src\n" +
 		"EndFunction\n"
 
@@ -28,9 +33,13 @@ fn compile(src string) &pex.PexFile {
 	global_scope := &ast.Scope{
 		parent: 0
 	}
-
+	
+	mut parent_file := parser.parse_text(parent_src, table, prefs, global_scope)
 	mut file := parser.parse_text(full_src, table, prefs, global_scope)
+
 	mut c := checker.new_checker(table, prefs)
+
+	c.check(mut parent_file)
 	c.check(mut file)
 
 	assert c.errors.len == 0
@@ -42,7 +51,7 @@ fn compile(src string) &pex.PexFile {
 fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
 	func := pex_file.find_function("ABCD", "Bar") or { panic("function not found") }
 
-	$if true {
+	$if false {
 		println("")
 		for instr in func.info.instructions {
 			pex_file.print_instruction(instr, 0)
@@ -53,7 +62,7 @@ fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
 	return func.info.instructions
 }
 
-fn test_static_call1() {
+fn test_static_call() {
 	//src:			Foo(11, 12)
 	//original:		opcode: 'callstatic', args: [ident(ABCD), ident(Foo), ident(::NoneVar), integer(2), integer(11), integer(12)]
 
@@ -111,6 +120,63 @@ fn test_method_call() {
 	assert ins[0].args[3].integer == 2
 	assert ins[0].args[4].integer == 17
 	assert ins[0].args[5].integer == 18
+
+	//src:			obj.Foz(25, 26)
+    //original:		opcode: 'callmethod', args: [ident(Foz), ident(obj), ident(::NoneVar), integer(2), integer(25), integer(26)]
+
+	pex_file = compile("obj.Foz(25, 26)")
+	ins = get_instructions(pex_file)
+
+	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
+	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
+	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
+	assert ins[0].args[3].integer == 2
+	assert ins[0].args[4].integer == 25
+	assert ins[0].args[5].integer == 26
+}
+
+fn test_parent_method_call() {
+	//src:			ParentFoz(19, 20)
+	//original:		opcode: 'callmethod', args: [ident(ParentFoz), ident(self), ident(::NoneVar), integer(2), integer(19), integer(20)]
+
+	mut pex_file := compile("ParentFoz(19, 20)")
+	mut ins := get_instructions(pex_file)
+
+	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
+	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
+	assert ins[0].args[3].integer == 2
+	assert ins[0].args[4].integer == 19
+	assert ins[0].args[5].integer == 20
+
+	//src:			Parent.ParentFoz(21, 22)
+	//original:		opcode: 'callparent', args: [ident(ParentFoz), ident(::NoneVar), integer(2), integer(21), integer(22)]
+
+	pex_file = compile("Parent.ParentFoz(21, 22)")
+	ins = get_instructions(pex_file)
+
+	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callparent
+	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].string_id) == "::NoneVar"
+	assert ins[0].args[2].integer == 2
+	assert ins[0].args[3].integer == 21
+	assert ins[0].args[4].integer == 22
+
+	//src:			obj.ParentFoz(23, 24)
+    //original:		opcode: 'callmethod', args: [ident(ParentFoz), ident(obj), ident(::NoneVar), integer(2), integer(23), integer(24)]
+
+	pex_file = compile("obj.ParentFoz(23, 24)")
+	ins = get_instructions(pex_file)
+
+	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
+	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
+	assert ins[0].args[3].integer == 2
+	assert ins[0].args[4].integer == 23
+	assert ins[0].args[5].integer == 24
 }
 
 fn test_foo() {

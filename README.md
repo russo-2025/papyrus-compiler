@@ -15,7 +15,7 @@ v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused co
 ## Testing
 
 ```bash
-v test modules
+v -stats test modules
 ```
 
 ## Usage
