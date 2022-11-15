@@ -283,8 +283,9 @@ fn (mut r Reader) read_instruction() ?Instruction{
 		.callparent,
 		.callstatic {
 			
-			r.read_byte() //wtf??
-			len = int(r.read_u32())
+			var_len := r.read_variable_data() or { return err }
+			inst.args << var_len
+			len = var_len.integer
 			
 			i = 0
 			for i < len{
