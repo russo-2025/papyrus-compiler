@@ -16,9 +16,9 @@ fn print_end_block(name string) {
 fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
-	obj_name := p.get_string(f.object_name_index)
-	state_name := p.get_string(f.state_name_index)
-	fn_name := p.get_string(f.function_name_index)
+	obj_name := p.get_string(f.object_name)
+	state_name := p.get_string(f.state_name)
+	fn_name := p.get_string(f.function_name)
 	fn_type := f.function_type
 	instruction_count := f.instruction_count
 	//line_numbers := "..." //f.line_numbers
@@ -31,7 +31,7 @@ fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 }
 
 fn (p PexFile) print_flag(flg UserFlag) {
-	name := p.get_string(flg.name_index)
+	name := p.get_string(flg.name)
 	index := "0x" + flg.flag_index.hex()
 	print("flag{ name: '$name', index: $index }")
 }
@@ -232,16 +232,16 @@ fn (p PexFile) print_property(prop Property, indentSize int) {
 fn (p PexFile) print_object(obj Object, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 	
-	name := p.get_string(obj.name_index)
+	name := p.get_string(obj.name)
 	size := "0x" + obj.size.hex()
-	parent := p.get_string(obj.data.parent_class_name)
-	doc := p.get_string(obj.data.docstring)
-	user_flags := "0x" + obj.data.user_flags.hex()
-	auto_state_name := p.get_string(obj.data.auto_state_name)
+	parent := p.get_string(obj.parent_class_name)
+	doc := p.get_string(obj.docstring)
+	user_flags := "0x" + obj.user_flags.hex()
+	auto_state_name := p.get_string(obj.auto_state_name)
 
-	vars_count := obj.data.num_variables
-	props_count := obj.data.num_properties
-	states_count := obj.data.num_states
+	vars_count := obj.num_variables
+	props_count := obj.num_properties
+	states_count := obj.num_states
 	
 	println(tab + "name: '$name'")
 	println(tab + "size: $size")
@@ -253,8 +253,8 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	println(tab + "variables count: '$vars_count'")
 	println(tab + "variables:")
 	mut i := 0
-	for i < obj.data.num_variables {
-		p.print_variable(obj.data.variables[i], indentSize + 1)
+	for i < obj.num_variables {
+		p.print_variable(obj.variables[i], indentSize + 1)
 		println("")
 		i++
 	}
@@ -262,8 +262,8 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	println(tab + "properties count: '$props_count'")
 	println(tab + "properties: ")
 	i = 0
-	for i < obj.data.num_properties {
-		p.print_property(obj.data.properties[i], indentSize + 1)
+	for i < obj.num_properties {
+		p.print_property(obj.properties[i], indentSize + 1)
 		println("")
 		i++
 	}
@@ -273,7 +273,7 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	
 	i = 0
 	for i < states_count {
-		p.print_state(obj.data.states[i], indentSize + 1)
+		p.print_state(obj.states[i], indentSize + 1)
 		i++
 	}
 }
@@ -286,7 +286,7 @@ fn (p PexFile) get_formated_script_flags() string {
 		flag := p.user_flags[i]
 		str += "0x" + flag.flag_index.hex()
 		str += " - "
-		str += p.get_string(flag.name_index)
+		str += p.get_string(flag.name)
 		
 		if i < p.user_flags.len - 1 {
 			str += ", "
@@ -375,7 +375,7 @@ pub fn (p PexFile) print() {
 
 pub fn (p PexFile) print_functions_list() {
 	for object in p.objects {
-		for state in object.data.states {
+		for state in object.states {
 			for func in state.functions {
 				println(p.get_string(func.name))
 			}

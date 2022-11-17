@@ -62,15 +62,15 @@ pub fn read(pref &pref.Preferences) &PexFile {
 		for i < f.function_count {
 			mut d := DebugFunction{}
 
-			d.object_name_index = r.read_string_ref() or {
+			d.object_name = r.read_string_ref() or {
 				r.error(err.msg())
 				return r.pex
 			}
-			d.state_name_index = r.read_string_ref() or {
+			d.state_name = r.read_string_ref() or {
 				r.error(err.msg())
 				return r.pex
 			}
-			d.function_name_index = r.read_string_ref() or {
+			d.function_name = r.read_string_ref() or {
 				r.error(err.msg())
 				return r.pex
 			}
@@ -99,7 +99,7 @@ pub fn read(pref &pref.Preferences) &PexFile {
 		flag_index := r.read<byte>()
 
 		f.user_flags << UserFlag { 
-			name_index: name_index, 
+			name: name_index, 
 			flag_index: flag_index
 		}
 
@@ -129,44 +129,37 @@ pub fn read(pref &pref.Preferences) &PexFile {
 fn (mut r Reader) read_object() ?Object{
 	mut obj := Object{}
 
-	obj.name_index = r.read_string_ref() or { return err }
+	obj.name = r.read_string_ref() or { return err }
 	obj.size = r.read<u32>()
-	obj.data = r.read_object_data() or { return err }
-	return obj
-}
 
-fn (mut r Reader) read_object_data() ?ObjectData{
-	mut data := ObjectData{}
-
-	data.parent_class_name = r.read_string_ref() or { return err }
-	data.docstring = r.read_string_ref() or { return err }
-	data.user_flags = r.read<u32>()
-	data.auto_state_name = r.read_string_ref() or { return err }
+	obj.parent_class_name = r.read_string_ref() or { return err }
+	obj.docstring = r.read_string_ref() or { return err }
+	obj.user_flags = r.read<u32>()
+	obj.auto_state_name = r.read_string_ref() or { return err }
 	
-	data.num_variables = r.read<u16>()
+	obj.num_variables = r.read<u16>()
 
 	mut i := 0
-	for i < data.num_variables{
-		data.variables << r.read_variable() or { return err }
+	for i < obj.num_variables{
+		obj.variables << r.read_variable() or { return err }
 		i++
 	}
 
-	data.num_properties = r.read<u16>()
+	obj.num_properties = r.read<u16>()
 
 	i = 0
-	for i < data.num_properties{
-		data.properties << r.read_property() or { return err }
+	for i < obj.num_properties{
+		obj.properties << r.read_property() or { return err }
 		i++
 	}
-	data.num_states = r.read<u16>()
+	obj.num_states = r.read<u16>()
 
 	i = 0
-	for i < data.num_states{
-		data.states << r.read_state() or { return err }
+	for i < obj.num_states{
+		obj.states << r.read_state() or { return err }
 		i++
 	}
-
-	return data
+	return obj
 }
 
 fn (mut r Reader) read_state() ?State{

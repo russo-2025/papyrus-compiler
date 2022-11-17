@@ -56,12 +56,12 @@ fn (mut w Writer) write_pex() {
 	mut debug_fns := []DebugFunction{}
 
 	for obj in w.pex.objects {
-		for state in obj.data.states {
+		for state in obj.states {
 			for func in state.functions {
 				debug_fns << DebugFunction{
-					object_name_index: obj.name_index
-					state_name_index: state.name
-					function_name_index: func.name
+					object_name: obj.name
+					state_name: state.name
+					function_name: func.name
 					function_type: 0
 					instruction_count: func.info.num_instructions
 					line_numbers: []u16{}
@@ -73,9 +73,9 @@ fn (mut w Writer) write_pex() {
 	w.write(cast_int_to_u16(debug_fns.len))
 
 	for func in debug_fns {
-		w.write(func.object_name_index)
-		w.write(func.state_name_index)
-		w.write(func.function_name_index)
+		w.write(func.object_name)
+		w.write(func.state_name)
+		w.write(func.function_name)
 		w.write(0) //type
 		w.write(func.instruction_count)
 
@@ -90,7 +90,7 @@ fn (mut w Writer) write_pex() {
 	//user flags
 	w.write(cast_int_to_u16(w.pex.user_flags.len))
 	for flag in w.pex.user_flags {
-		w.write(flag.name_index)
+		w.write(flag.name)
 		w.write(flag.flag_index)
 	}
 	
@@ -106,32 +106,32 @@ fn (mut w Writer) write_pex() {
 
 fn (mut w Writer) write_object(obj &pex.Object) {
 	
-	w.write(obj.name_index)
+	w.write(obj.name)
 	start_pos := w.bytes.len
 	w.write(obj.size)
-	w.write(obj.data.parent_class_name)
-	w.write(obj.data.docstring)
-	w.write(obj.data.user_flags)
-	w.write(obj.data.auto_state_name)
+	w.write(obj.parent_class_name)
+	w.write(obj.docstring)
+	w.write(obj.user_flags)
+	w.write(obj.auto_state_name)
 
 	//write variables
-	assert obj.data.num_variables == obj.data.variables.len
-	w.write(cast_int_to_u16(obj.data.variables.len))
-	for var in obj.data.variables {
+	assert obj.num_variables == obj.variables.len
+	w.write(cast_int_to_u16(obj.variables.len))
+	for var in obj.variables {
 		w.write_variable(var)
 	}
 
 	//write properties
-	assert obj.data.num_properties == obj.data.properties.len
-	w.write(cast_int_to_u16(obj.data.properties.len))
-	for prop in obj.data.properties {
+	assert obj.num_properties == obj.properties.len
+	w.write(cast_int_to_u16(obj.properties.len))
+	for prop in obj.properties {
 		w.write_property(prop)
 	}
 
 	//write states
-	assert obj.data.num_states == obj.data.states.len
-	w.write(obj.data.num_states)
-	for state in obj.data.states {
+	assert obj.num_states == obj.states.len
+	w.write(obj.num_states)
+	for state in obj.states {
 		w.write_state(state)
 	}
 

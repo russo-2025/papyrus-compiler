@@ -18,10 +18,10 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	
 	for flag in s.flags {
 		if flag == .key_hidden {
-			g.cur_obj.data.user_flags |= 0b0001
+			g.cur_obj.user_flags |= 0b0001
 		}
 		else if flag == .key_conditional {
-			g.cur_obj.data.user_flags |= 0b0010
+			g.cur_obj.user_flags |= 0b0010
 		}
 		else {
 			panic("invalid flag: `${flag.str()}`")
@@ -30,22 +30,22 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 
 	mut state := g.create_state(token.default_state_name)
 
-	g.cur_obj.data.states << state
-	g.cur_obj.data.num_states++
+	g.cur_obj.states << state
+	g.cur_obj.num_states++
 
-	g.cur_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
-	g.default_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
+	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
+	g.default_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
 	
 	g.add_default_functions_to_state(mut g.default_state)
 
 	g.pex.user_flags << pex.UserFlag{
-		name_index: g.gen_string_ref("hidden")
+		name: g.gen_string_ref("hidden")
 		flag_index: 0
 	}
 	g.pex.user_flag_count++
 
 	g.pex.user_flags << pex.UserFlag{
-		name_index: g.gen_string_ref("conditional")
+		name: g.gen_string_ref("conditional")
 		flag_index: 1
 	}
 	g.pex.user_flag_count++
@@ -55,10 +55,10 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	mut state := g.create_state(s.name)
 
-	g.cur_obj.data.states << state
-	g.cur_obj.data.num_states++
+	g.cur_obj.states << state
+	g.cur_obj.num_states++
 
-	g.cur_state = &g.cur_obj.data.states[g.cur_obj.data.states.len - 1]
+	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
 	
 	for mut func in s.fns {
 		g.fn_decl(mut &func)
@@ -287,14 +287,14 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 			user_flags |= 0b0010
 		}
 
-		g.cur_obj.data.variables << pex.Variable{
+		g.cur_obj.variables << pex.Variable{
 			name: g.gen_string_ref(stmt.name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 			user_flags: user_flags
 			data: g.get_operand_from_expr(mut &stmt.assign.right)
 		}
 
-		g.cur_obj.data.num_variables++
+		g.cur_obj.num_variables++
 	}
 	else {
 		g.cur_fn.info.locals << pex.VariableType{
@@ -368,8 +368,8 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 		}
 	}
 	
-	g.cur_obj.data.properties << prop
-	g.cur_obj.data.num_properties++
+	g.cur_obj.properties << prop
+	g.cur_obj.num_properties++
 }
 
 [inline]

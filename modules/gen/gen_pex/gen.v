@@ -162,23 +162,21 @@ fn (mut g Gen) gen_string_ref(str string) u16 {
 
 fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 	return &pex.Object {
-		name_index: g.gen_string_ref(name)
+		name: g.gen_string_ref(name)
 		size: 0
-		data: pex.ObjectData {
-				parent_class_name: g.gen_string_ref(parent_name)
-				docstring: g.gen_string_ref("")
-				user_flags: 0
-				auto_state_name: g.gen_string_ref(token.default_state_name)
-				
-				num_variables: 0
-				variables: []pex.Variable{}
-				
-				num_properties: 0
-				properties: []pex.Property{}
-				
-				num_states: 0
-				states: []pex.State{}
-		}
+		parent_class_name: g.gen_string_ref(parent_name)
+		docstring: g.gen_string_ref("")
+		user_flags: 0
+		auto_state_name: g.gen_string_ref(token.default_state_name)
+		
+		num_variables: 0
+		variables: []pex.Variable{}
+		
+		num_properties: 0
+		properties: []pex.Property{}
+		
+		num_states: 0
+		states: []pex.State{}
 	}
 }
 

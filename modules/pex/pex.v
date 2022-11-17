@@ -1,54 +1,9 @@
 module pex
 
-pub enum OpCode as u8 {
-	nop					//none		do nothing
-	iadd				//SII		add two integers
-	fadd				//SFF		add two floats
-	isub				//SII		subtract two integers
-	fsub				//SFF		subtract two floats
-	imul				//SII		multiply two integers
-	fmul				//SFF		multiply two floats
-	idiv				//SII		divide two integers
-	fdiv				//SFF		divide two floats
-	imod				//SII		remainder of two integers
-	not					//SA		flip a bool, type conversion may occur?
-	ineg				//SI		negate an integer
-	fneg				//SF		negate a float
-	assign				//SA		store a variable
-	cast				//SA		type conversion?
-	cmp_eq				//SAA		set a bool to true if a == b
-	cmp_lt				//SAA		set a bool to true if a < b
-	cmp_le				//SAA		set a bool to true if a <= b
-	cmp_gt				//SAA		set a bool to true if a > b
-	cmp_ge				//SAA		set a bool to true if a >= b
-	jmp					//L			relative unconditional branch
-	jmpt				//AL		relative conditional branch if a bool is true
-	jmpf				//AL		relative conditional branch if a bool is false
-	callmethod			//NSS*	
-	callparent			//NS*	
-	callstatic			//NNS*	
-	ret					//A	
-	strcat				//SQQ		concatenate two strings
-	propget				//NSS		retrieve an instance property
-	propset				//NSA		set an instance property
-	array_create		//Su		create an array of the specified size
-	array_length		//SS		get an array's length
-	array_getelement	//SSI		get an element from an array
-	array_setelement	//SIA		set an element to an array
-	array_findelement	//SSII		find an element in an array. The 4th arg is the startIndex, default = 0
-	array_rfindelement	//SSII		find an element in an array, starting from the end. The 4th arg is the startIndex, default = -1
-
-	_opcode_end
-}
-
-pub enum DataType {
-	type_null
-	type_ident
-	type_string
-	type_integer
-	type_float
-	type_bool
-}
+const (
+	datatype_str = build_datatype_str()
+	opcode_str = build_opcode_str()
+)
 
 fn build_datatype_str() []string {
 	mut s := []string{len: int(DataType.type_bool) + 1}
@@ -106,10 +61,46 @@ fn build_opcode_str() []string {
 	return s
 }
 
-const (
-	datatype_str = build_datatype_str()
-	opcode_str = build_opcode_str()
-)
+pub enum OpCode as u8 {
+	nop					//none		do nothing
+	iadd				//SII		add two integers
+	fadd				//SFF		add two floats
+	isub				//SII		subtract two integers
+	fsub				//SFF		subtract two floats
+	imul				//SII		multiply two integers
+	fmul				//SFF		multiply two floats
+	idiv				//SII		divide two integers
+	fdiv				//SFF		divide two floats
+	imod				//SII		remainder of two integers
+	not					//SA		flip a bool, type conversion may occur?
+	ineg				//SI		negate an integer
+	fneg				//SF		negate a float
+	assign				//SA		store a variable
+	cast				//SA		type conversion?
+	cmp_eq				//SAA		set a bool to true if a == b
+	cmp_lt				//SAA		set a bool to true if a < b
+	cmp_le				//SAA		set a bool to true if a <= b
+	cmp_gt				//SAA		set a bool to true if a > b
+	cmp_ge				//SAA		set a bool to true if a >= b
+	jmp					//L			relative unconditional branch
+	jmpt				//AL		relative conditional branch if a bool is true
+	jmpf				//AL		relative conditional branch if a bool is false
+	callmethod			//NSS*	
+	callparent			//NS*	
+	callstatic			//NNS*	
+	ret					//A	
+	strcat				//SQQ		concatenate two strings
+	propget				//NSS		retrieve an instance property
+	propset				//NSA		set an instance property
+	array_create		//Su		create an array of the specified size
+	array_length		//SS		get an array's length
+	array_getelement	//SSI		get an element from an array
+	array_setelement	//SIA		set an element to an array
+	array_findelement	//SSII		find an element in an array. The 4th arg is the startIndex, default = 0
+	array_rfindelement	//SSII		find an element in an array, starting from the end. The 4th arg is the startIndex, default = -1
+
+	_opcode_end
+}
 
 pub fn (op OpCode) str() string {
 	return opcode_str[int(op)]
@@ -179,15 +170,24 @@ fn (op OpCode) get_count_arguments() int {
 	}
 }
 
+pub enum DataType {
+	type_null
+	type_ident
+	type_string
+	type_integer
+	type_float
+	type_bool
+}
+
 pub fn (typ DataType) str() string {
 	return datatype_str[int(typ)]
 }
 
 pub struct DebugFunction {
 pub mut:
-	object_name_index	u16 //Index(base 0) into string table.
-	state_name_index	u16 //Index(base 0) into string table.
-	function_name_index	u16 //Index(base 0) into string table.
+	object_name			u16 //Index(base 0) into string table.
+	state_name			u16 //Index(base 0) into string table.
+	function_name		u16 //Index(base 0) into string table.
 	function_type		byte //valid values 0-3
 	instruction_count	u16	
 	line_numbers		[]u16 //[instruction_count] Maps instructions to their original lines in the source.
@@ -195,19 +195,43 @@ pub mut:
 
 pub struct UserFlag {
 pub mut:
-	name_index	u16		//Index(base 0) into string table.
+	name		u16		//Index(base 0) into string table.
 	flag_index	byte	//Bit index
+}
+
+[heap]
+pub struct PexFile {
+pub mut:
+	magic_number		u32		// 0xFA57C0DE (FASTCODE?)
+	major_version		byte	// 3
+	minor_version		byte	// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
+	game_id				u16		// 1 = Skyrim?
+	compilation_time	i64
+	
+	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
+	user_name			string	// Username used to compile the script
+	machine_name		string	// Machine name used to compile the script
+
+	//String Table
+	string_table_count	u16
+	string_table		[]string //StringTable to look up member names and other stuff from
+
+	//Debug Info
+	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
+	modification_time 	i64 // time_t
+	function_count		u16
+	functions			[]DebugFunction
+
+	user_flag_count		u16
+	user_flags			[]UserFlag
+	object_count		u16	
+	objects				[]Object //[object_count]
 }
 
 pub struct Object {
 pub mut:
-	name_index	u16	//Index(base 0) into string table.
-	size		u32	
-	data		ObjectData //[size-4]	size includes itself for some reason, hence size-4
-}
-
-pub struct ObjectData {
-pub mut:
+	name				u16	//Index(base 0) into string table.
+	size				u32	
 	parent_class_name	u16	//Index(base 0) into string table.
 	docstring			u16	//Index(base 0) into string table.
 	user_flags			u32	
@@ -284,37 +308,8 @@ pub mut:
 
 pub struct Instruction {
 pub mut:
-	op		OpCode // byte			//see Opcodes
+	op		OpCode 			//see Opcodes
 	args	[]VariableData	//[changes depending on opcode]	Length is dependent on opcode, also varargs
-}
-
-[heap]
-pub struct PexFile {
-pub mut:
-	magic_number		u32		// 0xFA57C0DE (FASTCODE?)
-	major_version		byte	// 3
-	minor_version		byte	// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
-	game_id				u16		// 1 = Skyrim?
-	compilation_time	i64
-	
-	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
-	user_name			string	// Username used to compile the script
-	machine_name		string	// Machine name used to compile the script
-
-	//String Table
-	string_table_count	u16
-	string_table		[]string //StringTable to look up member names and other stuff from
-
-	//Debug Info
-	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
-	modification_time 	i64 // time_t
-	function_count		u16
-	functions			[]DebugFunction
-
-	user_flag_count		u16
-	user_flags			[]UserFlag
-	object_count		u16	
-	objects				[]Object //[object_count]
 }
 
 fn (p PexFile) get_string(i int) string {
@@ -325,7 +320,7 @@ fn (p PexFile) get_string(i int) string {
 
 fn (p PexFile) get_object_by_name(name string) ?&Object {
 	for i := 0; i < p.objects.len; i++ {
-		obj_name := p.get_string(p.objects[i].name_index)
+		obj_name := p.get_string(p.objects[i].name)
 		
 		if name == obj_name {
 			return unsafe { &p.objects[i] }
@@ -336,10 +331,10 @@ fn (p PexFile) get_object_by_name(name string) ?&Object {
 }
 
 fn (p PexFile) get_state(obj &Object, name string) ?&State {
-	for i := 0; i < obj.data.states.len; i++ {
-		state_name := p.get_string(obj.data.states[i].name)
+	for i := 0; i < obj.states.len; i++ {
+		state_name := p.get_string(obj.states[i].name)
 		if state_name == name {
-			return unsafe { &obj.data.states[i] }
+			return unsafe { &obj.states[i] }
 		}
 	}
 
@@ -347,12 +342,12 @@ fn (p PexFile) get_state(obj &Object, name string) ?&State {
 }
 
 fn (p PexFile) get_default_state(obj &Object) ?&State {
-	default_state_name := p.get_string(obj.data.auto_state_name)
+	default_state_name := p.get_string(obj.auto_state_name)
 
-	for i := 0; i < obj.data.states.len; i++ {
-		state_name := p.get_string(obj.data.states[i].name)
+	for i := 0; i < obj.states.len; i++ {
+		state_name := p.get_string(obj.states[i].name)
 		if state_name == default_state_name {
-			return unsafe { &obj.data.states[i] }
+			return unsafe { &obj.states[i] }
 		}
 	}
 
