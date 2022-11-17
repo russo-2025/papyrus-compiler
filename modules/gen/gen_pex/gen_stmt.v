@@ -96,7 +96,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 			jmp_to_next_ids << g.cur_fn.info.instructions.len
 			//добавляем прыжок к следующему блоку (jmpf)
 			g.cur_fn.info.instructions << pex.Instruction{
-				op: byte(pex.OpCode.jmpf)
+				op: pex.OpCode.jmpf
 				args: [ var_data ]
 			}
 			g.cur_fn.info.num_instructions++
@@ -111,7 +111,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 			jmp_to_end_ids << g.cur_fn.info.instructions.len
 			//добавляем прыжок в конец
 			g.cur_fn.info.instructions << pex.Instruction{
-				op: byte(pex.OpCode.jmp)
+				op: pex.OpCode.jmp
 				args: [ ]
 			}
 			g.cur_fn.info.num_instructions++
@@ -213,7 +213,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 
 				//добавляем инструкцию в функцию
 				g.cur_fn.info.instructions << pex.Instruction{
-					op: byte(pex.OpCode.propset)
+					op: pex.OpCode.propset
 					args: [
 						pex.VariableData{ typ: 1, string_id: g.gen_string_ref(name) },
 						pex.VariableData{ typ: 1, string_id: g.gen_string_ref("self") },
@@ -230,7 +230,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 		g.free_temp(var_data)
 
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.assign)
+			op: pex.OpCode.assign
 			args: [
 				pex.VariableData{
 					typ: 1
@@ -249,7 +249,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 		g.free_temp(right_data)
 
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.array_setelement)
+			op: pex.OpCode.array_setelement
 			args: [ left_data, index_data, right_data ]
 		}
 	}
@@ -265,7 +265,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 
 		//добавляем инструкцию в функцию
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.propset)
+			op: pex.OpCode.propset
 			args: [
 				pex.VariableData{ typ: 1, string_id: g.gen_string_ref(stmt.left.field_name) },
 				expr_data,
@@ -350,7 +350,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 			num_instructions: 1
 			instructions: [
 				pex.Instruction{
-					op: byte(pex.OpCode.ret)
+					op: pex.OpCode.ret
 					args: [g.get_operand_from_expr(mut &stmt.expr)]
 				}
 			]
@@ -392,7 +392,7 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 	jmpf_index := g.cur_fn.info.instructions.len
 
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.jmpf)
+		op: pex.OpCode.jmpf
 		args: [ var_data ]
 	}
 	g.cur_fn.info.num_instructions++
@@ -404,7 +404,7 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 	}
 
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.jmp)
+		op: pex.OpCode.jmp
 		args: [ pex.VariableData{ typ: 3, integer: start_index - g.cur_fn.info.instructions.len } ]
 	}
 	g.cur_fn.info.num_instructions++

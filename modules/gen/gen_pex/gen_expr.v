@@ -64,7 +64,7 @@ fn (mut g Gen) free_temp(v pex.VariableData) {
 [inline]
 fn (mut g Gen) gen_cast(v1 pex.VariableData, v2 pex.VariableData) {
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.cast)
+		op: pex.OpCode.cast
 		args: [v1, v2]
 	}
 }
@@ -77,7 +77,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableData {
 		var_data := g.gen_infix_operator(mut e)
 		
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.not)
+			op: pex.OpCode.not
 			args: [var_data, var_data]
 		}
 
@@ -97,7 +97,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableData {
 		mut var_data := g.get_operand_from_expr(mut &expr.left)
 		left_jmp_index := g.cur_fn.info.instructions.len
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.jmpf)
+			op: pex.OpCode.jmpf
 			args: [ var_data ]
 		}
 
@@ -122,7 +122,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableData {
 		mut var_data := g.get_operand_from_expr(mut &expr.left)
 		left_jmp_index := g.cur_fn.info.instructions.len
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.jmpt)
+			op: pex.OpCode.jmpt
 			args: [ var_data ]
 		}
 
@@ -145,7 +145,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableData {
 	var_data := g.get_free_temp(expr.result_type)
 
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(op)
+		op: op
 		args: [var_data, left_data, right_data]
 	}
 
@@ -163,7 +163,7 @@ fn (mut g Gen) gen_prefix_operator(mut expr ast.PrefixExpr) pex.VariableData {
 	var_data := g.get_free_temp(expr.right_type)
 
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(op)
+		op: op
 		args: [var_data, right_data]
 	}
 
@@ -228,7 +228,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(calltype)
+		op: calltype
 		args: args
 	}
 
@@ -272,7 +272,7 @@ fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableData {
 		var_data := g.get_free_temp(expr.typ)
 		//добавляем инструкцию в функцию
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.array_create)
+			op: pex.OpCode.array_create
 			args: [var_data, len_data]
 		}
 		return var_data
@@ -300,7 +300,7 @@ fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableData {
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: if lname == 'find' { byte(pex.OpCode.array_findelement) } else { byte(pex.OpCode.array_rfindelement) }
+		op: if lname == 'find' { pex.OpCode.array_findelement } else { pex.OpCode.array_rfindelement }
 		args: [left, var_data, value_data, start_index_data]
 	}
 	return var_data
@@ -318,7 +318,7 @@ fn (mut g Gen) gen_array_get_element(mut expr &ast.IndexExpr) pex.VariableData {
 	var_data := g.get_free_temp(expr.typ)
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.array_getelement)
+		op: pex.OpCode.array_getelement
 		args: [var_data, left_data, index_data]
 	}
 	return var_data
@@ -338,7 +338,7 @@ fn (mut g Gen) gen_selector(mut expr &ast.SelectorExpr) pex.VariableData {
 
 		//добавляем инструкцию в функцию
 		g.cur_fn.info.instructions << pex.Instruction{
-			op: byte(pex.OpCode.array_length)
+			op: pex.OpCode.array_length
 			args: [var_data, expr_data]
 		}
 
@@ -355,7 +355,7 @@ fn (mut g Gen) gen_selector(mut expr &ast.SelectorExpr) pex.VariableData {
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{
-		op: byte(pex.OpCode.propget)
+		op: pex.OpCode.propget
 		args: [
 			pex.VariableData{ typ: 1, string_id: g.gen_string_ref(expr.field_name) },
 			expr_data,
@@ -412,7 +412,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 				var_data = g.get_free_temp(ast.int_type)
 
 				g.cur_fn.info.instructions << pex.Instruction{
-					op: byte(pex.OpCode.callstatic)
+					op: pex.OpCode.callstatic
 					args: [
 						pex.VariableData{
 							typ: 1

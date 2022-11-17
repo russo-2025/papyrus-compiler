@@ -264,13 +264,15 @@ fn (mut r Reader) read_function() ?FunctionInfo{
 
 fn (mut r Reader) read_instruction() ?Instruction{
 	mut inst := Instruction{}
-	inst.op = r.read_byte()
+	
+	op_byte := r.read_byte()
 
-	if inst.op > 0x23 {
-		return error("invalid opcode: 0x" + inst.op.hex())
+	if op_byte >= u8(OpCode._opcode_end) {
+		return error("invalid opcode: 0x" + op_byte.hex())
 	}
 
-	mut len := get_count_arguments(unsafe { OpCode(inst.op) })
+	inst.op = unsafe { OpCode(r.read_byte()) }
+	mut len := inst.op.get_count_arguments()
 
 	mut i := 0
 	for i < len{

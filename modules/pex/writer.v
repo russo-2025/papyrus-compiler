@@ -192,7 +192,7 @@ fn (mut w Writer) write_function(func pex.Function) {
 
 [inline]
 fn (mut w Writer) write_instruction(inst pex.Instruction) {
-	w.write_byte(inst.op)
+	w.write_byte(byte(inst.op))
 
 	mut i := 0
 	for i < inst.args.len {

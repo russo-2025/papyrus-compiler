@@ -1,6 +1,6 @@
 module pex
 
-pub enum OpCode {
+pub enum OpCode as u8 {
 	nop					//none		do nothing
 	iadd				//SII		add two integers
 	fadd				//SFF		add two floats
@@ -37,6 +37,8 @@ pub enum OpCode {
 	array_setelement	//SIA		set an element to an array
 	array_findelement	//SSII		find an element in an array. The 4th arg is the startIndex, default = 0
 	array_rfindelement	//SSII		find an element in an array, starting from the end. The 4th arg is the startIndex, default = -1
+
+	_opcode_end
 }
 
 pub enum DataType {
@@ -111,6 +113,70 @@ const (
 
 pub fn (op OpCode) str() string {
 	return opcode_str[int(op)]
+}
+
+fn (op OpCode) get_count_arguments() int {
+	match op {
+		.nop {
+			return 0
+		}
+
+		.jmp,
+		.ret {
+			return 1
+		}
+
+		.not,
+		.ineg,
+		.fneg,
+		.assign,
+		.cast,
+		.jmpt,
+		.jmpf,
+		.array_create,
+		.array_length {
+			return 2
+		}
+
+		.iadd,
+		.fadd,
+		.isub,
+		.fsub,
+		.imul,
+		.fmul,
+		.idiv,
+		.fdiv,
+		.imod,
+		.cmp_eq,
+		.cmp_lt,
+		.cmp_le,
+		.cmp_gt,
+		.cmp_ge,
+		.strcat,
+		.propget,
+		.propset,
+		.array_getelement,
+		.array_setelement {
+			return 3
+		}
+
+		.array_findelement,
+		.array_rfindelement {
+			return 4
+		}
+
+		.callparent {
+			return 2//2+
+		}
+
+		.callstatic,
+		.callmethod {
+			return 3//3+
+		}
+		._opcode_end {
+			panic("error")
+		}
+	}
 }
 
 pub fn (typ DataType) str() string {
@@ -218,7 +284,7 @@ pub mut:
 
 pub struct Instruction {
 pub mut:
-	op			byte			//see Opcodes
+	op		OpCode // byte			//see Opcodes
 	args	[]VariableData	//[changes depending on opcode]	Length is dependent on opcode, also varargs
 }
 
@@ -249,68 +315,6 @@ pub mut:
 	user_flags			[]UserFlag
 	object_count		u16	
 	objects				[]Object //[object_count]
-}
-
-fn get_count_arguments(op OpCode) int {
-
-	match op {
-		.nop {
-			return 0
-		}
-
-		.jmp,
-		.ret {
-			return 1
-		}
-
-		.not,
-		.ineg,
-		.fneg,
-		.assign,
-		.cast,
-		.jmpt,
-		.jmpf,
-		.array_create,
-		.array_length {
-			return 2
-		}
-
-		.iadd,
-		.fadd,
-		.isub,
-		.fsub,
-		.imul,
-		.fmul,
-		.idiv,
-		.fdiv,
-		.imod,
-		.cmp_eq,
-		.cmp_lt,
-		.cmp_le,
-		.cmp_gt,
-		.cmp_ge,
-		.strcat,
-		.propget,
-		.propset,
-		.array_getelement,
-		.array_setelement {
-			return 3
-		}
-
-		.array_findelement,
-		.array_rfindelement {
-			return 4
-		}
-
-		.callparent {
-			return 2//2+
-		}
-
-		.callstatic,
-		.callmethod {
-			return 3//3+
-		}
-	}
 }
 
 fn (p PexFile) get_string(i int) string {

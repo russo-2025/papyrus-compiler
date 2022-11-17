@@ -116,7 +116,7 @@ fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 			g.free_temp(var_data)
 
 			g.cur_fn.info.instructions << pex.Instruction{
-				op: byte(pex.OpCode.ret)
+				op: pex.OpCode.ret
 				args: [ var_data ]
 			}
 		}
@@ -209,7 +209,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			num_instructions: 1
 			instructions: [
 				pex.Instruction{
-					op: byte(pex.OpCode.ret)			
+					op: pex.OpCode.ret			
 					args: [
 						pex.VariableData{
 							typ: 1
@@ -249,7 +249,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			num_instructions: 3
 			instructions: [
 				pex.Instruction{
-					op: byte(pex.OpCode.callmethod)			
+					op: pex.OpCode.callmethod
 					args: [
 						pex.VariableData{
 							typ: 1
@@ -270,7 +270,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 					]
 				},
 				pex.Instruction{
-					op: byte(pex.OpCode.assign)			
+					op: pex.OpCode.assign	
 					args: [
 						pex.VariableData{
 							typ: 1
@@ -283,7 +283,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 					]
 				},
 				pex.Instruction{
-					op: byte(pex.OpCode.callmethod)			
+					op: pex.OpCode.callmethod	
 					args: [
 						pex.VariableData{
 							typ: 1
