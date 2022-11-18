@@ -102,6 +102,14 @@ pub enum OpCode as u8 {
 	_opcode_end
 }
 
+pub fn opcode_from_byte(v byte) OpCode {
+	if v >= byte(OpCode._opcode_end) {
+		panic("invalid opcode: 0x" + v.hex())
+	}
+
+	return unsafe { OpCode(v) }
+}
+
 pub fn (op OpCode) str() string {
 	return opcode_str[int(op)]
 }
