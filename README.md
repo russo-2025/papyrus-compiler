@@ -86,7 +86,6 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] array acces
   - [x] find
   - [ ] casting??? [docs](https://www.creationkit.com/index.php?title=Arrays_(Papyrus)#Casting_Arrays)
-  - [ ] `MyObjectArray[iElement].Disable()`???
 - [x] `if` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
 - [x] `while` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
   - [ ] Variable Lifetime??? [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_and_Variable_Lifetime)
