@@ -244,7 +244,7 @@ fn (mut r Reader) read_function() ?FunctionInfo{
 
 fn (mut r Reader) read_instruction() ?Instruction{
 	mut inst := Instruction{}
-	
+
 	inst.op = opcode_from_byte(r.read<byte>())
 	mut len := inst.op.get_count_arguments()
 
@@ -254,7 +254,7 @@ fn (mut r Reader) read_instruction() ?Instruction{
 		i++
 	}
 
-	match unsafe { OpCode(inst.op) } {
+	match inst.op {
 		.callmethod,
 		.callparent,
 		.callstatic {

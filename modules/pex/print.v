@@ -39,7 +39,6 @@ fn (p PexFile) print_flag(flg UserFlag) {
 pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
-	op := unsafe { OpCode(inst.op) }.str()
 	mut args := ""
 	
 	mut i := 0
@@ -53,7 +52,7 @@ pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
 		i++
 	}
 
-	println(tab + "opcode: '$op', args: [$args]")
+	println(tab + "opcode: '$inst.op', args: [$args]")
 }
 
 fn (p PexFile) print_variable_type(v VariableType, indentSize int) {

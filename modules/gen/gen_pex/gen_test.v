@@ -69,7 +69,7 @@ fn test_static_call() {
 	mut pex_file := compile("Foo(11, 12)")
 	mut ins := get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callstatic
+	assert ins[0].op == pex.OpCode.callstatic
 	assert pex_file.get_string(ins[0].args[0].string_id) == "ABCD"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "Foo"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -83,7 +83,7 @@ fn test_static_call() {
 	pex_file = compile("ABCD.Foo(13, 14)")
 	ins = get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callstatic
+	assert ins[0].op == pex.OpCode.callstatic
 	assert pex_file.get_string(ins[0].args[0].string_id) == "ABCD"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "Foo"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -99,7 +99,7 @@ fn test_method_call() {
 	mut pex_file := compile("Foz(15, 16)")
 	mut ins := get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert ins[0].op == pex.OpCode.callmethod
 	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -113,7 +113,7 @@ fn test_method_call() {
 	pex_file = compile("self.Foz(17, 18)")
 	ins = get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert ins[0].op == pex.OpCode.callmethod
 	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -127,7 +127,7 @@ fn test_method_call() {
 	pex_file = compile("obj.Foz(25, 26)")
 	ins = get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert ins[0].op == pex.OpCode.callmethod
 	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -143,7 +143,7 @@ fn test_parent_method_call() {
 	mut pex_file := compile("ParentFoz(19, 20)")
 	mut ins := get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert ins[0].op == pex.OpCode.callmethod
 	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -157,7 +157,7 @@ fn test_parent_method_call() {
 	pex_file = compile("Parent.ParentFoz(21, 22)")
 	ins = get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callparent
+	assert ins[0].op == pex.OpCode.callparent
 	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "::NoneVar"
 	assert ins[0].args[2].integer == 2
@@ -170,7 +170,7 @@ fn test_parent_method_call() {
 	pex_file = compile("obj.ParentFoz(23, 24)")
 	ins = get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.callmethod
+	assert ins[0].op == pex.OpCode.callmethod
 	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
@@ -183,12 +183,12 @@ fn test_foo() {
 	pex_file := compile("int n = 1 + 2")
 	ins := get_instructions(pex_file)
 
-	assert unsafe { pex.OpCode(ins[0].op)} == pex.OpCode.iadd
+	assert ins[0].op == pex.OpCode.iadd
 	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp1"
 	assert ins[0].args[1].integer == 1
 	assert ins[0].args[2].integer == 2
 	
-	assert unsafe { pex.OpCode(ins[1].op)} == pex.OpCode.assign
+	assert ins[1].op == pex.OpCode.assign
 	assert pex_file.get_string(ins[1].args[0].string_id) == "n"
 	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp1"
 }
