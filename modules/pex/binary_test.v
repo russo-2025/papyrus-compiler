@@ -130,7 +130,7 @@ fn test_read() {
 	assert str[4] == "e"[0]
 	assert str[5] == "f"[0]
 
-	assert str.len == "abcdef".len + 1
+	assert str.len == "abcdef".len
 	assert is_empty()
 }
 

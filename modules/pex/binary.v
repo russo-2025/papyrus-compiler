@@ -33,18 +33,10 @@ fn (mut r Reader) read<T>() T {
 		return cast_u32_to_f32(r.read<u32>())
 	}
 	$else $if T is string {
-		mut buf := []u8{}
 		mut len := int(r.read<u16>())
-		len += r.pos
-
-		for r.pos < len {
-			buf << r.bytes[r.pos]
-			r.pos++
-		}
-		
-		buf << 0x00
-
-		return buf.bytestr()
+		str := unsafe { tos(voidptr(&r.bytes[r.pos]), len) }
+		r.pos += len
+		return str
 	}
 	$else {
 		panic('[pex.Reader.read] invalid type ${T.name}')
