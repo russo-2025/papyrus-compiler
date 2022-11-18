@@ -85,7 +85,6 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] length
   - [x] array acces
   - [x] find
-  - [ ] casting??? [docs](https://www.creationkit.com/index.php?title=Arrays_(Papyrus)#Casting_Arrays)
 - [x] `if` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
 - [x] `while` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
   - [ ] Variable Lifetime??? [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_and_Variable_Lifetime)
@@ -100,7 +99,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
 - [x] **Events** [docs](https://www.creationkit.com/index.php?title=Events_Reference)
   - [x] declaration
   - [x] special variables (`Self`, `Parent`) 
-  - [ ] calling???
+  - [x] calling
 - [x] **Properties** [docs](https://www.creationkit.com/index.php?title=Property_Reference)
   - [x] declaration
   - [x] read only

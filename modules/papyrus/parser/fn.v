@@ -19,6 +19,23 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 
+	if !p.is_state() {
+		mut sym := p.table.get_type_symbol(p.cur_object)
+		
+		if !sym.has_method(name) {
+			sym.register_method(ast.Fn{
+				pos: pos
+				params: params
+				return_type: ast.none_type
+				state_name: p.cur_state_name
+				obj_name: p.cur_obj_name
+				name: name
+				sname: name.to_lower()
+				is_static: false
+			})
+		}
+	}
+
 	return ast.FnDecl{
 		name: name
 		pos: pos

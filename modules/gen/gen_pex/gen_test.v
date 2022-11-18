@@ -13,6 +13,8 @@ fn compile(src string) &pex.PexFile {
 
 	full_src :=
 		"Scriptname ABCD extends CDFG\n" +
+		"Event OnInit()\n" +
+		"EndEvent\n" +
 		"Function Foo(int n1, int n2) global\n" +
 		"EndFunction\n" +
 		"Function Foz(int n1, int n2)\n" +
@@ -215,6 +217,21 @@ fn test_parent_method_call() {
 	assert ins[0].args[3].integer == 2
 	assert ins[0].args[4].integer == 23
 	assert ins[0].args[5].integer == 24
+}
+
+fn test_call_event() {
+	//src: 			OnInit()
+	//original:		opcode: 'callmethod', args: [ident(OnInit), ident(self), ident(::NoneVar), integer(0)]
+	//my:			opcode: 'callmethod', args: [ident(OnInit), ident(self), ident(::NoneVar), integer(0)]
+
+	pex_file := compile("OnInit()")
+	ins := get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.callmethod
+	assert pex_file.get_string(ins[0].args[0].string_id) == "OnInit"
+	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
+	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
+	assert ins[0].args[3].integer == 0
 }
 
 fn test_foo() {
