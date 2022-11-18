@@ -191,22 +191,6 @@ pub fn (typ DataType) str() string {
 	return datatype_str[int(typ)]
 }
 
-pub struct DebugFunction {
-pub mut:
-	object_name			u16 //Index(base 0) into string table.
-	state_name			u16 //Index(base 0) into string table.
-	function_name		u16 //Index(base 0) into string table.
-	function_type		byte //valid values 0-3
-	instruction_count	u16	
-	line_numbers		[]u16 //[instruction_count] Maps instructions to their original lines in the source.
-}
-
-pub struct UserFlag {
-pub mut:
-	name		u16		//Index(base 0) into string table.
-	flag_index	byte	//Bit index
-}
-
 [heap]
 pub struct PexFile {
 pub mut:
@@ -234,6 +218,22 @@ pub mut:
 	user_flags			[]UserFlag
 	object_count		u16	
 	objects				[]Object //[object_count]
+}
+
+pub struct DebugFunction {
+pub mut:
+	object_name			u16 //Index(base 0) into string table.
+	state_name			u16 //Index(base 0) into string table.
+	function_name		u16 //Index(base 0) into string table.
+	function_type		byte //valid values 0-3
+	instruction_count	u16	
+	line_numbers		[]u16 //[instruction_count] Maps instructions to their original lines in the source.
+}
+
+pub struct UserFlag {
+pub mut:
+	name		u16		//Index(base 0) into string table.
+	flag_index	byte	//Bit index
 }
 
 pub struct Object {

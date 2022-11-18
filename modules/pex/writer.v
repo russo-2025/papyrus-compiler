@@ -50,48 +50,33 @@ fn (mut w Writer) write_pex() {
 	}
 
 	//debug info
-	//w.write(0) //skip debug info
+	w.write(w.pex.has_debug_info)
 
-	//debug info обязательна?!
-	w.write(byte(1))
-	w.write(i64(1616261626))
+	if w.pex.has_debug_info > 0 {
+		w.write(w.pex.modification_time)
 
-	mut debug_fns := []DebugFunction{}
+		assert w.pex.function_count == w.pex.functions.len
+		w.write(cast_int_to_u16(w.pex.function_count))
 
-	for obj in w.pex.objects {
-		for state in obj.states {
-			for func in state.functions {
-				debug_fns << DebugFunction{
-					object_name: obj.name
-					state_name: state.name
-					function_name: func.name
-					function_type: 0
-					instruction_count: func.info.num_instructions
-					line_numbers: []u16{}
-				}
+		for func in w.pex.functions {
+			w.write(func.object_name)
+			w.write(func.state_name)
+			w.write(func.function_name)
+			w.write(func.function_type)
+
+			assert func.instruction_count == func.line_numbers.len
+			w.write(func.instruction_count)
+
+			for line in func.line_numbers {
+				w.write(line)
 			}
 		}
 	}
 
-	w.write(cast_int_to_u16(debug_fns.len))
-
-	for func in debug_fns {
-		w.write(func.object_name)
-		w.write(func.state_name)
-		w.write(func.function_name)
-		w.write(byte(0)) //type
-		w.write(func.instruction_count)
-
-		mut i := 0
-		for i < func.instruction_count {
-			i++
-			w.write(cast_int_to_u16(i))
-		}
-	}
-
-
 	//user flags
+	assert w.pex.user_flag_count == w.pex.user_flags.len
 	w.write(cast_int_to_u16(w.pex.user_flags.len))
+
 	for flag in w.pex.user_flags {
 		w.write(flag.name)
 		w.write(flag.flag_index)
@@ -99,7 +84,6 @@ fn (mut w Writer) write_pex() {
 	
 	//objects
 	assert w.pex.object_count == w.pex.objects.len
-	
 	w.write(cast_int_to_u16(w.pex.objects.len))
 	
 	for obj in w.pex.objects {

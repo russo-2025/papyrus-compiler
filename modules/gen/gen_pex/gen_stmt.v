@@ -151,8 +151,19 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 			instructions: []pex.Instruction{}
 		}
 	}
-	
+
 	g.cur_fn = &f
+
+	g.pex.functions << pex.DebugFunction{
+		object_name: g.cur_obj.name
+		state_name: g.cur_state.name
+		function_name: f.name
+		function_type: 0 // TODO выяснить что это
+		instruction_count: 0 //func.info.num_instructions
+		line_numbers: []u16{}
+	}
+	g.pex.function_count++
+
 	g.temp_locals = []TempVariable{}
 
 	for flag in node.flags {

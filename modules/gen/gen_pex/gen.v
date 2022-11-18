@@ -72,6 +72,9 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &p
 			src_file_name: file.path_base
 			user_name: os.loginname()
 			machine_name: os.hostname()
+
+			has_debug_info: byte(1) //debug info обязательна?!
+			modification_time: i64(1616261626) //TODO
 		}
 
 		table: table
