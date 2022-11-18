@@ -50,8 +50,8 @@ fn (mut w Writer) write_pex() {
 	//w.write(0) //skip debug info
 
 	//debug info обязательна?!
-	w.write(1)
-	w.write(1616261626)
+	w.write(byte(1))
+	w.write(i64(1616261626))
 
 	mut debug_fns := []DebugFunction{}
 
@@ -76,7 +76,7 @@ fn (mut w Writer) write_pex() {
 		w.write(func.object_name)
 		w.write(func.state_name)
 		w.write(func.function_name)
-		w.write(0) //type
+		w.write(byte(0)) //type
 		w.write(func.instruction_count)
 
 		mut i := 0
