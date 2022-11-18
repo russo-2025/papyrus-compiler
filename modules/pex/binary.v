@@ -3,22 +3,6 @@ module pex
 import encoding.binary
 
 [inline]
-fn (mut r Reader) read_string_ref() ?u16 {
-	val := r.read<u16>()
-
-	if val >= r.pex.string_table.len {
-		return error("string index($val) >= total strings count($r.pex.string_table.len)")
-	}
-
-	return val
-}
-
-[inline]
-fn (mut r Reader) read_time() i64 {
-	return r.read<i64>()
-}
-
-[inline]
 fn (mut r Reader) read<T>() T {
 	$if T is byte {
 		val := r.bytes[r.pos]
@@ -68,24 +52,6 @@ fn (mut r Reader) read<T>() T {
 }
 
 [inline]
-fn cast_int_to_u16(v int) u16 {
-	assert u32(v) <= 0xFFFF
-	return u16(v)
-}
-
-[inline]
-fn cast_f32_to_u32(v f32) u32 {
-	v_u32 := unsafe { &u32(&v) }
-	return *v_u32
-}
-
-[inline]
-fn cast_u32_to_f32(v u32) f32 {
-	v_f32 := unsafe { &f32(&v) }
-	return *v_f32
-}
-
-[inline]
 fn (mut w Writer) write<T>(v T) {
 	$if T is byte {
 		w.bytes << u8(v)
@@ -127,4 +93,38 @@ fn (mut w Writer) write<T>(v T) {
 	$else {
 		panic('[pex.Writer.write] invalid type ${T.name}')
 	}
+}
+
+[inline]
+fn (mut r Reader) read_string_ref() ?u16 {
+	val := r.read<u16>()
+	
+	if val >= r.pex.string_table.len {
+		return error("string index($val) >= total strings count($r.pex.string_table.len)")
+	}
+
+	return val
+}
+
+[inline]
+fn (mut r Reader) read_time() i64 {
+	return r.read<i64>()
+}
+
+[inline]
+fn cast_int_to_u16(v int) u16 {
+	assert u32(v) <= 0xFFFF
+	return u16(v)
+}
+
+[inline]
+fn cast_f32_to_u32(v f32) u32 {
+	v_u32 := unsafe { &u32(&v) }
+	return *v_u32
+}
+
+[inline]
+fn cast_u32_to_f32(v u32) f32 {
+	v_f32 := unsafe { &f32(&v) }
+	return *v_f32
 }

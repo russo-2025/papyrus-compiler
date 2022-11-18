@@ -37,7 +37,6 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 		}
 		ast.PropertyDecl {
 			if c.type_is_valid(node.typ) {
-
 				c.inside_property = true
 
 				if mut node.read is ast.FnDecl {
@@ -81,7 +80,6 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 }
 
 fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
-
 	for mut stmt in stmts {
 		c.stmt(mut stmt)
 	}
@@ -92,7 +90,6 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 			typ := c.expr(mut node.expr)
 			
 			if c.valid_type(typ, c.cur_fn.return_type) {
-
 			}
 			else if c.can_cast(typ, c.cur_fn.return_type) {
 				new_expr := ast.CastExpr {

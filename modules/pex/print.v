@@ -298,7 +298,6 @@ fn (p PexFile) get_formated_script_flags() string {
 }
 
 pub fn (p PexFile) print() {
-	
 	print_start_block("Header")
 
 	println("magic_number: " + "0x" + p.magic_number.hex())

@@ -157,7 +157,6 @@ fn (mut p Parser) fn_args() []ast.Param {
 }
 
 pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOptionalArg) {
-
 	mut args := []ast.CallArg{}
 	mut redefined_args := map[string]ast.RedefinedOptionalArg{}
 

@@ -28,9 +28,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 		}
 	}
 
-	mut state := g.create_state(token.default_state_name)
-
-	g.cur_obj.states << state
+	g.cur_obj.states << g.create_state(token.default_state_name)
 	g.cur_obj.num_states++
 
 	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]

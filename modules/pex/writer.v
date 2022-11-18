@@ -27,7 +27,6 @@ pub fn write(path string, pex &PexFile) {
 }
 
 fn (mut w Writer) write_pex() {
-
 	//header
 	w.write(w.pex.magic_number)
 	w.write(w.pex.major_version)
@@ -105,7 +104,6 @@ fn (mut w Writer) write_pex() {
 }
 
 fn (mut w Writer) write_object(obj &pex.Object) {
-	
 	w.write(obj.name)
 	start_pos := w.bytes.len
 	w.write(obj.size)
@@ -144,7 +142,6 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 }
 
 fn (mut w Writer) write_state(state pex.State) {
-
 	w.write(state.name)
 	
 	assert state.num_functions == state.functions.len

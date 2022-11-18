@@ -319,7 +319,6 @@ fn (s Scanner) look_ahead(n int) byte {
 
 [inline]
 fn (mut s Scanner) skip_whitespace() {
-
 	for s.pos < s.text.len && s.text[s.pos].is_space() {
 		if util.is_nl(s.text[s.pos]) && !s.expect('\r\n', s.pos - 1) {
 			s.inc_line_number()

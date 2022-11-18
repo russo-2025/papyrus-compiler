@@ -50,7 +50,7 @@ pub fn read(pref &pref.Preferences) &PexFile {
 		f.string_table << r.read<string>()
 		i++
 	}
-
+	
 	f.has_debug_info = r.read<byte>()
 	
 	if f.has_debug_info != 0
@@ -92,14 +92,14 @@ pub fn read(pref &pref.Preferences) &PexFile {
 
 	i = 0
 	for i < f.user_flag_count{
-		name_index := r.read_string_ref() or {
+		name := r.read_string_ref() or {
 			r.error(err.msg())
 			return r.pex
 		}
 		flag_index := r.read<byte>()
 
 		f.user_flags << UserFlag { 
-			name: name_index, 
+			name: name, 
 			flag_index: flag_index
 		}
 
