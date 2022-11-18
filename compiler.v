@@ -16,7 +16,8 @@ fn main() {
 			builder.compile(prefs)
 		}
 		.read {
-			pex.read(prefs)
+			pex_file := pex.read_from_file(prefs.paths[0])
+			pex_file.print()
 		}
 	}
 

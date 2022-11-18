@@ -7,23 +7,27 @@ import pex
 
 pub struct Writer{
 pub mut:
-	path	string
 	pex		&PexFile
 	bytes	[]u8
 }
 
-pub fn write(path string, pex &PexFile) {
+pub fn write_to_file(pex &PexFile, path string) {
+	bytes := write(pex)
+
+	mut file := os.create(path) or { panic(err) }
+	file.write(bytes) or { panic(err) }
+	file.close()
+}
+
+pub fn write(pex &PexFile) []u8 {
 	mut w := Writer{
-		path:	path
 		pex:	pex
 		bytes: 	[]u8{}
 	}
 	
 	w.write_pex()
 
-	mut file := os.create(path) or { panic(err) }
-	file.write(w.bytes) or { panic(err) }
-	file.close()
+	return w.bytes
 }
 
 fn (mut w Writer) write_pex() {

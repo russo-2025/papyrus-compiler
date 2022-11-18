@@ -306,7 +306,6 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
  
 [inline]
 fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
-	
 	mut prop := pex.Property{
 		name: g.gen_string_ref(stmt.name)
 		typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))

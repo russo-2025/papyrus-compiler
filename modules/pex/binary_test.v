@@ -4,9 +4,8 @@ import math
 
 fn test_read() {
 	mut r := &pex.Reader{
-		path: "::in-memory::"
 		pex: unsafe { voidptr(0) }
-		bytes: 	[]u8{}
+		bytes: 	[]byte{}
 	}
 
 	is_empty := fn [r] () bool {
@@ -137,7 +136,6 @@ fn test_read() {
 
 fn test_write() {
 	mut w := &pex.Writer{
-		path: "::in-memory::"
 		pex: unsafe { voidptr(0) }
 		bytes: 	[]u8{}
 	}

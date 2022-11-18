@@ -2,21 +2,14 @@ module pex
 
 import os
 
-import pref
-
 pub struct Reader{
 pub mut:
-	path	string
-	bytes	[]u8
+	bytes	[]byte
 	pos		int
 	pex		&PexFile
 }
 
-pub fn read(pref &pref.Preferences) &PexFile {
-	mut f := PexFile{}
-
-	path := pref.paths[0]
-
+pub fn read_from_file(path string) &PexFile {
 	if !os.is_file(path) {
 		eprintln("invalid file path: `$path`")
 		exit(1)
@@ -28,52 +21,54 @@ pub fn read(pref &pref.Preferences) &PexFile {
 	}
 
 	println("read file: `$path`")
-	
+
+	mut bytes := os.read_bytes(path) or { panic(err) }
+
+	return read(bytes)
+}
+
+pub fn read(bytes []byte) &PexFile {
 	mut r := Reader{
-		path:	path
-		bytes:	os.read_bytes(path) or { return &PexFile{} }
-		pex:	&f
+		bytes: bytes
+		pex: &PexFile{}
 	}
-	
-	f.magic_number = r.read<u32>()
-	f.major_version = r.read<byte>()
-	f.minor_version = r.read<byte>()
-	f.game_id = r.read<u16>()
-	f.compilation_time = r.read_time()
-	f.src_file_name = r.read<string>()
-	f.user_name = r.read<string>()
-	f.machine_name = r.read<string>()
-	f.string_table_count = r.read<u16>()
+
+	r.read_pex() or { r.error(err.msg()) }
+
+	return r.pex
+}
+
+fn (mut r Reader) read_pex() ! {
+	r.pex.magic_number = r.read<u32>()
+	r.pex.major_version = r.read<byte>()
+	r.pex.minor_version = r.read<byte>()
+	r.pex.game_id = r.read<u16>()
+	r.pex.compilation_time = r.read_time()
+	r.pex.src_file_name = r.read<string>()
+	r.pex.user_name = r.read<string>()
+	r.pex.machine_name = r.read<string>()
+	r.pex.string_table_count = r.read<u16>()
 
 	mut i := 0
-	for i < f.string_table_count {
-		f.string_table << r.read<string>()
+	for i < r.pex.string_table_count {
+		r.pex.string_table << r.read<string>()
 		i++
 	}
 	
-	f.has_debug_info = r.read<byte>()
+	r.pex.has_debug_info = r.read<byte>()
 	
-	if f.has_debug_info != 0
+	if r.pex.has_debug_info != 0
 	{
-		f.modification_time = r.read_time()
-		f.function_count = r.read<u16>()
+		r.pex.modification_time = r.read_time()
+		r.pex.function_count = r.read<u16>()
 		
 		i = 0
-		for i < f.function_count {
+		for i < r.pex.function_count {
 			mut d := DebugFunction{}
 
-			d.object_name = r.read_string_ref() or {
-				r.error(err.msg())
-				return r.pex
-			}
-			d.state_name = r.read_string_ref() or {
-				r.error(err.msg())
-				return r.pex
-			}
-			d.function_name = r.read_string_ref() or {
-				r.error(err.msg())
-				return r.pex
-			}
+			d.object_name = r.read_string_ref() or { return err }
+			d.state_name = r.read_string_ref() or { return err }
+			d.function_name = r.read_string_ref() or { return err }
 			d.function_type = r.read<byte>()
 			d.instruction_count = r.read<u16>()
 
@@ -83,22 +78,19 @@ pub fn read(pref &pref.Preferences) &PexFile {
 				k++
 			}
 
-			f.functions << d
+			r.pex.functions << d
 			i++
 		}
 	}
 
-	f.user_flag_count = r.read<u16>()
+	r.pex.user_flag_count = r.read<u16>()
 
 	i = 0
-	for i < f.user_flag_count{
-		name := r.read_string_ref() or {
-			r.error(err.msg())
-			return r.pex
-		}
+	for i < r.pex.user_flag_count{
+		name := r.read_string_ref() or { return err }
 		flag_index := r.read<byte>()
 
-		f.user_flags << UserFlag { 
+		r.pex.user_flags << UserFlag { 
 			name: name, 
 			flag_index: flag_index
 		}
@@ -106,27 +98,20 @@ pub fn read(pref &pref.Preferences) &PexFile {
 		i++
 	}
 
-	f.object_count = r.read<u16>()
+	r.pex.object_count = r.read<u16>()
 
 	i = 0
-	for i < f.object_count{
-		f.objects << r.read_object() or {
-			r.error(err.msg())
-			return r.pex
-		}
+	for i < r.pex.object_count{
+		r.pex.objects << r.read_object() or { return err }
 		i++
 	}
 
 	if r.pos != r.bytes.len {
-		r.error("number of bytes read($r.pos) != total bytes($r.bytes.len)")
-		return r.pex
+		return error("number of bytes read($r.pos) != total bytes($r.bytes.len)")
 	}
-
-	r.pex.print()
-	return r.pex
 }
 
-fn (mut r Reader) read_object() ?Object{
+fn (mut r Reader) read_object() !Object {
 	mut obj := Object{}
 
 	obj.name = r.read_string_ref() or { return err }
@@ -162,7 +147,7 @@ fn (mut r Reader) read_object() ?Object{
 	return obj
 }
 
-fn (mut r Reader) read_state() ?State{
+fn (mut r Reader) read_state() !State{
 	mut s := State{}
 
 	s.name = r.read_string_ref() or { return err }
@@ -176,7 +161,7 @@ fn (mut r Reader) read_state() ?State{
 	return s
 }
 
-fn (mut r Reader) read_named_function() ?Function{
+fn (mut r Reader) read_named_function() !Function{
 	mut n := Function{}
 
 	n.name = r.read_string_ref() or { return err }
@@ -185,7 +170,7 @@ fn (mut r Reader) read_named_function() ?Function{
 	return n
 }
 
-fn (mut r Reader) read_property() ?Property{
+fn (mut r Reader) read_property() !Property{
 	mut p := Property{}
 	
 	p.name = r.read<u16>()
@@ -209,7 +194,7 @@ fn (mut r Reader) read_property() ?Property{
 	return p
 }
 
-fn (mut r Reader) read_function() ?FunctionInfo{
+fn (mut r Reader) read_function() !FunctionInfo{
 	mut func := FunctionInfo{}
 	
 	func.return_type = r.read_string_ref() or { return err }
@@ -242,7 +227,7 @@ fn (mut r Reader) read_function() ?FunctionInfo{
 	return func
 }
 
-fn (mut r Reader) read_instruction() ?Instruction{
+fn (mut r Reader) read_instruction() !Instruction{
 	mut inst := Instruction{}
 
 	inst.op = opcode_from_byte(r.read<byte>())
@@ -276,7 +261,7 @@ fn (mut r Reader) read_instruction() ?Instruction{
 }
 
 //read_variable_data
-fn (mut r Reader) read_variable_type() ?VariableType{
+fn (mut r Reader) read_variable_type() !VariableType{
 	mut t := VariableType{}
 	t.name = r.read_string_ref() or { return err }
 	t.typ = r.read_string_ref() or { return err }
@@ -284,7 +269,7 @@ fn (mut r Reader) read_variable_type() ?VariableType{
 	return t
 }
 
-fn (mut r Reader) read_variable() ?Variable{
+fn (mut r Reader) read_variable() !Variable{
 	mut var := Variable{}
 
 	var.name = r.read_string_ref() or { return err }
@@ -295,7 +280,7 @@ fn (mut r Reader) read_variable() ?Variable{
 	return var
 }
 
-fn (mut r Reader) read_variable_data() ?VariableData{
+fn (mut r Reader) read_variable_data() !VariableData{
 	mut data := VariableData{}
 
 	data.typ = r.read<byte>()

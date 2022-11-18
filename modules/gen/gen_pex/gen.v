@@ -57,7 +57,7 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 	
 	g.gen_objects()
 
-	pex.write(output_file_path, g.pex)
+	pex.write_to_file(g.pex, output_file_path)
 }
 
 pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFile {
