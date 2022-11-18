@@ -134,6 +134,44 @@ fn test_method_call() {
 	assert ins[0].args[3].integer == 2
 	assert ins[0].args[4].integer == 25
 	assert ins[0].args[5].integer == 26
+
+	//src:			ABCD[] x = new ABCD[5]
+	//				x[1].Foz(25, 26)
+    //original:		opcode: 'array_create', args: [ident(::temp0), integer(5)]
+	//				opcode: 'assign', args: [ident(x), ident(::temp0)]
+	//				opcode: 'array_getelement', args: [ident(::temp1), ident(x), integer(1)]
+	//				opcode: 'callmethod', args: [ident(Foz), ident(::temp1), ident(::NoneVar), integer(2), integer(25), integer(26)]
+	//my:			opcode: 'array_create', args: [ident(::temp2), integer(5)]
+	//				opcode: 'assign', args: [ident(x), ident(::temp2)]
+	//				opcode: 'array_getelement', args: [ident(::temp3), ident(x), integer(1)]
+	//				opcode: 'callmethod', args: [ident(Foz), ident(::temp3), ident(::NoneVar), integer(2), integer(25), integer(26)]
+	
+	pex_file = compile(
+		"ABCD[] x = new ABCD[5]\n" +
+		"x[1].Foz(25, 26)"
+	)
+	ins = get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.array_create
+	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp1"
+	assert ins[0].args[1].integer == 5
+
+	assert ins[1].op == pex.OpCode.assign
+	assert pex_file.get_string(ins[1].args[0].string_id) == "x"
+	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp1"
+
+	assert ins[2].op == pex.OpCode.array_getelement
+	assert pex_file.get_string(ins[2].args[0].string_id) == "::temp3"
+	assert pex_file.get_string(ins[2].args[1].string_id) == "x"
+	assert ins[2].args[2].integer == 1
+
+	assert ins[3].op == pex.OpCode.callmethod
+	assert pex_file.get_string(ins[3].args[0].string_id) == "Foz"
+	assert pex_file.get_string(ins[3].args[1].string_id) == "::temp3"
+	assert pex_file.get_string(ins[3].args[2].string_id) == "::NoneVar"
+	assert ins[3].args[3].integer == 2
+	assert ins[3].args[4].integer == 25
+	assert ins[3].args[5].integer == 26
 }
 
 fn test_parent_method_call() {
@@ -177,44 +215,6 @@ fn test_parent_method_call() {
 	assert ins[0].args[3].integer == 2
 	assert ins[0].args[4].integer == 23
 	assert ins[0].args[5].integer == 24
-
-	//src:			ABCD[] x = new ABCD[5]
-	//				x[1].Foz(25, 26)
-    //original:		opcode: 'array_create', args: [ident(::temp0), integer(5)]
-	//				opcode: 'assign', args: [ident(x), ident(::temp0)]
-	//				opcode: 'array_getelement', args: [ident(::temp1), ident(x), integer(1)]
-	//				opcode: 'callmethod', args: [ident(Foz), ident(::temp1), ident(::NoneVar), integer(2), integer(25), integer(26)]
-	//my:			opcode: 'array_create', args: [ident(::temp2), integer(5)]
-	//				opcode: 'assign', args: [ident(x), ident(::temp2)]
-	//				opcode: 'array_getelement', args: [ident(::temp3), ident(x), integer(1)]
-	//				opcode: 'callmethod', args: [ident(Foz), ident(::temp3), ident(::NoneVar), integer(2), integer(25), integer(26)]
-	
-	pex_file = compile(
-		"ABCD[] x = new ABCD[5]\n" +
-		"x[1].Foz(25, 26)"
-	)
-	ins = get_instructions(pex_file)
-
-	assert ins[0].op == pex.OpCode.array_create
-	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp1"
-	assert ins[0].args[1].integer == 5
-
-	assert ins[1].op == pex.OpCode.assign
-	assert pex_file.get_string(ins[1].args[0].string_id) == "x"
-	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp1"
-
-	assert ins[2].op == pex.OpCode.array_getelement
-	assert pex_file.get_string(ins[2].args[0].string_id) == "::temp3"
-	assert pex_file.get_string(ins[2].args[1].string_id) == "x"
-	assert ins[2].args[2].integer == 1
-
-	assert ins[3].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[3].args[0].string_id) == "Foz"
-	assert pex_file.get_string(ins[3].args[1].string_id) == "::temp3"
-	assert pex_file.get_string(ins[3].args[2].string_id) == "::NoneVar"
-	assert ins[3].args[3].integer == 2
-	assert ins[3].args[4].integer == 25
-	assert ins[3].args[5].integer == 26
 }
 
 fn test_foo() {

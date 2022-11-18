@@ -98,19 +98,19 @@ pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 	return false
 }
 
-//можно ли кастануть тип t1 к типу t2
-pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
-	s1 := c.table.get_type_symbol(t1)
-	s2 := c.table.get_type_symbol(t2)
+//можно ли кастануть тип from_type к типу to_type
+pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
+	from_sym := c.table.get_type_symbol(from_type)
+	to_sym := c.table.get_type_symbol(to_type)
 
-	if isnil(s1) || isnil(s2) {
+	if isnil(from_sym) || isnil(to_sym) {
 		return false
 	}
 
-	match s1.kind {
+	match from_sym.kind {
 		.placeholder { panic("wtf") }
 		.none_ {
-			match s2.kind {
+			match to_sym.kind {
 				.array,
 				.script,
 				.string,
@@ -120,7 +120,7 @@ pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 			return false
 		}
 		.int {
-			match s2.kind {
+			match to_sym.kind {
 				.float,
 				.string,
 				.bool { return true }
@@ -128,7 +128,7 @@ pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 			}
 		}
 		.float {
-			match s2.kind {
+			match to_sym.kind {
 				.int,
 				.string,
 				.bool { return true }
@@ -136,7 +136,7 @@ pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 			}
 		}
 		.string {
-			match s2.kind {
+			match to_sym.kind {
 				.int,
 				.float,
 				.bool { return true }
@@ -147,14 +147,14 @@ pub fn (mut c Checker) can_cast(t1 ast.Type, t2 ast.Type) bool {
 			return true
 		}
 		.array {
-			match s2.kind {
+			match to_sym.kind {
 				.string,
 				.bool { return true }
 				else { return false}
 			}
 		}
 		.script {
-			match s2.kind {
+			match to_sym.kind {
 				.string,
 				.bool,
 				.script { return true }
@@ -170,7 +170,7 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	if !c.can_cast(from_type, to_type) {
 		type_name := c.get_type_name(from_type)
 		to_type_name := c.get_type_name(to_type)
-		c.error("cannot convert type `$type_name` to type `$to_type_name`",  node.pos)
+		c.error("cannot cast type `$type_name` to type `$to_type_name`", node.pos)
 	}
 
 	new_node := ast.CastExpr {

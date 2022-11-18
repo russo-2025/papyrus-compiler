@@ -64,15 +64,17 @@ fn (mut b BuilderOrigin) run() {
 	}
 
 	all_inputs = all_inputs[..all_inputs.len-1] + '"'
-
+	
 	for path in b.input_paths {
 		cmd := '"$compiler_exe_path" "$path" -all -quiet $all_inputs -o="$b.output_path" -f="$compiler_flags_path"'
-		res := os.system(cmd)
-		if res == 0 {
-			println('successfully')
+		res := unsafe { os.raw_execute(cmd) }
+		
+		if res.exit_code == 0 {
+			println('successfully - ${path}')
 		}
 		else {
-			println('failed')
+			println('failed - ${path}')
+			println(res.output)
 		}
 	}
 }
