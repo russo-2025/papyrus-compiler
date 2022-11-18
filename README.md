@@ -85,8 +85,8 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] length
   - [x] array acces
   - [x] find
-- [x] `if` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
-- [x] `while` [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
+- [x] **If** [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
+- [x] **While** [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
   - [ ] Variable Lifetime??? [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_and_Variable_Lifetime)
 - [x] **Functions** [docs](https://www.creationkit.com/index.php?title=Function_Reference)
   - [x] declaration
@@ -117,7 +117,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] switching states `GotoState`
   - [x] getting current state `GetState`
   - [ ] effect of states on functions and events???
-- [ ] Imports [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
+- [ ] **Imports** [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
 - [x] **Comments**
   - [x] single line
   - [x] multi line
