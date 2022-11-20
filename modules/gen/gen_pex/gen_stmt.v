@@ -211,9 +211,9 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	if mut stmt.left is ast.Ident {
 		mut name := stmt.left.name
 
-		if f := g.table.find_property(g.cur_obj_name, name) {
-			if token.Kind.key_auto in f.flags {
-				name = f.default_var_name
+		if prop := g.table.find_property(g.cur_obj_name, name) {
+			if token.Kind.key_auto in prop.flags {
+				name = prop.default_var_name
 			}
 			else {
 				//значение

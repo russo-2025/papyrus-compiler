@@ -384,10 +384,10 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 		}
 		ast.Ident {
 			if expr.is_property {
-				if f := g.table.find_property(g.cur_obj_name, expr.name) {
+				if prop := g.table.find_property(g.cur_obj_name, expr.name) {
 					
-					if token.Kind.key_auto in f.flags {
-						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(f.default_var_name) }
+					if token.Kind.key_auto in prop.flags {
+						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(prop.default_var_name) }
 					}
 
 					return g.gen_selector(mut &ast.SelectorExpr{
@@ -396,7 +396,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 							typ: ast.Type(g.table.find_type_idx(g.cur_obj_name))
 						}
 						field_name: expr.name
-						typ: f.typ
+						typ: prop.typ
 					})
 				}
 
