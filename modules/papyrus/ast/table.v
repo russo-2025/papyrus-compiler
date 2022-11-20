@@ -5,12 +5,12 @@ import papyrus.token
 [heap]
 pub struct Table {
 pub mut:
-	types		[]TypeSymbol // aka type_symbols
-	type_idxs	map[string]int
+	object_names	[]string
+	types			[]TypeSymbol // aka type_symbols
+	type_idxs		map[string]int
 
-	fns			map[string]Fn
-	fields		map[string]Field
-	modules		[]string
+	fns				map[string]Fn
+	props			map[string]Prop
 }
 
 pub struct Param {
@@ -21,8 +21,6 @@ pub mut:
 	default_value	string
 	
 }
-
-pub type Field = Prop
 
 pub struct Prop {
 pub:
@@ -42,19 +40,19 @@ pub:
 	pos				token.Position
 pub mut:
 	name			string
-	sname			string
+	lname			string //in lowercase
 	is_static		bool
 }
 
-pub fn (t Table) has_module(name string) bool {
-	return name.to_lower() in t.modules
+pub fn (t Table) has_object(name string) bool {
+	return name.to_lower() in t.object_names
 }
 
-pub fn (mut t Table) register_module(name string) {
+pub fn (mut t Table) register_object(name string) {
 	s := name.to_lower()
 	
-	if s !in t.modules {
-		t.modules << s
+	if s !in t.object_names {
+		t.object_names << s
 	}
 }
 
@@ -64,18 +62,18 @@ pub fn new_table() &Table {
 	return t
 }
 
-pub fn (t &Table) find_field(obj_name string, name string) ?Field {
+pub fn (t &Table) find_property(obj_name string, name string) ?Prop {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
-	if f := t.fields[key] {
-		return f
+	if p := t.props[key] {
+		return p
 	}
 	
 	return none
 }
 
-pub fn (mut t Table) register_field(f Field) {
-	t.fields[f.obj_name.to_lower() + "." + f.name.to_lower()] = f
+pub fn (mut t Table) register_property(p Prop) {
+	t.props[p.obj_name.to_lower() + "." + p.name.to_lower()] = p
 }
 
 pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {

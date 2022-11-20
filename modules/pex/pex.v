@@ -1,5 +1,9 @@
 module pex
 
+pub const (
+	default_state_name = ""
+)
+
 const (
 	datatype_str = build_datatype_str()
 	opcode_str = build_opcode_str()
@@ -243,7 +247,7 @@ pub mut:
 	parent_class_name	u16	//Index(base 0) into string table.
 	docstring			u16	//Index(base 0) into string table.
 	user_flags			u32	
-	auto_state_name		u16	//Index(base 0) into string table.
+	default_state_name	u16	//Index(base 0) into string table.
 	num_variables		u16	
 	variables			[]Variable //[num_variables]	
 	num_properties		u16	
@@ -350,11 +354,11 @@ fn (p PexFile) get_state(obj &Object, name string) ?&State {
 }
 
 fn (p PexFile) get_default_state(obj &Object) ?&State {
-	default_state_name := p.get_string(obj.auto_state_name)
+	name := p.get_string(obj.default_state_name)
 
 	for i := 0; i < obj.states.len; i++ {
 		state_name := p.get_string(obj.states[i].name)
-		if state_name == default_state_name {
+		if state_name == name {
 			return unsafe { &obj.states[i] }
 		}
 	}

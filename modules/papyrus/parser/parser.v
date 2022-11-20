@@ -6,6 +6,7 @@ import os
 import pref
 import papyrus.ast
 import papyrus.util
+import pex
 
 pub struct Parser {
 	pref				&pref.Preferences
@@ -31,7 +32,7 @@ mut:
 	inside_property		bool
 
 	cur_obj_name		string 
-	cur_state_name		string = token.default_state_name
+	cur_state_name		string = pex.default_state_name
 	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
@@ -139,8 +140,6 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 		else {
 			last_token_pos = p.tok.pos
 		}
-
-		//println("top_stmt for: " + p.tok.kind.str() + ", " + p.tok.lit)
 
 		match p.tok.kind {
 			.key_import {
@@ -253,7 +252,7 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 
 	p.check(.key_endstate)
 	
-	p.cur_state_name = token.default_state_name
+	p.cur_state_name = pex.default_state_name
 	
 	return ast.StateDecl {
 		pos: pos
@@ -335,7 +334,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	
 	node.auto_var_name = auto_var_name
 
-	p.table.register_field(ast.Prop{
+	p.table.register_property(ast.Prop{
 		name: node.name
 		obj_name: p.cur_obj_name
 		auto_var_name: auto_var_name
@@ -364,7 +363,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 	name := p.check_name()
 
 	p.cur_obj_name = name
-	p.table.register_module(name)
+	p.table.register_object(name)
 
 	mut node := ast.ScriptDecl{
 		pos: pos
@@ -512,8 +511,6 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 		else {
 			last_token_pos = p.tok.pos
 		}
-
-		//println("stmt for: " + p.tok.kind.str() + ", " + p.tok.lit)
 
 		match p.tok.kind {
 			.comment {
@@ -687,7 +684,7 @@ pub fn (mut p Parser) check_extended_lang() {
 
 [inline]
 pub fn (p Parser) is_state() bool {
-	return p.cur_state_name != token.default_state_name
+	return p.cur_state_name != pex.default_state_name
 }
 
 [inline]

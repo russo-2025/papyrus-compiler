@@ -28,7 +28,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 		}
 	}
 
-	g.cur_obj.states << g.create_state(token.default_state_name)
+	g.cur_obj.states << g.create_state(pex.default_state_name)
 	g.cur_obj.num_states++
 
 	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
@@ -211,7 +211,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	if mut stmt.left is ast.Ident {
 		mut name := stmt.left.name
 
-		if f := g.table.find_field(g.cur_obj_name, name) {
+		if f := g.table.find_property(g.cur_obj_name, name) {
 			if token.Kind.key_auto in f.flags {
 				name = f.auto_var_name
 			}

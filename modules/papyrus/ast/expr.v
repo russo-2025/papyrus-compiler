@@ -97,11 +97,11 @@ pub mut:
 pub struct CallExpr {
 pub mut:
 	pos				token.Position
-	left			Expr // `user` in `user.register()`
-	obj_name		string // obj_name.name()
-	name			string // left.name()
+	left			Expr	// `user` in `user.register()`
+	obj_name		string	// `Foo` in Foo.name()
+	name			string	// `name` in bar.name()
 	args			[]CallArg
-	redefined_args	map[string]RedefinedOptionalArg // redefined optional arguments
+	redefined_args	map[string]RedefinedOptionalArg // `d = 2.0` in `Foo(5.0, 2.4, d = 2.0)`
 	return_type		ast.Type
 	is_static		bool
 }
@@ -110,7 +110,7 @@ pub mut:
 pub struct SelectorExpr {
 pub mut:
 	pos			token.Position
-	expr		Expr // expr.field_name
+	expr		Expr	// `expr` in expr.field_name
 	field_name	string
 	typ			ast.Type
 }

@@ -120,7 +120,7 @@ fn (mut r Reader) read_object() !Object {
 	obj.parent_class_name = r.read_string_ref() or { return err }
 	obj.docstring = r.read_string_ref() or { return err }
 	obj.user_flags = r.read<u32>()
-	obj.auto_state_name = r.read_string_ref() or { return err }
+	obj.default_state_name = r.read_string_ref() or { return err }
 	
 	obj.num_variables = r.read<u16>()
 

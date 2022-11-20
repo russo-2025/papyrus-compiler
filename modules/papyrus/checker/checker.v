@@ -5,6 +5,7 @@ import pref
 import papyrus.token
 import papyrus.errors
 import papyrus.util
+import pex
 
 [heap]
 pub struct Checker {
@@ -282,7 +283,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 				return_type: ast.int_type
 				obj_name: 'builtin'
 				name: name
-				sname: name.to_lower()
+				lname: name.to_lower()
 				is_static: false
 			}
 		}
@@ -293,7 +294,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 			return_type: ast.string_type
 			obj_name: c.cur_obj_name
 			name: 'GetState'
-			sname: 'getstate'
+			lname: 'getstate'
 			is_static: false
 		}
 	}
@@ -308,7 +309,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 			return_type: ast.none_type
 			obj_name: c.cur_obj_name
 			name: 'GoToState'
-			sname: 'gotostate'
+			lname: 'gotostate'
 			is_static: false
 		}
 	}
@@ -344,7 +345,7 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 
 [inline]
 pub fn (c Checker) is_state() bool {
-	return c.cur_state_name != token.default_state_name
+	return c.cur_state_name != pex.default_state_name
 }
 
 pub fn (c Checker) warn(message string, pos token.Position) {

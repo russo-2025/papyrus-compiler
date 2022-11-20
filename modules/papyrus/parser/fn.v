@@ -30,7 +30,7 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 				state_name: p.cur_state_name
 				obj_name: p.cur_obj_name
 				name: name
-				sname: name.to_lower()
+				lname: name.to_lower()
 				is_static: false
 			})
 		}
@@ -90,7 +90,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 					state_name: p.cur_state_name
 					obj_name: p.cur_obj_name
 					name: name
-					sname: name.to_lower()
+					lname: name.to_lower()
 					is_static: true
 				})
 			}
@@ -106,7 +106,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 					state_name: p.cur_state_name
 					obj_name: p.cur_obj_name
 					name: name
-					sname: name.to_lower()
+					lname: name.to_lower()
 					is_static: false
 				})
 			}

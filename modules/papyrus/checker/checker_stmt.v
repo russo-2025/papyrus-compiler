@@ -2,6 +2,7 @@ module checker
 
 import papyrus.ast
 import papyrus.token
+import pex
 
 fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 	match mut node {
@@ -27,7 +28,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			}
 
 			c.temp_state_fns = map[string]bool{}
-			c.cur_state_name = token.default_state_name
+			c.cur_state_name = pex.default_state_name
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)

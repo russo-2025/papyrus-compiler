@@ -384,7 +384,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 		}
 		ast.Ident {
 			if expr.is_property {
-				if f := g.table.find_field(g.cur_obj_name, expr.name) {
+				if f := g.table.find_property(g.cur_obj_name, expr.name) {
 					
 					if token.Kind.key_auto in f.flags {
 						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(f.auto_var_name) }

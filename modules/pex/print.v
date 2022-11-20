@@ -236,7 +236,7 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	parent := p.get_string(obj.parent_class_name)
 	doc := p.get_string(obj.docstring)
 	user_flags := "0x" + obj.user_flags.hex()
-	auto_state_name := p.get_string(obj.auto_state_name)
+	def_state_name := p.get_string(obj.default_state_name)
 
 	vars_count := obj.num_variables
 	props_count := obj.num_properties
@@ -247,7 +247,7 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	println(tab + "parent: '$parent'")
 	println(tab + "doc: '$doc'")
 	println(tab + "user flags: $user_flags")
-	println(tab + "auto state name: '$auto_state_name'")
+	println(tab + "default state name: '$def_state_name'")
 	
 	println(tab + "variables count: '$vars_count'")
 	println(tab + "variables:")

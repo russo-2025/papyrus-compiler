@@ -147,7 +147,7 @@ pub fn (t &TypeSymbol) has_method(name string) bool {
 pub fn (t &TypeSymbol) find_method(name string) ?Fn {
 	s := name.to_lower()
 	for method in t.methods {
-		if method.sname == s {
+		if method.lname == s {
 			return method
 		}
 	}

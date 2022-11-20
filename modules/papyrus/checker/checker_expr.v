@@ -81,7 +81,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 					return obj.typ
 				}
 			}
-			else if obj := c.table.find_field(c.cur_obj_name, node.name){
+			else if obj := c.table.find_property(c.cur_obj_name, node.name){
 				node.typ = obj.typ
 				node.is_property = true
 				return obj.typ
@@ -151,12 +151,12 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				return ast.int_type
 			}
 			else {
-				if f := c.table.find_field(sym.obj_name, node.field_name) {
+				if f := c.table.find_property(sym.obj_name, node.field_name) {
 					return f.typ
 				}
 				else {
 					for {
-						if f := c.table.find_field(sym.obj_name, node.field_name) {
+						if f := c.table.find_property(sym.obj_name, node.field_name) {
 							return f.typ
 						}
 
@@ -399,7 +399,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	if node.left is ast.EmptyExpr {
 		left = c.cur_obj_name
 	}
-	else if node.left is ast.Ident && c.table.has_module((node.left as ast.Ident).name) {
+	else if node.left is ast.Ident && c.table.has_object((node.left as ast.Ident).name) {
 		left = (node.left as ast.Ident).name
 		typ = (node.left as ast.Ident).typ
 	}

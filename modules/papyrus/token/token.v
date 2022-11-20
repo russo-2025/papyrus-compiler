@@ -1,9 +1,5 @@
 module token
 
-pub const (
-	default_state_name = ""
-)
-
 pub struct Token {
 pub:
 	kind    Kind // the token number/enum; for quick comparisons
