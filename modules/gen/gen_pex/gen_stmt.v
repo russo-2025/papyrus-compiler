@@ -289,7 +289,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 
 [inline]
 fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
-	if stmt.is_obj_var {
+	if stmt.is_object_var {
 		mut user_flags := u32(0)
 
 		if token.Kind.key_conditional in stmt.flags {

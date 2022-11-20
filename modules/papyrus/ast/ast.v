@@ -125,13 +125,13 @@ pub mut:
 
 pub struct VarDecl {
 pub mut:
-	typ			ast.Type
-	obj_name	string
-	name		string
-	assign		AssignStmt
-	pos			token.Position
-	flags		[]token.Kind
-	is_obj_var	bool
+	typ				ast.Type
+	obj_name		string
+	name			string
+	assign			AssignStmt
+	pos				token.Position
+	flags			[]token.Kind
+	is_object_var	bool
 }
 
 pub struct Comment {

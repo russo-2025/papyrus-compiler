@@ -66,7 +66,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 						}
 						pos: node.pos
 						flags: []
-						is_obj_var: true
+						is_object_var: true
 					}
 				}
 				

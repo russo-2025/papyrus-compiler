@@ -461,7 +461,7 @@ pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 }
 
 [inline]
-pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
+pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 	
 	mut pos := p.tok.position()
 
@@ -495,7 +495,7 @@ pub fn (mut p Parser) var_decl(is_obj_var bool) ast.VarDecl {
 		}
 		flags: flags
 		pos: pos
-		is_obj_var: is_obj_var
+		is_object_var: is_object_var
 	}
 }
 
