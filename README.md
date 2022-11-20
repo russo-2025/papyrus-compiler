@@ -1,6 +1,6 @@
 # Compiler
 
-The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v).
+The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v). Work in progress.
 
 ## Prerequisites
 
