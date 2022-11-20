@@ -52,7 +52,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 					c.file.stmts << ast.VarDecl {
 						typ: node.typ
 						obj_name: c.cur_obj_name
-						name: node.auto_var_name
+						name: node.default_var_name
 						assign: ast.AssignStmt{
 							op: token.Kind.assign
 							pos: node.pos

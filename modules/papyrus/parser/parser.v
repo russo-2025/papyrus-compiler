@@ -330,14 +330,14 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 
 	p.inside_property = false
 	
-	auto_var_name := "::" + node.name + "_var"
+	default_var_name := "::" + node.name + "_var"
 	
-	node.auto_var_name = auto_var_name
+	node.default_var_name = default_var_name
 
 	p.table.register_property(ast.Prop{
 		name: node.name
 		obj_name: p.cur_obj_name
-		auto_var_name: auto_var_name
+		default_var_name: default_var_name
 		flags: flags
 		typ: node.typ
 	})

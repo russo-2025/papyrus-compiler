@@ -213,7 +213,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 
 		if f := g.table.find_property(g.cur_obj_name, name) {
 			if token.Kind.key_auto in f.flags {
-				name = f.auto_var_name
+				name = f.default_var_name
 			}
 			else {
 				//значение

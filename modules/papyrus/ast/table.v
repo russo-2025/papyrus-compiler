@@ -24,11 +24,11 @@ pub mut:
 
 pub struct Prop {
 pub:
-	name			string
-	obj_name		string
-	auto_var_name	string
-	flags			[]token.Kind
-	typ				Type
+	name				string
+	obj_name			string
+	default_var_name	string
+	flags				[]token.Kind
+	typ					Type
 }
 	
 pub struct Fn {
