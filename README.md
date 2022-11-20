@@ -1,15 +1,15 @@
 # Compiler
 
-The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v), for use with [Skymp VM](https://github.com/skyrim-multiplayer/skymp/tree/main/skymp5-server/cpp/papyrus_vm_lib) (Not tested in Skyrim)
+The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v).
 
 ## Prerequisites
 
-  - [V compiler (weekly.2022.30)](https://github.com/vlang/v/releases/tag/weekly.2022.30)
+  - [V compiler (weekly.2022.46)](https://github.com/vlang/v/releases/tag/weekly.2022.46)
 
 ## Building
 
 ```bash
-v -cc msvc -m64 -os windows -o "bin\papyrus.exe" -prod -compress -skip-unused compiler.v
+v -o "bin\papyrus.exe" -prod compiler.v
 ```
 
 ## Testing
