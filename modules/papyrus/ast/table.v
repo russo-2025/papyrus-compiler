@@ -41,7 +41,8 @@ pub:
 pub mut:
 	name			string
 	lname			string //in lowercase
-	is_static		bool
+	is_global		bool
+	is_native		bool
 }
 
 pub fn (t Table) has_object(name string) bool {

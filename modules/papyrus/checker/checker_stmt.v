@@ -250,7 +250,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 
 		if func := c.find_fn(c.cur_obj, c.cur_obj_name, node.name) {
-			if node.is_static != func.is_static {
+			if node.is_global != func.is_global {
 				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
 			}
 
@@ -290,7 +290,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 	}
 	else {
-		if node.is_static {
+		if node.is_global {
 			if func := c.table.find_fn(c.cur_obj_name, node.name) {
 				if node.pos != func.pos {
 					c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)

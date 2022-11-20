@@ -248,7 +248,7 @@ fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableData {
 		return g.gen_array_find_element(mut expr)
 	}
 
-	if expr.is_static {
+	if expr.is_global {
 		return g.gen_call(.callstatic, mut expr)
 	}
 	else {

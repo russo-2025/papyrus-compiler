@@ -284,7 +284,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 				obj_name: 'builtin'
 				name: name
 				lname: name.to_lower()
-				is_static: false
+				is_global: false
 			}
 		}
 	}
@@ -295,7 +295,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 			obj_name: c.cur_obj_name
 			name: 'GetState'
 			lname: 'getstate'
-			is_static: false
+			is_global: false
 		}
 	}
 	else if name.to_lower() == 'gotostate' {
@@ -310,7 +310,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 			obj_name: c.cur_obj_name
 			name: 'GoToState'
 			lname: 'gotostate'
-			is_static: false
+			is_global: false
 		}
 	}
 	

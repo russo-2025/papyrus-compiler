@@ -418,7 +418,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	if func := c.find_fn(typ, left, name) {
 		node.obj_name = func.obj_name
 		node.return_type = func.return_type
-		node.is_static = func.is_static
+		node.is_global = func.is_global
 
 		if node.args.len > func.params.len {
 			c.error("function takes $func.params.len parameters not $node.args.len", node.pos)

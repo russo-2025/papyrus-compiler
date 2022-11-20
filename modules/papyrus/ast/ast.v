@@ -55,8 +55,8 @@ pub mut:
 	return_type		ast.Type
 	flags			[]token.Kind
 	scope			&Scope
-	no_body			bool
-	is_static		bool
+	is_native		bool
+	is_global		bool
 	is_event		bool
 }
 

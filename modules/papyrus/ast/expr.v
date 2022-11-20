@@ -103,7 +103,7 @@ pub mut:
 	args			[]CallArg
 	redefined_args	map[string]RedefinedOptionalArg // `d = 2.0` in `Foo(5.0, 2.4, d = 2.0)`
 	return_type		ast.Type
-	is_static		bool
+	is_global		bool
 }
 
 // `foo.bar`

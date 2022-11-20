@@ -31,7 +31,7 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 				obj_name: p.cur_obj_name
 				name: name
 				lname: name.to_lower()
-				is_static: false
+				is_global: false
 			})
 		}
 	}
@@ -44,8 +44,8 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 		return_type: ast.none_type
 		flags: []token.Kind{}
 		scope: scope
-		no_body: false
-		is_static: false
+		is_native: false
+		is_global: false
 		is_event: true
 	}
 }
@@ -66,12 +66,12 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	
 	params := p.fn_args()
 	flags := p.parse_flags()
-	no_body := token.Kind.key_native in flags
-	is_static := token.Kind.key_global in flags
+	is_native := token.Kind.key_native in flags
+	is_global := token.Kind.key_global in flags
 
 	mut stmts := []ast.Stmt{}
 
-	if !no_body {
+	if !is_native {
 		stmts = p.stmts()
 		p.check(.key_endfunction)
 	}
@@ -80,7 +80,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	p.close_scope()
 	
 	if !p.is_state() && !p.inside_property {
-		if is_static {
+		if is_global {
 			if _ := p.table.find_fn(p.cur_obj_name, name) {}
 			else {
 				p.table.register_fn(ast.Fn{
@@ -91,7 +91,8 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 					obj_name: p.cur_obj_name
 					name: name
 					lname: name.to_lower()
-					is_static: true
+					is_global: is_global
+					is_native: is_native
 				})
 			}
 		}
@@ -107,7 +108,8 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 					obj_name: p.cur_obj_name
 					name: name
 					lname: name.to_lower()
-					is_static: false
+					is_global: is_global
+					is_native: is_native
 				})
 			}
 		}
@@ -121,8 +123,8 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 		return_type: return_type
 		flags: flags
 		scope: scope
-		no_body: no_body
-		is_static: is_static
+		is_native: is_native
+		is_global: is_global
 	}
 }
 
@@ -179,7 +181,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 
 	start_pos := p.tok.position()
 	
-	mut args_is_ended := false
+	mut optional_args_is_started := false
 
 	for p.tok.kind != .rpar {
 		if p.tok.kind == .eof {
@@ -189,7 +191,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 		arg_start_pos := p.tok.position()
 
 		if p.tok.kind == .name && p.peek_tok.kind == .assign {
-			args_is_ended = true
+			optional_args_is_started = true
 
 			name := p.check_name()
 			p.check(.assign)
@@ -207,7 +209,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 			}
 		}
 		else {
-			if args_is_ended {
+			if optional_args_is_started {
 				p.error("parameter is expected in the format 'name = value`") // ожидается параметр в формате `name = value`
 			}
 
