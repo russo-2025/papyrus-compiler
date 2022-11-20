@@ -208,24 +208,19 @@ fn (p PexFile) print_property(prop Property, indentSize int) {
 	println(tab + "user flags: '$user_flags'")
 	println(tab + "flags: '$flags'")
 
-	is_autovar := (prop.flags & 0b0100) != 0
-	is_read := (prop.flags & 0b0001) != 0
-	is_write := (prop.flags & 0b0010) != 0
-
-	if is_autovar {
+	if prop.is_autovar() {
 		println(tab + "auto var name: '$auto_var_name'")
 	}
-
-	if is_read && !is_autovar {
-		println(tab + "read handler:")
-		p.print_func_info(prop.read_handler, indentSize + 1)
+	else {
+		if prop.is_read() {
+			println(tab + "read handler:")
+			p.print_func_info(prop.read_handler, indentSize + 1)
+		}
+		if prop.is_write() {
+			println(tab + "write handler:")
+			p.print_func_info(prop.write_handler, indentSize + 1)
+		}
 	}
-
-	if is_write && !is_autovar {
-		println(tab + "write handler:")
-		p.print_func_info(prop.write_handler, indentSize + 1)
-	}
-
 }
 
 fn (p PexFile) print_object(obj Object, indentSize int) {

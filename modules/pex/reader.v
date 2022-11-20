@@ -179,14 +179,14 @@ fn (mut r Reader) read_property() !Property{
 	p.user_flags = r.read<u32>()
 	p.flags = r.read<byte>()
 
-	if p.flags & 0b0100 != 0 {
+	if p.is_autovar() {
 		p.auto_var_name = r.read<u16>()
 	}
 	else {
-		if p.flags & 0b0001 != 0 {
+		if p.is_read() {
 			p.read_handler = r.read_function() or { return err }
 		}
-		if p.flags & 0b0010 != 0 {
+		if p.is_write() {
 			p.write_handler = r.read_function() or { return err }
 		}
 	}

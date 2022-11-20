@@ -203,14 +203,14 @@ fn (mut w Writer) write_property(prop pex.Property) {
 	w.write(prop.user_flags)
 	w.write(prop.flags)
 
-	if prop.flags & 0b0100 != 0 {
+	if prop.is_autovar() {
 		w.write(prop.auto_var_name)
 	}
 	else {
-		if prop.flags & 0b0001 != 0 {
+		if prop.is_read() {
 			w.write_function_info(prop.read_handler)
 		}
-		if prop.flags & 0b0010 != 0 {
+		if prop.is_write() {
 			w.write_function_info(prop.write_handler)
 		}
 	}

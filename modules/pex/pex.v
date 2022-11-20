@@ -285,6 +285,18 @@ pub mut:
 	write_handler	FunctionInfo //present if (flags & 6) == 2
 }
 
+fn (prop Property) is_autovar() bool {
+	return (prop.flags & 0b0100) != 0
+}
+
+fn (prop Property) is_write() bool {
+	return (prop.flags & 0b0010) != 0
+}
+
+fn (prop Property) is_read() bool {
+	return (prop.flags & 0b0001) != 0
+}
+
 pub struct State {
 pub mut:
 	name			u16	//Index(base 0) into string table, empty string for default state
