@@ -282,20 +282,42 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 
 	flags := p.parse_flags()
 
-	no_body := token.Kind.key_auto in flags || token.Kind.key_readonly in flags
-
 	mut node := ast.PropertyDecl {
 		typ: typ
 		pos: pos
 		name: name
-		flags: flags
 		expr: expr
 		read: &ast.Empty{}
 		write: &ast.Empty{}
 	}
 
-	if !no_body {
+	for flag in flags {
+		if flag == token.Kind.key_auto {
+			node.is_auto = true
+		}
+		else if flag == token.Kind.key_readonly {
+			node.is_autoread = true
+		}
+		else if flag == token.Kind.key_hidden {
+			node.is_hidden = true
+		}
+		else if flag == token.Kind.key_conditional {
+			node.is_conditional = true
+		}
+		else {
+			p.error("you cannot use flag ${flag} with property")
+		}
+	}
 
+	if node.is_conditional && node.is_autoread {
+		p.error("`Conditional` flag cannot be used with `AutoReadOnly` flag")
+	}
+
+	if node.is_auto && node.is_autoread {
+		p.error("`Auto` flag cannot be used with `AutoReadOnly` flag")
+	}
+
+	if !node.is_auto && !node.is_autoread {
 		mut i := 0
 
 		for i < 2 {
@@ -338,8 +360,9 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 		name: node.name
 		obj_name: p.cur_obj_name
 		default_var_name: default_var_name
-		flags: flags
 		typ: node.typ
+
+		is_auto: node.is_auto
 	})
 
 	return node

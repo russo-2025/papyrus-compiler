@@ -61,18 +61,22 @@ pub mut:
 }
 
 pub struct Empty {}
-pub type Handler = Empty | FnDecl
+pub type Handler = FnDecl | Empty
 
 pub struct PropertyDecl {
 pub mut:
 	name				string
 	pos					token.Position
 	typ					ast.Type
-	flags				[]token.Kind
 	default_var_name	string
 	expr				Expr
 	read				Handler
 	write				Handler
+
+	is_auto				bool //flag
+	is_autoread			bool //flag
+	is_hidden			bool //flag
+	is_conditional		bool //flag
 }
 
 pub struct Return {

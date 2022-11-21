@@ -105,8 +105,8 @@ papyrus -read "../test-files/compiled/ABCD.pex"
   - [x] read only
   - [x] assign
   - [x] flags
-    - [ ] `Hidden`
-    - [ ] `Conditional`
+    - [x] `Hidden`
+    - [x] `Conditional`
     - [x] `Auto`
     - [x] `AutoReadOnly`
 - [x] **States** [docs](https://www.creationkit.com/index.php?title=State_Reference)

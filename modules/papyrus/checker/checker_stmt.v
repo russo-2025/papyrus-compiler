@@ -48,7 +48,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 					c.top_stmt(mut &node.write)
 				}
 
-				if token.Kind.key_auto in node.flags {
+				if node.is_auto {
 					c.file.stmts << ast.VarDecl {
 						typ: node.typ
 						obj_name: c.cur_obj_name

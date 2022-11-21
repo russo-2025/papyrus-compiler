@@ -212,7 +212,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 		mut name := stmt.left.name
 
 		if prop := g.table.find_property(g.cur_obj_name, name) {
-			if token.Kind.key_auto in prop.flags {
+			if prop.is_auto {
 				name = prop.default_var_name
 			}
 			else {
@@ -326,28 +326,17 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 		auto_var_name: 0
 	}
 
-	mut is_auto := false
-	mut is_autoread := false
-
-	for flag in stmt.flags {
-		match flag {
-			.key_auto {
-				is_auto = true
-			}
-			.key_readonly {
-				is_autoread = true
-			}
-			else{}
-		}
+	if stmt.is_hidden {
+		prop.user_flags = 1
 	}
 
-	if is_auto {
+	if stmt.is_auto {
 		prop.flags |= 0b0111
 
 		var_name := "::" + stmt.name + "_var"
 		prop.auto_var_name = g.gen_string_ref(var_name)
 	}
-	else if is_autoread {
+	else if stmt.is_autoread {
 		prop.flags |= 0b0001
 		prop.read_handler = pex.FunctionInfo{
 			return_type: g.gen_string_ref(g.table.type_to_str(stmt.typ))

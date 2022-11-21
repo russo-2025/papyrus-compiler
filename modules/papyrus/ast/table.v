@@ -27,8 +27,9 @@ pub:
 	name				string
 	obj_name			string
 	default_var_name	string
-	flags				[]token.Kind
 	typ					Type
+
+	is_auto				bool //flag
 }
 	
 pub struct Fn {
