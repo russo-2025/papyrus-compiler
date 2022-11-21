@@ -342,11 +342,11 @@ fn (p PexFile) get_string(i int) string {
 	return p.string_table[i]
 }
 
-fn (p PexFile) get_object_by_name(name string) ?&Object {
+fn (p PexFile) get_object(name string) ?&Object {
 	for i := 0; i < p.objects.len; i++ {
-		obj_name := p.get_string(p.objects[i].name)
+		tname := p.get_string(p.objects[i].name)
 		
-		if name == obj_name {
+		if tname == name {
 			return unsafe { &p.objects[i] }
 		}
 	}
@@ -356,8 +356,8 @@ fn (p PexFile) get_object_by_name(name string) ?&Object {
 
 fn (p PexFile) get_state(obj &Object, name string) ?&State {
 	for i := 0; i < obj.states.len; i++ {
-		state_name := p.get_string(obj.states[i].name)
-		if state_name == name {
+		tname := p.get_string(obj.states[i].name)
+		if tname == name {
 			return unsafe { &obj.states[i] }
 		}
 	}
@@ -369,8 +369,8 @@ fn (p PexFile) get_default_state(obj &Object) ?&State {
 	name := p.get_string(obj.default_state_name)
 
 	for i := 0; i < obj.states.len; i++ {
-		state_name := p.get_string(obj.states[i].name)
-		if state_name == name {
+		tname := p.get_string(obj.states[i].name)
+		if tname == name {
 			return unsafe { &obj.states[i] }
 		}
 	}
@@ -378,10 +378,10 @@ fn (p PexFile) get_default_state(obj &Object) ?&State {
 	return none
 }
 
-fn (p PexFile) get_function(state &State, name string) ?&Function {
+fn (p PexFile) get_function_from_state(state &State, func_name string) ?&Function {
 	for i := 0; i < state.functions.len; i++ {
-		state_name := p.get_string(state.functions[i].name)
-		if state_name == name {
+		tname := p.get_string(state.functions[i].name)
+		if tname == func_name {
 			return unsafe { &state.functions[i] }
 		}
 	}
@@ -389,9 +389,35 @@ fn (p PexFile) get_function(state &State, name string) ?&Function {
 	return none
 }
 
-fn (p PexFile) find_function(obj_name string, func_name string) ?&Function {
-	obj := p.get_object_by_name(obj_name) or { return none }
+fn (p PexFile) get_function(obj_name string, func_name string) ?&Function {
+	obj := p.get_object(obj_name) or { return none }
 	default_state := p.get_default_state(obj) or { return none }
-	func := p.get_function(default_state, func_name) or { return none }
+	func := p.get_function_from_state(default_state, func_name) or { return none }
 	return func
+}
+
+fn (p PexFile) get_property(obj_name string, prop_name string) ?&Property {
+	obj := p.get_object(obj_name) or { return none }
+
+	for i := 0; i < obj.properties.len; i++ {
+		tname := p.get_string(obj.properties[i].name)
+		if tname == prop_name {
+			return unsafe { &obj.properties[i] }
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) get_var(obj_name string, var_name string) ?&Variable {
+	obj := p.get_object(obj_name) or { return none }
+
+	for i := 0; i < obj.variables.len; i++ {
+		tname := p.get_string(obj.variables[i].name)
+		if tname == var_name {
+			return unsafe { &obj.variables[i] }
+		}
+	}
+
+	return none
 }

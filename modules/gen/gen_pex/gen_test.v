@@ -5,25 +5,8 @@ import pex
 import gen_pex
 import pref
 
-fn compile(src string) &pex.PexFile {
-	parent_src :=
-		"Scriptname CDFG\n" +
-		"Function ParentFoz(int n1, int n2)\n" +
-		"EndFunction"
-
-	full_src :=
-		"Scriptname ABCD extends CDFG\n" +
-		"Event OnInit()\n" +
-		"EndEvent\n" +
-		"Function Foo(int n1, int n2) global\n" +
-		"EndFunction\n" +
-		"Function Foz(int n1, int n2)\n" +
-		"EndFunction\n" +
-		"Function Bar(string v, ABCD obj)\n" +
-		"$src\n" +
-		"EndFunction\n"
-
-	prefs := pref.Preferences {
+const (
+	prefs = pref.Preferences {
 		paths: []string{}
 		out_dir: []string{}
 		mode: .compile
@@ -31,6 +14,48 @@ fn compile(src string) &pex.PexFile {
 		no_cache: true
 		crutches_enabled: false
 	}
+
+	parent_src =
+		"Scriptname CDFG\n" +
+		"Function ParentFoz(int n1, int n2)\n" +
+		"EndFunction"
+
+	src_template = 
+		"Scriptname ABCD extends CDFG\n" +
+		"int myValue = 0\n" +
+		"Event OnInit()\n" +
+		"EndEvent\n" +
+		"Function Foo(int n1, int n2) global\n" +
+		"EndFunction\n" +
+		"Function Foz(int n1, int n2)\n" +
+		"EndFunction\n"
+)
+
+fn compile_top(src string) &pex.PexFile {
+	full_src := "${src_template}${src}"
+	table := ast.new_table()
+	global_scope := &ast.Scope{
+		parent: 0
+	}
+	
+	mut parent_file := parser.parse_text(parent_src, table, prefs, global_scope)
+	mut file := parser.parse_text(full_src, table, prefs, global_scope)
+
+	mut c := checker.new_checker(table, prefs)
+
+	c.check(mut parent_file)
+	c.check(mut file)
+
+	assert c.errors.len == 0
+
+	pex_file := gen_pex.gen_pex_file(file, table, prefs)
+	bytes := pex.write(pex_file)
+	out_pex_file := pex.read(bytes)
+	return out_pex_file
+}
+
+fn compile(src string) &pex.PexFile {
+	full_src := "${src_template}Function Bar(string v, ABCD obj)\n${src}\nEndFunction\n"
 	table := ast.new_table()
 	global_scope := &ast.Scope{
 		parent: 0
@@ -51,7 +76,7 @@ fn compile(src string) &pex.PexFile {
 }
 
 fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
-	func := pex_file.find_function("ABCD", "Bar") or { panic("function not found") }
+	func := pex_file.get_function("ABCD", "Bar") or { panic("function not found") }
 
 	$if false {
 		println("")
@@ -124,7 +149,7 @@ fn test_method_call() {
 	assert ins[0].args[5].integer == 18
 
 	//src:			obj.Foz(25, 26)
-    //original:		opcode: 'callmethod', args: [ident(Foz), ident(obj), ident(::NoneVar), integer(2), integer(25), integer(26)]
+	//original:		opcode: 'callmethod', args: [ident(Foz), ident(obj), ident(::NoneVar), integer(2), integer(25), integer(26)]
 
 	pex_file = compile("obj.Foz(25, 26)")
 	ins = get_instructions(pex_file)
@@ -139,7 +164,7 @@ fn test_method_call() {
 
 	//src:			ABCD[] x = new ABCD[5]
 	//				x[1].Foz(25, 26)
-    //original:		opcode: 'array_create', args: [ident(::temp0), integer(5)]
+	//original:		opcode: 'array_create', args: [ident(::temp0), integer(5)]
 	//				opcode: 'assign', args: [ident(x), ident(::temp0)]
 	//				opcode: 'array_getelement', args: [ident(::temp1), ident(x), integer(1)]
 	//				opcode: 'callmethod', args: [ident(Foz), ident(::temp1), ident(::NoneVar), integer(2), integer(25), integer(26)]
@@ -205,7 +230,7 @@ fn test_parent_method_call() {
 	assert ins[0].args[4].integer == 22
 
 	//src:			obj.ParentFoz(23, 24)
-    //original:		opcode: 'callmethod', args: [ident(ParentFoz), ident(obj), ident(::NoneVar), integer(2), integer(23), integer(24)]
+	//original:		opcode: 'callmethod', args: [ident(ParentFoz), ident(obj), ident(::NoneVar), integer(2), integer(23), integer(24)]
 
 	pex_file = compile("obj.ParentFoz(23, 24)")
 	ins = get_instructions(pex_file)
@@ -232,6 +257,455 @@ fn test_call_event() {
 	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
 	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
 	assert ins[0].args[3].integer == 0
+}
+
+fn test_property_decl_1() {
+	//src:		string Property Hello = "Hello world!" Auto
+	//original:
+	//			variables: 
+
+	//			name: '::Hello_var'
+	//			type name: 'String'
+	//			user flags: ''
+	//			data: string('Hello world!')
+
+	//			properties:
+
+	//			name: 'Hello'
+	//			type name: 'String'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x07'
+	//			auto var name: '::Hello_var'
+
+	mut pex_file := compile_top('string Property Hello = "Hello world!" Auto')
+	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello"
+	assert pex_file.get_string(prop.typ).to_lower() == "string"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0111
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
+	
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "string"
+	assert var.user_flags == 0
+	assert var.data.typ == 2
+	assert pex_file.get_string(var.data.string_id) == "Hello world!"
+}
+
+fn test_property_decl_2() {
+	//src:		string Property Hello = "Hello world!" AutoReadOnly
+	//original:
+	//			name: 'Hello'
+	//			type name: 'String'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x01'
+	//			read handler:
+	//					typ: 'String'
+	//					doc: ''
+	//					user_flags: 0x0
+	//					flags: 0x00
+	//					flags: ``
+	//					params count: '0'
+	//					locals count: '0'
+	//					instructions count: '1'
+	//							opcode: 'ret', args: [string('Hello world!')]
+
+	pex_file := compile_top('string Property Hello2 = "Hello world2!" AutoReadOnly')
+	prop := pex_file.get_property("ABCD", "Hello2") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello2"
+	assert pex_file.get_string(prop.typ).to_lower() == "string"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0001
+
+	//prop.prop.read_handler
+	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "string"
+	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "string"
+	assert prop.read_handler.user_flags == 0
+	assert prop.read_handler.flags == 0
+	assert prop.read_handler.num_params == 0
+	assert prop.read_handler.num_locals == 0
+	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "Hello world2!"
+}
+
+fn test_property_decl_3() {
+	//src:		string Property Hello3 = "Hello world3!" Auto Hidden
+	//original:	
+	//			name: 'Hello3'
+	//			type name: 'String'
+	//			doc string: ''
+	//			user flags: '0x1'
+	//			flags: '0x07'
+	//			auto var name: '::Hello3_var'
+	
+	pex_file := compile_top('string Property Hello3 = "Hello world3!" Auto Hidden')
+	prop := pex_file.get_property("ABCD", "Hello3") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello3"
+	assert pex_file.get_string(prop.typ).to_lower() == "string"
+	assert prop.user_flags == 1
+	assert prop.flags == 0b0111
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello3_var"
+
+	//var
+	var := pex_file.get_var("ABCD", "::Hello3_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello3_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "string"
+	assert var.user_flags == 0
+	assert var.data.typ == 2
+	assert pex_file.get_string(var.data.string_id) == "Hello world3!"
+}
+
+fn test_property_decl_4() {
+	//src:		string Property Hello5 = "Hello world!" Auto Conditional
+	//original:	
+	//			name: 'Hello5'
+	//			type name: 'String'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x07'
+	//			auto var name: '::Hello5_var'
+
+	pex_file := compile_top('string Property Hello5 = "Hello world5!" Auto Conditional')
+	prop := pex_file.get_property("ABCD", "Hello5") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello5"
+	assert pex_file.get_string(prop.typ).to_lower() == "string"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0111
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello5_var"
+
+	//var
+	var := pex_file.get_var("ABCD", "::Hello5_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello5_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "string"
+	assert var.user_flags == 0
+	assert var.data.typ == 2
+	assert pex_file.get_string(var.data.string_id) == "Hello world5!"
+}
+
+fn test_property_decl_5() {
+	//src:		
+	//		int Property Hello6
+	//		    Function Set(int value)
+	//		        myValue = value
+	//		    EndFunction
+	//		    int Function Get()
+	//		        return myValue
+	//		    EndFunction
+	//		EndProperty
+	//original:
+	//			name: 'Hello6'
+	//			type name: 'Int'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x03'
+	//			read handler:
+	//			        typ: 'Int'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '0'
+	//			        locals count: '0'
+	//			        instructions count: '1'
+	//			                opcode: 'ret', args: [ident(myValue)]
+	//			write handler:
+	//			        typ: 'None'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '1'
+	//			                Int value
+	//			        locals count: '0'
+	//			        instructions count: '1'
+	//			                opcode: 'assign', args: [ident(myValue), ident(value)]
+
+	pex_file := compile_top('int Property Hello6
+								Function Set(int value)
+									myValue = value
+								EndFunction
+								int Function Get()
+									return myValue
+								EndFunction
+							EndProperty')
+	prop := pex_file.get_property("ABCD", "Hello6") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello6"
+	assert pex_file.get_string(prop.typ).to_lower() == "int"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0011
+
+	//prop.prop.read_handler
+	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"
+	assert prop.read_handler.user_flags == 0
+	assert prop.read_handler.flags == 0
+	assert prop.read_handler.num_params == 0
+	assert prop.read_handler.num_locals == 0
+	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
+
+	//prop.prop.write_handler
+	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
+	assert prop.write_handler.user_flags == 0
+	assert prop.write_handler.flags == 0
+	assert prop.write_handler.num_params == 1
+	assert pex_file.get_string(prop.write_handler.params[0].name) == "value"
+	assert pex_file.get_string(prop.write_handler.params[0].typ).to_lower() == "int"
+	assert prop.write_handler.num_locals == 0
+	assert prop.write_handler.num_instructions == 1
+	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
+}
+
+fn test_property_decl_6() {
+	//src:
+	//		int Property Hello7
+	//		    Function Set(int value)
+	//		        myValue = value
+	//		    EndFunction
+	//		EndProperty
+	//original:	
+	//			name: 'Hello7'
+	//			type name: 'Int'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x02'
+	//			write handler:
+	//			        typ: 'None'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '1'
+	//			                Int value
+	//			        locals count: '0'
+	//			        instructions count: '1'
+	//			                opcode: 'assign', args: [ident(myValue), ident(value)]
+
+	pex_file := compile_top('int Property Hello7
+								Function Set(int value)
+									myValue = value
+								EndFunction
+							EndProperty')
+	prop := pex_file.get_property("ABCD", "Hello7") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello7"
+	assert pex_file.get_string(prop.typ).to_lower() == "int"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0010
+
+	//prop.prop.write_handler
+	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
+	assert prop.write_handler.user_flags == 0
+	assert prop.write_handler.flags == 0
+	assert prop.write_handler.num_params == 1
+	assert pex_file.get_string(prop.write_handler.params[0].name) == "value"
+	assert pex_file.get_string(prop.write_handler.params[0].typ).to_lower() == "int"
+	assert prop.write_handler.num_locals == 0
+	assert prop.write_handler.num_instructions == 1
+	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
+}
+
+fn test_property_decl_7() {
+	//src:
+	//		int Property Hello8
+	//		    int Function Get()
+	//		        return myValue
+	//		    EndFunction
+	//		EndProperty
+	//original:	
+	//			name: 'Hello8'
+	//			type name: 'Int'
+	//			doc string: ''
+	//			user flags: '0x0'
+	//			flags: '0x01'
+	//			read handler:
+	//			        typ: 'Int'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '0'
+	//			        locals count: '0'
+	//			        instructions count: '1'
+	//			                opcode: 'ret', args: [ident(myValue)]
+
+	pex_file := compile_top('int Property Hello8
+								int Function Get()
+									return myValue
+								EndFunction
+							EndProperty')
+	prop := pex_file.get_property("ABCD", "Hello8") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello8"
+	assert pex_file.get_string(prop.typ).to_lower() == "int"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0001
+
+	//prop.prop.read_handler
+	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"
+	assert prop.read_handler.user_flags == 0
+	assert prop.read_handler.flags == 0
+	assert prop.read_handler.num_params == 0
+	assert prop.read_handler.num_locals == 0
+	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
+}
+
+fn test_state_decl_1() {
+	//src:		
+	//		State MyState1
+	//		EndState
+	//original:
+	//			name: 'mystate1'
+    //			functions count: '0'
+    //			functions:
+
+	pex_file := compile_top('State MyState1
+							EndState')
+
+	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	state := pex_file.get_state(obj, "MyState1") or { panic("state not found") }
+
+	assert pex_file.get_string(state.name) == "MyState1"
+	assert state.num_functions == 0
+}
+
+fn test_state_decl_2() {
+	//src:		
+	//		State MyState2
+	//			Function Foz(int n1, int n2)
+	//				n1 + n2 + 1
+	//			EndFunction
+	//		EndState
+	//original:
+	//			name: 'mystate2'
+	//			functions count: '1'
+	//			functions:
+	//			        name: 'Foz'
+	//			        typ: 'None'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '2'
+	//			                Int n1
+	//			                Int n2
+	//			        locals count: '1'
+	//			                Int ::temp0
+	//			        instructions count: '2'
+	//			                opcode: 'iadd', args: [ident(::temp0), ident(n1), ident(n2)]
+	//			                opcode: 'iadd', args: [ident(::temp0), ident(::temp0), integer(1)]
+
+	pex_file := compile_top('State MyState2
+								Function Foz(int n1, int n2)
+									n1 + n2 + 1
+								EndFunction
+							EndState')
+
+	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	state := pex_file.get_state(obj, "MyState2") or { panic("state not found") }
+
+	assert pex_file.get_string(state.name) == "MyState2"
+	assert state.num_functions == 1
+
+	assert pex_file.get_string(state.functions[0].name) == "Foz"
+	assert pex_file.get_string(state.functions[0].info.return_type) == "None"
+	assert state.functions[0].info.user_flags == 0
+	assert state.functions[0].info.flags == 0
+
+	assert state.functions[0].info.num_params == 2
+	assert pex_file.get_string(state.functions[0].info.params[0].name) == "n1"
+	assert pex_file.get_string(state.functions[0].info.params[0].typ) == "Int"
+	assert pex_file.get_string(state.functions[0].info.params[1].name) == "n2"
+	assert pex_file.get_string(state.functions[0].info.params[1].typ) == "Int"
+
+	assert state.functions[0].info.num_locals == 1
+	assert pex_file.get_string(state.functions[0].info.locals[0].name) == "::temp0"
+	assert pex_file.get_string(state.functions[0].info.locals[0].typ) == "Int"
+
+	assert state.functions[0].info.num_instructions == 2
+	assert state.functions[0].info.instructions[0].op == pex.OpCode.iadd
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[0].string_id) == "::temp0"
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[1].string_id) == "n1"
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[2].string_id) == "n2"
+
+	assert state.functions[0].info.instructions[1].op == pex.OpCode.iadd
+	assert pex_file.get_string(state.functions[0].info.instructions[1].args[0].string_id) == "::temp0"
+	assert pex_file.get_string(state.functions[0].info.instructions[1].args[1].string_id) == "::temp0"
+	assert state.functions[0].info.instructions[1].args[2].integer == 1
+}
+
+fn test_state_decl_3() {
+	//src:		
+	//		Auto State MyState3
+	//			Function Foz(int n1, int n2)
+	//				n1 + n2 + 5
+	//			EndFunction
+	//		EndState
+	//original:
+	//			name: 'MyState3'
+	//			functions count: '1'
+	//			functions:
+	//			        name: 'Foz'
+	//			        typ: 'None'
+	//			        doc: ''
+	//			        user_flags: 0x0
+	//			        flags: 0x00
+	//			        flags: ``
+	//			        params count: '2'
+	//			                Int n1
+	//			                Int n2
+	//			        locals count: '1'
+	//			                Int ::temp1
+	//			        instructions count: '2'
+	//			                opcode: 'iadd', args: [ident(::temp1), ident(n1), ident(n2)]
+	//			                opcode: 'iadd', args: [ident(::temp1), ident(::temp1), integer(5)]
+
+	pex_file := compile_top('Auto State MyState3
+								Function Foz(int n1, int n2)
+									n1 + n2 + 5
+								EndFunction
+							EndState')
+
+	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	assert pex_file.get_string(obj.default_state_name) == "MyState3"
+
+	state := pex_file.get_state(obj, "MyState3") or { panic("state not found") }
+
+	assert pex_file.get_string(state.name) == "MyState3"
+	assert state.num_functions == 1
+	assert pex_file.get_string(state.functions[0].name) == "Foz"
+	assert pex_file.get_string(state.functions[0].info.return_type) == "None"
 }
 
 fn test_foo() {
