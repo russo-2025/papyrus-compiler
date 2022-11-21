@@ -111,7 +111,7 @@ papyrus -read "../test-files/compiled/ABCD.pex"
     - [x] `AutoReadOnly`
 - [x] **States** [docs](https://www.creationkit.com/index.php?title=State_Reference)
   - [x] declaration
-  - [ ] flag `auto` ...
+  - [x] flag `auto`
   - [x] empty state (default state)
   - [x] `OnBeginState`
   - [x] switching states `GotoState`

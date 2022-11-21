@@ -30,7 +30,6 @@ pub mut:
 	cur_state		&pex.State = unsafe{ 0 }
 	cur_fn			&pex.Function = unsafe{ 0 }
 
-	default_obj		&pex.Object = unsafe{ 0 }
 	default_state	&pex.State = unsafe{ 0 }
 
 	cur_obj_name	string

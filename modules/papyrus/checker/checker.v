@@ -12,13 +12,14 @@ pub struct Checker {
 	pref				&pref.Preferences
 pub mut:
 	table				&ast.Table
-	file				&ast.File = unsafe { 0 }
+	file				&ast.File = unsafe { voidptr(0) }
 	errors				[]errors.Error
 	warnings			[]errors.Warning
 
 	inside_fn			bool
 	inside_property		bool
-	cur_fn				&ast.FnDecl = unsafe { 0 }
+	auto_state_is_exist	bool
+	cur_fn				&ast.FnDecl = unsafe { voidptr(0) }
 	cur_scope			&ast.Scope = voidptr(0)
 	cur_obj_name		string
 	cur_parent_obj_name	string

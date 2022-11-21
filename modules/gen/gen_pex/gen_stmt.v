@@ -12,7 +12,6 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	g.pex.object_count++
 	
 	g.cur_obj = &g.pex.objects[g.pex.objects.len - 1]
-	g.default_obj = g.cur_obj
 
 	g.cur_obj_name = s.name
 	
@@ -51,6 +50,10 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 
 [inline]
 fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
+	if s.is_auto {
+		g.cur_obj.default_state_name = g.gen_string_ref(s.name)
+	}
+
 	mut state := g.create_state(s.name)
 
 	g.cur_obj.states << state

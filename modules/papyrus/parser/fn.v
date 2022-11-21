@@ -81,8 +81,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	
 	if !p.is_state() && !p.inside_property {
 		if is_global {
-			if _ := p.table.find_fn(p.cur_obj_name, name) {}
-			else {
+			if !p.table.has_fn(p.cur_obj_name, name) {
 				p.table.register_fn(ast.Fn{
 					pos: pos
 					params: params

@@ -5,12 +5,13 @@ import papyrus.token
 [heap]
 pub struct Table {
 pub mut:
-	object_names	[]string
-	types			[]TypeSymbol // aka type_symbols
-	type_idxs		map[string]int
+	object_names		[]string
+	types				[]TypeSymbol // aka type_symbols
+	type_idxs			map[string]int
 
-	fns				map[string]Fn
-	props			map[string]Prop
+	fns					map[string]Fn
+	props				map[string]Prop
+	states				map[string]State
 }
 
 pub struct Param {
@@ -22,13 +23,21 @@ pub mut:
 	
 }
 
+pub struct State {
+pub:
+	name		string
+	obj_name	string
+	is_auto		bool //flag
+	pos			token.Position
+}
+
 pub struct Prop {
 pub:
 	name				string
 	obj_name			string
 	default_var_name	string
 	typ					Type
-
+	pos					token.Position
 	is_auto				bool //flag
 }
 	
@@ -64,6 +73,40 @@ pub fn new_table() &Table {
 	return t
 }
 
+pub fn (t &Table) has_state(obj_name string, name string) bool {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if _ := t.states[key] {
+		return true
+	}
+	
+	return false
+}
+
+pub fn (t &Table) find_state(obj_name string, name string) ?State {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if s := t.states[key] {
+		return s
+	}
+	
+	return none
+}
+
+pub fn (mut t Table) register_state(s State) {
+	t.states[s.obj_name.to_lower() + "." + s.name.to_lower()] = s
+}
+
+pub fn (t &Table) has_property(obj_name string, name string) bool {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if _ := t.props[key] {
+		return true
+	}
+	
+	return false
+}
+
 pub fn (t &Table) find_property(obj_name string, name string) ?Prop {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
@@ -76,6 +119,16 @@ pub fn (t &Table) find_property(obj_name string, name string) ?Prop {
 
 pub fn (mut t Table) register_property(p Prop) {
 	t.props[p.obj_name.to_lower() + "." + p.name.to_lower()] = p
+}
+
+pub fn (t &Table) has_fn(obj_name string, name string) bool {
+	key := obj_name.to_lower() + "." + name.to_lower()
+	
+	if _ := t.fns[key] {
+		return true
+	}
+	
+	return false
 }
 
 pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {

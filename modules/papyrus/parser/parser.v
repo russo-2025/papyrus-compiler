@@ -31,7 +31,7 @@ mut:
 	
 	inside_property		bool
 
-	cur_obj_name		string 
+	cur_obj_name		string
 	cur_state_name		string = pex.default_state_name
 	cur_object			ast.Type //current object type
 
@@ -142,6 +142,13 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 		}
 
 		match p.tok.kind {
+			.key_auto {
+				if p.peek_tok.kind == .key_state {
+					return p.state_decl()
+				}
+
+				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "${p.tok.lit}")
+			}
 			.key_import {
 				p.next()
 				name := p.check_name()
@@ -178,7 +185,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 				return p.state_decl()
 			}
 			else {
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "${p.tok.lit}")
 			}
 		}
 	}
@@ -202,6 +209,14 @@ pub fn (mut p Parser) parse_flags() []token.Kind {
 
 pub fn (mut p Parser) state_decl() ast.StateDecl {
 	pos := p.tok.position()
+	
+	mut is_auto := false
+
+	if p.tok.kind == .key_auto {
+		is_auto = true
+		p.next()
+	}
+
 	p.check(.key_state)
 
 	name := p.check_name()
@@ -253,11 +268,21 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	p.check(.key_endstate)
 	
 	p.cur_state_name = pex.default_state_name
+
+	if !p.table.has_state(p.cur_obj_name, name) {
+		p.table.register_state(ast.State{
+			name: name
+			obj_name: p.cur_obj_name
+			pos: pos
+			is_auto: is_auto
+		})
+	}
 	
 	return ast.StateDecl {
-		pos: pos
 		name: name
+		pos: pos
 		fns: fns
+		is_auto: is_auto
 	}
 }
 
@@ -356,14 +381,16 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	
 	node.default_var_name = default_var_name
 
-	p.table.register_property(ast.Prop{
-		name: node.name
-		obj_name: p.cur_obj_name
-		default_var_name: default_var_name
-		typ: node.typ
-
-		is_auto: node.is_auto
-	})
+	if !p.table.has_property(p.cur_obj_name, name) {
+		p.table.register_property(ast.Prop{
+			name: node.name
+			obj_name: p.cur_obj_name
+			default_var_name: default_var_name
+			typ: node.typ
+			pos: pos
+			is_auto: node.is_auto
+		})
+	}
 
 	return node
 }

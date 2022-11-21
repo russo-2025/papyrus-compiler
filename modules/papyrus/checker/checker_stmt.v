@@ -29,6 +29,21 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 
 			c.temp_state_fns = map[string]bool{}
 			c.cur_state_name = pex.default_state_name
+
+			if node.is_auto {
+				if !c.auto_state_is_exist {
+					c.auto_state_is_exist = true
+				}
+				else {
+					c.error("state with `Auto` flag already exists", node.pos)
+				}
+			}
+
+			if t_state := c.table.find_state(c.cur_obj_name, node.name) {
+				if t_state.pos.pos != node.pos.pos {
+					c.error("state with this name already exists", node.pos)
+				}
+			}
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)
@@ -46,6 +61,12 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 
 				if mut node.write is ast.FnDecl {
 					c.top_stmt(mut &node.write)
+				}
+
+				if t_prop := c.table.find_property(c.cur_obj_name, node.name) {
+					if t_prop.pos.pos != node.pos.pos {
+						c.error("property with this name already exists", node.pos)
+					}
 				}
 
 				if node.is_auto {

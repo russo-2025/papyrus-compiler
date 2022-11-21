@@ -22,20 +22,21 @@ pub mut:
 
 pub struct ScriptDecl {
 pub mut:
-	pos				token.Position
-	name			string
-	name_pos		token.Position
+	pos					token.Position
+	name				string
+	name_pos			token.Position
 
-	parent_name		string
-	parent_pos		token.Position
-	flags			[]token.Kind
+	parent_name			string
+	parent_pos			token.Position
+	flags				[]token.Kind
 }
 
 pub struct StateDecl {
 pub mut:
-	pos		token.Position
-	name	string
-	fns		[]FnDecl
+	pos			token.Position
+	name		string
+	fns			[]FnDecl
+	is_auto		bool //flag
 }
 
 pub struct FnArg {
@@ -55,8 +56,8 @@ pub mut:
 	return_type		ast.Type
 	flags			[]token.Kind
 	scope			&Scope
-	is_native		bool
-	is_global		bool
+	is_native		bool //flag
+	is_global		bool //flag
 	is_event		bool
 }
 
