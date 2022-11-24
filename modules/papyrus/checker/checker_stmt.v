@@ -28,7 +28,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			}
 
 			c.temp_state_fns = map[string]bool{}
-			c.cur_state_name = pex.default_state_name
+			c.cur_state_name = pex.empty_state_name
 
 			if node.is_auto {
 				if !c.auto_state_is_exist {

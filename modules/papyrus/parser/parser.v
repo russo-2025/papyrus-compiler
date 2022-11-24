@@ -32,7 +32,7 @@ mut:
 	inside_property		bool
 
 	cur_obj_name		string
-	cur_state_name		string = pex.default_state_name
+	cur_state_name		string = pex.empty_state_name
 	cur_object			ast.Type //current object type
 
 	parsed_type			ast.Type //спаршеный тип
@@ -268,7 +268,7 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 
 	p.check(.key_endstate)
 	
-	p.cur_state_name = pex.default_state_name
+	p.cur_state_name = pex.empty_state_name
 
 	if !p.table.has_state(p.cur_obj_name, name) {
 		p.table.register_state(ast.State{
@@ -735,7 +735,7 @@ pub fn (mut p Parser) check_extended_lang() {
 
 [inline]
 pub fn (p Parser) is_state() bool {
-	return p.cur_state_name != pex.default_state_name
+	return p.cur_state_name != pex.empty_state_name
 }
 
 [inline]

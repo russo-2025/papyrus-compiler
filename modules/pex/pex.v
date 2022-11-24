@@ -1,7 +1,7 @@
 module pex
 
 pub const (
-	default_state_name = ""
+	empty_state_name = ""
 )
 
 const (

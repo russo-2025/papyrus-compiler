@@ -167,7 +167,7 @@ fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 		parent_class_name: g.gen_string_ref(parent_name)
 		docstring: g.gen_string_ref("")
 		user_flags: 0
-		default_state_name: g.gen_string_ref(pex.default_state_name)
+		default_state_name: g.gen_string_ref(pex.empty_state_name)
 		
 		num_variables: 0
 		variables: []&pex.Variable{}
