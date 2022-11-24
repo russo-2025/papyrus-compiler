@@ -65,7 +65,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	name := p.check_name()
 	
 	params := p.fn_args()
-	flags := p.parse_flags()
+	flags := p.parse_flags(pos.line_nr + 1)
 	is_native := token.Kind.key_native in flags
 	is_global := token.Kind.key_global in flags
 

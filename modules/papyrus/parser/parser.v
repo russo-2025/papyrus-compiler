@@ -66,7 +66,7 @@ pub fn parse_file(path string, table &ast.Table, pref &pref.Preferences, global_
 	return p.parse()
 }
 
-pub fn parse_text(text string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_text(path string, text string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner(text, pref)
 		pref: pref
@@ -78,7 +78,7 @@ pub fn parse_text(text string, table &ast.Table, pref &pref.Preferences, global_
 		table: table
 	}
 
-	p.set_path('::in-memory::')
+	p.set_path(path)
 
 	return p.parse()
 }
@@ -194,9 +194,10 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 }
 
 [inline]
-pub fn (mut p Parser) parse_flags() []token.Kind {
+pub fn (mut p Parser) parse_flags(line int) []token.Kind {
 	mut flags := []token.Kind{}
-	for p.tok.kind.is_flag() {
+
+	for p.tok.kind.is_flag() && p.tok.line_nr <= line {
 		if p.tok.kind !in flags {
 			flags << p.tok.kind
 		}
@@ -305,7 +306,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 		expr = p.expr(0)
 	}
 
-	flags := p.parse_flags()
+	flags := p.parse_flags(pos.line_nr + 1)
 
 	mut node := ast.PropertyDecl {
 		typ: typ
@@ -437,7 +438,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		}
 	}
 	
-	node.flags = p.parse_flags()
+	node.flags = p.parse_flags(pos.line_nr + 1)
 	
 	p.cur_object = p.table.register_type_symbol(
 		parent_idx: parent_idx
@@ -525,7 +526,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 		expr = p.expr(0)
 	}
 
-	flags := p.parse_flags()
+	flags := p.parse_flags(pos.line_nr + 1)
 	pos = pos.extend(p.prev_tok.position())
 
 	return  ast.VarDecl{

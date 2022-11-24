@@ -80,7 +80,6 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &p
 	}
 	
 	g.gen_objects()
-
 	return g.pex
 }
 
@@ -171,13 +170,13 @@ fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 		default_state_name: g.gen_string_ref(pex.default_state_name)
 		
 		num_variables: 0
-		variables: []pex.Variable{}
+		variables: []&pex.Variable{}
 		
 		num_properties: 0
-		properties: []pex.Property{}
+		properties: []&pex.Property{}
 		
 		num_states: 0
-		states: []pex.State{}
+		states: []&pex.State{}
 	}
 }
 
@@ -185,13 +184,13 @@ fn (mut g Gen) create_state(name string) &pex.State {
 	return &pex.State {
 		name: g.gen_string_ref(name)
 		num_functions: 0
-		functions: []pex.Function{}
+		functions: []&pex.Function{}
 	}
 }
 
 fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 	//GetState
-	state.functions << pex.Function{
+	state.functions << &pex.Function{
 		name: g.gen_string_ref("GetState")
 		info: pex.FunctionInfo{
 			return_type: g.gen_string_ref("String")
@@ -221,7 +220,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 	}
 
 	//GotoState
-	state.functions << pex.Function{
+	state.functions << &pex.Function{
 		name: g.gen_string_ref("GotoState")
 		info: pex.FunctionInfo{
 			return_type: g.gen_string_ref("None")
@@ -307,7 +306,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 	}
 
 	//onEndState
-	state.functions << pex.Function{
+	state.functions << &pex.Function{
 		name: g.gen_string_ref("onEndState")
 		info: pex.FunctionInfo{
 			return_type: g.gen_string_ref("None")
@@ -327,7 +326,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 	}
 
 	//onBeginState
-	state.functions << pex.Function{
+	state.functions << &pex.Function{
 		name: g.gen_string_ref("onBeginState")
 		info: pex.FunctionInfo{
 			return_type: g.gen_string_ref("None")

@@ -33,7 +33,7 @@ fn test_build() {
 		parent: 0
 	}
 
-	mut file := parser.parse_text(src, table, prefs, global_scope)
+	mut file := parser.parse_text("::rw_text.v::", src, table, prefs, global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 

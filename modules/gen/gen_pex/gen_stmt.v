@@ -11,7 +11,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	g.pex.objects << obj
 	g.pex.object_count++
 	
-	g.cur_obj = &g.pex.objects[g.pex.objects.len - 1]
+	g.cur_obj = g.pex.objects[g.pex.objects.len - 1]
 
 	g.cur_obj_name = s.name
 	
@@ -27,11 +27,12 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 		}
 	}
 
-	g.cur_obj.states << g.create_state(pex.default_state_name)
+	state := g.create_state(pex.default_state_name)
+	g.cur_obj.states << state
 	g.cur_obj.num_states++
 
-	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
-	g.default_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
+	g.cur_state = state
+	g.default_state = state
 	
 	g.add_default_functions_to_state(mut g.default_state)
 
@@ -55,12 +56,11 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	}
 
 	mut state := g.create_state(s.name)
-
 	g.cur_obj.states << state
 	g.cur_obj.num_states++
-
-	g.cur_state = &g.cur_obj.states[g.cur_obj.states.len - 1]
 	
+	g.cur_state = g.cur_obj.states[g.cur_obj.states.len - 1]
+
 	for mut func in s.fns {
 		g.fn_decl(mut &func)
 	}
@@ -195,6 +195,8 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 	f.info.num_params = u16(f.info.params.len)
 	f.info.num_locals = u16(f.info.locals.len)
 	f.info.num_instructions = u16(f.info.instructions.len)
+	
+	g.cur_fn = unsafe { voidptr(0) } // лучше пусть упадет с ошибкой, чем просто добавит инструкции туда куда не должен был
 
 	return &f
 }
@@ -298,8 +300,8 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 		if token.Kind.key_conditional in stmt.flags {
 			user_flags |= 0b0010
 		}
-
-		g.cur_obj.variables << pex.Variable{
+		
+		g.cur_obj.variables << &pex.Variable{
 			name: g.gen_string_ref(stmt.name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 			user_flags: user_flags
@@ -368,7 +370,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 		}
 	}
 	
-	g.cur_obj.properties << prop
+	g.cur_obj.properties << &prop
 	g.cur_obj.num_properties++
 }
 

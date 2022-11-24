@@ -8,16 +8,13 @@ import papyrus.token
 fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableData {
 	assert typ != 0
 
-	mut i := 0
-	for i < g.temp_locals.len {
+	for i := 0; i < g.temp_locals.len; i++ {
 		local := g.temp_locals[i]
 
 		if local.free && local.typ == typ {
 			g.temp_locals[i].free = false
 			return local.data
 		}
-
-		i++
 	}
 
 	local_name := if typ != ast.none_type { "::temp" + g.cur_fn.info.locals.len.str() } else { "::NoneVar" }
@@ -48,14 +45,10 @@ fn (mut g Gen) free_temp(v pex.VariableData) {
 		return
 	}
 
-	mut i := 0
-	for i < g.temp_locals.len {
-
+	for i := 0; i < g.temp_locals.len; i++ {
 		if g.temp_locals[i].data.string_id == v.string_id {
 			g.temp_locals[i].free = true
 		}
-
-		i++
 	}
 }
 

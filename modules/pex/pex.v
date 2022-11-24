@@ -221,7 +221,7 @@ pub mut:
 	user_flag_count		u16
 	user_flags			[]UserFlag
 	object_count		u16	
-	objects				[]Object //[object_count]
+	objects				[]&Object //[object_count]
 }
 
 pub struct DebugFunction {
@@ -249,11 +249,11 @@ pub mut:
 	user_flags			u32	
 	default_state_name	u16	//Index(base 0) into string table.
 	num_variables		u16	
-	variables			[]Variable //[num_variables]	
+	variables			[]&Variable //[num_variables]	
 	num_properties		u16	
-	properties			[]Property //[num_properties]	
+	properties			[]&Property //[num_properties]	
 	num_states			u16	
-	states				[]State //[num_states]
+	states				[]&State //[num_states]
 }
 
 pub struct Variable {
@@ -301,7 +301,7 @@ pub struct State {
 pub mut:
 	name			u16	//Index(base 0) into string table, empty string for default state
 	num_functions	u16	
-	functions		[]Function // [num_functions]
+	functions		[]&Function // [num_functions]
 }
 
 pub struct Function {
@@ -347,7 +347,7 @@ fn (p PexFile) get_object(name string) ?&Object {
 		tname := p.get_string(p.objects[i].name)
 		
 		if tname == name {
-			return unsafe { &p.objects[i] }
+			return p.objects[i]
 		}
 	}
 
@@ -358,7 +358,20 @@ fn (p PexFile) get_state(obj &Object, name string) ?&State {
 	for i := 0; i < obj.states.len; i++ {
 		tname := p.get_string(obj.states[i].name)
 		if tname == name {
-			return unsafe { &obj.states[i] }
+			return obj.states[i]
+		}
+	}
+
+	return none
+}
+
+fn (p PexFile) get_empty_state(obj &Object) ?&State {
+	name := ""
+
+	for i := 0; i < obj.states.len; i++ {
+		tname := p.get_string(obj.states[i].name)
+		if tname == name {
+			return obj.states[i]
 		}
 	}
 
@@ -371,7 +384,7 @@ fn (p PexFile) get_default_state(obj &Object) ?&State {
 	for i := 0; i < obj.states.len; i++ {
 		tname := p.get_string(obj.states[i].name)
 		if tname == name {
-			return unsafe { &obj.states[i] }
+			return obj.states[i]
 		}
 	}
 
@@ -382,16 +395,16 @@ fn (p PexFile) get_function_from_state(state &State, func_name string) ?&Functio
 	for i := 0; i < state.functions.len; i++ {
 		tname := p.get_string(state.functions[i].name)
 		if tname == func_name {
-			return unsafe { &state.functions[i] }
+			return state.functions[i]
 		}
 	}
 
 	return none
 }
 
-fn (p PexFile) get_function(obj_name string, func_name string) ?&Function {
+fn (p PexFile) get_function_from_empty_state(obj_name string, func_name string) ?&Function {
 	obj := p.get_object(obj_name) or { return none }
-	default_state := p.get_default_state(obj) or { return none }
+	default_state := p.get_empty_state(obj) or { return none }
 	func := p.get_function_from_state(default_state, func_name) or { return none }
 	return func
 }
@@ -402,7 +415,7 @@ fn (p PexFile) get_property(obj_name string, prop_name string) ?&Property {
 	for i := 0; i < obj.properties.len; i++ {
 		tname := p.get_string(obj.properties[i].name)
 		if tname == prop_name {
-			return unsafe { &obj.properties[i] }
+			return obj.properties[i]
 		}
 	}
 
@@ -415,7 +428,7 @@ fn (p PexFile) get_var(obj_name string, var_name string) ?&Variable {
 	for i := 0; i < obj.variables.len; i++ {
 		tname := p.get_string(obj.variables[i].name)
 		if tname == var_name {
-			return unsafe { &obj.variables[i] }
+			return obj.variables[i]
 		}
 	}
 

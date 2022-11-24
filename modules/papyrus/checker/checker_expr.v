@@ -21,9 +21,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 
 			match node.op {
 				.not {
-					if node.right_type == ast.bool_type {
-
-					}
+					if c.valid_type(node.right_type, ast.bool_type) {}
 					else if c.can_cast(node.right_type, ast.bool_type) {
 						new_expr := ast.CastExpr {
 							expr: node.right
@@ -151,25 +149,21 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				return ast.int_type
 			}
 			else {
-				if f := c.table.find_property(sym.obj_name, node.field_name) {
-					return f.typ
-				}
-				else {
-					for {
-						if f := c.table.find_property(sym.obj_name, node.field_name) {
-							return f.typ
-						}
-
-						if sym.parent_idx > 0 {
-							sym = c.table.get_type_symbol(sym.parent_idx)
-							continue
-						}
-
-						break
+				for {
+					if f := c.table.find_property(sym.obj_name, node.field_name) {
+						node.typ = f.typ
+						return f.typ
 					}
 
-					c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
+					if sym.parent_idx > 0 {
+						sym = c.table.get_type_symbol(sym.parent_idx)
+						continue
+					}
+
+					break
 				}
+
+				c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
 			}
 			
 			return node.typ
@@ -512,7 +506,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 			node.args[i].typ = arg_typ
 			func_arg_type := func.params[i].typ
 			
-			if arg_typ == func_arg_type || (func.params[i].is_optional && c.valid_type(arg_typ, func_arg_type)) {}
+			if c.valid_type(arg_typ, func_arg_type) {}
 			else if c.can_cast(arg_typ, func_arg_type) {
 				new_expr := ast.CastExpr {
 					expr: node.args[i].expr

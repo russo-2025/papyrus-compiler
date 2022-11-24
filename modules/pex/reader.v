@@ -111,7 +111,7 @@ fn (mut r Reader) read_pex() ! {
 	}
 }
 
-fn (mut r Reader) read_object() !Object {
+fn (mut r Reader) read_object() !&Object {
 	mut obj := Object{}
 
 	obj.name = r.read_string_ref() or { return err }
@@ -144,10 +144,10 @@ fn (mut r Reader) read_object() !Object {
 		obj.states << r.read_state() or { return err }
 		i++
 	}
-	return obj
+	return &obj
 }
 
-fn (mut r Reader) read_state() !State{
+fn (mut r Reader) read_state() !&State{
 	mut s := State{}
 
 	s.name = r.read_string_ref() or { return err }
@@ -158,19 +158,19 @@ fn (mut r Reader) read_state() !State{
 		s.functions << r.read_named_function() or { return err }
 		i++
 	}
-	return s
+	return &s
 }
 
-fn (mut r Reader) read_named_function() !Function{
+fn (mut r Reader) read_named_function() !&Function{
 	mut n := Function{}
 
 	n.name = r.read_string_ref() or { return err }
 	n.info = r.read_function() or { return err }
 
-	return n
+	return &n
 }
 
-fn (mut r Reader) read_property() !Property{
+fn (mut r Reader) read_property() !&Property{
 	mut p := Property{}
 	
 	p.name = r.read<u16>()
@@ -191,7 +191,7 @@ fn (mut r Reader) read_property() !Property{
 		}
 	}
 	
-	return p
+	return &p
 }
 
 fn (mut r Reader) read_function() !FunctionInfo{
@@ -269,7 +269,7 @@ fn (mut r Reader) read_variable_type() !VariableType{
 	return t
 }
 
-fn (mut r Reader) read_variable() !Variable{
+fn (mut r Reader) read_variable() !&Variable{
 	mut var := Variable{}
 
 	var.name = r.read_string_ref() or { return err }
@@ -277,7 +277,7 @@ fn (mut r Reader) read_variable() !Variable{
 	var.user_flags = r.read<u32>()
 	var.data = r.read_variable_data() or { return err }
 
-	return var
+	return &var
 }
 
 fn (mut r Reader) read_variable_data() !VariableData{

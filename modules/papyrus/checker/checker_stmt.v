@@ -111,8 +111,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.Return {
 			typ := c.expr(mut node.expr)
 			
-			if c.valid_type(typ, c.cur_fn.return_type) {
-			}
+			if c.valid_type(typ, c.cur_fn.return_type) {}
 			else if c.can_cast(typ, c.cur_fn.return_type) {
 				new_expr := ast.CastExpr {
 					expr: node.expr
@@ -176,7 +175,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 
 				node.typ = left_type
 
-				if left_type == right_type {}
+				if c.valid_type(left_type, right_type) {}
 				else if c.can_cast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
 					right_type = left_type
@@ -339,7 +338,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	left_type := node.typ
 	mut right_type := c.expr(mut node.assign.right)
 
-	if left_type == right_type {}
+	if c.valid_type(left_type, right_type) {}
 	else if c.can_cast(right_type, left_type) {
 		node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
 	}

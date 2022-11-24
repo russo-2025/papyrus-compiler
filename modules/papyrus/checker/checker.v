@@ -88,9 +88,10 @@ pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 		return false
 	}
 	
-	match s2.kind {
+	match s1.kind {
+		.array,
 		.script {
-			if s1.kind == .none_ {
+			if s2.kind == .none_ {
 				return true
 			}
 		}
@@ -102,6 +103,8 @@ pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 
 //можно ли кастануть тип from_type к типу to_type
 pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
+	assert !c.valid_type(to_type, from_type)
+
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
 
