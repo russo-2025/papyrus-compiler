@@ -734,8 +734,8 @@ pub fn (mut p Parser) check_extended_lang() {
 }
 
 [inline]
-pub fn (p Parser) is_state() bool {
-	return p.cur_state_name != pex.empty_state_name
+pub fn (p Parser) is_empty_state() bool {
+	return p.cur_state_name == pex.empty_state_name
 }
 
 [inline]

@@ -19,7 +19,7 @@ pub fn (mut p Parser) event_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 
-	if !p.is_state() {
+	if p.is_empty_state() {
 		mut sym := p.table.get_type_symbol(p.cur_object)
 		
 		if !sym.has_method(name) {
@@ -79,7 +79,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 	
-	if !p.is_state() && !p.inside_property {
+	if p.is_empty_state() && !p.inside_property {
 		if is_global {
 			if !p.table.has_fn(p.cur_obj_name, name) {
 				p.table.register_fn(ast.Fn{

@@ -259,7 +259,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 
 	c.stmts(mut node.stmts)
 
-	if c.is_state() {
+	if !c.is_empty_state() {
 		if !c.temp_state_fns[node.name] {
 			if !c.inside_property {
 				c.temp_state_fns[node.name] = true

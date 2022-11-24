@@ -348,8 +348,8 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 }
 
 [inline]
-pub fn (c Checker) is_state() bool {
-	return c.cur_state_name != pex.empty_state_name
+pub fn (c Checker) is_empty_state() bool {
+	return c.cur_state_name == pex.empty_state_name
 }
 
 pub fn (c Checker) warn(message string, pos token.Position) {
