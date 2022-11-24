@@ -380,7 +380,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 				if prop := g.table.find_property(g.cur_obj_name, expr.name) {
 					
 					if prop.is_auto {
-						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(prop.default_var_name) }
+						return pex.VariableData{ typ: 1, string_id: g.gen_string_ref(prop.auto_var_name) }
 					}
 
 					return g.gen_selector(mut &ast.SelectorExpr{

@@ -218,7 +218,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 
 		if prop := g.table.find_property(g.cur_obj_name, name) {
 			if prop.is_auto {
-				name = prop.default_var_name
+				name = prop.auto_var_name
 			}
 			else {
 				//значение

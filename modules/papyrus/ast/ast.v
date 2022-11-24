@@ -69,7 +69,7 @@ pub mut:
 	name				string
 	pos					token.Position
 	typ					ast.Type
-	default_var_name	string
+	auto_var_name		string
 	expr				Expr
 	read				Handler
 	write				Handler

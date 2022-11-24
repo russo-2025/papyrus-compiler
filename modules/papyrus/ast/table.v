@@ -35,7 +35,7 @@ pub struct Prop {
 pub:
 	name				string
 	obj_name			string
-	default_var_name	string
+	auto_var_name		string
 	typ					Type
 	pos					token.Position
 	is_auto				bool //flag
