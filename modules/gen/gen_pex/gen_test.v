@@ -171,7 +171,7 @@ fn test_state_decl_1() {
 	state := pex_file.get_state(obj, "MyTestState1") or { panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyTestState1"
-	assert state.num_functions == 0
+	assert state.functions.len == 0
 }
 
 fn test_state_decl_2() {
@@ -210,24 +210,24 @@ fn test_state_decl_2() {
 	state := pex_file.get_state(obj, "MyTestState2") or { panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyTestState2"
-	assert state.num_functions == 1
+	assert state.functions.len == 1
 
 	assert pex_file.get_string(state.functions[0].name) == "Foz"
 	assert pex_file.get_string(state.functions[0].info.return_type) == "None"
 	assert state.functions[0].info.user_flags == 0
 	assert state.functions[0].info.flags == 0
 
-	assert state.functions[0].info.num_params == 2
+	assert state.functions[0].info.params.len == 2
 	assert pex_file.get_string(state.functions[0].info.params[0].name) == "n1"
 	assert pex_file.get_string(state.functions[0].info.params[0].typ) == "Int"
 	assert pex_file.get_string(state.functions[0].info.params[1].name) == "n2"
 	assert pex_file.get_string(state.functions[0].info.params[1].typ) == "Int"
 
-	assert state.functions[0].info.num_locals == 1
+	assert state.functions[0].info.locals.len == 1
 	assert pex_file.get_string(state.functions[0].info.locals[0].name) == "::temp0"
 	assert pex_file.get_string(state.functions[0].info.locals[0].typ) == "Int"
 
-	assert state.functions[0].info.num_instructions == 2
+	assert state.functions[0].info.instructions.len == 2
 	assert state.functions[0].info.instructions[0].op == pex.OpCode.iadd
 	assert pex_file.get_string(state.functions[0].info.instructions[0].args[0].string_id) == "::temp0"
 	assert pex_file.get_string(state.functions[0].info.instructions[0].args[1].string_id) == "n1"
@@ -273,7 +273,7 @@ fn test_state_decl_3() {
 	state := pex_file.get_state(obj, "MyAutoState") or { panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyAutoState"
-	assert state.num_functions == 1
+	assert state.functions.len == 1
 	assert pex_file.get_string(state.functions[0].name) == "Foz"
 	assert pex_file.get_string(state.functions[0].info.return_type) == "None"
 }
@@ -351,9 +351,9 @@ fn test_property_decl_2() {
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "string"
 	assert prop.read_handler.user_flags == 0
 	assert prop.read_handler.flags == 0
-	assert prop.read_handler.num_params == 0
-	assert prop.read_handler.num_locals == 0
-	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.params.len == 0
+	assert prop.read_handler.locals.len == 0
+	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
 	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "Hello world2!"
 }
@@ -480,9 +480,9 @@ fn test_property_decl_5() {
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"
 	assert prop.read_handler.user_flags == 0
 	assert prop.read_handler.flags == 0
-	assert prop.read_handler.num_params == 0
-	assert prop.read_handler.num_locals == 0
-	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.params.len == 0
+	assert prop.read_handler.locals.len == 0
+	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
 	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
 
@@ -490,11 +490,11 @@ fn test_property_decl_5() {
 	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
 	assert prop.write_handler.user_flags == 0
 	assert prop.write_handler.flags == 0
-	assert prop.write_handler.num_params == 1
+	assert prop.write_handler.params.len == 1
 	assert pex_file.get_string(prop.write_handler.params[0].name) == "value"
 	assert pex_file.get_string(prop.write_handler.params[0].typ).to_lower() == "int"
-	assert prop.write_handler.num_locals == 0
-	assert prop.write_handler.num_instructions == 1
+	assert prop.write_handler.locals.len == 0
+	assert prop.write_handler.instructions.len == 1
 	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
 	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
 	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
@@ -542,11 +542,11 @@ fn test_property_decl_6() {
 	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
 	assert prop.write_handler.user_flags == 0
 	assert prop.write_handler.flags == 0
-	assert prop.write_handler.num_params == 1
+	assert prop.write_handler.params.len == 1
 	assert pex_file.get_string(prop.write_handler.params[0].name) == "value"
 	assert pex_file.get_string(prop.write_handler.params[0].typ).to_lower() == "int"
-	assert prop.write_handler.num_locals == 0
-	assert prop.write_handler.num_instructions == 1
+	assert prop.write_handler.locals.len == 0
+	assert prop.write_handler.instructions.len == 1
 	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
 	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
 	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
@@ -593,9 +593,9 @@ fn test_property_decl_7() {
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"
 	assert prop.read_handler.user_flags == 0
 	assert prop.read_handler.flags == 0
-	assert prop.read_handler.num_params == 0
-	assert prop.read_handler.num_locals == 0
-	assert prop.read_handler.num_instructions == 1
+	assert prop.read_handler.params.len == 0
+	assert prop.read_handler.locals.len == 0
+	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
 	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
 }

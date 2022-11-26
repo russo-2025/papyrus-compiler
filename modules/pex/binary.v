@@ -104,7 +104,7 @@ fn (mut r Reader) read_time() i64 {
 }
 
 [inline]
-fn cast_int_to_u16(v int) u16 {
+pub fn cast_int_to_u16(v int) u16 {
 	assert u32(v) <= 0xFFFF
 	return u16(v)
 }

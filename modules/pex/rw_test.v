@@ -46,17 +46,17 @@ fn test_build() {
 	out_pex_file := pex.read(bytes)
 
 	//string table
-	assert out_pex_file.string_table_count == 27
+	assert out_pex_file.string_table.len == 27
 
 	//debug info
 	assert out_pex_file.has_debug_info == 1
 	assert out_pex_file.modification_time == i64(1616261626)
 
 	//user flags
-	assert out_pex_file.user_flag_count == 2
+	assert out_pex_file.user_flags.len == 2
 
 	//objests
-	assert out_pex_file.object_count == 1
+	assert out_pex_file.objects.len == 1
 
 	assert out_pex_file.get_string(out_pex_file.objects[0].name) == "ABCD"
 	assert out_pex_file.objects[0].size == 277
@@ -64,13 +64,13 @@ fn test_build() {
 	assert out_pex_file.get_string(out_pex_file.objects[0].docstring) == ""
 	assert out_pex_file.objects[0].user_flags == 0
 	assert out_pex_file.get_string(out_pex_file.objects[0].default_state_name) == ""
-	assert out_pex_file.objects[0].num_variables == 0
-	assert out_pex_file.objects[0].num_properties == 0
-	assert out_pex_file.objects[0].num_states == 1
+	assert out_pex_file.objects[0].variables.len == 0
+	assert out_pex_file.objects[0].properties.len == 0
+	assert out_pex_file.objects[0].states.len == 1
 
 	//states
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].name) == ""
-	assert out_pex_file.objects[0].states[0].num_functions == 6
+	assert out_pex_file.objects[0].states[0].functions.len == 6
 
 	//functions
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[0].name) == "GetState"
@@ -83,16 +83,16 @@ fn test_build() {
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[4].info.docstring) == ""
 	assert out_pex_file.objects[0].states[0].functions[4].info.user_flags == 0
 	assert out_pex_file.objects[0].states[0].functions[4].info.flags == 0b01
-	assert out_pex_file.objects[0].states[0].functions[4].info.num_params == 2
-	assert out_pex_file.objects[0].states[0].functions[4].info.num_locals == 3
-	assert out_pex_file.objects[0].states[0].functions[4].info.num_instructions == 4
+	assert out_pex_file.objects[0].states[0].functions[4].info.params.len == 2
+	assert out_pex_file.objects[0].states[0].functions[4].info.locals.len == 3
+	assert out_pex_file.objects[0].states[0].functions[4].info.instructions.len == 4
 
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].name) == "Bar"
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].info.return_type) == "None"
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].info.docstring) == ""
 	assert out_pex_file.objects[0].states[0].functions[5].info.user_flags == 0
 	assert out_pex_file.objects[0].states[0].functions[5].info.flags == 0b00
-	assert out_pex_file.objects[0].states[0].functions[5].info.num_params == 2
-	assert out_pex_file.objects[0].states[0].functions[5].info.num_locals == 3
-	assert out_pex_file.objects[0].states[0].functions[5].info.num_instructions == 4
+	assert out_pex_file.objects[0].states[0].functions[5].info.params.len == 2
+	assert out_pex_file.objects[0].states[0].functions[5].info.locals.len == 3
+	assert out_pex_file.objects[0].states[0].functions[5].info.instructions.len == 4
 }

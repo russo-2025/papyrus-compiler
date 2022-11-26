@@ -47,10 +47,10 @@ fn (mut r Reader) read_pex() ! {
 	r.pex.src_file_name = r.read<string>()
 	r.pex.user_name = r.read<string>()
 	r.pex.machine_name = r.read<string>()
-	r.pex.string_table_count = r.read<u16>()
+	string_table_len := r.read<u16>()
 
 	mut i := 0
-	for i < r.pex.string_table_count {
+	for i < string_table_len {
 		r.pex.string_table << r.read<string>()
 		i++
 	}
@@ -60,21 +60,21 @@ fn (mut r Reader) read_pex() ! {
 	if r.pex.has_debug_info != 0
 	{
 		r.pex.modification_time = r.read_time()
-		r.pex.function_count = r.read<u16>()
+		functions_len := r.read<u16>()
 		
 		i = 0
-		for i < r.pex.function_count {
+		for i < functions_len {
 			mut d := DebugFunction{}
 
 			d.object_name = r.read_string_ref() or { return err }
 			d.state_name = r.read_string_ref() or { return err }
 			d.function_name = r.read_string_ref() or { return err }
 			d.function_type = r.read<byte>()
-			d.instruction_count = r.read<u16>()
+			instruction_line_numbers_len := r.read<u16>()
 
 			mut k := 0
-			for k < d.instruction_count {
-				d.line_numbers << r.read<u16>()
+			for k < instruction_line_numbers_len {
+				d.instruction_line_numbers << r.read<u16>()
 				k++
 			}
 
@@ -83,10 +83,10 @@ fn (mut r Reader) read_pex() ! {
 		}
 	}
 
-	r.pex.user_flag_count = r.read<u16>()
+	user_flag_len := r.read<u16>()
 
 	i = 0
-	for i < r.pex.user_flag_count{
+	for i < user_flag_len {
 		name := r.read_string_ref() or { return err }
 		flag_index := r.read<byte>()
 
@@ -98,10 +98,10 @@ fn (mut r Reader) read_pex() ! {
 		i++
 	}
 
-	r.pex.object_count = r.read<u16>()
+	objects_len := r.read<u16>()
 
 	i = 0
-	for i < r.pex.object_count{
+	for i < objects_len {
 		r.pex.objects << r.read_object() or { return err }
 		i++
 	}
@@ -122,25 +122,26 @@ fn (mut r Reader) read_object() !&Object {
 	obj.user_flags = r.read<u32>()
 	obj.default_state_name = r.read_string_ref() or { return err }
 	
-	obj.num_variables = r.read<u16>()
+	variables_len := r.read<u16>()
 
 	mut i := 0
-	for i < obj.num_variables{
+	for i < variables_len {
 		obj.variables << r.read_variable() or { return err }
 		i++
 	}
 
-	obj.num_properties = r.read<u16>()
+	properties_len := r.read<u16>()
 
 	i = 0
-	for i < obj.num_properties{
+	for i < properties_len {
 		obj.properties << r.read_property() or { return err }
 		i++
 	}
-	obj.num_states = r.read<u16>()
+
+	states_len := r.read<u16>()
 
 	i = 0
-	for i < obj.num_states{
+	for i < states_len {
 		obj.states << r.read_state() or { return err }
 		i++
 	}
@@ -151,10 +152,10 @@ fn (mut r Reader) read_state() !&State{
 	mut s := State{}
 
 	s.name = r.read_string_ref() or { return err }
-	s.num_functions = r.read<u16>()
+	functions_len := r.read<u16>()
 
 	mut i := 0
-	for i < s.num_functions{
+	for i < functions_len {
 		s.functions << r.read_named_function() or { return err }
 		i++
 	}
@@ -202,24 +203,24 @@ fn (mut r Reader) read_function() !FunctionInfo{
 	func.user_flags = r.read<u32>()
 	func.flags = r.read<byte>()
 	
-	func.num_params = r.read<u16>()
+	params_len := r.read<u16>()
 	mut i := 0
-	for i < func.num_params{
+	for i < params_len {
 		func.params << r.read_variable_type() or { return err }
 		i++
 	}
 
-	func.num_locals = r.read<u16>()
+	locals_len := r.read<u16>()
 	i = 0
-	for i < func.num_locals{
+	for i < locals_len {
 		func.locals << r.read_variable_type() or { return err }
 		i++
 	}
 
-	func.num_instructions = r.read<u16>()
+	instructions_len := r.read<u16>()
 	i = 0
 
-	for i < func.num_instructions {
+	for i < instructions_len {
 		func.instructions << r.read_instruction() or { return err }
 		i++
 	}

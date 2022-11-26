@@ -20,7 +20,7 @@ fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 	state_name := p.get_string(f.state_name)
 	fn_name := p.get_string(f.function_name)
 	fn_type := f.function_type
-	instruction_count := f.instruction_count
+	instruction_count := f.instruction_line_numbers.len
 	//line_numbers := "..." //f.line_numbers
 
 	println(tab + "object name: '$obj_name'")
@@ -99,28 +99,24 @@ fn (p PexFile) print_func_info(info FunctionInfo, indentSize int) {
 	user_flags :=  "0x" + info.user_flags.hex()
 	flags :=  "0x" + info.flags.hex()
 
-	params_count := info.num_params
-	locals_count := info.num_locals
-	instructions_count := info.num_instructions
-
 	println(tab + "typ: '$typ'")
 	println(tab + "doc: '$doc'")
 	println(tab + "user_flags: $user_flags")
 	println(tab + "flags: $flags")
 	println(tab + "flags: `${p.get_formated_fn_flags(info)}`")
-	println(tab + "params count: '$params_count'")
+	println(tab + "params count: '${info.params.len}'")
 	
 	for param in info.params {
 		p.print_variable_type(param, indentSize + 1)
 	}
 
-	println(tab + "locals count: '$locals_count'")
+	println(tab + "locals count: '${info.locals.len}'")
 	
 	for local in info.locals {
 		p.print_variable_type(local, indentSize + 1)
 	}
 
-	println(tab + "instructions count: '$instructions_count'")
+	println(tab + "instructions count: '${info.instructions.len}'")
 	
 	for inst in info.instructions {
 		p.print_instruction(inst, indentSize + 1)
@@ -131,14 +127,12 @@ fn (p PexFile) print_state(st State, indentSize int){
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
 	name := p.get_string(st.name)
-	func_count := st.num_functions
 
 	println(tab + "name: '$name'")
-	println(tab + "functions count: '$func_count'")
-	println(tab + "functions:")
+	println(tab + "functions[${st.functions.len}]:")
 
 	mut i := 0
-	for i < func_count {
+	for i < st.functions.len {
 		p.print_func(st.functions[i], indentSize + 1)
 		println("")
 		i++
@@ -232,10 +226,6 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	doc := p.get_string(obj.docstring)
 	user_flags := "0x" + obj.user_flags.hex()
 	def_state_name := p.get_string(obj.default_state_name)
-
-	vars_count := obj.num_variables
-	props_count := obj.num_properties
-	states_count := obj.num_states
 	
 	println(tab + "name: '$name'")
 	println(tab + "size: $size")
@@ -244,29 +234,26 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	println(tab + "user flags: $user_flags")
 	println(tab + "default state name: '$def_state_name'")
 	
-	println(tab + "variables count: '$vars_count'")
-	println(tab + "variables:")
+	println(tab + "variables[${obj.variables.len}]:")
 	mut i := 0
-	for i < obj.num_variables {
+	for i < obj.variables.len {
 		p.print_variable(obj.variables[i], indentSize + 1)
 		println("")
 		i++
 	}
 
-	println(tab + "properties count: '$props_count'")
-	println(tab + "properties: ")
+	println(tab + "properties[${obj.properties.len}]: ")
 	i = 0
-	for i < obj.num_properties {
+	for i < obj.properties.len {
 		p.print_property(obj.properties[i], indentSize + 1)
 		println("")
 		i++
 	}
 	
-	println(tab + "states count: '$states_count'")
-	println(tab + "states:")
+	println(tab + "states[${obj.states.len}]:")
 	
 	i = 0
-	for i < states_count {
+	for i < obj.states.len {
 		p.print_state(obj.states[i], indentSize + 1)
 		i++
 	}
@@ -311,8 +298,7 @@ pub fn (p PexFile) print() {
 
 	print_start_block("String table")
 
-	println("length: " + p.string_table_count.str())
-	
+	println("String table[${p.string_table.len}]:")
 	mut i := 0
 	for i < p.string_table.len {
 		str := p.string_table[i]
@@ -334,14 +320,13 @@ pub fn (p PexFile) print() {
 		print_start_block("Debug Info")
 
 		println("modification_time: " +  p.modification_time.str())
-		println("function_count: " +  p.function_count.str())
 	
-		println("functions: ")
+		println("functions[${p.functions.len}]: ")
 		i = 0
-		for i < p.function_count {
+		for i < p.functions.len {
 			p.print_debug_function(p.functions[i], 1)
 
-			if i < p.function_count - 1 {
+			if i < p.functions.len - 1 {
 				print("\n")
 			}
 
@@ -355,10 +340,9 @@ pub fn (p PexFile) print() {
 	}
 
 	print_start_block("Objects")
-	println("length: " + p.object_count.str())
-	println("Objects:")
+	println("Objects[${p.objects.len}]:")
 	i = 0
-	for i < p.object_count {
+	for i < p.objects.len {
 		p.print_object(p.objects[i], 1)
 		i++
 	}

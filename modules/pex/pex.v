@@ -209,29 +209,24 @@ pub mut:
 	machine_name		string	// Machine name used to compile the script
 
 	//String Table
-	string_table_count	u16
 	string_table		[]string //StringTable to look up member names and other stuff from
 
 	//Debug Info
 	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
 	modification_time 	i64 // time_t
-	function_count		u16
 	functions			[]DebugFunction
 
-	user_flag_count		u16
 	user_flags			[]UserFlag
-	object_count		u16	
-	objects				[]&Object //[object_count]
+	objects				[]&Object
 }
 
 pub struct DebugFunction {
 pub mut:
-	object_name			u16 //Index(base 0) into string table.
-	state_name			u16 //Index(base 0) into string table.
-	function_name		u16 //Index(base 0) into string table.
-	function_type		byte //valid values 0-3
-	instruction_count	u16	
-	line_numbers		[]u16 //[instruction_count] Maps instructions to their original lines in the source.
+	object_name					u16 //Index(base 0) into string table.
+	state_name					u16 //Index(base 0) into string table.
+	function_name				u16 //Index(base 0) into string table.
+	function_type				byte //valid values 0-3
+	instruction_line_numbers	[]u16 //Maps instructions to their original lines in the source.
 }
 
 pub struct UserFlag {
@@ -248,12 +243,9 @@ pub mut:
 	docstring			u16	//Index(base 0) into string table.
 	user_flags			u32	
 	default_state_name	u16	//Index(base 0) into string table.
-	num_variables		u16	
-	variables			[]&Variable //[num_variables]	
-	num_properties		u16	
-	properties			[]&Property //[num_properties]	
-	num_states			u16	
-	states				[]&State //[num_states]
+	variables			[]&Variable
+	properties			[]&Property
+	states				[]&State
 }
 
 pub struct Variable {
@@ -300,8 +292,7 @@ fn (prop Property) is_read() bool {
 pub struct State {
 pub mut:
 	name			u16	//Index(base 0) into string table, empty string for default state
-	num_functions	u16	
-	functions		[]&Function // [num_functions]
+	functions		[]&Function
 }
 
 pub struct Function {
@@ -316,12 +307,9 @@ pub mut:
 	docstring			u16	//Index(base 0) into string table
 	user_flags			u32	
 	flags				byte //первый бит - global, второй бит - native
-	num_params			u16	
-	params				[]VariableType //[num_params]	
-	num_locals			u16	
-	locals				[]VariableType //[num_locals]	
-	num_instructions	u16	
-	instructions		[]Instruction //[num_instructions]
+	params				[]VariableType
+	locals				[]VariableType
+	instructions		[]Instruction
 }
 
 pub struct VariableType {
@@ -338,7 +326,6 @@ pub mut:
 
 fn (p PexFile) get_string(i int) string {
 	assert i < p.string_table.len
-	assert i < p.string_table_count
 	return p.string_table[i]
 }
 

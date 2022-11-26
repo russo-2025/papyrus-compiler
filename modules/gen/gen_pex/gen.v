@@ -142,15 +142,11 @@ fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 
 [inline]
 fn (mut g Gen) gen_string_ref(str string) u16 {
-	mut index := u16(0)
-
 	if str in g.string_table {
 		return g.string_table[str]
 	}
 	else {
-		index = g.pex.string_table_count
-
-		g.pex.string_table_count++
+		index := pex.cast_int_to_u16(g.pex.string_table.len)
 
 		g.pex.string_table << str
 
@@ -169,13 +165,8 @@ fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 		user_flags: 0
 		default_state_name: g.gen_string_ref(pex.empty_state_name)
 		
-		num_variables: 0
 		variables: []&pex.Variable{}
-		
-		num_properties: 0
 		properties: []&pex.Property{}
-		
-		num_states: 0
 		states: []&pex.State{}
 	}
 }
@@ -183,7 +174,6 @@ fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 fn (mut g Gen) create_state(name string) &pex.State {
 	return &pex.State {
 		name: g.gen_string_ref(name)
-		num_functions: 0
 		functions: []&pex.Function{}
 	}
 }
@@ -198,13 +188,8 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			user_flags: 0
 			flags: 0
 			
-			num_params: 0
 			params: []pex.VariableType{}
-			
-			num_locals: 0
 			locals: []pex.VariableType{}
-			
-			num_instructions: 1
 			instructions: [
 				pex.Instruction{
 					op: pex.OpCode.ret			
@@ -228,7 +213,6 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			user_flags: 0
 			flags: 0
 			
-			num_params: 1
 			params: [
 				pex.VariableType{
 					typ: g.gen_string_ref("String")
@@ -236,7 +220,6 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 				}
 			]
 			
-			num_locals: 1
 			locals: [
 				pex.VariableType{
 					typ: g.gen_string_ref("None")
@@ -244,7 +227,6 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 				}
 			]
 			
-			num_instructions: 3
 			instructions: [
 				pex.Instruction{
 					op: pex.OpCode.callmethod
@@ -314,13 +296,8 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			user_flags: 0
 			flags: 0
 			
-			num_params: 0
 			params: []pex.VariableType{}
-			
-			num_locals: 0
 			locals: []pex.VariableType{}
-			
-			num_instructions: 0
 			instructions: []pex.Instruction{}
 		}
 	}
@@ -334,16 +311,9 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 			user_flags: 0
 			flags: 0
 			
-			num_params: 0
 			params: []pex.VariableType{}
-			
-			num_locals: 0
 			locals: []pex.VariableType{}
-			
-			num_instructions: 0
 			instructions: []pex.Instruction{}
 		}
 	}
-	
-	state.num_functions += 4
 }

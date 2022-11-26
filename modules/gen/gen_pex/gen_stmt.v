@@ -9,7 +9,6 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	mut obj := g.create_obj(s.name, s.parent_name)
 
 	g.pex.objects << obj
-	g.pex.object_count++
 	
 	g.cur_obj = g.pex.objects[g.pex.objects.len - 1]
 
@@ -29,7 +28,6 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 
 	state := g.create_state(pex.empty_state_name)
 	g.cur_obj.states << state
-	g.cur_obj.num_states++
 
 	g.cur_state = state
 	g.default_state = state
@@ -40,13 +38,10 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 		name: g.gen_string_ref("hidden")
 		flag_index: 0
 	}
-	g.pex.user_flag_count++
-
 	g.pex.user_flags << pex.UserFlag{
 		name: g.gen_string_ref("conditional")
 		flag_index: 1
 	}
-	g.pex.user_flag_count++
 }
 
 [inline]
@@ -57,7 +52,6 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 
 	mut state := g.create_state(s.name)
 	g.cur_obj.states << state
-	g.cur_obj.num_states++
 	
 	g.cur_state = g.cur_obj.states[g.cur_obj.states.len - 1]
 
@@ -100,7 +94,6 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 				op: pex.OpCode.jmpf
 				args: [ var_data ]
 			}
-			g.cur_fn.info.num_instructions++
 		}
 		//выполняем блок
 		for mut stmt in b.stmts {
@@ -115,7 +108,6 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 				op: pex.OpCode.jmp
 				args: [ ]
 			}
-			g.cur_fn.info.num_instructions++
 		}
 
 		//если это не последний else, то добавляем относительный индекс к последнему jmpf
@@ -144,13 +136,8 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 			user_flags: 0 //u32	
 			flags: 0
 			
-			num_params: 0
 			params: []pex.VariableType{}
-			
-			num_locals: 0
-			locals: []pex.VariableType{}	
-			
-			num_instructions: 0
+			locals: []pex.VariableType{}
 			instructions: []pex.Instruction{}
 		}
 	}
@@ -162,10 +149,8 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 		state_name: g.cur_state.name
 		function_name: f.name
 		function_type: 0 // TODO выяснить что это
-		instruction_count: 0 //func.info.num_instructions
-		line_numbers: []u16{}
+		instruction_line_numbers: []u16{}
 	}
-	g.pex.function_count++
 
 	g.temp_locals = []TempVariable{}
 
@@ -192,10 +177,6 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 		g.stmt(mut stmt)
 	}
 	
-	f.info.num_params = u16(f.info.params.len)
-	f.info.num_locals = u16(f.info.locals.len)
-	f.info.num_instructions = u16(f.info.instructions.len)
-	
 	g.cur_fn = unsafe { voidptr(0) } // лучше пусть упадет с ошибкой, чем просто добавит инструкции туда куда не должен был
 
 	return &f
@@ -203,7 +184,6 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 
 [inline]
 fn (mut g Gen) fn_decl(mut node &ast.FnDecl) {
-	g.cur_state.num_functions++
 	g.cur_state.functions << g.gen_fn(mut node)
 }
 
@@ -307,8 +287,6 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 			user_flags: user_flags
 			data: g.get_operand_from_expr(mut &stmt.assign.right)
 		}
-
-		g.cur_obj.num_variables++
 	}
 	else {
 		g.cur_fn.info.locals << pex.VariableType{
@@ -348,8 +326,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 			docstring: g.gen_string_ref("")
 			user_flags: 0
 			flags: 0
-
-			num_instructions: 1
+			
 			instructions: [
 				pex.Instruction{
 					op: pex.OpCode.ret
@@ -371,7 +348,6 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	}
 	
 	g.cur_obj.properties << &prop
-	g.cur_obj.num_properties++
 }
 
 [inline]
@@ -397,7 +373,6 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 		op: pex.OpCode.jmpf
 		args: [ var_data ]
 	}
-	g.cur_fn.info.num_instructions++
 
 	g.free_temp(var_data)
 
@@ -409,7 +384,6 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 		op: pex.OpCode.jmp
 		args: [ pex.VariableData{ typ: 3, integer: start_index - g.cur_fn.info.instructions.len } ]
 	}
-	g.cur_fn.info.num_instructions++
 
 	g.cur_fn.info.instructions[jmpf_index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - jmpf_index }
 }

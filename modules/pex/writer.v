@@ -55,8 +55,7 @@ fn (mut w Writer) write_pex() {
 	if w.pex.has_debug_info > 0 {
 		w.write(w.pex.modification_time)
 
-		assert w.pex.function_count == w.pex.functions.len
-		w.write(cast_int_to_u16(w.pex.function_count))
+		w.write(cast_int_to_u16(w.pex.functions.len))
 
 		for func in w.pex.functions {
 			w.write(func.object_name)
@@ -64,17 +63,15 @@ fn (mut w Writer) write_pex() {
 			w.write(func.function_name)
 			w.write(func.function_type)
 
-			assert func.instruction_count == func.line_numbers.len
-			w.write(func.instruction_count)
+			w.write(cast_int_to_u16(func.instruction_line_numbers.len))
 
-			for line in func.line_numbers {
+			for line in func.instruction_line_numbers {
 				w.write(line)
 			}
 		}
 	}
 
 	//user flags
-	assert w.pex.user_flag_count == w.pex.user_flags.len
 	w.write(cast_int_to_u16(w.pex.user_flags.len))
 
 	for flag in w.pex.user_flags {
@@ -83,7 +80,6 @@ fn (mut w Writer) write_pex() {
 	}
 	
 	//objects
-	assert w.pex.object_count == w.pex.objects.len
 	w.write(cast_int_to_u16(w.pex.objects.len))
 	
 	for obj in w.pex.objects {
@@ -101,22 +97,19 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 	w.write(obj.default_state_name)
 
 	//write variables
-	assert obj.num_variables == obj.variables.len
 	w.write(cast_int_to_u16(obj.variables.len))
 	for var in obj.variables {
 		w.write_variable(var)
 	}
 
 	//write properties
-	assert obj.num_properties == obj.properties.len
 	w.write(cast_int_to_u16(obj.properties.len))
 	for prop in obj.properties {
 		w.write_property(prop)
 	}
 
 	//write states
-	assert obj.num_states == obj.states.len
-	w.write(obj.num_states)
+	w.write(cast_int_to_u16(obj.states.len))
 	for state in obj.states {
 		w.write_state(state)
 	}
@@ -132,8 +125,7 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 fn (mut w Writer) write_state(state pex.State) {
 	w.write(state.name)
 	
-	assert state.num_functions == state.functions.len
-	w.write(state.num_functions)
+	w.write(cast_int_to_u16(state.functions.len))
 	
 	for func in state.functions {
 		w.write_function(func)
@@ -148,22 +140,19 @@ fn (mut w Writer) write_function_info(info pex.FunctionInfo) {
 	w.write(info.user_flags)
 	w.write(info.flags)
 
-	assert info.num_params == info.params.len
-	w.write(info.num_params)
+	w.write(cast_int_to_u16(info.params.len))
 	
 	for param in info.params {
 		w.write_variable_type(param)
 	}
 
-	assert info.num_locals == info.locals.len
-	w.write(info.num_locals)
+	w.write(cast_int_to_u16(info.locals.len))
 
 	for local in info.locals {
 		w.write_variable_type(local)
 	}
 
-	assert info.num_instructions == info.instructions.len
-	w.write(info.num_instructions)
+	w.write(cast_int_to_u16(info.instructions.len))
 
 	for inst in info.instructions {
 		w.write_instruction(inst)

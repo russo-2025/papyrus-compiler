@@ -34,7 +34,6 @@ fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableData {
 		name: g.gen_string_ref(local_name)
 		typ: g.gen_string_ref(g.table.type_to_str(typ))
 	}
-	g.cur_fn.info.num_locals++
 
 	return data
 }
