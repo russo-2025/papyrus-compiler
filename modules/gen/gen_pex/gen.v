@@ -16,8 +16,8 @@ pub mut:
 
 struct Gen {
 pub mut:
-	file	&ast.File = unsafe{ 0 }
-	pex		&pex.PexFile = unsafe{ 0 }
+	file	&ast.File = unsafe{ voidptr(0) }
+	pex		&pex.PexFile = unsafe{ voidptr(0) }
 	
 	string_table	map[string]u16
 	
@@ -26,11 +26,11 @@ pub mut:
 	table			&ast.Table
 	pref			&pref.Preferences
 	
-	cur_obj			&pex.Object = unsafe{ 0 }
-	cur_state		&pex.State = unsafe{ 0 }
-	cur_fn			&pex.Function = unsafe{ 0 }
+	cur_obj			&pex.Object = unsafe{ voidptr(0) }
+	cur_state		&pex.State = unsafe{ voidptr(0) }
+	cur_fn			&pex.Function = unsafe{ voidptr(0) }
 
-	default_state	&pex.State = unsafe{ 0 }
+	default_state	&pex.State = unsafe{ voidptr(0) }
 
 	cur_obj_name	string
 }
