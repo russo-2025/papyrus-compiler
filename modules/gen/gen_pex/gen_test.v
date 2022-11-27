@@ -16,10 +16,9 @@ const (
 	}
 
 	parent_src =
-		"Scriptname CDFG\n" +
-
-		"Function ParentFoz(int n1, int n2)\n" +
-		"EndFunction"
+"Scriptname CDFG
+Function ParentFoz(int n1, int n2)
+EndFunction\n"
 
 	src_template = 
 "Scriptname ABCD extends CDFG
@@ -108,7 +107,9 @@ fn compile(src string) &pex.PexFile {
 	assert c.errors.len == 0
 
 	pex_file := gen_pex.gen_pex_file(file, table, prefs)
-	return pex_file
+	bytes := pex.write(pex_file)
+	out_pex_file := pex.read(bytes)
+	return out_pex_file
 }
 
 fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
@@ -125,7 +126,7 @@ fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
 	return func.info.instructions
 }
 
-fn test_object_var_1() {
+fn test_object_var_decl_1() {
 	pex_file := compile_top('ABCD myTestObjectVar')
 	
 	var := pex_file.get_var("ABCD", "myTestObjectVar") or { panic("object variable not found") }
@@ -135,7 +136,7 @@ fn test_object_var_1() {
 	assert var.data.typ == 0
 }
 
-fn test_object_var_2() {
+fn test_object_var_decl_2() {
 	pex_file := compile_top('int myTestObjectVar2 = 10')
 	var := pex_file.get_var("ABCD", "myTestObjectVar2") or { panic("object variable not found") }
 
@@ -145,7 +146,7 @@ fn test_object_var_2() {
 	assert var.data.integer == 10
 }
 
-fn test_object_var_3() {
+fn test_object_var_decl_3() {
 	pex_file := compile_top('ABCD[] myTestObjectVar3')
 	
 	var := pex_file.get_var("ABCD", "myTestObjectVar3") or { panic("object variable not found") }
