@@ -73,23 +73,25 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			return ast.string_type
 		}
 		ast.Ident {
-			sym := c.table.get_type_symbol(c.cur_obj)
-
-			if obj := c.cur_scope.find_var(node.name) {
-				if node.pos.pos >= obj.pos.pos {
-					node.typ = obj.typ
-					return obj.typ
+			if var := c.cur_scope.find_var(node.name) {
+				if node.pos.pos >= var.pos.pos {
+					node.typ = var.typ
+					return var.typ
 				}
 			}
-			else if obj := sym.find_property(node.name){
-				node.typ = obj.typ
-				node.is_property = true
-				return obj.typ
+			else if var := c.find_var(c.cur_obj, node.name) {
+				node.typ = var.typ
+				node.is_object_var_or_prpperty = true
+				return var.typ
 			}
-			else {
-				c.error("variable declaration not found: `$node.name`",  node.pos)
-				return ast.none_type
+			else if p := c.find_property(c.cur_obj, node.name) {
+				node.typ = p.typ
+				node.is_object_var_or_prpperty = true
+				return p.typ
 			}
+			
+			c.error("variable declaration not found: `$node.name`",  node.pos)
+			return ast.none_type
 		}
 		ast.CallExpr {
 			return c.call_expr(mut node)
@@ -108,35 +110,21 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		}
 		ast.IndexExpr {
 			index_type := c.expr(mut node.index)
+			left_type := c.expr(mut node.left)
 
 			if index_type != ast.int_type {
 				c.error("index can only be a number",  node.pos)
 			}
 
-			if mut node.left is ast.Ident {
-				if obj := c.cur_scope.find_var(node.left.name) {
-					if node.pos.pos > obj.pos.pos + obj.pos.len {
-						node.typ = obj.typ
+			left_sym := c.table.get_type_symbol(left_type)
+			
+			if left_sym.kind != .array {
+				c.error("index expression is only available for arrays", node.pos)
+				return ast.none_type
+			}
 
-						sym := c.table.get_type_symbol(node.typ)
-						
-						if isnil(sym) || sym.kind != .array || sym.info !is ast.Array {
-							c.error("invalid type in index expression",  node.pos)
-						}
-						else {
-							info := c.table.get_type_symbol(node.typ).info as ast.Array
-							node.typ = info.elem_type
-							return info.elem_type
-						}
-					}
-				}
-				else {
-					c.error("array declaration not found: `$node.left.name`",  node.pos)
-				}
-			}
-			else {
-				c.error("left-side expression in index expression is not indifier",  node.pos)
-			}
+			node.typ = (left_sym.info as ast.Array).elem_type
+			return node.typ
 		}
 		ast.SelectorExpr {
 			node.typ = c.expr(mut node.expr)
@@ -151,21 +139,17 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				return ast.int_type
 			}
 			else {
-				for {
-					if f := sym.find_property(node.field_name) {
-						node.typ = f.typ
-						return f.typ
-					}
-
-					if sym.parent_idx > 0 {
-						sym = c.table.get_type_symbol(sym.parent_idx)
-						continue
-					}
-
-					break
+				if v := c.find_var(node.typ, node.field_name) {
+					node.typ = v.typ
+					return v.typ
+				}
+				else if p := c.find_property(node.typ, node.field_name) {
+					node.typ = p.typ
+					return p.typ
 				}
 
 				c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
+				return ast.none_type
 			}
 			
 			return node.typ
@@ -184,6 +168,9 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				type_name := c.get_type_name(node.typ)
 				c.error("cannot convert type `$expr_type_name` to type `$type_name`",  node.pos)
 			}
+			
+			c.error("invalid cast expression", node.pos)
+			return ast.none_type
 		}
 		ast.EmptyExpr {
 			return ast.none_type
@@ -411,7 +398,55 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		assert left == ""
 	}
 
-	if func := c.find_fn(typ, left, name) {
+/*
+	if name.to_lower() == "find" || name.to_lower() == "rfind" {
+		//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
+		//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
+
+		sym := c.table.get_type_symbol(typ)
+		
+		if sym.kind == .array {
+			elem_type := (sym.info as ast.Array).elem_type
+
+			if node.args.len == 0 || node.args.len > 2 {
+				c.error("function takes 1 or 2 parameters not $node.args.len", node.pos)
+				return ast.none_type
+			}
+
+			c.expr(mut node.args[0].expr)
+			if node.args[0].typ != ast.none_type && node.args[0].typ != elem_type {
+				// неверный первый аргумент
+					println(node.args)
+					node_arg_name := c.get_type_name(node.args[0].typ)
+					fn_arg_name := c.get_type_name(elem_type)
+					c.error("cannot convert type `$node_arg_name` to type `$fn_arg_name`", node.pos)
+			}
+
+			if node.args.len == 2 {
+				c.expr(mut node.args[1].expr)
+
+				if node.args[1].typ != ast.int_type {
+					// неверный второй аргумент
+					node_arg_name := c.get_type_name(node.args[1].typ)
+					fn_arg_name := c.get_type_name(ast.int_type)
+					c.error("cannot convert type `$node_arg_name` to type `$fn_arg_name`", node.pos)
+				}
+			}
+			else {
+				node.args << ast.CallArg {
+					expr: ast.IntegerLiteral {
+						val: if name.to_lower() == "find" { "0" } else { "-1" }
+					}
+					typ: ast.int_type
+				}
+			}
+
+			return ast.int_type
+		}
+	}
+*/
+
+	if mut func := c.find_fn(typ, left, name) {
 		node.obj_name = func.obj_name
 		node.return_type = func.return_type
 		node.is_global = func.is_global
@@ -502,6 +537,24 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 			return ast.none_type
 		}
 
+		//for find/rfind 
+		if name.to_lower() == "find" || name.to_lower() == "rfind" {
+			sym := c.table.get_type_symbol(typ)
+
+			if sym.kind == .array {
+				if node.args.len >= 1 {
+					if node.args[0].expr is ast.NoneLiteral {
+						func.params[0] = ast.Param {
+							name: "value"
+							typ: ast.none_type
+							is_optional: false
+							default_value: "none"
+						}
+					}
+				}
+			}
+		}
+
 		mut i := 0
 		for i < node.args.len {
 			arg_typ := c.expr(mut node.args[i].expr)
@@ -520,6 +573,10 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 				node.args[i].expr = new_expr
 			}
 			else {
+				println(name)
+				println(c.table.get_type_symbol(typ))
+				println(func)
+				println(node)
 				left_type_name := c.get_type_name(func_arg_type)
 				right_type_name := c.get_type_name(arg_typ)
 				c.error("cannot convert type `$right_type_name` to type `$left_type_name`", node.pos)

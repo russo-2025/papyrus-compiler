@@ -375,7 +375,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 			var_data = g.gen_prefix_operator(mut &expr)
 		}
 		ast.Ident {
-			if expr.is_property {
+			if expr.is_object_var_or_prpperty {
 				sym := g.table.get_type_symbol(g.cur_obj_type)
 				if prop := sym.find_property(expr.name) {
 					

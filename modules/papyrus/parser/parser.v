@@ -518,7 +518,6 @@ pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 
 [inline]
 pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
-	
 	mut pos := p.tok.position()
 
 	typ := p.get_parsed_type()
@@ -533,6 +532,19 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 
 	flags := p.parse_flags(pos.line_nr + 1)
 	pos = pos.extend(p.prev_tok.position())
+
+	if is_object_var {
+		mut sym := p.table.get_type_symbol(p.cur_object)
+
+		if !sym.has_var(name) {
+			sym.register_var(ast.Var{
+				name: name
+				obj_name: p.cur_obj_name
+				pos: pos
+				typ: typ
+			})
+		}
+	}
 
 	return  ast.VarDecl{
 		typ: typ

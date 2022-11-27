@@ -15,6 +15,7 @@ pub mut:
 	methods		[]Fn
 	props		map[string]Prop
 	states		map[string]State
+	vars		map[string]Var
 }
 
 pub struct EmptyInfo {}
@@ -216,4 +217,29 @@ pub fn (t TypeSymbol) find_state(name string) ?State {
 pub fn (mut t TypeSymbol) register_state(s State) {
 	key := s.name.to_lower()
 	t.states[key] = s
+}
+
+pub fn (t TypeSymbol) has_var(name string) bool {
+	key := name.to_lower()
+	
+	if _ := t.vars[key] {
+		return true
+	}
+	
+	return false
+}
+
+pub fn (t TypeSymbol) find_var(name string) ?Var {
+	key := name.to_lower()
+	
+	if s := t.vars[key] {
+		return s
+	}
+	
+	return none
+}
+
+pub fn (mut t TypeSymbol) register_var(s Var) {
+	key := s.name.to_lower()
+	t.vars[key] = s
 }

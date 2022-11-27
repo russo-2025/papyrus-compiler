@@ -347,6 +347,44 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 	}
 }
 
+fn (c Checker) find_var(typ ast.Type, name string) ?ast.Var {
+	mut sym := c.table.get_type_symbol(typ)
+
+	for {
+		if p := sym.find_var(name) {
+			return p
+		}
+
+		if sym.parent_idx > 0 {
+			sym = c.table.get_type_symbol(sym.parent_idx)
+			continue
+		}
+
+		break
+	}
+
+	return none
+}
+
+fn (c Checker) find_property(typ ast.Type, name string) ?ast.Prop {
+	mut sym := c.table.get_type_symbol(typ)
+
+	for {
+		if p := sym.find_property(name) {
+			return p
+		}
+
+		if sym.parent_idx > 0 {
+			sym = c.table.get_type_symbol(sym.parent_idx)
+			continue
+		}
+
+		break
+	}
+
+	return none
+}
+
 [inline]
 pub fn (c Checker) is_empty_state() bool {
 	return c.cur_state_name == pex.empty_state_name

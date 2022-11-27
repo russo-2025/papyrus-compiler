@@ -70,11 +70,11 @@ pub:
 
 pub struct Ident {
 pub:
-	name		string
-	pos			token.Position
+	name						string
+	pos							token.Position
 pub mut:
-	typ			ast.Type
-	is_property	bool
+	typ							ast.Type
+	is_object_var_or_prpperty	bool
 }
 
 pub struct RedefinedOptionalArg {

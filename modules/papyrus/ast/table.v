@@ -38,15 +38,23 @@ pub:
 	pos					token.Position
 	is_auto				bool //flag
 }
+
+pub struct Var {
+pub:
+	name				string
+	obj_name			string
+	typ					Type
+	pos					token.Position
+}
 	
 pub struct Fn {
 pub:
-	params			[]Param
 	return_type		Type
 	obj_name		string
 	state_name		string
 	pos				token.Position
 pub mut:
+	params			[]Param
 	name			string
 	lname			string //in lowercase
 	is_global		bool
