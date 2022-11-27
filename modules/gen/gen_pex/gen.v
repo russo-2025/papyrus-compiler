@@ -32,6 +32,7 @@ pub mut:
 
 	default_state	&pex.State = unsafe{ voidptr(0) }
 
+	cur_obj_type	ast.Type
 	cur_obj_name	string
 }
 

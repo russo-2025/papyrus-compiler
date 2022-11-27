@@ -10,8 +10,6 @@ pub mut:
 	type_idxs			map[string]int
 
 	fns					map[string]Fn
-	props				map[string]Prop
-	states				map[string]State
 }
 
 pub struct Param {
@@ -71,54 +69,6 @@ pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
 	return t
-}
-
-pub fn (t &Table) has_state(obj_name string, name string) bool {
-	key := obj_name.to_lower() + "." + name.to_lower()
-	
-	if _ := t.states[key] {
-		return true
-	}
-	
-	return false
-}
-
-pub fn (t &Table) find_state(obj_name string, name string) ?State {
-	key := obj_name.to_lower() + "." + name.to_lower()
-	
-	if s := t.states[key] {
-		return s
-	}
-	
-	return none
-}
-
-pub fn (mut t Table) register_state(s State) {
-	t.states[s.obj_name.to_lower() + "." + s.name.to_lower()] = s
-}
-
-pub fn (t &Table) has_property(obj_name string, name string) bool {
-	key := obj_name.to_lower() + "." + name.to_lower()
-	
-	if _ := t.props[key] {
-		return true
-	}
-	
-	return false
-}
-
-pub fn (t &Table) find_property(obj_name string, name string) ?Prop {
-	key := obj_name.to_lower() + "." + name.to_lower()
-	
-	if p := t.props[key] {
-		return p
-	}
-	
-	return none
-}
-
-pub fn (mut t Table) register_property(p Prop) {
-	t.props[p.obj_name.to_lower() + "." + p.name.to_lower()] = p
 }
 
 pub fn (t &Table) has_fn(obj_name string, name string) bool {

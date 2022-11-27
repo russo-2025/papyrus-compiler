@@ -73,13 +73,15 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			return ast.string_type
 		}
 		ast.Ident {
+			sym := c.table.get_type_symbol(c.cur_obj)
+
 			if obj := c.cur_scope.find_var(node.name) {
 				if node.pos.pos >= obj.pos.pos {
 					node.typ = obj.typ
 					return obj.typ
 				}
 			}
-			else if obj := c.table.find_property(c.cur_obj_name, node.name){
+			else if obj := sym.find_property(node.name){
 				node.typ = obj.typ
 				node.is_property = true
 				return obj.typ
@@ -150,7 +152,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			}
 			else {
 				for {
-					if f := c.table.find_property(sym.obj_name, node.field_name) {
+					if f := sym.find_property(node.field_name) {
 						node.typ = f.typ
 						return f.typ
 					}

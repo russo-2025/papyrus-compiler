@@ -270,8 +270,10 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	
 	p.cur_state_name = pex.empty_state_name
 
-	if !p.table.has_state(p.cur_obj_name, name) {
-		p.table.register_state(ast.State{
+	mut sym := p.table.get_type_symbol(p.cur_object)
+
+	if !sym.has_state(name) {
+		sym.register_state(ast.State{
 			name: name
 			obj_name: p.cur_obj_name
 			pos: pos
@@ -382,8 +384,11 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	
 	node.auto_var_name = auto_var_name
 
-	if !p.table.has_property(p.cur_obj_name, name) {
-		p.table.register_property(ast.Prop{
+	
+	mut sym := p.table.get_type_symbol(p.cur_object)
+
+	if !sym.has_property(name) {
+		sym.register_property(ast.Prop{
 			name: node.name
 			obj_name: p.cur_obj_name
 			auto_var_name: auto_var_name

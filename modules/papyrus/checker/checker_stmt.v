@@ -39,7 +39,8 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 				}
 			}
 
-			if t_state := c.table.find_state(c.cur_obj_name, node.name) {
+			sym := c.table.get_type_symbol(c.cur_obj)
+			if t_state := sym.find_state(node.name) {
 				if t_state.pos.pos != node.pos.pos {
 					c.error("state with this name already exists", node.pos)
 				}
@@ -63,7 +64,8 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 					c.top_stmt(mut &node.write)
 				}
 
-				if t_prop := c.table.find_property(c.cur_obj_name, node.name) {
+				sym := c.table.get_type_symbol(c.cur_obj)
+				if t_prop := sym.find_property(node.name) {
 					if t_prop.pos.pos != node.pos.pos {
 						c.error("property with this name already exists", node.pos)
 					}

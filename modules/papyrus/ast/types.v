@@ -10,9 +10,11 @@ pub:
 pub mut:
 	info		TypeInfo
 	kind		Kind
+	obj_name	string
 	name		string
 	methods		[]Fn
-	obj_name	string
+	props		map[string]Prop
+	states		map[string]State
 }
 
 pub struct EmptyInfo {}
@@ -163,4 +165,55 @@ pub fn (mut t TypeSymbol) register_method(new_fn Fn) int {
 	t.methods << new_fn
 	
 	return t.methods.len - 1
+}
+
+pub fn (t TypeSymbol) has_property(name string) bool {
+	key := name.to_lower()
+	
+	if _ := t.props[key] {
+		return true
+	}
+	
+	return false
+}
+
+pub fn (t TypeSymbol) find_property(name string) ?Prop {
+	key := name.to_lower()
+	
+	if p := t.props[key] {
+		return p
+	}
+	
+	return none
+}
+
+pub fn (mut t TypeSymbol) register_property(p Prop) {
+	key := p.name.to_lower()
+
+	t.props[key] = p
+}
+
+pub fn (t TypeSymbol) has_state(name string) bool {
+	key := name.to_lower()
+	
+	if _ := t.states[key] {
+		return true
+	}
+	
+	return false
+}
+
+pub fn (t TypeSymbol) find_state(name string) ?State {
+	key := name.to_lower()
+	
+	if s := t.states[key] {
+		return s
+	}
+	
+	return none
+}
+
+pub fn (mut t TypeSymbol) register_state(s State) {
+	key := s.name.to_lower()
+	t.states[key] = s
 }
