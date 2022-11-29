@@ -4,23 +4,24 @@ import os
 
 const (
 	builtin_path = os.real_path('./builtin')
+	
 )
 
 pub enum Backend {
 	pex
-	original
+	original // use a vanilla compiler to compile files
 }
 
 pub enum RunMode {
 	compile
-	read
+	read 
 }
 
 [heap]
 pub struct Preferences {
 pub mut:
-	paths				[]string	//папки с файлами для компиляции
-	out_dir				[]string	//папки для результата
+	paths				[]string	// folders with files to compile
+	out_dir				[]string	// folders for output files
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
@@ -33,10 +34,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 	p.backend = .pex
 
 	if args.len < 3  {
-		error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
+		error("invalid number of arguments")
 	}
 
-	mut i := 1
+	mut i := 0
 
 	for i < args.len {
 		match args[i] {
@@ -109,55 +110,102 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 }
 
 pub fn parse_args() Preferences {
-	
 	mut p := Preferences{}
-
-	if os.args.len <= 1 {
-		error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
-	}
 
 	args := os.args[1..]
 
+	if args.len == 0 {
+		help()
+		exit(0)
+	}
+
 	match args[0] {
-		"-compile" {
-			p.mode = .compile
-			p.parse_compile_args(args)
+		"help" {
+			if args.len > 1 {
+				if args[1] == "compile" || args[1] == "read" {
+					help_command(args[1])
+				}
+			}
+
+			help()
 		}
-		"-read" {
+		"-compile", // outdated
+		"compile" {
+			p.mode = .compile
+			p.parse_compile_args(args[1..])
+		}
+		"read" {
 			if args.len < 2 {
-				error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
+				error("invalid number of arguments")
 			}
 
 			p.mode = .read
 			p.paths << os.real_path(args[1])
 		}
 		else {
-			error("invalid arguments.\npapyrus.exe -compile <input-path> <output-path>")
+			if args[0].starts_with("-") {
+				p.mode = .compile
+				p.parse_compile_args(args)
+			}
+			else {
+				error("unknown command: `${args[0]}`")
+			}
 		}
 	}
 
 	return p
 }
 
-pub fn should_compile_filtered_files(dir string, files_ []string) []string {
-	mut files := files_.clone()
-	files.sort()
-
-	mut all_v_files := []string{}
-
-	for file in files {
-		if !file.ends_with('.psc') {
-			continue
-		}
-
-		all_v_files << os.join_path(dir, os.file_name(file))
-	}
-
-	return all_v_files
-}
-
 fn error(msg string) {
 	eprintln(msg)
-	eprintln("papyrus.exe -compile <input-path> <output-path>")
 	exit(1)
+}
+
+fn help() {
+	println("Papyrus language compiler")
+	println("")
+	println("Usage:")
+	println("")
+	println("	papyrus <command> [arguments]")
+	println("")
+	println("The commands are:")
+	println("")
+	println("		compile")
+	println("			compile papyrus files")
+	println("")
+	println("		read")
+	println("			read \"*.pex\" file and output result to console")
+	println("")
+	println("")
+	println("Use \"papyrus help <command>\" for more information about a command.")
+	exit(0)
+}
+
+fn help_command(command string) {
+	println("Arguments:")
+
+	match command {
+		"compile" {
+			println("")
+			println("		-i")
+			println("			folder with files(*.psc) to compile")
+			println("")
+			println("		-o")
+			println("			folder for compiled files(*.pex)")
+			println("")
+			println("		-nocache")
+			println("			compile all files, regardless of the modification date")
+			println("")
+			println("		-original")
+			println("			compile using a vanilla compiler")
+			println("")
+		}
+		"read" {
+			println("papyrus read \"path/to/file.pex\"")
+		}
+		else {
+		}
+	}
+
+	exit(0)
 }

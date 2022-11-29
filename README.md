@@ -20,40 +20,34 @@ v -stats test modules
 
 ## Usage
 
-```papyrus [command] [flags]```
-
-#### Examples:
-
-```
-papyrus -compile -nocache -i "../test-files/compiler" -o "../test-files/compiled"
-papyrus -compile -nocache -crutches -i "../../RH-workspace/scripts" -o ""../../RH-workspace/compiled""
-papyrus -read "../test-files/compiled/ABCD.pex"
-```
+```papyrus <command> [arguments]```
 
 #### Commands:
 
 ```
--compile        `papyrus -compile [build flags]`
+compile        compile papyrus files
 
--read           read the`. pex ' file and outputs the result to the console
-                    `papyrus -read "path-to-file.pex"`
+read           read "*.pex" file and output result to console
 ```
 
-#### Flags:
+#### Сompile command arguments:
 
 ```
--i, -input			folder with files(*.psc) to compile
+-i, -input      folder with files(*.psc) to compile
 
--o, -output			folder for compiled files(*.pex)
+-o, -output     folder for compiled files(*.pex)
 
--nocache			by default, the compiler checks the file modification date and compiles 
-				        the file if it has changed. `-nocache` flag disables this behavior.
+-nocache        compile all files, regardless of the modification date
 
--original			compiles files using a standard compiler
-			        	(only the `-i` and `-o` flags are available)
+-original       compile using a vanilla compiler
+```
 
--crutches			replaces the hex number by calling the function `M.StringToInt`
-                        `0xFF` -> `M.StringToInt("0xFF")`
+#### Examples:
+
+```
+papyrus compile -nocache -i "../test-files/compiler" -o "../test-files/compiled"
+papyrus compile -i "../../RH-workspace/scripts" -o ""../../RH-workspace/compiled""
+papyrus read "../test-files/compiled/ABCD.pex"
 ```
 
 ## List of supported language features
