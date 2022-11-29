@@ -10,7 +10,6 @@ import papyrus.checker
 import gen.gen_pex
 
 const (
-	builtin_path = os.real_path('./builtin')
 	cache_path = os.real_path('./.papyrus')
 	compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
 	compiler_flags_path = os.real_path('./Original Compiler/TESV_Papyrus_Flags.flg')
@@ -124,12 +123,12 @@ fn (mut b Builder) print_timer(name string) {
 }
 
 fn (mut b Builder) load_builtin_files()  {
-	if os.is_dir(builtin_path) {
-		files := os.walk_ext(builtin_path, ".psc")
+	if os.is_dir(b.pref.builtin_path) {
+		files := os.walk_ext(b.pref.builtin_path, ".psc")
 		parser.parse_files(files, b.table, b.pref, b.global_scope)
 	}
 	else {
-		panic("invalid builtin dir - `$builtin_path`")
+		panic("invalid builtin dir - `${b.pref.builtin_path}`")
 	}
 }
 

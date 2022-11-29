@@ -83,7 +83,7 @@ fn compile_original(pref &pref.Preferences) {
 	$if windows {
 		mut b := BuilderOrigin{}
 		
-		b.set_builtin_path(builtin_path)
+		b.set_builtin_path(pref.builtin_path)
 
 		for path in pref.paths {
 			b.add_input_path(path)

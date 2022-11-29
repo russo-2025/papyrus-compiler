@@ -2,6 +2,10 @@ module pref
 
 import os
 
+const (
+	builtin_path = os.real_path('./builtin')
+)
+
 pub enum Backend {
 	pex
 	original
@@ -21,6 +25,7 @@ pub mut:
 	backend				Backend = .pex
 	no_cache			bool
 	crutches_enabled	bool
+	builtin_path		string = builtin_path
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
