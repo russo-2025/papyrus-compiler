@@ -84,7 +84,7 @@ pub fn compile(pref &pref.Preferences) {
 	b.start_timer('gen files')
 	match b.pref.backend {
 		.pex {
-			compile_pex(parsed_files, b.table, b.pref)
+			b.compile_pex(parsed_files)
 		}
 		else { panic('invalid compiler backend') }
 	}
@@ -92,16 +92,16 @@ pub fn compile(pref &pref.Preferences) {
 	b.print_timer('gen files')
 }
 
-fn compile_pex(parsed_files []ast.File, table &ast.Table, pref &pref.Preferences) {
+fn (b Builder) compile_pex(parsed_files []ast.File) {
 	for pfile in parsed_files {
-		if is_outdated(pfile, pref) {
+		if is_outdated(pfile, b.pref) {
 			output_file_name := pfile.file_name + ".pex"
-			output_file_path := os.join_path(pref.out_dir[0], output_file_name)
-			println('gen `$output_file_name`')
-			gen_pex.gen(pfile, output_file_path, table, pref)
+			output_file_path := os.join_path(b.pref.out_dir[0], output_file_name)
+			b.print('gen `$output_file_name`')
+			gen_pex.gen(pfile, output_file_path, b.table, b.pref)
 			
-			if pref.out_dir.len > 1 {
-				os.cp(output_file_path, os.join_path(pref.out_dir[1], output_file_name)) or { panic(err) }
+			if b.pref.out_dir.len > 1 {
+				os.cp(output_file_path, os.join_path(b.pref.out_dir[1], output_file_name)) or { panic(err) }
 			}
 		}
 	}
@@ -114,7 +114,7 @@ fn (mut b Builder) start_timer(name string) {
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
 		time := f32(sw.elapsed().microseconds()) / 1000
-		println('$name: $time ms')
+		b.print('$name: $time ms')
 		b.timers.delete(name)
 	}
 	else {
@@ -130,6 +130,14 @@ fn (mut b Builder) load_builtin_files()  {
 	else {
 		panic("invalid builtin dir - `${b.pref.builtin_path}`")
 	}
+}
+
+fn (b Builder) print(msg string) {
+	if b.pref.output_mode == .silent {
+		return
+	}
+
+	println(msg)
 }
 
 fn get_all_src_files(paths []string) []string {

@@ -3,6 +3,7 @@ module util
 import os
 import term
 import papyrus.token
+import papyrus.errors
 
 const (
 	error_context_before = 2
@@ -116,4 +117,9 @@ pub fn source_context(kind string, source string, column int, pos token.Position
 		}
 	}
 	return clines
+}
+
+pub fn show_compiler_message(kind string, err errors.CompilerMessage) {
+	ferror := util.formatted_error(kind, err.message, err.file_path, err.pos)
+	eprintln(ferror)
 }

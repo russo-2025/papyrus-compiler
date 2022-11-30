@@ -390,19 +390,29 @@ pub fn (c Checker) is_empty_state() bool {
 	return c.cur_state_name == pex.empty_state_name
 }
 
-pub fn (c Checker) warn(message string, pos token.Position) {
-	eprintln("Checker warning: " + message)
+pub fn (mut c Checker) warn(message string, pos token.Position) {
+	c.warnings << errors.Warning {
+		message: message
+		file_path: c.file.path
+		pos: pos
+		reporter:  errors.Reporter.checker
+	}
+
+	util.show_compiler_message("Checker warning:", pos: pos, file_path: c.file.path, message: message)	
 }
 
 pub fn (mut c Checker) error(message string, pos token.Position) {
-	ferror := util.formatted_error('Checker error:', message, c.file.path, pos)
-	eprintln(ferror)
+	if c.pref.is_verbose {
+		print_backtrace()
+	}
+
 	c.errors << errors.Error {
 		message: message
-		details: message
 		file_path: c.file.path
 		pos: pos
 		backtrace: ""
 		reporter:  errors.Reporter.checker
-	}	
+	}
+
+	util.show_compiler_message("Checker error:", pos: pos, file_path: c.file.path, message: message)	
 }

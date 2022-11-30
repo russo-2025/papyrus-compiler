@@ -7,6 +7,11 @@ const (
 	
 )
 
+pub enum OutputMode {
+	stdout
+	silent
+}
+
 pub enum Backend {
 	pex
 	original // use a vanilla compiler to compile files
@@ -27,6 +32,8 @@ pub mut:
 	no_cache			bool
 	crutches_enabled	bool
 	builtin_path		string = builtin_path
+	output_mode			OutputMode = .stdout
+	is_verbose			bool
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
@@ -99,6 +106,12 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 			"-original" {
 				p.backend = .original
+			}
+			"-verbose" {
+				p.is_verbose = true
+			}
+			"-silent" {
+				p.output_mode = .silent
 			}
 			else {
 				error("invalid argument `${args[i]}`")
@@ -182,10 +195,9 @@ fn help() {
 }
 
 fn help_command(command string) {
-	println("Arguments:")
-
 	match command {
 		"compile" {
+			println("Arguments:")
 			println("")
 			println("		-i")
 			println("			folder with files(*.psc) to compile")
@@ -199,8 +211,14 @@ fn help_command(command string) {
 			println("		-original")
 			println("			compile using a vanilla compiler")
 			println("")
+			println("		-silent")
+			println("			disable output of messages and errors to console")
+			println("")
+			println("		-verbose")
+			println("			")
 		}
 		"read" {
+			println("")
 			println("papyrus read \"path/to/file.pex\"")
 		}
 		else {

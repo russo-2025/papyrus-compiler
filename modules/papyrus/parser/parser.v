@@ -7,6 +7,7 @@ import pref
 import papyrus.ast
 import papyrus.util
 import pex
+import papyrus.errors
 
 pub struct Parser {
 	pref				&pref.Preferences
@@ -37,6 +38,8 @@ mut:
 
 	parsed_type			ast.Type //спаршеный тип
 	is_extended_lang	bool
+pub mut:
+	errors				[]errors.Error
 }
 
 pub fn parse_files(paths []string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) []ast.File {
@@ -120,16 +123,6 @@ pub fn (mut p Parser) set_path(path string) {
 	p.path = path
 }
 
-[inline]
-pub fn (mut p Parser) comment() ast.Comment {
-	node := ast.Comment{
-		text: p.tok.lit,
-		pos: p.tok.position()
-	}
-	p.next()
-	return node
-}
-
 pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 	mut last_token_pos := 0
 
@@ -193,19 +186,245 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 	return none
 }
 
-[inline]
-pub fn (mut p Parser) parse_flags(line int) []token.Kind {
-	mut flags := []token.Kind{}
+pub fn (mut p Parser) stmts() []ast.Stmt {
+	mut last_token_pos := 0
 
-	for p.tok.kind.is_flag() && p.tok.line_nr <= line {
-		if p.tok.kind !in flags {
-			flags << p.tok.kind
+	mut s := []ast.Stmt{}
+
+	for {
+		if last_token_pos == p.tok.pos {
+			p.error("compiler bug(stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
 		}
-		
-		p.next()
+		else {
+			last_token_pos = p.tok.pos
+		}
+
+		match p.tok.kind {
+			.comment {
+				s << p.comment()
+			}
+			.key_return {
+				pos := p.tok.position()
+				p.next()
+
+				s << ast.Return {
+					pos: pos
+					expr: p.expr(0)
+				}
+			}
+			.key_if {
+				mut branches := []ast.IfBranch{}
+
+				mut pos := p.tok.position()
+				p.next()
+				
+				
+				mut cond := p.expr(0)
+
+
+
+				
+				p.open_scope()
+				mut stmts := p.stmts()
+				mut scope := p.scope
+				p.close_scope()
+
+				branches << ast.IfBranch{
+					pos: pos
+					cond: cond
+					stmts: stmts
+					scope: scope
+				}
+
+				for p.tok.kind != .key_endif && p.tok.kind != .key_else {
+					pos = p.tok.position()
+					p.check(.key_elseif)
+					
+					
+					cond = p.expr(0)
+					
+					
+
+					p.open_scope()
+					stmts = p.stmts()
+					scope = p.scope
+					p.close_scope()
+
+					branches << ast.IfBranch{
+						pos: pos
+						cond: cond
+						stmts: stmts
+						scope: scope
+					}
+				}
+
+				mut has_else := false
+				
+				if p.tok.kind == .key_else {
+					has_else = true
+					pos = p.tok.position()
+					p.next()
+
+					p.open_scope()
+					stmts = p.stmts()
+					scope = p.scope
+					p.close_scope()
+
+					branches << ast.IfBranch{
+						pos: pos
+						cond: ast.BoolLiteral { val: "true" }
+						stmts: stmts
+						scope: scope
+					}
+				}
+
+				p.check(.key_endif)
+
+				s << ast.If {
+					pos: pos
+					branches: branches
+					has_else: has_else
+				}
+			}
+			.key_while {
+				mut pos := p.tok.position()
+				p.next()
+				//p.check(.lpar)
+				
+				mut cond := p.expr(0)
+				//p.check(.rpar)
+				
+				
+				p.open_scope()
+				mut stmts := p.stmts()
+				scope := p.scope
+				p.close_scope()
+
+				p.check(.key_endwhile)
+				
+				s << ast.While {
+					pos: pos
+					cond: cond
+					stmts: stmts
+					scope: scope
+				}
+			}
+			.name {
+				if p.next_is_type() {
+					p.parse_type()
+					continue
+				}
+				else if p.parsed_type != 0 {
+					s << p.var_decl(false)
+				}
+				else {
+					s << p.parse_expr_stmt()
+				}
+			}
+			.number,
+			.string,
+			.key_new,
+			.key_self,
+			.key_parent,
+			.key_none,
+			.key_true,
+			.key_false,
+			.plus,
+			.minus,
+			.not,
+			.lpar {
+				s << p.parse_expr_stmt()
+			}
+			//типы перед переменными
+			.key_bool,
+			.key_int,
+			.key_string,
+			.key_float {
+				p.parse_type()
+			}
+			.key_endfunction,
+			.key_endwhile,
+			.key_endif,
+			.key_else,
+			.key_elseif,
+			.key_endevent {
+				break
+			}
+			.eof {
+				p.error("unexpected end of file")
+			}
+			else {
+				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+			}
+		}
 	}
 
-	return flags
+	return s
+}
+
+pub fn (mut p Parser) script_decl() ast.ScriptDecl {
+	
+	pos := p.tok.position()
+
+	if p.tok.kind == .key_scriptname {
+		p.next()
+	}
+	else if p.tok.kind == .key_scriptplus {
+		p.next()
+		p.is_extended_lang = true
+	}
+	else {
+		p.error('unexpected `$p.tok.lit`, expecting `scriptname` or `scriptplus`')
+	}
+
+	name := p.check_name()
+
+	p.cur_obj_name = name
+	p.table.register_object(name)
+
+	mut node := ast.ScriptDecl{
+		pos: pos
+		name: name
+		name_pos: p.tok.position()
+	}
+
+	mut parent_idx := 0
+
+	if p.tok.kind == .key_extends {
+		
+		p.next()
+
+		node.parent_pos = p.tok.position()
+		node.parent_name = p.check_name()
+
+		parent_idx = p.table.find_type_idx(node.parent_name)
+		
+		if parent_idx == 0 {
+			parent_idx = p.table.add_placeholder_type(node.parent_name)
+		}
+	}
+	
+	node.flags = p.parse_flags(pos.line_nr + 1)
+	
+	p.cur_object = p.table.register_type_symbol(
+		parent_idx: parent_idx
+		kind: .script
+		name: name
+		obj_name: name
+		methods: []ast.Fn{}
+	)
+
+	return node
+}
+
+[inline]
+pub fn (mut p Parser) comment() ast.Comment {
+	node := ast.Comment{
+		text: p.tok.lit,
+		pos: p.tok.position()
+	}
+	p.next()
+	return node
 }
 
 pub fn (mut p Parser) state_decl() ast.StateDecl {
@@ -401,96 +620,6 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	return node
 }
 
-pub fn (mut p Parser) script_decl() ast.ScriptDecl {
-	
-	pos := p.tok.position()
-
-	if p.tok.kind == .key_scriptname {
-		p.next()
-	}
-	else if p.tok.kind == .key_scriptplus {
-		p.next()
-		p.is_extended_lang = true
-	}
-	else {
-		p.error('unexpected `$p.tok.lit`, expecting `scriptname` or `scriptplus`')
-	}
-
-	name := p.check_name()
-
-	p.cur_obj_name = name
-	p.table.register_object(name)
-
-	mut node := ast.ScriptDecl{
-		pos: pos
-		name: name
-		name_pos: p.tok.position()
-	}
-
-	mut parent_idx := 0
-
-	if p.tok.kind == .key_extends {
-		
-		p.next()
-
-		node.parent_pos = p.tok.position()
-		node.parent_name = p.check_name()
-
-		parent_idx = p.table.find_type_idx(node.parent_name)
-		
-		if parent_idx == 0 {
-			parent_idx = p.table.add_placeholder_type(node.parent_name)
-		}
-	}
-	
-	node.flags = p.parse_flags(pos.line_nr + 1)
-	
-	p.cur_object = p.table.register_type_symbol(
-		parent_idx: parent_idx
-		kind: .script
-		name: name
-		obj_name: name
-		methods: []ast.Fn{}
-	)
-
-	return node
-}
-
-pub fn (mut p Parser) read_first_token() {
-	// need to call next() 4 times to get peek token 1,2,3 and current token
-	p.next()
-	p.next()
-	p.next()
-	p.next()
-}
-
-[inline]
-fn (mut p Parser) next() {
-	p.prev_tok = p.tok
-	p.tok = p.peek_tok
-	p.peek_tok = p.peek_tok2
-	p.peek_tok2 = p.peek_tok3
-	p.peek_tok3 = p.scanner.scan()
-}
-
-[inline]
-pub fn (mut p Parser) check_name() string {
-	name := p.tok.lit
-	p.check(.name)
-	return name
-}
-
-[inline]
-pub fn (mut p Parser) check(expected token.Kind) {
-	if p.tok.kind == expected {
-		p.next()
-	} else if p.tok.kind == .name {
-		p.error('unexpected name `$p.tok.lit`, expecting `$expected.str()`')
-	} else {
-		p.error('unexpected `$p.tok.kind.str()`, expecting `$expected.str()`')
-	}
-}
-
 [inline]
 pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 	pos := p.tok.position()
@@ -567,180 +696,54 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 	}
 }
 
-pub fn (mut p Parser) stmts() []ast.Stmt {
-	mut last_token_pos := 0
+[inline]
+pub fn (mut p Parser) parse_flags(line int) []token.Kind {
+	mut flags := []token.Kind{}
 
-	mut s := []ast.Stmt{}
-
-	for {
-		if last_token_pos == p.tok.pos {
-			p.error("compiler bug(stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
+	for p.tok.kind.is_flag() && p.tok.line_nr <= line {
+		if p.tok.kind !in flags {
+			flags << p.tok.kind
 		}
-		else {
-			last_token_pos = p.tok.pos
-		}
-
-		match p.tok.kind {
-			.comment {
-				s << p.comment()
-			}
-			.key_return {
-				pos := p.tok.position()
-				p.next()
-
-				s << ast.Return {
-					pos: pos
-					expr: p.expr(0)
-				}
-			}
-			.key_if {
-				mut branches := []ast.IfBranch{}
-
-				mut pos := p.tok.position()
-				p.next()
-				
-				
-				mut cond := p.expr(0)
-
-
-
-				
-				p.open_scope()
-				mut stmts := p.stmts()
-				mut scope := p.scope
-				p.close_scope()
-
-				branches << ast.IfBranch{
-					pos: pos
-					cond: cond
-					stmts: stmts
-					scope: scope
-				}
-
-				for p.tok.kind != .key_endif && p.tok.kind != .key_else {
-					pos = p.tok.position()
-					p.check(.key_elseif)
-					
-					
-					cond = p.expr(0)
-					
-					
-
-					p.open_scope()
-					stmts = p.stmts()
-					scope = p.scope
-					p.close_scope()
-
-					branches << ast.IfBranch{
-						pos: pos
-						cond: cond
-						stmts: stmts
-						scope: scope
-					}
-				}
-
-				mut has_else := false
-				
-				if p.tok.kind == .key_else {
-					has_else = true
-					pos = p.tok.position()
-					p.next()
-
-					p.open_scope()
-					stmts = p.stmts()
-					scope = p.scope
-					p.close_scope()
-
-					branches << ast.IfBranch{
-						pos: pos
-						cond: ast.BoolLiteral { val: "true" }
-						stmts: stmts
-						scope: scope
-					}
-				}
-
-				p.check(.key_endif)
-
-				s << ast.If {
-					pos: pos
-					branches: branches
-					has_else: has_else
-				}
-			}
-			.key_while {
-				mut pos := p.tok.position()
-				p.next()
-				//p.check(.lpar)
-				
-				mut cond := p.expr(0)
-				//p.check(.rpar)
-				
-				
-				p.open_scope()
-				mut stmts := p.stmts()
-				scope := p.scope
-				p.close_scope()
-
-				p.check(.key_endwhile)
-				
-				s << ast.While {
-					pos: pos
-					cond: cond
-					stmts: stmts
-					scope: scope
-				}
-			}
-			.name {
-				if p.next_is_type() {
-					p.parse_type()
-					continue
-				}
-				else if p.parsed_type != 0 {
-					s << p.var_decl(false)
-				}
-				else {
-					s << p.parse_expr_stmt()
-				}
-			}
-			.number,
-			.string,
-			.key_new,
-			.key_self,
-			.key_parent,
-			.key_none,
-			.key_true,
-			.key_false,
-			.plus,
-			.minus,
-			.not,
-			.lpar {
-				s << p.parse_expr_stmt()
-			}
-			//типы перед переменными
-			.key_bool,
-			.key_int,
-			.key_string,
-			.key_float {
-				p.parse_type()
-			}
-			.key_endfunction,
-			.key_endwhile,
-			.key_endif,
-			.key_else,
-			.key_elseif,
-			.key_endevent {
-				break
-			}
-			.eof {
-				p.error("unexpected end of file")
-			}
-			else {
-				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
-			}
-		}
+		
+		p.next()
 	}
 
-	return s
+	return flags
+}
+
+pub fn (mut p Parser) read_first_token() {
+	// need to call next() 4 times to get peek token 1,2,3 and current token
+	p.next()
+	p.next()
+	p.next()
+	p.next()
+}
+
+[inline]
+fn (mut p Parser) next() {
+	p.prev_tok = p.tok
+	p.tok = p.peek_tok
+	p.peek_tok = p.peek_tok2
+	p.peek_tok2 = p.peek_tok3
+	p.peek_tok3 = p.scanner.scan()
+}
+
+[inline]
+pub fn (mut p Parser) check_name() string {
+	name := p.tok.lit
+	p.check(.name)
+	return name
+}
+
+[inline]
+pub fn (mut p Parser) check(expected token.Kind) {
+	if p.tok.kind == expected {
+		p.next()
+	} else if p.tok.kind == .name {
+		p.error('unexpected name `$p.tok.lit`, expecting `$expected.str()`')
+	} else {
+		p.error('unexpected `$p.tok.kind.str()`, expecting `$expected.str()`')
+	}
 }
 
 [inline]
@@ -780,7 +783,15 @@ pub fn (mut p Parser) error(s string) {
 }
 
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
-	ferror := util.formatted_error('parser error:', s, p.path, pos)
-	eprintln(ferror)
-	exit(1)
+	if p.pref.output_mode == .stdout {
+		if p.pref.is_verbose {
+			print_backtrace()
+		}
+
+		util.show_compiler_message("Parser error:", pos: pos, file_path: p.path, message: s)
+		exit(1)
+	}
+	else {
+		exit(1)
+	}
 }
