@@ -66,11 +66,6 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 }
 
 [inline]
-fn (c Checker) get_type_kind(typ ast.Type) ast.Kind {
-	return c.table.get_type_symbol(typ).kind
-}
-
-[inline]
 fn (c Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
@@ -188,48 +183,6 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	return &new_node
 }
 
-pub fn (mut c Checker) valid_infix_op_type(op token.Kind, typ ast.Type) bool {
-	match op {
-		.plus {
-			match typ {
-			 ast.string_type,
-			 ast.float_type,
-			 ast.int_type {
-					return true
-				}
-				else {
-					return false
-				}
-			}
-		}
-		.minus, .mul, .div, .gt, .lt, .ge, .le {
-			match typ {
-			 ast.float_type,
-			 ast.int_type {
-					return true
-				}
-				else {
-					return false
-				}
-			}
-		}
-		.mod {
-			if typ == ast.int_type {
-				return true
-			}
-			else {
-				return false
-			}
-		}
-		.and, .logical_or, .eq, .ne {
-			return true
-		}
-		else { panic("wtf") }
-	}
-
-	return false
-}
-
 pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?ast.Fn {
 	mut typ := a_typ
 
@@ -323,7 +276,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 
 [inline]
 pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
-	match c.get_type_kind(typ) {
+	match c.table.get_type_symbol(typ).kind {
 		.int {
 			return ast.IntegerLiteral{ val: "0" }
 		}

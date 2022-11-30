@@ -454,7 +454,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableData {
 			g.gen_cast(var_data, expr_data)
 		}
 		ast.EmptyExpr {
-			panic("wtf") //var_data = pex.VariableData{ typ: 0 }
+			panic("wtf")
 		}
 	}
 

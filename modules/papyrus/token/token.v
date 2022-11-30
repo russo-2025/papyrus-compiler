@@ -254,7 +254,7 @@ pub fn (kind Kind) is_infix() bool {
 
 pub fn (kind Kind) is_prefix() bool {
 	return kind in
-		[.plus, .minus, .not]
+		[.minus, .not]
 }
 
 pub fn (kind Kind) is_assign() bool {

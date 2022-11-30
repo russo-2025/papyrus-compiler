@@ -44,8 +44,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 						c.error("prefix operator: `-` not support type: `$type_name`",  node.pos)
 					}
 				}
-				.plus { panic("wtf") }
-				else { panic("wtf") }
+				else {}
 			}
 
 			return node.right_type
@@ -397,54 +396,6 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		println(node)
 		assert left == ""
 	}
-
-/*
-	if name.to_lower() == "find" || name.to_lower() == "rfind" {
-		//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
-		//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
-
-		sym := c.table.get_type_symbol(typ)
-		
-		if sym.kind == .array {
-			elem_type := (sym.info as ast.Array).elem_type
-
-			if node.args.len == 0 || node.args.len > 2 {
-				c.error("function takes 1 or 2 parameters not $node.args.len", node.pos)
-				return ast.none_type
-			}
-
-			c.expr(mut node.args[0].expr)
-			if node.args[0].typ != ast.none_type && node.args[0].typ != elem_type {
-				// неверный первый аргумент
-					println(node.args)
-					node_arg_name := c.get_type_name(node.args[0].typ)
-					fn_arg_name := c.get_type_name(elem_type)
-					c.error("cannot convert type `$node_arg_name` to type `$fn_arg_name`", node.pos)
-			}
-
-			if node.args.len == 2 {
-				c.expr(mut node.args[1].expr)
-
-				if node.args[1].typ != ast.int_type {
-					// неверный второй аргумент
-					node_arg_name := c.get_type_name(node.args[1].typ)
-					fn_arg_name := c.get_type_name(ast.int_type)
-					c.error("cannot convert type `$node_arg_name` to type `$fn_arg_name`", node.pos)
-				}
-			}
-			else {
-				node.args << ast.CallArg {
-					expr: ast.IntegerLiteral {
-						val: if name.to_lower() == "find" { "0" } else { "-1" }
-					}
-					typ: ast.int_type
-				}
-			}
-
-			return ast.int_type
-		}
-	}
-*/
 
 	if mut func := c.find_fn(typ, left, name) {
 		node.obj_name = func.obj_name

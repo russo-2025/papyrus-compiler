@@ -98,12 +98,7 @@ pub fn (mut p Parser) parse() &ast.File {
 			break
 		}
 
-		if stmt := p.top_stmt() {
-			stmts << stmt
-		}
-		else {
-			panic("wtf")
-		}
+		stmts << p.top_stmt()
 	}
 
 	return &ast.File{
@@ -123,7 +118,7 @@ pub fn (mut p Parser) set_path(path string) {
 	p.path = path
 }
 
-pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
+pub fn (mut p Parser) top_stmt() ast.TopStmt {
 	mut last_token_pos := 0
 
 	for {
@@ -183,7 +178,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 		}
 	}
 
-	return none
+	panic("wtf")
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {
