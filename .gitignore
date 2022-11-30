@@ -3,7 +3,9 @@ bin/*.exe
 bin/*.pdb
 bin/*.ilk
 bin/*.rar
-test-files/**
+test-files/compiled
+test-files/compiler
+test-files/*.*
 TODO.txt
 *.bat
 vls.log

@@ -78,10 +78,12 @@ pub fn compile(pref &pref.Preferences) {
 	}
 
 	if c.errors.len != 0 {
+		assert false, "checker.errors.len != 0"
 		return
 	}
 	
 	b.start_timer('gen files')
+	
 	match b.pref.backend {
 		.pex {
 			b.compile_pex(parsed_files)
