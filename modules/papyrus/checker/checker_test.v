@@ -32,7 +32,7 @@ int Property myAutoProp = 123 Auto\n"
 )
 
 fn compile(src string) (&ast.File, &ast.Table) {
-	full_src := "${src_template}Function Bar(string arg1, ABCD obj)\n${src}\nEndFunction\n"
+	full_src := "${src_template}Function Bar(string arg1, int arg2, ABCD obj)\n${src}\nEndFunction\n"
 	mut table := ast.new_table()
 	global_scope := &ast.Scope{
 		parent: 0
@@ -138,9 +138,25 @@ fn test_ident() {
 	mut expr := &ast.Expr(ast.EmptyExpr{})
 	mut table := ast.new_table()
 
-	expr, _ = compile_expr('arg1')
+	expr, _ = compile_expr('arg1') //fn argument
 	assert expr is ast.Ident
 	assert (expr as ast.Ident).typ == ast.string_type
+
+	expr, _ = compile_expr('myObjectVar') //object var
+	assert expr is ast.Ident
+	assert (expr as ast.Ident).typ == ast.bool_type
+
+	expr, _ = compile_expr('myAutoProp') //object property
+	assert expr is ast.Ident
+	assert (expr as ast.Ident).typ == ast.int_type
+
+	expr, _ = compile_expr('myParentObjectVar') //object var
+	assert expr is ast.Ident
+	assert (expr as ast.Ident).typ == ast.string_type
+
+	expr, _ = compile_expr('myAutoParentProp') //object property
+	assert expr is ast.Ident
+	assert (expr as ast.Ident).typ == ast.float_type
 }
 
 fn test_cast_expr() {
@@ -284,6 +300,11 @@ fn test_prefix_expr() {
 	expr, _ = compile_expr('!False')
 	assert (expr as ast.PrefixExpr).op == token.Kind.not
 	assert (expr as ast.PrefixExpr).right_type == ast.bool_type
+	
+	expr, _ = compile_expr('-arg2')
+	assert (expr as ast.PrefixExpr).op == token.Kind.minus
+	assert (expr as ast.PrefixExpr).right_type == ast.int_type
+	assert ((expr as ast.PrefixExpr).right as ast.Ident).typ == ast.int_type
 }
 
 fn test_literals() {
@@ -293,16 +314,28 @@ fn test_literals() {
 	expr, table = compile_expr('123')
 	assert expr is ast.IntegerLiteral
 
+	expr, table = compile_expr('-123')
+	assert expr is ast.IntegerLiteral
+
 	expr, _ = compile_expr('0.123')
 	assert expr is ast.FloatLiteral
 
-	expr, _ = compile_expr('"123"')
+	expr, _ = compile_expr('10.123')
+	assert expr is ast.FloatLiteral
+
+	expr, _ = compile_expr('-10.123')
+	assert expr is ast.FloatLiteral
+
+	expr, _ = compile_expr('"msg123"')
 	assert expr is ast.StringLiteral
 
 	expr, _ = compile_expr('None')
 	assert expr is ast.NoneLiteral
 
 	expr, _ = compile_expr('True')
+	assert expr is ast.BoolLiteral
+
+	expr, _ = compile_expr('False')
 	assert expr is ast.BoolLiteral
 }
 
@@ -405,4 +438,12 @@ fn test_infix() {
 	expr, _ = compile_expr('True || False')
 	assert (expr as ast.InfixExpr).op == token.Kind.logical_or
 	assert (expr as ast.InfixExpr).result_type == ast.bool_type
+}
+
+fn test_autocast() {
+	//TODO
+}
+
+fn test_operator_priority() {
+	//TODO
 }
