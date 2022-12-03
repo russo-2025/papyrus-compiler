@@ -159,7 +159,7 @@ fn (mut s Scanner) text_scan() token.Token {
 				if nextc == `&` {
 					s.pos++
 					s.pos++
-					return s.new_token(.and, '', 2)
+					return s.new_token(.logical_and, '', 2)
 				}
 			}
 			`|` {

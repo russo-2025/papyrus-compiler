@@ -352,7 +352,7 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 				}
 			}
 		}
-		.and, .logical_or {
+		.logical_and, .logical_or {
 			if node.left_type != ast.bool_type {
 				node.left = c.cast_to_type(node.left, node.left_type, ast.bool_type)
 				node.left_type = ast.bool_type

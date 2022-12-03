@@ -75,7 +75,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableData {
 
 		return var_data
 	}
-	else if expr.op == .and {
+	else if expr.op == .logical_and {
 		//opcode: 'assign', args: [ident(a), integer(1)]
 		//opcode: 'cmp_gt', args: [ident(::temp0), integer(1), integer(11)]
 		//opcode: 'cast', args: [ident(::temp0), ident(::temp0)]
@@ -544,7 +544,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 			}
 		}
 
-		.and {
+		.logical_and {
 			panic("Gen error: infix operator: `and`")
 		}
 		.logical_or {

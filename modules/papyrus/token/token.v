@@ -27,7 +27,7 @@ pub enum Kind {
 	div
 	mod
 
-	and // &&
+	logical_and // &&
 	logical_or // ||
 	not // !
 
@@ -98,7 +98,6 @@ pub enum Kind {
 
 	key_as
 	key_import
-	//key_length
 	key_none
 	key_parent
 	key_scriptname
@@ -144,7 +143,7 @@ fn build_token_str() []string {
 	s[Kind.div] = '/'
 	s[Kind.mod] = '%'
 
-	s[Kind.and] = '&&'
+	s[Kind.logical_and] = '&&'
 	s[Kind.logical_or] = '||'
 	s[Kind.not] = '!'
 
@@ -193,7 +192,6 @@ fn build_token_str() []string {
 	s[Kind.key_if] = 'if'
 	s[Kind.key_import] = 'import'
 	s[Kind.key_int] = 'int'
-	//s[Kind.key_length] = 'length'
 	s[Kind.key_native] = 'native'
 	s[Kind.key_new] = 'new'
 	s[Kind.key_none] = 'none'
@@ -249,7 +247,7 @@ pub fn (kind Kind) is_flag() bool {
 
 pub fn (kind Kind) is_infix() bool {
 	return kind in
-		[.plus, .minus, .mul, .div, .mod, .and, .logical_or, .eq, .ne, .gt, .lt, .ge, .le]
+		[.plus, .minus, .mul, .div, .mod, .logical_and, .logical_or, .eq, .ne, .gt, .lt, .ge, .le]
 }
 
 pub fn (kind Kind) is_prefix() bool {
@@ -266,7 +264,8 @@ pub fn (kind Kind) is_assign() bool {
 pub enum Precedence {
 	lowest
 	assign // =
-	cond // OR AND
+	logical_or // ||
+	logical_and // &&
 	eq // == !=
 	sum // + -
 	product // * /
@@ -288,9 +287,9 @@ pub fn build_precedences() []Precedence {
 	p[Kind.div] = 	.product
 	p[Kind.mod] = 	.product
 
-	// && ||
-	p[Kind.and]			=	.cond
-	p[Kind.logical_or]	=	.cond
+	// ||  &&
+	p[Kind.logical_or]	=	.logical_or
+	p[Kind.logical_and]	=	.logical_and
 
 	// !
 	p[Kind.not]	=	.prefix
