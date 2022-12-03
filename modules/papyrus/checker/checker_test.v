@@ -217,7 +217,7 @@ fn test_infix() {
 	assert (expr as ast.InfixExpr).result_type == ast.bool_type
 
 	expr, _ = compile_expr('True && False')
-	assert (expr as ast.InfixExpr).op == token.Kind.and
+	assert (expr as ast.InfixExpr).op == token.Kind.logical_and
 	assert (expr as ast.InfixExpr).result_type == ast.bool_type
 
 	expr, _ = compile_expr('True || False')
@@ -654,5 +654,88 @@ fn test_autocast_call() {
 }
 
 fn test_operator_priority() {
-	//TODO
+	mut expr := &ast.Expr(ast.EmptyExpr{})
+	mut table := ast.new_table()
+
+	expr, _ = compile_expr("1 + 2 - 3")
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "3"
+	expr = &(expr as ast.InfixExpr).left
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "2"
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "1"
+	
+	expr, _ = compile_expr("1 / 2 * 3 % 4")
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "4"
+	expr = &(expr as ast.InfixExpr).left
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "3"
+	expr = &(expr as ast.InfixExpr).left
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "2"
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "1"
+
+	expr, table = compile_expr("obj as CDFG.myAutoParentProp")
+	assert (expr as ast.SelectorExpr).field_name == "myAutoParentProp"
+	assert (expr as ast.SelectorExpr).typ == ast.float_type
+	expr = &(expr as ast.SelectorExpr).expr
+	assert (expr as ast.CastExpr).type_name == "CDFG"
+	assert (expr as ast.CastExpr).typ == table.find_type_idx("CDFG")
+	expr = &(expr as ast.CastExpr).expr
+	assert (expr as ast.Ident).name == "obj"
+	assert (expr as ast.Ident).typ == table.find_type_idx("ABCD")
+
+	expr, _ = compile_expr("1 || 2 && 3")
+	assert (expr as ast.InfixExpr).op == .logical_or
+	assert (((expr as ast.InfixExpr).left as ast.CastExpr).expr as ast.IntegerLiteral).val == "1"
+	expr = &(expr as ast.InfixExpr).right
+	assert (expr as ast.InfixExpr).op == .logical_and
+	assert (((expr as ast.InfixExpr).left as ast.CastExpr).expr as ast.IntegerLiteral).val == "2"
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "3"
+
+	expr, _ = compile_expr("1 && 2 || 3")
+	assert (expr as ast.InfixExpr).op == .logical_or
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "3"
+	expr = &(expr as ast.InfixExpr).left
+	assert (expr as ast.InfixExpr).op == .logical_and
+	assert (((expr as ast.InfixExpr).left as ast.CastExpr).expr as ast.IntegerLiteral).val == "1"
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "2"
+
+	expr, _ = compile_expr("(1 || 2) && 3")
+	assert (expr as ast.InfixExpr).op == .logical_and
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "3"
+	expr = &((expr as ast.InfixExpr).left as ast.ParExpr).expr
+	assert (expr as ast.InfixExpr).op == .logical_or
+	assert (((expr as ast.InfixExpr).left as ast.CastExpr).expr as ast.IntegerLiteral).val == "1"
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "2"
+
+	expr, _ = compile_expr("2 + -arg2")
+	assert (expr as ast.InfixExpr).op == .plus
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "2"
+	expr = &(expr as ast.InfixExpr).right
+	assert (expr as ast.PrefixExpr).op == .minus
+	expr = &(expr as ast.PrefixExpr).right
+	assert (expr as ast.Ident).name == "arg2"
+
+	expr, _ = compile_expr("1 * (2 + 3)")
+	assert (expr as ast.InfixExpr).op == .mul
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "1"
+	expr = &((expr as ast.InfixExpr).right as ast.ParExpr).expr
+	assert (expr as ast.InfixExpr).op == .plus
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "2"
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "3"
+
+	expr, _ = compile_expr("1 + 2 * 3 == 4 && 5 || -arg2")
+	assert (expr as ast.InfixExpr).op == .logical_or
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.PrefixExpr).op == .minus
+	assert ((((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.PrefixExpr).right as ast.Ident).name == "arg2"
+	expr = &(expr as ast.InfixExpr).left
+	assert (expr as ast.InfixExpr).op == .logical_and
+	assert (((expr as ast.InfixExpr).right as ast.CastExpr).expr as ast.IntegerLiteral).val == "5"
+	expr = &(expr as ast.InfixExpr).left
+	assert (expr as ast.InfixExpr).op == .eq
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "4"
+	expr = &(expr as ast.InfixExpr).left
+	assert (expr as ast.InfixExpr).op == .plus
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "1"
+	expr = &(expr as ast.InfixExpr).right
+	assert (expr as ast.InfixExpr).op == .mul
+	assert ((expr as ast.InfixExpr).left as ast.IntegerLiteral).val == "2"
+	assert ((expr as ast.InfixExpr).right as ast.IntegerLiteral).val == "3"
 }
