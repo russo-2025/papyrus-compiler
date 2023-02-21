@@ -9,6 +9,10 @@ import papyrus.util
 import pex
 import papyrus.errors
 
+const (
+	max_trigger_count = 10
+)
+
 pub struct Parser {
 	pref				&pref.Preferences
 mut:
@@ -35,6 +39,8 @@ mut:
 	cur_obj_name		string
 	cur_state_name		string = pex.empty_state_name
 	cur_object			ast.Type //current object type
+	last_parse_pos		int = -1
+	number_of_triggers_per_token int
 
 	parsed_type			ast.Type //спаршеный тип
 	is_extended_lang	bool
@@ -119,15 +125,8 @@ pub fn (mut p Parser) set_path(path string) {
 }
 
 pub fn (mut p Parser) top_stmt() ast.TopStmt {
-	mut last_token_pos := 0
-
 	for {
-		if last_token_pos == p.tok.pos {
-			p.error("compiler bug(top stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
-		}
-		else {
-			last_token_pos = p.tok.pos
-		}
+		p.parser_bug_check()
 
 		match p.tok.kind {
 			.key_auto {
@@ -182,17 +181,10 @@ pub fn (mut p Parser) top_stmt() ast.TopStmt {
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {
-	mut last_token_pos := 0
-
 	mut s := []ast.Stmt{}
 
 	for {
-		if last_token_pos == p.tok.pos {
-			p.error("compiler bug(stmt): " + p.tok.kind.str() + ", " + "$p.tok.lit")
-		}
-		else {
-			last_token_pos = p.tok.pos
-		}
+		p.parser_bug_check()
 
 		match p.tok.kind {
 			.comment {
@@ -439,20 +431,13 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	p.cur_state_name = name
 	
 	mut fns := []ast.FnDecl{}
-	
-	mut last_token_pos := 0
 
 	for {
 		if p.tok.kind == .key_endstate {
 			break
 		}
 
-		if last_token_pos == p.tok.pos {
-			p.error("compiler bug(state): " + p.tok.kind.str() + ", " + "$p.tok.lit")
-		}
-		else {
-			last_token_pos = p.tok.pos
-		}
+		p.parser_bug_check()
 
 		match p.tok.kind {
 			.name {
@@ -771,6 +756,20 @@ pub fn (mut p Parser) close_scope() {
 	p.scope.end_pos = p.prev_tok.pos
 	p.scope.parent.children << p.scope
 	p.scope = p.scope.parent
+}
+
+fn (mut p Parser) parser_bug_check() {
+	if p.number_of_triggers_per_token > max_trigger_count {
+		p.error("[Parser.parserBugCheck] compiler bug")
+	}
+
+	if p.last_parse_pos == p.tok.pos {
+		p.number_of_triggers_per_token++
+	}
+	else {
+		p.last_parse_pos = p.tok.pos
+		p.number_of_triggers_per_token = 0
+	}
 }
 
 pub fn (mut p Parser) error(s string) {
