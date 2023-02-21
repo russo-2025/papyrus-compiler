@@ -8,9 +8,9 @@ import pref
 
 struct BuilderOrigin {
 mut:
-	builtin_path	string
-	input_paths		[]string
-	output_path		string
+	papyrus_headers_dir	string
+	input_paths			[]string
+	output_path			string
 }
 
 fn walk(parent_path string) []string {
@@ -36,12 +36,12 @@ fn (mut b BuilderOrigin) add_input_path(path string) {
 	b.input_paths << walk(path)
 }
 
-fn (mut b BuilderOrigin) set_builtin_path(path string) {
+fn (mut b BuilderOrigin) set_headers_path(path string) {
 	if !os.is_dir(path) {
-		panic('invalid builtin path \n`$path`')
+		panic('invalid papyrus headers dir \n`$path`')
 	}
 
-	b.builtin_path = path
+	b.papyrus_headers_dir = path
 }
 
 fn (mut b BuilderOrigin) set_output_path(path string) {
@@ -57,7 +57,7 @@ fn (mut b BuilderOrigin) run() {
 
 	all_inputs += '-i="'
 
-	all_inputs += b.builtin_path + ";"
+	all_inputs += b.papyrus_headers_dir + ";"
 
 	for path in b.input_paths {
 		all_inputs += '$path' + ";"
@@ -82,7 +82,7 @@ fn (mut b BuilderOrigin) run() {
 fn compile_original(prefs &pref.Preferences) {
 	$if windows {
 		mut b := BuilderOrigin{}
-
+		
 		b.set_headers_path(prefs.papyrus_headers_dir)
 
 		for path in prefs.paths {

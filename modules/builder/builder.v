@@ -57,9 +57,9 @@ pub fn compile(prefs &pref.Preferences) {
 	mut b := new_builder(prefs)
 	mut c := checker.new_checker(b.table, b.pref)
 	
-	b.start_timer('load builtin files')
-	b.load_builtin_files()
-	b.print_timer('load builtin files')
+	b.start_timer('load headers files')
+	b.load_headers_files()
+	b.print_timer('load headers files')
 
 	b.start_timer('find source files')
 	files := get_all_src_files(b.pref.paths)
@@ -124,13 +124,13 @@ fn (mut b Builder) print_timer(name string) {
 	}
 }
 
-fn (mut b Builder) load_builtin_files()  {
-	if os.is_dir(b.pref.builtin_path) {
-		files := os.walk_ext(b.pref.builtin_path, ".psc")
+fn (mut b Builder) load_headers_files()  {
+	if os.is_dir(b.pref.papyrus_headers_dir) {
+		files := os.walk_ext(b.pref.papyrus_headers_dir, ".psc")
 		parser.parse_files(files, b.table, b.pref, b.global_scope)
 	}
 	else {
-		panic("invalid builtin dir - `${b.pref.builtin_path}`")
+		panic("invalid papyrus headers dir - `${b.pref.papyrus_headers_dir}`")
 	}
 }
 

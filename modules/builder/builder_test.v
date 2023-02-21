@@ -10,7 +10,7 @@ const (
 		backend: .pex
 		no_cache: true
 		crutches_enabled: false
-		builtin_path: os.real_path('bin/builtin')
+		papyrus_headers_dir: os.real_path('bin/papyrus-headers')
 		output_mode: pref.OutputMode.silent
 	}
 )
