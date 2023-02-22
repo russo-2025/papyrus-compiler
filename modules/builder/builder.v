@@ -61,11 +61,8 @@ pub fn compile(prefs &pref.Preferences) {
 	b.load_headers_files()
 	b.print_timer('load headers files')
 
-	b.start_timer('find source files')
-	files := get_all_src_files(b.pref.paths)
-	b.print_timer('find source files')
-
 	b.start_timer('parse files')
+	files := get_all_src_files(b.pref.paths)
 	mut parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
 	b.print_timer('parse files')
 

@@ -261,7 +261,6 @@ fn (mut r Reader) read_instruction() !Instruction{
 	return inst
 }
 
-//read_variable_data
 fn (mut r Reader) read_variable_type() !VariableType{
 	mut t := VariableType{}
 	t.name = r.read_string_ref() or { return err }
@@ -301,11 +300,13 @@ fn (mut r Reader) read_variable_data() !VariableData{
 		5 {//bool
 			data.boolean = r.read[byte]()
 		}
-		else{}
+		else{ r.error("pex.Reader.read_variable_data: invalid variable data type: 0x${data.typ.hex()}") }
 	}
+
 	return data
 }
 
 fn (mut r Reader) error(msg string) {
 	eprintln("Reader error: " + msg)
+	exit(1)
 }

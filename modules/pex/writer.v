@@ -224,7 +224,7 @@ fn (mut w Writer) write_variable_data(data pex.VariableData) {
 			w.write(data.boolean)
 		}
 		else {
-			panic("pex.Writer: invalid variable data type: 0x${data.typ.hex()}")
+			panic("pex.Writer.write_variable_data: invalid variable data type: 0x${data.typ.hex()}")
 		}
 	}
 }
