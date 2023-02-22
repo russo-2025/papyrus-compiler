@@ -36,7 +36,7 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref.Preferences) {
+pub fn gen(file &ast.File, output_file_path string, table &ast.Table, prefs &pref.Preferences) {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -51,7 +51,7 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 		}
 
 		table: table
-		pref: pref
+		pref: prefs
 	}
 	
 	g.gen_objects()
@@ -59,7 +59,7 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, pref &pref
 	pex.write_to_file(g.pex, output_file_path)
 }
 
-pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &pex.PexFile {
+pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &pex.PexFile {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -77,7 +77,7 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, pref &pref.Preferences) &p
 		}
 
 		table: table
-		pref: pref
+		pref: prefs
 	}
 	
 	g.gen_objects()

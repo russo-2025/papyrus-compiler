@@ -42,20 +42,20 @@ pub mut:
 	errors				[]errors.Error
 }
 
-pub fn parse_files(paths []string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) []ast.File {
+pub fn parse_files(paths []string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) []ast.File {
 	mut files := []ast.File{}
 
 	for path in paths {
-		files << parse_file(path, table, pref, global_scope)
+		files << parse_file(path, table, prefs, global_scope)
 	}
 
 	return files
 }
 
-pub fn parse_file(path string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_file(path string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
-		scanner: scanner.new_scanner_file(path, pref)
-		pref: pref
+		scanner: scanner.new_scanner_file(path, prefs)
+		pref: prefs
 		scope: &ast.Scope{
 			start_pos: 0
 			parent: global_scope
@@ -69,10 +69,10 @@ pub fn parse_file(path string, table &ast.Table, pref &pref.Preferences, global_
 	return p.parse()
 }
 
-pub fn parse_text(path string, text string, table &ast.Table, pref &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_text(path string, text string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
-		scanner: scanner.new_scanner(text, pref)
-		pref: pref
+		scanner: scanner.new_scanner(text, prefs)
+		pref: prefs
 		scope: &ast.Scope{
 			start_pos: 0
 			parent: global_scope

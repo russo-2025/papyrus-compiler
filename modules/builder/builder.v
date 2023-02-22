@@ -28,14 +28,14 @@ pub mut:
 	table			&ast.Table
 }
 
-fn new_builder(pref &pref.Preferences) Builder{
-	rdir := pref.out_dir[0]
+fn new_builder(prefs &pref.Preferences) Builder{
+	rdir := prefs.out_dir[0]
 	output_dir := if os.is_dir(rdir) { rdir } else { os.dir(rdir) }
 	mut table := ast.new_table()
 	
 	return Builder{
-		pref: pref
-		checker: checker.new_checker(table, pref)
+		pref: prefs
+		checker: checker.new_checker(table, prefs)
 		global_scope: &ast.Scope{
 			parent: 0
 		}
@@ -44,17 +44,17 @@ fn new_builder(pref &pref.Preferences) Builder{
 	}
 }
 
-pub fn compile(pref &pref.Preferences) {
-	if pref.backend == .original {
-		compile_original(pref)
+pub fn compile(prefs &pref.Preferences) {
+	if prefs.backend == .original {
+		compile_original(prefs)
 		return
 	}
 
-	os.ensure_folder_is_writable(pref.paths[0]) or {
+	os.ensure_folder_is_writable(prefs.paths[0]) or {
 		panic(err)
 	}
 
-	mut b := new_builder(pref)
+	mut b := new_builder(prefs)
 	mut c := checker.new_checker(b.table, b.pref)
 	
 	b.start_timer('load builtin files')
@@ -115,8 +115,8 @@ fn (mut b Builder) start_timer(name string) {
 
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
-		time := f32(sw.elapsed().microseconds()) / 1000
-		b.print('$name: $time ms')
+		time_ms := f32(sw.elapsed().microseconds()) / 1000
+		b.print('$name: $time_ms ms')
 		b.timers.delete(name)
 	}
 	else {

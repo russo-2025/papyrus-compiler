@@ -3,7 +3,7 @@ module pex
 import encoding.binary
 
 [inline]
-fn (mut r Reader) read<T>() T {
+pub fn (mut r Reader) read[T]() T {
 	$if T is byte {
 		val := r.bytes[r.pos]
 		r.pos++
@@ -30,10 +30,10 @@ fn (mut r Reader) read<T>() T {
 		return i64(val)
 	}
 	$else $if T is f32 {
-		return cast_u32_to_f32(r.read<u32>())
+		return cast_u32_to_f32(r.read[u32]())
 	}
 	$else $if T is string {
-		mut len := int(r.read<u16>())
+		mut len := int(r.read[u16]())
 		str := unsafe { tos(voidptr(&r.bytes[r.pos]), len) }
 		r.pos += len
 		return str
@@ -44,7 +44,7 @@ fn (mut r Reader) read<T>() T {
 }
 
 [inline]
-fn (mut w Writer) write<T>(v T) {
+pub fn (mut w Writer) write[T](v T) {
 	$if T is byte {
 		w.bytes << u8(v)
 	}
@@ -89,7 +89,7 @@ fn (mut w Writer) write<T>(v T) {
 
 [inline]
 fn (mut r Reader) read_string_ref() ?u16 {
-	val := r.read<u16>()
+	val := r.read[u16]()
 	
 	if val >= r.pex.string_table.len {
 		return error("string index($val) >= total strings count($r.pex.string_table.len)")
@@ -100,7 +100,7 @@ fn (mut r Reader) read_string_ref() ?u16 {
 
 [inline]
 fn (mut r Reader) read_time() i64 {
-	return r.read<i64>()
+	return r.read[i64]()
 }
 
 [inline]

@@ -14,22 +14,22 @@ fn test_read() {
 
 	//byte
 	r.bytes << 0x12
-	assert r.read<byte>() == byte(0x12)
+	assert r.read[byte]() == byte(0x12)
 	assert is_empty()
 
 	r.bytes << 0xff
-	assert r.read<byte>() == byte(0xff)
+	assert r.read[byte]() == byte(0xff)
 	assert is_empty()
 
 	//u16
 	r.bytes << 0x12
 	r.bytes << 0x34
-	assert r.read<u16>() == u16(0x1234)
+	assert r.read[u16]() == u16(0x1234)
 	assert is_empty()
 
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read<u16>() == u16(0xffff)
+	assert r.read[u16]() == u16(0xffff)
 	assert is_empty()
 
 	//u32
@@ -37,14 +37,14 @@ fn test_read() {
 	r.bytes << 0x34
 	r.bytes << 0x56
 	r.bytes << 0x78
-	assert r.read<u32>() == u32(0x12345678)
+	assert r.read[u32]() == u32(0x12345678)
 	assert is_empty()
 
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read<u32>() == u32(0xffffffff)
+	assert r.read[u32]() == u32(0xffffffff)
 	assert is_empty()
 
 	//int
@@ -52,14 +52,14 @@ fn test_read() {
 	r.bytes << 0x00
 	r.bytes << 0x00
 	r.bytes << 0x00
-	assert r.read<int>() == int(math.min_i32)
+	assert r.read[int]() == int(math.min_i32)
 	assert is_empty()
 
 	r.bytes << 0x7f
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read<int>() == int(math.max_i32)
+	assert r.read[int]() == int(math.max_i32)
 	assert is_empty()
 
 	//i64
@@ -71,7 +71,7 @@ fn test_read() {
 	r.bytes << 0x34
 	r.bytes << 0x56
 	r.bytes << 0x78
-	assert r.read<i64>() == i64(0x1234567812345678)
+	assert r.read[i64]() == i64(0x1234567812345678)
 	assert is_empty()
 
 	r.bytes << 0x80
@@ -82,7 +82,7 @@ fn test_read() {
 	r.bytes << 0x00
 	r.bytes << 0x00
 	r.bytes << 0x00
-	assert r.read<i64>() == i64(math.min_i64)
+	assert r.read[i64]() == i64(math.min_i64)
 	assert is_empty()
 
 	r.bytes << 0x7f
@@ -93,7 +93,7 @@ fn test_read() {
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read<i64>() == i64(math.max_i64)
+	assert r.read[i64]() == i64(math.max_i64)
 	assert is_empty()
 
 	//f32
@@ -101,14 +101,14 @@ fn test_read() {
 	r.bytes << 0x23
 	r.bytes << 0x14
 	r.bytes << 0xdb
-	assert r.read<f32>() == f32(-163.081468)
+	assert r.read[f32]() == f32(-163.081468)
 	assert is_empty()
 	
 	r.bytes << 0x47
 	r.bytes << 0xa8
 	r.bytes << 0x3B
 	r.bytes << 0x4f
-	assert r.read<f32>() == f32(86134.617983)
+	assert r.read[f32]() == f32(86134.617983)
 	assert is_empty()
 
 	//string
@@ -121,7 +121,7 @@ fn test_read() {
 	r.bytes << "e"[0]
 	r.bytes << "f"[0]
 
-	str := r.read<string>()
+	str := r.read[string]()
 
 	assert str[0] == "a"[0]
 	assert str[1] == "b"[0]

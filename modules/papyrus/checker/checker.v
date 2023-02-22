@@ -29,10 +29,10 @@ pub mut:
 	temp_state_fns		map[string]bool
 }
 
-pub fn new_checker(table &ast.Table, pref &pref.Preferences) Checker {
+pub fn new_checker(table &ast.Table, prefs &pref.Preferences) Checker {
 	return Checker{
 		table: table
-		pref: pref
+		pref: prefs
 		cur_fn: 0
 	}
 }

@@ -79,17 +79,17 @@ fn (mut b BuilderOrigin) run() {
 	}
 }
 
-fn compile_original(pref &pref.Preferences) {
+fn compile_original(prefs &pref.Preferences) {
 	$if windows {
 		mut b := BuilderOrigin{}
-		
-		b.set_builtin_path(pref.builtin_path)
 
-		for path in pref.paths {
+		b.set_headers_path(prefs.papyrus_headers_dir)
+
+		for path in prefs.paths {
 			b.add_input_path(path)
 		}
 
-		b.set_output_path(pref.out_dir[0])
+		b.set_output_path(prefs.out_dir[0])
 
 		b.run()
 	}

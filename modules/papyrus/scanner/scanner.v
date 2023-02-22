@@ -28,7 +28,7 @@ pub mut:
 	warnings			[]errors.Warning
 }
 
-pub fn new_scanner_file(file_path string, pref &pref.Preferences) &Scanner {
+pub fn new_scanner_file(file_path string, prefs &pref.Preferences) &Scanner {
 	if !os.exists(file_path) {
 		panic("$file_path doesn't exist")
 	}
@@ -38,24 +38,24 @@ pub fn new_scanner_file(file_path string, pref &pref.Preferences) &Scanner {
 	}
 
 	return &Scanner{
-		pref: pref
+		pref: prefs
 		text: raw_text
 		file_path: file_path
 	}
 }
 
-pub fn new_scanner(text string, pref &pref.Preferences) &Scanner {
+pub fn new_scanner(text string, prefs &pref.Preferences) &Scanner {
 	return &Scanner{
-		pref: pref
+		pref: prefs
 		text: text
 		file_path: ''
 	}
 }
 
-pub fn new_scanner_test(raw_text string, pref &pref.Preferences) &Scanner {
+pub fn new_scanner_test(raw_text string, prefs &pref.Preferences) &Scanner {
 
 	return &Scanner{
-		pref: pref
+		pref: prefs
 		text: raw_text
 		file_path: "::test::in-memory::"
 	}

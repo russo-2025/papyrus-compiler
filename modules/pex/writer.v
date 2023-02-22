@@ -1,6 +1,5 @@
 module pex
 
-//import encoding.binary
 import os
 
 import pex
@@ -11,17 +10,17 @@ pub mut:
 	bytes	[]u8
 }
 
-pub fn write_to_file(pex &PexFile, path string) {
-	bytes := write(pex)
+pub fn write_to_file(pex_file &PexFile, path string) {
+	bytes := write(pex_file)
 
 	mut file := os.create(path) or { panic(err) }
 	file.write(bytes) or { panic(err) }
 	file.close()
 }
 
-pub fn write(pex &PexFile) []u8 {
+pub fn write(pex_file &PexFile) []u8 {
 	mut w := Writer{
-		pex:	pex
+		pex:	pex_file
 		bytes: 	[]u8{}
 	}
 	

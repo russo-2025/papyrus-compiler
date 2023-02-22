@@ -24,8 +24,8 @@ fn write_cache(path string, cache &CacheFile) {
 	file.close()
 }
 
-fn is_outdated(pfile &ast.File, pref &pref.Preferences) bool {
-	if pref.no_cache {
+fn is_outdated(pfile &ast.File, prefs &pref.Preferences) bool {
+	if prefs.no_cache {
 		return true
 	}
 	

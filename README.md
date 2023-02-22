@@ -4,7 +4,7 @@ The Papyrus compiler is based on the [V language compiler](https://github.com/vl
 
 ## Prerequisites
 
-  - [V compiler (weekly.2022.46)](https://github.com/vlang/v/releases/tag/weekly.2022.46)
+  - [V compiler e9a3817(weekly.2023.08)](https://github.com/vlang/v/releases/tag/weekly.2023.08)
 
 ## Building
 

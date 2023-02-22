@@ -111,22 +111,25 @@ pub enum Kind {
 }
 
 const (
-	nr_tokens = int(Kind._end_)
+	token_str = build_token_str()
+	keywords  = build_keys()
 )
 
 // build_keys genereates a map with keywords' string values:
 // Keywords['return'] == .key_return
 fn build_keys() map[string]Kind {
+	assert token_str.len > 0 // call build_keys before calling build_token_str
+	
 	mut res := map[string]Kind{}
 	for t in int(Kind.keyword_beg) + 1 .. int(Kind.keyword_end) {
-		key := token_str[t]
+		key := token.token_str[t]
 		res[key] = unsafe { Kind(t) }
 	}
 	return res
 }
 
 fn build_token_str() []string {
-	mut s := []string{len: nr_tokens}
+	mut s := []string{len: int(Kind._end_)}
 	
 	s[Kind.unknown] = 'unknown'
 	s[Kind.eof] = 'eof'
@@ -210,11 +213,6 @@ fn build_token_str() []string {
 	
 	return s
 }
-
-const (
-	token_str = build_token_str()
-	keywords  = build_keys()
-)
 
 pub fn key_to_token(key string) Kind {
 	return Kind(keywords[key])

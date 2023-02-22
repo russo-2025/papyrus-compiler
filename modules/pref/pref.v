@@ -2,11 +2,6 @@ module pref
 
 import os
 
-const (
-	builtin_path = os.real_path('./builtin')
-	
-)
-
 pub enum OutputMode {
 	stdout
 	silent
@@ -31,7 +26,7 @@ pub mut:
 	backend				Backend = .pex
 	no_cache			bool
 	crutches_enabled	bool
-	builtin_path		string = builtin_path
+	papyrus_headers_dir	string = os.real_path('./papyrus-headers')
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
 }

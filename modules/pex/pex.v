@@ -324,12 +324,12 @@ pub mut:
 	args	[]VariableData	//[changes depending on opcode]	Length is dependent on opcode, also varargs
 }
 
-fn (p PexFile) get_string(i int) string {
+pub fn (p PexFile) get_string(i int) string {
 	assert i < p.string_table.len
 	return p.string_table[i]
 }
 
-fn (p PexFile) get_object(name string) ?&Object {
+pub fn (p PexFile) get_object(name string) ?&Object {
 	for i := 0; i < p.objects.len; i++ {
 		tname := p.get_string(p.objects[i].name)
 		
@@ -341,7 +341,7 @@ fn (p PexFile) get_object(name string) ?&Object {
 	return none
 }
 
-fn (p PexFile) get_state(obj &Object, name string) ?&State {
+pub fn (p PexFile) get_state(obj &Object, name string) ?&State {
 	for i := 0; i < obj.states.len; i++ {
 		tname := p.get_string(obj.states[i].name)
 		if tname == name {
@@ -389,14 +389,14 @@ fn (p PexFile) get_function_from_state(state &State, func_name string) ?&Functio
 	return none
 }
 
-fn (p PexFile) get_function_from_empty_state(obj_name string, func_name string) ?&Function {
+pub fn (p PexFile) get_function_from_empty_state(obj_name string, func_name string) ?&Function {
 	obj := p.get_object(obj_name) or { return none }
 	default_state := p.get_empty_state(obj) or { return none }
 	func := p.get_function_from_state(default_state, func_name) or { return none }
 	return func
 }
 
-fn (p PexFile) get_property(obj_name string, prop_name string) ?&Property {
+pub fn (p PexFile) get_property(obj_name string, prop_name string) ?&Property {
 	obj := p.get_object(obj_name) or { return none }
 
 	for i := 0; i < obj.properties.len; i++ {
@@ -409,7 +409,7 @@ fn (p PexFile) get_property(obj_name string, prop_name string) ?&Property {
 	return none
 }
 
-fn (p PexFile) get_var(obj_name string, var_name string) ?&Variable {
+pub fn (p PexFile) get_var(obj_name string, var_name string) ?&Variable {
 	obj := p.get_object(obj_name) or { return none }
 
 	for i := 0; i < obj.variables.len; i++ {
