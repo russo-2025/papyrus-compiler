@@ -93,7 +93,7 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 	w.write(obj.parent_class_name)
 	w.write(obj.docstring)
 	w.write(obj.user_flags)
-	w.write(obj.default_state_name)
+	w.write(obj.auto_state_name)
 
 	//write variables
 	w.write(cast_int_to_u16(obj.variables.len))

@@ -70,28 +70,6 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 						c.error("property with this name already exists", node.pos)
 					}
 				}
-
-				if node.is_auto {
-					c.file.stmts << ast.VarDecl {
-						typ: node.typ
-						obj_name: c.cur_obj_name
-						name: node.auto_var_name
-						assign: ast.AssignStmt{
-							op: token.Kind.assign
-							pos: node.pos
-							left: ast.Ident{
-								name: node.name
-								pos: node.pos
-								typ: node.typ
-							}
-							right: node.expr
-							typ: node.typ
-						}
-						pos: node.pos
-						flags: []
-						is_object_var: true
-					}
-				}
 				
 				c.inside_property = false
 			}

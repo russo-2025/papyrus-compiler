@@ -2,7 +2,7 @@ import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 import pex
-import gen_pex
+import gen.gen_pex
 import pref
 
 const (
@@ -269,7 +269,7 @@ fn test_state_decl_3() {
 	pex_file := compile_top('')
 
 	obj := pex_file.get_object("ABCD") or { panic("object not found") }
-	assert pex_file.get_string(obj.default_state_name) == "MyAutoState"
+	assert pex_file.get_string(obj.auto_state_name) == "MyAutoState"
 
 	state := pex_file.get_state(obj, "MyAutoState") or { panic("state not found") }
 
@@ -825,7 +825,7 @@ fn test_property_get() {
 	assert ins[1].args[2].integer == 14
 }
 
-fn test_foo() {
+fn test_foo() { // ???
 	pex_file := compile("int n = 1 + 2")
 	ins := get_instructions(pex_file)
 

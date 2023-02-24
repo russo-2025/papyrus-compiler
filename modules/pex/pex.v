@@ -242,7 +242,7 @@ pub mut:
 	parent_class_name	u16	//Index(base 0) into string table.
 	docstring			u16	//Index(base 0) into string table.
 	user_flags			u32	
-	default_state_name	u16	//Index(base 0) into string table.
+	auto_state_name		u16 //Index(base 0) into string table. 
 	variables			[]&Variable
 	properties			[]&Property
 	states				[]&State
@@ -366,7 +366,7 @@ fn (p PexFile) get_empty_state(obj &Object) ?&State {
 }
 
 fn (p PexFile) get_default_state(obj &Object) ?&State {
-	name := p.get_string(obj.default_state_name)
+	name := p.get_string(obj.auto_state_name)
 
 	for i := 0; i < obj.states.len; i++ {
 		tname := p.get_string(obj.states[i].name)

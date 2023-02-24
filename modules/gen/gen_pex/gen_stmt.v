@@ -31,9 +31,9 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	g.cur_obj.states << state
 
 	g.cur_state = state
-	g.default_state = state
+	g.empty_state = state
 	
-	g.add_default_functions_to_state(mut g.default_state)
+	g.add_default_functions_to_state(mut g.empty_state)
 
 	g.pex.user_flags << pex.UserFlag{
 		name: g.gen_string_ref("hidden")
@@ -48,7 +48,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 [inline]
 fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	if s.is_auto {
-		g.cur_obj.default_state_name = g.gen_string_ref(s.name)
+		g.cur_obj.auto_state_name = g.gen_string_ref(s.name)
 	}
 
 	mut state := g.create_state(s.name)
@@ -60,7 +60,7 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 		g.fn_decl(mut &func)
 	}
 	
-	g.cur_state = g.default_state
+	g.cur_state = g.empty_state
 }
 
 [inline]
@@ -318,8 +318,20 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	if stmt.is_auto {
 		prop.flags |= 0b0111
 
-		var_name := "::" + stmt.name + "_var"
-		prop.auto_var_name = g.gen_string_ref(var_name)
+		prop.auto_var_name = g.gen_string_ref(stmt.auto_var_name)
+		
+		var_data := if stmt.expr is ast.EmptyExpr {
+			pex.VariableData{ typ: 0 }
+		} else {
+			g.get_operand_from_expr(mut &stmt.expr)
+		}
+		
+		g.cur_obj.variables << &pex.Variable{
+			name: g.gen_string_ref(stmt.auto_var_name)
+			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
+			user_flags: u32(0)
+			data: var_data
+		}
 	}
 	else if stmt.is_autoread {
 		prop.flags |= 0b0001

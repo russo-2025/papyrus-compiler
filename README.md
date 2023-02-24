@@ -5,11 +5,12 @@ The Papyrus compiler is based on the [V language compiler](https://github.com/vl
 ## Prerequisites
 
   - [V compiler e9a3817(weekly.2023.08)](https://github.com/vlang/v/releases/tag/weekly.2023.08)
+  - Visual Studio
 
 ## Building
 
 ```bash
-v -o "bin\papyrus.exe" -prod compiler.v
+v -o "bin\papyrus.exe" -prod -gc none compiler.v
 ```
 
 ## Testing
@@ -110,10 +111,11 @@ papyrus read "../test-files/compiled/ABCD.pex"
 - [x] **States** [docs](https://www.creationkit.com/index.php?title=State_Reference)
   - [x] declaration
   - [x] flag `auto`
-  - [x] empty state (default state)
+  - [x] empty state
   - [x] `OnBeginState`
   - [x] switching states `GotoState`
   - [x] getting current state `GetState`
+  - [x] `onEndState`
   - [ ] effect of states on functions and events???
 - [ ] **Imports** [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
 - [x] **Comments**

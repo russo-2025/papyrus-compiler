@@ -225,14 +225,14 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	parent := p.get_string(obj.parent_class_name)
 	doc := p.get_string(obj.docstring)
 	user_flags := "0x" + obj.user_flags.hex()
-	def_state_name := p.get_string(obj.default_state_name)
+	auto_state_name := p.get_string(obj.auto_state_name)
 	
 	println(tab + "name: '$name'")
 	println(tab + "size: $size")
 	println(tab + "parent: '$parent'")
 	println(tab + "doc: '$doc'")
 	println(tab + "user flags: $user_flags")
-	println(tab + "default state name: '$def_state_name'")
+	println(tab + "auto state name: '$auto_state_name'")
 	
 	println(tab + "variables[${obj.variables.len}]:")
 	mut i := 0

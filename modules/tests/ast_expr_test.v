@@ -67,7 +67,7 @@ fn compile(src string) (&ast.File, &ast.Table) {
 
 fn compile_stmt(src string) (&ast.Stmt, &ast.Table) {
 	mut file, table := compile(src)
-	assert file.stmts.len == 13
+	assert file.stmts.len == 12
 	assert file.stmts[11] is ast.FnDecl
 	func := file.stmts[11] as ast.FnDecl
 	assert func.stmts.len > 0
@@ -249,7 +249,7 @@ fn test_ident() {
 	assert (expr as ast.Ident).typ == ast.float_type
 }
 
-fn test_kw_parent_self() {
+fn test_keywords_parent_self() {
 	mut expr := &ast.Expr(ast.EmptyExpr{})
 	mut table := ast.new_table()
 	
@@ -267,6 +267,21 @@ fn test_kw_parent_self() {
 	
 	expr, _ = compile_expr('parent.myAutoParentProp')
 	assert (expr as ast.SelectorExpr).typ == ast.float_type
+
+	expr, _ = compile_expr('self.Foz(11, 22)')
+	assert (expr as ast.CallExpr).obj_name == "ABCD"
+	assert (expr as ast.CallExpr).return_type == ast.int_type
+	assert (expr as ast.CallExpr).args.len == 2
+
+	expr, _ = compile_expr('self.ParentFoz(11, 22)')
+	assert (expr as ast.CallExpr).obj_name == "CDFG"
+	assert (expr as ast.CallExpr).return_type == ast.int_type
+	assert (expr as ast.CallExpr).args.len == 2
+
+	expr, _ = compile_expr('parent.ParentFoz(11, 22)')
+	assert (expr as ast.CallExpr).obj_name == "CDFG"
+	assert (expr as ast.CallExpr).return_type == ast.int_type
+	assert (expr as ast.CallExpr).args.len == 2
 }
 
 fn test_object_props() {
@@ -322,21 +337,6 @@ fn test_call_expr() {
 
 	expr, _ = compile_expr('obj.Foz(11, 22)')
 	assert (expr as ast.CallExpr).obj_name == "ABCD"
-	assert (expr as ast.CallExpr).return_type == ast.int_type
-	assert (expr as ast.CallExpr).args.len == 2
-
-	expr, _ = compile_expr('self.Foz(11, 22)')
-	assert (expr as ast.CallExpr).obj_name == "ABCD"
-	assert (expr as ast.CallExpr).return_type == ast.int_type
-	assert (expr as ast.CallExpr).args.len == 2
-
-	expr, _ = compile_expr('self.ParentFoz(11, 22)')
-	assert (expr as ast.CallExpr).obj_name == "CDFG"
-	assert (expr as ast.CallExpr).return_type == ast.int_type
-	assert (expr as ast.CallExpr).args.len == 2
-
-	expr, _ = compile_expr('parent.ParentFoz(11, 22)')
-	assert (expr as ast.CallExpr).obj_name == "CDFG"
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 	assert (expr as ast.CallExpr).args.len == 2
 

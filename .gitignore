@@ -6,6 +6,5 @@ bin/*.rar
 test-files/compiled
 test-files/compiler
 test-files/*.*
-TODO.txt
 *.bat
 vls.log

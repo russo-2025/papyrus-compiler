@@ -63,13 +63,13 @@ fn test_build() {
 	assert out_pex_file.get_string(out_pex_file.objects[0].parent_class_name) == ""
 	assert out_pex_file.get_string(out_pex_file.objects[0].docstring) == ""
 	assert out_pex_file.objects[0].user_flags == 0
-	assert out_pex_file.get_string(out_pex_file.objects[0].default_state_name) == ""
+	assert out_pex_file.get_string(out_pex_file.objects[0].auto_state_name) == pex.empty_state_name
 	assert out_pex_file.objects[0].variables.len == 0
 	assert out_pex_file.objects[0].properties.len == 0
 	assert out_pex_file.objects[0].states.len == 1
 
 	//states
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].name) == ""
+	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].name) == pex.empty_state_name
 	assert out_pex_file.objects[0].states[0].functions.len == 6
 
 	//functions

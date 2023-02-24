@@ -30,7 +30,7 @@ pub mut:
 	cur_state		&pex.State = unsafe{ voidptr(0) }
 	cur_fn			&pex.Function = unsafe{ voidptr(0) }
 
-	default_state	&pex.State = unsafe{ voidptr(0) }
+	empty_state		&pex.State = unsafe{ voidptr(0) }
 
 	cur_obj_type	ast.Type
 	cur_obj_name	string
@@ -164,7 +164,7 @@ fn (mut g Gen) create_obj(name string, parent_name string) &pex.Object {
 		parent_class_name: g.gen_string_ref(parent_name)
 		docstring: g.gen_string_ref("")
 		user_flags: 0
-		default_state_name: g.gen_string_ref(pex.empty_state_name)
+		auto_state_name: g.gen_string_ref(pex.empty_state_name)
 		
 		variables: []&pex.Variable{}
 		properties: []&pex.Property{}

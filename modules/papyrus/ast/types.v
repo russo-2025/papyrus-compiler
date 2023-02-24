@@ -2,8 +2,6 @@ module ast
 
 pub type Type = int
 
-pub type TypeInfo = Array | EmptyInfo
-
 pub struct TypeSymbol {
 pub:
 	parent_idx	int
@@ -17,6 +15,8 @@ pub mut:
 	states		map[string]State
 	vars		map[string]Var
 }
+
+pub type TypeInfo = Array | EmptyInfo
 
 pub struct EmptyInfo {}
 pub struct Array {
