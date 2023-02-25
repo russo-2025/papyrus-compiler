@@ -43,7 +43,7 @@ pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
 	
 	mut i := 0
 	for i < inst.args.len {
-		args += p.get_variable_data(inst.args[i])
+		args += p.variable_value_to_str(inst.args[i])
 		
 		if i < inst.args.len - 1 {
 			args += ", "
@@ -139,34 +139,31 @@ fn (p PexFile) print_state(st State, indentSize int){
 	}
 }
 
-fn (p PexFile) get_variable_data(v VariableData) string {
-	mut data_str := ""
+fn (p PexFile) variable_value_to_str(v VariableValue) string {
+	mut value_str := ""
 
 	match v.typ {
-		0 {
-			data_str = "none"
+		.null {
+			value_str = "none"
 		}
-		1 {
-			data_str = "ident(${p.string_table[v.string_id]})"
+		.identifier {
+			value_str = "ident(${p.string_table[v.to_string_id()]})"
 		}
-		2 {
-			data_str = "string('${p.string_table[v.string_id]}')"
+		.str {
+			value_str = "string('${p.string_table[v.to_string_id()]}')"
 		}
-		3 {
-			data_str = "integer(${v.integer.str()})"
+		.integer {
+			value_str = "integer(${v.to_integer().str()})"
 		}
-		4 {
-			data_str = "float(${v.float.str()})"
+		.float {
+			value_str = "float(${v.to_float().str()})"
 		}
-		5 {
-			data_str = "boolean(${v.boolean.hex()})"
-		}
-		else {
-			panic("invalid data type")
+		.boolean {
+			value_str = "boolean(${v.to_boolean().hex()})"
 		}
 	}
 	
-	return data_str
+	return value_str
 }
 
 fn (p PexFile) print_variable(v Variable, indentSize int) {
@@ -183,7 +180,7 @@ fn (p PexFile) print_variable(v Variable, indentSize int) {
 	println(tab + "name: '$name'")
 	println(tab + "type name: '$type_name'")
 	println(tab + "user flags: '$user_flags'")
-	println(tab + "data: ${p.get_variable_data(v.data)}")
+	println(tab + "data: ${p.variable_value_to_str(v.data)}")
 }
 
 fn (p PexFile) print_property(prop Property, indentSize int) {

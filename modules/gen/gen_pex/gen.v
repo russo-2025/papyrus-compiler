@@ -10,7 +10,7 @@ import time
 struct TempVariable {
 pub mut:
 	typ		ast.Type
-	data	pex.VariableData
+	value	pex.VariableValue
 	free	bool
 }
 
@@ -40,10 +40,10 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, prefs &pre
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
-			magic_number: 0xFA57C0DE
+			magic_number: pex.le_magic_number //0xFA57C0DE
 			major_version: 3
 			minor_version: 2
-			game_id: 1
+			game_id: .skyrim
 			compilation_time: time.utc().unix_time()
 			src_file_name: file.path_base
 			user_name: os.loginname()
@@ -63,10 +63,10 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
-			magic_number: 0xFA57C0DE
+			magic_number: pex.le_magic_number //0xFA57C0DE
 			major_version: 3
 			minor_version: 2
-			game_id: 1
+			game_id: .skyrim
 			compilation_time: time.utc().unix_time()
 			src_file_name: file.path_base
 			user_name: os.loginname()
@@ -112,13 +112,13 @@ fn (mut g Gen) gen_objects() {
 fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 	match mut stmt {
 		ast.Return {
-			var_data := g.get_operand_from_expr(mut &stmt.expr)
+			value := g.get_operand_from_expr(mut &stmt.expr)
 			
-			g.free_temp(var_data)
+			g.free_temp(value)
 
 			g.cur_fn.info.instructions << pex.Instruction{
 				op: pex.OpCode.ret
-				args: [ var_data ]
+				args: [ value ]
 			}
 		}
 		ast.If {
@@ -128,8 +128,8 @@ fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 			g.while_stmt(mut stmt)
 		}
 		ast.ExprStmt {
-			var_data := g.get_operand_from_expr(mut &stmt.expr)
-			g.free_temp(var_data)
+			value := g.get_operand_from_expr(mut &stmt.expr)
+			g.free_temp(value)
 		}
 		ast.AssignStmt {
 			g.assign(mut stmt)
@@ -195,10 +195,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 				pex.Instruction{
 					op: pex.OpCode.ret			
 					args: [
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("::State")
-						}
+						pex.value_ident(g.gen_string_ref("::State"))
 					]
 				}
 			]
@@ -232,56 +229,26 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 				pex.Instruction{
 					op: pex.OpCode.callmethod
 					args: [
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("onEndState")
-						},
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("self")
-						},
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("::NoneVar")
-						},
-						pex.VariableData{
-							typ: 3
-							integer: 0
-						}
+						pex.value_ident(g.gen_string_ref("onEndState")),
+						pex.value_ident(g.gen_string_ref("self")),
+						pex.value_ident(g.gen_string_ref("::NoneVar")),
+						pex.value_integer(0)
 					]
 				},
 				pex.Instruction{
 					op: pex.OpCode.assign	
 					args: [
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("::State")
-						},
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("newState")
-						}
+						pex.value_ident(g.gen_string_ref("::State")),
+						pex.value_ident(g.gen_string_ref("newState"))
 					]
 				},
 				pex.Instruction{
 					op: pex.OpCode.callmethod	
 					args: [
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("onBeginState")
-						},
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("self")
-						},
-						pex.VariableData{
-							typ: 1
-							string_id: g.gen_string_ref("::NoneVar")
-						},
-						pex.VariableData{
-							typ: 3
-							integer: 0
-						}
+						pex.value_ident(g.gen_string_ref("onBeginState")),
+						pex.value_ident(g.gen_string_ref("self")),
+						pex.value_ident(g.gen_string_ref("::NoneVar")),
+						pex.value_integer(0)
 					]
 				},
 			]

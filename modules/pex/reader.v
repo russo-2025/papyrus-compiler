@@ -40,9 +40,20 @@ pub fn read(bytes []byte) &PexFile {
 
 fn (mut r Reader) read_pex() ! {
 	r.pex.magic_number = r.read[u32]()
+
+	if r.pex.magic_number != pex.le_magic_number {
+		return error("invalid magic number(${r.pex.magic_number})")
+	}
+
 	r.pex.major_version = r.read[byte]()
 	r.pex.minor_version = r.read[byte]()
-	r.pex.game_id = r.read[u16]()
+	game_id := r.read[u16]()
+	r.pex.game_id = unsafe { pex.GameType(game_id) }
+
+	if r.pex.game_id != .skyrim {
+		return error("invalid game id(${game_id})")
+	} 
+
 	r.pex.compilation_time = r.read_time()
 	r.pex.src_file_name = r.read[string]()
 	r.pex.user_name = r.read[string]()
@@ -236,7 +247,7 @@ fn (mut r Reader) read_instruction() !Instruction{
 
 	mut i := 0
 	for i < len{
-		inst.args << r.read_variable_data() or { return err }
+		inst.args << r.read_variable_value() or { return err }
 		i++
 	}
 
@@ -245,13 +256,13 @@ fn (mut r Reader) read_instruction() !Instruction{
 		.callparent,
 		.callstatic {
 			
-			var_len := r.read_variable_data() or { return err }
-			inst.args << var_len
-			len = var_len.integer
+			value_len := r.read_variable_value() or { return err }
+			inst.args << value_len
+			len = value_len.to_integer()
 			
 			i = 0
-			for i < len{
-				inst.args << r.read_variable_data() or { return err }
+			for i < len {
+				inst.args << r.read_variable_value() or { return err }
 				i++
 			}
 		}
@@ -275,35 +286,36 @@ fn (mut r Reader) read_variable() !&Variable{
 	var.name = r.read_string_ref() or { return err }
 	var.type_name = r.read_string_ref() or { return err }
 	var.user_flags = r.read[u32]()
-	var.data = r.read_variable_data() or { return err }
+	var.data = r.read_variable_value() or { return err }
 
 	return &var
 }
 
-fn (mut r Reader) read_variable_data() !VariableData{
-	mut data := VariableData{}
+fn (mut r Reader) read_variable_value() !VariableValue {
+	mut value := VariableValue{}
 
-	data.typ = r.read[byte]()
+	typ := r.read[byte]()
+	assert typ <= 5
+	value.typ = unsafe { pex.ValueType(typ) }
 
-	match data.typ {
-		0 {} //null
-		1, //identifier
-		2 {//string
-			data.string_id = r.read_string_ref() or { return err }
+	match value.typ {
+		.null {}
+		.identifier,
+		.str {
+			value.data.string_id = r.read_string_ref() or { return err }
 		}
-		3 {//integer
-			data.integer = r.read[int]()
+		.integer {
+			value.data.integer = r.read[int]()
 		}
-		4 {//float
-			data.float = r.read[f32]()
+		.float {
+			value.data.float = r.read[f32]()
 		}
-		5 {//bool
-			data.boolean = r.read[byte]()
+		.boolean {
+			value.data.boolean = r.read[byte]()
 		}
-		else{ r.error("pex.Reader.read_variable_data: invalid variable data type: 0x${data.typ.hex()}") }
 	}
 
-	return data
+	return value
 }
 
 fn (mut r Reader) error(msg string) {

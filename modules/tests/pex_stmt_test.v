@@ -133,7 +133,7 @@ fn test_object_var_decl_1() {
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar"
 	assert pex_file.get_string(var.type_name) == "ABCD"
-	assert var.data.typ == 0
+	assert var.data.typ == .null
 }
 
 fn test_object_var_decl_2() {
@@ -142,8 +142,8 @@ fn test_object_var_decl_2() {
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar2"
 	assert pex_file.get_string(var.type_name) == "Int"
-	assert var.data.typ == 3
-	assert var.data.integer == 10
+	assert var.data.typ == .integer
+	assert var.data.to_integer() == 10
 }
 
 fn test_object_var_decl_3() {
@@ -153,7 +153,7 @@ fn test_object_var_decl_3() {
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar3"
 	assert pex_file.get_string(var.type_name) == "ABCD[]"
-	assert var.data.typ == 0
+	assert var.data.typ == .null
 }
 
 fn test_state_decl_1() {
@@ -230,14 +230,14 @@ fn test_state_decl_2() {
 
 	assert state.functions[0].info.instructions.len == 2
 	assert state.functions[0].info.instructions[0].op == pex.OpCode.iadd
-	assert pex_file.get_string(state.functions[0].info.instructions[0].args[0].string_id) == "::temp0"
-	assert pex_file.get_string(state.functions[0].info.instructions[0].args[1].string_id) == "n1"
-	assert pex_file.get_string(state.functions[0].info.instructions[0].args[2].string_id) == "n2"
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[1].to_string_id()) == "n1"
+	assert pex_file.get_string(state.functions[0].info.instructions[0].args[2].to_string_id()) == "n2"
 
 	assert state.functions[0].info.instructions[1].op == pex.OpCode.iadd
-	assert pex_file.get_string(state.functions[0].info.instructions[1].args[0].string_id) == "::temp0"
-	assert pex_file.get_string(state.functions[0].info.instructions[1].args[1].string_id) == "::temp0"
-	assert state.functions[0].info.instructions[1].args[2].integer == 1
+	assert pex_file.get_string(state.functions[0].info.instructions[1].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(state.functions[0].info.instructions[1].args[1].to_string_id()) == "::temp0"
+	assert state.functions[0].info.instructions[1].args[2].to_integer() == 1
 }
 
 fn test_state_decl_3() {
@@ -315,8 +315,8 @@ fn test_property_decl_1() {
 	assert pex_file.get_string(var.name) == "::Hello_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0
-	assert var.data.typ == 2
-	assert pex_file.get_string(var.data.string_id) == "Hello world!"
+	assert var.data.typ == .str
+	assert pex_file.get_string(var.data.to_string_id()) == "Hello world!"
 }
 
 fn test_property_decl_2() {
@@ -356,7 +356,7 @@ fn test_property_decl_2() {
 	assert prop.read_handler.locals.len == 0
 	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
-	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "Hello world2!"
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].to_string_id()) == "Hello world2!"
 }
 
 fn test_property_decl_3() {
@@ -387,8 +387,8 @@ fn test_property_decl_3() {
 	assert pex_file.get_string(var.name) == "::Hello3_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0
-	assert var.data.typ == 2
-	assert pex_file.get_string(var.data.string_id) == "Hello world3!"
+	assert var.data.typ == .str
+	assert pex_file.get_string(var.data.to_string_id()) == "Hello world3!"
 }
 
 fn test_property_decl_4() {
@@ -419,8 +419,8 @@ fn test_property_decl_4() {
 	assert pex_file.get_string(var.name) == "::Hello5_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0
-	assert var.data.typ == 2
-	assert pex_file.get_string(var.data.string_id) == "Hello world5!"
+	assert var.data.typ == .str
+	assert pex_file.get_string(var.data.to_string_id()) == "Hello world5!"
 }
 
 fn test_property_decl_5() {
@@ -485,7 +485,7 @@ fn test_property_decl_5() {
 	assert prop.read_handler.locals.len == 0
 	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
-	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].to_string_id()) == "myValue"
 
 	//prop.prop.write_handler
 	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
@@ -497,8 +497,8 @@ fn test_property_decl_5() {
 	assert prop.write_handler.locals.len == 0
 	assert prop.write_handler.instructions.len == 1
 	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
-	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
-	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].to_string_id()) == "myValue"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].to_string_id()) == "value"
 }
 
 fn test_property_decl_6() {
@@ -549,8 +549,8 @@ fn test_property_decl_6() {
 	assert prop.write_handler.locals.len == 0
 	assert prop.write_handler.instructions.len == 1
 	assert prop.write_handler.instructions[0].op == pex.OpCode.assign
-	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].string_id) == "myValue"
-	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].string_id) == "value"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[0].to_string_id()) == "myValue"
+	assert pex_file.get_string(prop.write_handler.instructions[0].args[1].to_string_id()) == "value"
 }
 
 fn test_property_decl_7() {
@@ -598,7 +598,7 @@ fn test_property_decl_7() {
 	assert prop.read_handler.locals.len == 0
 	assert prop.read_handler.instructions.len == 1
 	assert prop.read_handler.instructions[0].op == pex.OpCode.ret
-	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].string_id) == "myValue"
+	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].to_string_id()) == "myValue"
 }
 
 fn test_static_call() {
@@ -609,12 +609,12 @@ fn test_static_call() {
 	mut ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callstatic
-	assert pex_file.get_string(ins[0].args[0].string_id) == "ABCD"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "Foo"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 11
-	assert ins[0].args[5].integer == 12
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ABCD"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "Foo"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 11
+	assert ins[0].args[5].to_integer() == 12
 
 	//src:			ABCD.Foo(13, 14)
 	//original:		opcode: 'callstatic', args: [ident(ABCD), ident(Foo), ident(::NoneVar), integer(2), integer(13), integer(14)]
@@ -623,12 +623,12 @@ fn test_static_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callstatic
-	assert pex_file.get_string(ins[0].args[0].string_id) == "ABCD"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "Foo"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 13
-	assert ins[0].args[5].integer == 14
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ABCD"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "Foo"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 13
+	assert ins[0].args[5].to_integer() == 14
 }
 
 fn test_method_call() {
@@ -639,12 +639,12 @@ fn test_method_call() {
 	mut ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 15
-	assert ins[0].args[5].integer == 16
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 15
+	assert ins[0].args[5].to_integer() == 16
 
 	//src:			self.Foz(17, 18)
 	//original:		opcode: 'callmethod', args: [ident(Foz), ident(self), ident(::NoneVar), integer(2), integer(17), integer(18)]
@@ -653,12 +653,12 @@ fn test_method_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 17
-	assert ins[0].args[5].integer == 18
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 17
+	assert ins[0].args[5].to_integer() == 18
 
 	//src:			obj.Foz(25, 26)
 	//original:		opcode: 'callmethod', args: [ident(Foz), ident(obj), ident(::NoneVar), integer(2), integer(25), integer(26)]
@@ -667,12 +667,12 @@ fn test_method_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "Foz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 25
-	assert ins[0].args[5].integer == 26
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 25
+	assert ins[0].args[5].to_integer() == 26
 
 	//src:			ABCD[] x = new ABCD[5]
 	//				x[1].Foz(25, 26)
@@ -692,25 +692,25 @@ fn test_method_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.array_create
-	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp1"
-	assert ins[0].args[1].integer == 5
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp1"
+	assert ins[0].args[1].to_integer() == 5
 
 	assert ins[1].op == pex.OpCode.assign
-	assert pex_file.get_string(ins[1].args[0].string_id) == "x"
-	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp1"
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "x"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
 
 	assert ins[2].op == pex.OpCode.array_getelement
-	assert pex_file.get_string(ins[2].args[0].string_id) == "::temp3"
-	assert pex_file.get_string(ins[2].args[1].string_id) == "x"
-	assert ins[2].args[2].integer == 1
+	assert pex_file.get_string(ins[2].args[0].to_string_id()) == "::temp3"
+	assert pex_file.get_string(ins[2].args[1].to_string_id()) == "x"
+	assert ins[2].args[2].to_integer() == 1
 
 	assert ins[3].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[3].args[0].string_id) == "Foz"
-	assert pex_file.get_string(ins[3].args[1].string_id) == "::temp3"
-	assert pex_file.get_string(ins[3].args[2].string_id) == "::NoneVar"
-	assert ins[3].args[3].integer == 2
-	assert ins[3].args[4].integer == 25
-	assert ins[3].args[5].integer == 26
+	assert pex_file.get_string(ins[3].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[3].args[1].to_string_id()) == "::temp3"
+	assert pex_file.get_string(ins[3].args[2].to_string_id()) == "::NoneVar"
+	assert ins[3].args[3].to_integer() == 2
+	assert ins[3].args[4].to_integer() == 25
+	assert ins[3].args[5].to_integer() == 26
 }
 
 fn test_parent_method_call() {
@@ -721,12 +721,12 @@ fn test_parent_method_call() {
 	mut ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 19
-	assert ins[0].args[5].integer == 20
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 19
+	assert ins[0].args[5].to_integer() == 20
 
 	//src:			Parent.ParentFoz(21, 22)
 	//original:		opcode: 'callparent', args: [ident(ParentFoz), ident(::NoneVar), integer(2), integer(21), integer(22)]
@@ -735,11 +735,11 @@ fn test_parent_method_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callparent
-	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "::NoneVar"
-	assert ins[0].args[2].integer == 2
-	assert ins[0].args[3].integer == 21
-	assert ins[0].args[4].integer == 22
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "::NoneVar"
+	assert ins[0].args[2].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 21
+	assert ins[0].args[4].to_integer() == 22
 
 	//src:			obj.ParentFoz(23, 24)
 	//original:		opcode: 'callmethod', args: [ident(ParentFoz), ident(obj), ident(::NoneVar), integer(2), integer(23), integer(24)]
@@ -748,12 +748,12 @@ fn test_parent_method_call() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "ParentFoz"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 2
-	assert ins[0].args[4].integer == 23
-	assert ins[0].args[5].integer == 24
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[4].to_integer() == 23
+	assert ins[0].args[5].to_integer() == 24
 }
 
 fn test_call_event() {
@@ -765,10 +765,10 @@ fn test_call_event() {
 	ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.callmethod
-	assert pex_file.get_string(ins[0].args[0].string_id) == "OnInit"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "self"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::NoneVar"
-	assert ins[0].args[3].integer == 0
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "OnInit"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 0
 }
 
 fn test_property_assign() {
@@ -779,8 +779,8 @@ fn test_property_assign() {
 	mut ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.assign
-	assert pex_file.get_string(ins[0].args[0].string_id) == "::myAutoProp_var"
-	assert ins[0].args[1].integer == 5
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::myAutoProp_var"
+	assert ins[0].args[1].to_integer() == 5
 
 	//src:			obj.myAutoProp = 15
 	//original:		opcode: 'assign', args: [ident(::temp2), integer(15)]
@@ -790,9 +790,9 @@ fn test_property_assign() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.propset
-	assert pex_file.get_string(ins[0].args[0].string_id) == "myAutoProp"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
-	assert ins[0].args[2].integer == 15
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "myAutoProp"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
+	assert ins[0].args[2].to_integer() == 15
 }
 
 fn test_property_get() {
@@ -803,9 +803,9 @@ fn test_property_get() {
 	mut ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.iadd
-	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp0"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "::myAutoProp_var"
-	assert ins[0].args[2].integer == 4
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "::myAutoProp_var"
+	assert ins[0].args[2].to_integer() == 4
 
 	//src:			obj.myAutoProp + 14
 	//original:		opcode: 'propget', args: [ident(myAutoProp), ident(obj), ident(::temp2)]
@@ -815,14 +815,14 @@ fn test_property_get() {
 	ins = get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.propget
-	assert pex_file.get_string(ins[0].args[0].string_id) == "myAutoProp"
-	assert pex_file.get_string(ins[0].args[1].string_id) == "obj"
-	assert pex_file.get_string(ins[0].args[2].string_id) == "::temp0"
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "myAutoProp"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::temp0"
 
 	assert ins[1].op == pex.OpCode.iadd
-	assert pex_file.get_string(ins[1].args[0].string_id) == "::temp0"
-	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp0"
-	assert ins[1].args[2].integer == 14
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp0"
+	assert ins[1].args[2].to_integer() == 14
 }
 
 fn test_foo() { // ???
@@ -830,11 +830,11 @@ fn test_foo() { // ???
 	ins := get_instructions(pex_file)
 
 	assert ins[0].op == pex.OpCode.iadd
-	assert pex_file.get_string(ins[0].args[0].string_id) == "::temp1"
-	assert ins[0].args[1].integer == 1
-	assert ins[0].args[2].integer == 2
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp1"
+	assert ins[0].args[1].to_integer() == 1
+	assert ins[0].args[2].to_integer() == 2
 	
 	assert ins[1].op == pex.OpCode.assign
-	assert pex_file.get_string(ins[1].args[0].string_id) == "n"
-	assert pex_file.get_string(ins[1].args[1].string_id) == "::temp1"
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "n"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
 }

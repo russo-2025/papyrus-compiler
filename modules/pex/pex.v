@@ -5,68 +5,11 @@ pub const (
 )
 
 const (
-	datatype_str = build_datatype_str()
 	opcode_str = build_opcode_str()
 )
 
-fn build_datatype_str() []string {
-	mut s := []string{len: int(DataType.type_bool) + 1}
-	
-	s[DataType.type_null] = 'null'
-	s[DataType.type_ident] = 'indent'
-	s[DataType.type_string] = 'string'
-	s[DataType.type_integer] = 'integer'
-	s[DataType.type_float] = 'float'
-	s[DataType.type_bool] = 'bool'
-
-	return s
-}
-
-fn build_opcode_str() []string {
-	mut s := []string{len: int(OpCode.array_rfindelement) + 1}
-	
-	s[OpCode.nop] = 'nop'				
-	s[OpCode.iadd] = 'iadd'
-	s[OpCode.fadd] = 'fadd'
-	s[OpCode.isub] = 'isub'
-	s[OpCode.fsub] = 'fsub'
-	s[OpCode.imul] = 'imul'
-	s[OpCode.fmul] = 'fmul'
-	s[OpCode.idiv] = 'idiv'
-	s[OpCode.fdiv] = 'fdiv'
-	s[OpCode.imod] = 'imod'
-	s[OpCode.not] = 'not'
-	s[OpCode.ineg] = 'ineg'
-	s[OpCode.fneg] = 'fneg'
-	s[OpCode.assign] = 'assign'
-	s[OpCode.cast] = 'cast'
-	s[OpCode.cmp_eq] = 'cmp_eq'
-	s[OpCode.cmp_lt] = 'cmp_lt'
-	s[OpCode.cmp_le] = 'cmp_le'
-	s[OpCode.cmp_gt] = 'cmp_gt'
-	s[OpCode.cmp_ge] = 'cmp_ge'
-	s[OpCode.jmp] = 'jmp'
-	s[OpCode.jmpt] = 'jmpt'
-	s[OpCode.jmpf] = 'jmpf'
-	s[OpCode.callmethod] = 'callmethod'
-	s[OpCode.callparent] = 'callparent'
-	s[OpCode.callstatic] = 'callstatic'
-	s[OpCode.ret] = 'ret'
-	s[OpCode.strcat] = 'strcat'
-	s[OpCode.propget] = 'propget'
-	s[OpCode.propset] = 'propset'
-	s[OpCode.array_create] = 'array_create'
-	s[OpCode.array_length] = 'array_length'
-	s[OpCode.array_getelement] = 'array_getelement'
-	s[OpCode.array_setelement] = 'array_setelement'
-	s[OpCode.array_findelement] = 'array_findelement'
-	s[OpCode.array_rfindelement] = 'array_rfindelement'
-
-	return s
-}
-
 pub enum OpCode as u8 {
-	nop					//none		do nothing
+	nop = 0				//none		do nothing
 	iadd				//SII		add two integers
 	fadd				//SFF		add two floats
 	isub				//SII		subtract two integers
@@ -106,93 +49,17 @@ pub enum OpCode as u8 {
 	_opcode_end
 }
 
-pub fn opcode_from_byte(v byte) OpCode {
-	if v >= byte(OpCode._opcode_end) {
-		panic("invalid opcode: 0x" + v.hex())
-	}
+pub const (
+	//LITTLE_ENDIAN
+	le_magic_number = u32(0xFA57C0DE)
+	
+	//BIG_ENDIAN
+	be_magic_number = u32(0xDEC057FA)
+)
 
-	return unsafe { OpCode(v) }
-}
-
-pub fn (op OpCode) str() string {
-	return opcode_str[int(op)]
-}
-
-fn (op OpCode) get_count_arguments() int {
-	match op {
-		.nop {
-			return 0
-		}
-
-		.jmp,
-		.ret {
-			return 1
-		}
-
-		.not,
-		.ineg,
-		.fneg,
-		.assign,
-		.cast,
-		.jmpt,
-		.jmpf,
-		.array_create,
-		.array_length {
-			return 2
-		}
-
-		.iadd,
-		.fadd,
-		.isub,
-		.fsub,
-		.imul,
-		.fmul,
-		.idiv,
-		.fdiv,
-		.imod,
-		.cmp_eq,
-		.cmp_lt,
-		.cmp_le,
-		.cmp_gt,
-		.cmp_ge,
-		.strcat,
-		.propget,
-		.propset,
-		.array_getelement,
-		.array_setelement {
-			return 3
-		}
-
-		.array_findelement,
-		.array_rfindelement {
-			return 4
-		}
-
-		.callparent {
-			return 2//2+
-		}
-
-		.callstatic,
-		.callmethod {
-			return 3//3+
-		}
-		._opcode_end {
-			panic("error")
-		}
-	}
-}
-
-pub enum DataType {
-	type_null
-	type_ident
-	type_string
-	type_integer
-	type_float
-	type_bool
-}
-
-pub fn (typ DataType) str() string {
-	return datatype_str[int(typ)]
+pub enum GameType as u16 {
+	unknown = 0
+	skyrim = 1
 }
 
 type StringId = u16
@@ -200,12 +67,12 @@ type StringId = u16
 [heap]
 pub struct PexFile {
 pub mut:
-	magic_number		u32		// 0xFA57C0DE (FASTCODE?)
-	major_version		byte	// 3
-	minor_version		byte	// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
-	game_id				u16		// 1 = Skyrim?
+	//Header
+	magic_number		u32			// 0xFA57C0DE (FASTCODE?)
+	major_version		byte		// 3
+	minor_version		byte		// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
+	game_id				GameType	// 1 = Skyrim?
 	compilation_time	i64
-	
 	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
 	user_name			string	// Username used to compile the script
 	machine_name		string	// Machine name used to compile the script
@@ -218,6 +85,7 @@ pub mut:
 	modification_time 	i64 // time_t
 	functions			[]DebugFunction
 
+	//Objects
 	user_flags			[]UserFlag
 	objects				[]&Object
 }
@@ -255,16 +123,31 @@ pub mut:
 	name		StringId
 	type_name	StringId
 	user_flags	u32	
-	data		VariableData //Default value
+	data		VariableValue //Default value
 }
 
-pub struct VariableData {
+pub enum ValueType as u8 {
+	null = 0 // aka none
+	identifier
+	str
+	integer
+	float
+	boolean
+}
+
+pub union ValueData {
 pub mut:
-	typ		byte //0 = null, 1 = identifier, 2 = string, 3 = integer, 4 = float, 5 = bool
 	string_id	StringId
 	integer		int	//present for integer types only
 	float		f32	//present for float types only
 	boolean		byte //present for bool types only
+}
+
+pub struct VariableValue {
+pub mut:
+	typ		ValueType // 0 = null, 1 = identifier, 2 = string, 3 = integer, 4 = float, 5 = bool
+	data 	ValueData
+	
 }
 
 pub struct Property {
@@ -323,12 +206,100 @@ pub mut:
 pub struct Instruction {
 pub mut:
 	op		OpCode 			//see Opcodes
-	args	[]VariableData	//[changes depending on opcode]	Length is dependent on opcode, also varargs
+	args	[]VariableValue	//[changes depending on opcode]	Length is dependent on opcode, also varargs
 }
 
-pub fn (p PexFile) get_string(i int) string {
-	assert i < p.string_table.len
-	return p.string_table[i]
+[inline]
+pub fn value_none() VariableValue {
+	return VariableValue{ typ: .null }
+}
+
+[inline]
+pub fn value_ident(v StringId) VariableValue {
+	return VariableValue{
+		typ: .identifier,
+		data: ValueData{ string_id: v }
+	}
+}
+
+[inline]
+pub fn value_string(v StringId) VariableValue {
+	return VariableValue{
+		typ: .str,
+		data: ValueData{ string_id: v }
+	}
+}
+
+[inline]
+pub fn value_integer(v int) VariableValue {
+	return VariableValue{
+		typ: .integer,
+		data: ValueData{ integer: v }
+	}
+}
+
+[inline]
+pub fn value_float(v f32) VariableValue {
+	return VariableValue{
+		typ: .float,
+		data: ValueData{ float: v }
+	}
+}
+
+[inline]
+pub fn value_bool(v byte) VariableValue {
+	return VariableValue{
+		typ: .boolean,
+		data: ValueData{ boolean: v }
+	}
+}
+
+[inline]
+pub fn (value VariableValue) to_string_id() StringId {
+	assert value.typ == .identifier || value.typ == .str
+	return unsafe { value.data.string_id }
+}
+
+[inline]
+pub fn (value VariableValue) to_integer() int {
+	assert value.typ == .integer
+	return unsafe { value.data.integer }
+}
+
+[inline]
+pub fn (value VariableValue) to_float() f32 {
+	assert value.typ == .float
+	return unsafe { value.data.float }
+}
+
+[inline]
+pub fn (value VariableValue) to_boolean() byte {
+	assert value.typ == .boolean
+	return unsafe { value.data.boolean }
+}
+
+[inline]
+pub fn (p PexFile) get_string[T](v T) string {
+	$if T is int {
+		index := v
+		assert index < p.string_table.len
+		return p.string_table[index]
+	}
+	$else $if T is u16 {
+		index := int(v)
+		assert index < p.string_table.len
+		return p.string_table[index]
+	}
+	$else $if T is StringId {
+		index := int(u16(v))
+		assert index < p.string_table.len
+		return p.string_table[index]
+	}
+	$else {
+		$compile_error("[pex.PexFile.get_string] invalid argument type")
+		assert false, "[pex.PexFile.get_string] invalid argument type ${T.name}"
+		panic("[pex.PexFile.get_string] invalid argument type ${T.name}")
+	}
 }
 
 pub fn (p PexFile) get_object(name string) ?&Object {
@@ -422,4 +393,123 @@ pub fn (p PexFile) get_var(obj_name string, var_name string) ?&Variable {
 	}
 
 	return none
+}
+
+fn build_opcode_str() []string {
+	mut s := []string{len: int(OpCode.array_rfindelement) + 1}
+	
+	s[OpCode.nop] = 'nop'				
+	s[OpCode.iadd] = 'iadd'
+	s[OpCode.fadd] = 'fadd'
+	s[OpCode.isub] = 'isub'
+	s[OpCode.fsub] = 'fsub'
+	s[OpCode.imul] = 'imul'
+	s[OpCode.fmul] = 'fmul'
+	s[OpCode.idiv] = 'idiv'
+	s[OpCode.fdiv] = 'fdiv'
+	s[OpCode.imod] = 'imod'
+	s[OpCode.not] = 'not'
+	s[OpCode.ineg] = 'ineg'
+	s[OpCode.fneg] = 'fneg'
+	s[OpCode.assign] = 'assign'
+	s[OpCode.cast] = 'cast'
+	s[OpCode.cmp_eq] = 'cmp_eq'
+	s[OpCode.cmp_lt] = 'cmp_lt'
+	s[OpCode.cmp_le] = 'cmp_le'
+	s[OpCode.cmp_gt] = 'cmp_gt'
+	s[OpCode.cmp_ge] = 'cmp_ge'
+	s[OpCode.jmp] = 'jmp'
+	s[OpCode.jmpt] = 'jmpt'
+	s[OpCode.jmpf] = 'jmpf'
+	s[OpCode.callmethod] = 'callmethod'
+	s[OpCode.callparent] = 'callparent'
+	s[OpCode.callstatic] = 'callstatic'
+	s[OpCode.ret] = 'ret'
+	s[OpCode.strcat] = 'strcat'
+	s[OpCode.propget] = 'propget'
+	s[OpCode.propset] = 'propset'
+	s[OpCode.array_create] = 'array_create'
+	s[OpCode.array_length] = 'array_length'
+	s[OpCode.array_getelement] = 'array_getelement'
+	s[OpCode.array_setelement] = 'array_setelement'
+	s[OpCode.array_findelement] = 'array_findelement'
+	s[OpCode.array_rfindelement] = 'array_rfindelement'
+
+	return s
+}
+
+pub fn opcode_from_byte(v byte) OpCode {
+	if v >= byte(OpCode._opcode_end) {
+		panic("invalid opcode: 0x" + v.hex())
+	}
+
+	return unsafe { OpCode(v) }
+}
+
+pub fn (op OpCode) str() string {
+	return opcode_str[int(op)]
+}
+
+fn (op OpCode) get_count_arguments() int {
+	match op {
+		.nop {
+			return 0
+		}
+
+		.jmp,
+		.ret {
+			return 1
+		}
+
+		.not,
+		.ineg,
+		.fneg,
+		.assign,
+		.cast,
+		.jmpt,
+		.jmpf,
+		.array_create,
+		.array_length {
+			return 2
+		}
+
+		.iadd,
+		.fadd,
+		.isub,
+		.fsub,
+		.imul,
+		.fmul,
+		.idiv,
+		.fdiv,
+		.imod,
+		.cmp_eq,
+		.cmp_lt,
+		.cmp_le,
+		.cmp_gt,
+		.cmp_ge,
+		.strcat,
+		.propget,
+		.propset,
+		.array_getelement,
+		.array_setelement {
+			return 3
+		}
+
+		.array_findelement,
+		.array_rfindelement {
+			return 4
+		}
+
+		.callparent {
+			return 2//2+
+		}
+
+		.callstatic,
+		.callmethod {
+			return 3//3+
+		}
+		._opcode_end {
+			panic("error")
+		}
+	}
 }

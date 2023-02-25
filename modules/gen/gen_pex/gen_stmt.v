@@ -86,14 +86,14 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 		//если это не последний else то добавляем jmpf
 		if !s.has_else || i < s.branches.len - 1 {
 			//условие
-			var_data := g.get_operand_from_expr(mut &b.cond)
-			g.free_temp(var_data)
+			cond_value := g.get_operand_from_expr(mut &b.cond)
+			g.free_temp(cond_value)
 			//добавляем индекс jmpf в массив(для добавления относительной позиции)
 			jmp_to_next_ids << g.cur_fn.info.instructions.len
 			//добавляем прыжок к следующему блоку (jmpf)
 			g.cur_fn.info.instructions << pex.Instruction{
 				op: pex.OpCode.jmpf
-				args: [ var_data ]
+				args: [ cond_value ]
 			}
 		}
 		//выполняем блок
@@ -115,7 +115,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 		if !s.has_else || i < s.branches.len - 1 {
 			//добавляем относительный индекс
 			index := jmp_to_next_ids[jmp_to_next_ids.len - 1]
-			g.cur_fn.info.instructions[index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - index }
+			g.cur_fn.info.instructions[index].args << pex.value_integer(g.cur_fn.info.instructions.len - index)
 		}
 
 		i++
@@ -123,7 +123,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 
 	//добавляем относительный индекс у прыжков в конец условия
 	for index in jmp_to_end_ids {
-		g.cur_fn.info.instructions[index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - index }
+		g.cur_fn.info.instructions[index].args << pex.value_integer(g.cur_fn.info.instructions.len - index)
 	}
 }
 
@@ -204,16 +204,16 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 			}
 			else {
 				//значение
-				right_data := g.get_operand_from_expr(mut &stmt.right)
-				g.free_temp(right_data)
+				right_value := g.get_operand_from_expr(mut &stmt.right)
+				g.free_temp(right_value)
 
 				//добавляем инструкцию в функцию
 				g.cur_fn.info.instructions << pex.Instruction{
 					op: pex.OpCode.propset
 					args: [
-						pex.VariableData{ typ: 1, string_id: g.gen_string_ref(name) },
-						pex.VariableData{ typ: 1, string_id: g.gen_string_ref("self") },
-						right_data
+						pex.value_ident(g.gen_string_ref(name)),
+						pex.value_ident(g.gen_string_ref("self")),
+						right_value
 					]
 				}
 
@@ -222,50 +222,47 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 		}
 
 		//opcode: 'assign', args: [ident(::temp1), integer(111)]
-		var_data := g.get_operand_from_expr(mut &stmt.right)
-		g.free_temp(var_data)
+		value := g.get_operand_from_expr(mut &stmt.right)
+		g.free_temp(value)
 
 		g.cur_fn.info.instructions << pex.Instruction{
 			op: pex.OpCode.assign
 			args: [
-				pex.VariableData{
-					typ: 1
-					string_id: g.gen_string_ref(name)
-				}, 
-				var_data 
+				pex.value_ident(g.gen_string_ref(name)), 
+				value 
 			]
 		}
 	}
 	else if mut stmt.left is ast.IndexExpr {
 		//opcode: 'array_setelement', args: [ident(arr), integer(0), ident(::temp1)]
-		left_data := g.get_operand_from_expr(mut &stmt.left.left)
-		index_data := g.get_operand_from_expr(mut &stmt.left.index)
-		right_data := g.get_operand_from_expr(mut &stmt.right)
-		g.free_temp(index_data)
-		g.free_temp(right_data)
+		left_value := g.get_operand_from_expr(mut &stmt.left.left)
+		index_value := g.get_operand_from_expr(mut &stmt.left.index)
+		right_value := g.get_operand_from_expr(mut &stmt.right)
+		g.free_temp(index_value)
+		g.free_temp(right_value)
 
 		g.cur_fn.info.instructions << pex.Instruction{
 			op: pex.OpCode.array_setelement
-			args: [ left_data, index_data, right_data ]
+			args: [ left_value, index_value, right_value ]
 		}
 	}
 	else if mut stmt.left is ast.SelectorExpr {
 		//opcode: 'propset', args: [ident(myProperty), ident(arg), ident(::temp0)]
 
-		expr_data := g.get_operand_from_expr(mut &stmt.left.expr)
-		g.free_temp(expr_data)
+		expr_value := g.get_operand_from_expr(mut &stmt.left.expr)
+		g.free_temp(expr_value)
 
 		//значение
-		right_data := g.get_operand_from_expr(mut &stmt.right)
-		g.free_temp(right_data)
+		right_value := g.get_operand_from_expr(mut &stmt.right)
+		g.free_temp(right_value)
 
 		//добавляем инструкцию в функцию
 		g.cur_fn.info.instructions << pex.Instruction{
 			op: pex.OpCode.propset
 			args: [
-				pex.VariableData{ typ: 1, string_id: g.gen_string_ref(stmt.left.field_name) },
-				expr_data,
-				right_data
+				pex.value_ident(g.gen_string_ref(stmt.left.field_name)),
+				expr_value,
+				right_value
 			]
 		}
 	}
@@ -320,8 +317,8 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 
 		prop.auto_var_name = g.gen_string_ref(stmt.auto_var_name)
 		
-		var_data := if stmt.expr is ast.EmptyExpr {
-			pex.VariableData{ typ: 0 }
+		value := if stmt.expr is ast.EmptyExpr {
+			pex.value_none()
 		} else {
 			g.get_operand_from_expr(mut &stmt.expr)
 		}
@@ -330,7 +327,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 			name: g.gen_string_ref(stmt.auto_var_name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 			user_flags: u32(0)
-			data: var_data
+			data: value
 		}
 	}
 	else if stmt.is_autoread {
@@ -379,16 +376,16 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 	
 	start_index := g.cur_fn.info.instructions.len
 
-	var_data := g.get_operand_from_expr(mut &s.cond)
+	cond_value := g.get_operand_from_expr(mut &s.cond)
 
 	jmpf_index := g.cur_fn.info.instructions.len
 
 	g.cur_fn.info.instructions << pex.Instruction{
 		op: pex.OpCode.jmpf
-		args: [ var_data ]
+		args: [ cond_value ]
 	}
 
-	g.free_temp(var_data)
+	g.free_temp(cond_value)
 
 	for mut stmt in s.stmts {
 		g.stmt(mut stmt)
@@ -396,8 +393,8 @@ fn (mut g Gen) while_stmt(mut s &ast.While) {
 
 	g.cur_fn.info.instructions << pex.Instruction{
 		op: pex.OpCode.jmp
-		args: [ pex.VariableData{ typ: 3, integer: start_index - g.cur_fn.info.instructions.len } ]
+		args: [ pex.value_integer(start_index - g.cur_fn.info.instructions.len) ]
 	}
 
-	g.cur_fn.info.instructions[jmpf_index].args << pex.VariableData{ typ: 3, integer: g.cur_fn.info.instructions.len - jmpf_index }
+	g.cur_fn.info.instructions[jmpf_index].args << pex.value_integer(g.cur_fn.info.instructions.len - jmpf_index)
 }

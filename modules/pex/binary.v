@@ -38,9 +38,19 @@ pub fn (mut r Reader) read[T]() T {
 		r.pos += len
 		return str
 	}
-	$else $if T is StringId {
+	$else $if T is StringId { //u16
 		val := binary.big_endian_u16(r.bytes[r.pos..r.pos+2])
 		r.pos += 2
+		return val
+	}
+	$else $if T is GameType { //u16
+		val := binary.big_endian_u16(r.bytes[r.pos..r.pos+2])
+		r.pos += 2
+		return val
+	}
+	$else $if T is ValueType { //byte
+		val := r.bytes[r.pos]
+		r.pos++
 		return val
 	}
 	$else {
@@ -88,8 +98,17 @@ pub fn (mut w Writer) write[T](v T) {
 		w.write(str_len)
 		w.bytes << v.bytes()
 	}
-	$else $if T is StringId {
-		w.bytes << u8(v>>u16(8))
+	$else $if T is StringId { //u16
+		real_val := u16(v)
+		w.bytes << u8(real_val>>u16(8))
+		w.bytes << u8(v)
+	}
+	$else $if T is GameType { //u16
+		real_val := u16(v)
+		w.bytes << u8(real_val>>u16(8))
+		w.bytes << u8(v)
+	}
+	$else $if T is ValueType { //byte
 		w.bytes << u8(v)
 	}
 	$else {

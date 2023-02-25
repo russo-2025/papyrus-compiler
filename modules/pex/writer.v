@@ -170,7 +170,7 @@ fn (mut w Writer) write_instruction(inst pex.Instruction) {
 	mut i := 0
 	for i < inst.args.len {
 		arg := inst.args[i]
-		w.write_variable_data(arg)
+		w.write_variable_value(arg)
 		i++
 	}
 }
@@ -180,7 +180,7 @@ fn (mut w Writer) write_variable(var pex.Variable) {
 	w.write(var.name)
 	w.write(var.type_name)
 	w.write(var.user_flags)
-	w.write_variable_data(var.data)
+	w.write_variable_value(var.data)
 }
 
 [inline]
@@ -205,26 +205,23 @@ fn (mut w Writer) write_property(prop pex.Property) {
 }
 
 [inline]
-fn (mut w Writer) write_variable_data(data pex.VariableData) {
-	w.write(data.typ)
+fn (mut w Writer) write_variable_value(value pex.VariableValue) {
+	w.write(value.typ)
 
-	match data.typ {
-		0 {}
-		1,
-		2 {
-			w.write(data.string_id)
+	match value.typ {
+		.null {}
+		.identifier,
+		.str {
+			w.write(value.to_string_id())
 		}
-		3 {
-			w.write(data.integer)
+		.integer {
+			w.write(value.to_integer())
 		}
-		4 {
-			w.write(data.float)
+		.float {
+			w.write(value.to_float())
 		}
-		5 {
-			w.write(data.boolean)
-		}
-		else {
-			panic("pex.Writer.write_variable_data: invalid variable data type: 0x${data.typ.hex()}")
+		.boolean {
+			w.write(value.to_boolean())
 		}
 	}
 }
