@@ -38,7 +38,13 @@ pub fn (mut r Reader) read[T]() T {
 		r.pos += len
 		return str
 	}
+	$else $if T is StringId {
+		val := binary.big_endian_u16(r.bytes[r.pos..r.pos+2])
+		r.pos += 2
+		return val
+	}
 	$else {
+		$compile_error('[pex.Reader.read] invalid type')
 		panic('[pex.Reader.read] invalid type ${T.name}')
 	}
 }
@@ -82,7 +88,12 @@ pub fn (mut w Writer) write[T](v T) {
 		w.write(str_len)
 		w.bytes << v.bytes()
 	}
+	$else $if T is StringId {
+		w.bytes << u8(v>>u16(8))
+		w.bytes << u8(v)
+	}
 	$else {
+		$compile_error('[pex.Reader.read] invalid type')
 		panic('[pex.Writer.write] invalid type ${T.name}')
 	}
 }

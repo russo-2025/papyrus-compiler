@@ -195,6 +195,8 @@ pub fn (typ DataType) str() string {
 	return datatype_str[int(typ)]
 }
 
+type StringId = u16
+
 [heap]
 pub struct PexFile {
 pub mut:
@@ -222,27 +224,27 @@ pub mut:
 
 pub struct DebugFunction {
 pub mut:
-	object_name					u16 //Index(base 0) into string table.
-	state_name					u16 //Index(base 0) into string table.
-	function_name				u16 //Index(base 0) into string table.
+	object_name					StringId
+	state_name					StringId
+	function_name				StringId
 	function_type				byte //valid values 0-3
 	instruction_line_numbers	[]u16 //Maps instructions to their original lines in the source.
 }
 
 pub struct UserFlag {
 pub mut:
-	name		u16		//Index(base 0) into string table.
+	name		StringId
 	flag_index	byte	//Bit index
 }
 
 pub struct Object {
 pub mut:
-	name				u16	//Index(base 0) into string table.
+	name				StringId
 	size				u32	
-	parent_class_name	u16	//Index(base 0) into string table.
-	docstring			u16	//Index(base 0) into string table.
+	parent_class_name	StringId
+	docstring			StringId
 	user_flags			u32	
-	auto_state_name		u16 //Index(base 0) into string table. 
+	auto_state_name		StringId
 	variables			[]&Variable
 	properties			[]&Property
 	states				[]&State
@@ -250,16 +252,16 @@ pub mut:
 
 pub struct Variable {
 pub mut:
-	name		u16	//Index(base 0) into string table.
-	type_name	u16	//Index(base 0) into string table.
+	name		StringId
+	type_name	StringId
 	user_flags	u32	
 	data		VariableData //Default value
 }
 
 pub struct VariableData {
 pub mut:
-	typ			byte //0 = null, 1 = identifier, 2 = string, 3 = integer, 4 = float, 5 = bool
-	string_id	u16 //Index(base 0) into string table, present for identifier and string types only
+	typ		byte //0 = null, 1 = identifier, 2 = string, 3 = integer, 4 = float, 5 = bool
+	string_id	StringId
 	integer		int	//present for integer types only
 	float		f32	//present for float types only
 	boolean		byte //present for bool types only
@@ -267,12 +269,12 @@ pub mut:
 
 pub struct Property {
 pub mut:
-	name			u16	//Index(base 0) into string table
-	typ				u16	//Index(base 0) into string table
-	docstring		u16	//Index(base 0) into string table
+	name			StringId
+	typ				StringId
+	docstring		StringId
 	user_flags		u32	
 	flags			byte //bitfield: 1(bit 1) = read, 2(bit 2) = write, 4(bit 3) = autovar. For example, Property in a source script contains only get() or is defined AutoReadOnly then the flags is 0x1, contains get() and set() then the flags is 0x3.
-	auto_var_name	u16	//Index(base 0) into string table, present if (flags & 4) != 0
+	auto_var_name	StringId //present if (flags & 4) != 0
 	read_handler	FunctionInfo //present if (flags & 5) == 1
 	write_handler	FunctionInfo //present if (flags & 6) == 2
 }
@@ -291,20 +293,20 @@ fn (prop Property) is_read() bool {
 
 pub struct State {
 pub mut:
-	name			u16	//Index(base 0) into string table, empty string for default state
+	name			StringId	//empty string for default state
 	functions		[]&Function
 }
 
 pub struct Function {
 pub mut:
-	name	u16	//Index(base 0) into string table
+	name	StringId
 	info	FunctionInfo
 }
 
 pub struct FunctionInfo {
 pub mut:
-	return_type			u16	//Index(base 0) into string table
-	docstring			u16	//Index(base 0) into string table
+	return_type			StringId
+	docstring			StringId
 	user_flags			u32	
 	flags				byte //первый бит - global, второй бит - native
 	params				[]VariableType
@@ -314,8 +316,8 @@ pub mut:
 
 pub struct VariableType {
 pub mut:
-	name	u16	//Index(base 0) into string table
-	typ		u16	//Index(base 0) into string table
+	name	StringId
+	typ		StringId
 }
 
 pub struct Instruction {
