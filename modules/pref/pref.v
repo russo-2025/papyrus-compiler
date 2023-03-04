@@ -93,6 +93,18 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 					i++
 				}
 			}
+			"-h",
+			"-headers_dir" {
+				i++
+				
+				path := os.real_path(args[i])
+
+				if !os.is_dir(path) {
+					error("invalid headers dir: '$path'")
+				}
+
+				p.papyrus_headers_dir = path
+			}
 			"-nocache" {
 				p.no_cache = true
 			}

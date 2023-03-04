@@ -122,6 +122,11 @@ fn (mut b Builder) print_timer(name string) {
 }
 
 fn (mut b Builder) load_headers_files()  {
+	if b.pref.papyrus_headers_dir in b.pref.paths {
+		// no need to parse the same file many times
+		return 
+	}
+
 	if os.is_dir(b.pref.papyrus_headers_dir) {
 		files := os.walk_ext(b.pref.papyrus_headers_dir, ".psc")
 		parser.parse_files(files, b.table, b.pref, b.global_scope)

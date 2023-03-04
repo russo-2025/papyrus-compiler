@@ -38,6 +38,8 @@ read           read "*.pex" file and output result to console
 
 -o, -output     folder for compiled files(*.pex)
 
+-h, -headers_dir  ...
+
 -nocache        compile all files, regardless of the modification date
 
 -original       compile using a vanilla compiler
