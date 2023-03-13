@@ -96,7 +96,11 @@ pub fn (mut p Parser) parse() &ast.File {
 	p.read_first_token()
 
 	mut stmts := []ast.TopStmt{}
-
+	
+	for p.tok.kind == .comment {
+		p.comment()
+	}
+	
 	stmts << p.script_decl()
 
 	for {
@@ -104,7 +108,7 @@ pub fn (mut p Parser) parse() &ast.File {
 			break
 		}
 
-		stmts << p.top_stmt()
+		stmts << p.top_stmt() or { break }
 	}
 
 	return &ast.File{
@@ -124,10 +128,14 @@ pub fn (mut p Parser) set_path(path string) {
 	p.path = path
 }
 
-pub fn (mut p Parser) top_stmt() ast.TopStmt {
+pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 	for {
-		p.parser_bug_check()
+		if p.tok.kind == .eof {
+			return none
+		}
 
+		p.parser_bug_check()
+		
 		match p.tok.kind {
 			.key_auto {
 				if p.peek_tok.kind == .key_state {
@@ -181,22 +189,22 @@ pub fn (mut p Parser) top_stmt() ast.TopStmt {
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {
-	mut s := []ast.Stmt{}
+	mut result_stmts := []ast.Stmt{}
 
 	for {
 		p.parser_bug_check()
 
 		match p.tok.kind {
 			.comment {
-				s << p.comment()
+				result_stmts << p.comment()
 			}
 			.key_return {
 				pos := p.tok.position()
 				p.next()
 
-				s << ast.Return {
+				result_stmts << ast.Return{
 					pos: pos
-					expr: p.expr(0)
+					expr: p.expr(0) or { ast.NoneLiteral{ val:"None", pos: pos }}
 				}
 			}
 			.key_if {
@@ -205,12 +213,8 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				mut pos := p.tok.position()
 				p.next()
 				
-				
-				mut cond := p.expr(0)
+				mut cond := p.expr(0) or { p.error("invalid condition in if") }
 
-
-
-				
 				p.open_scope()
 				mut stmts := p.stmts()
 				mut scope := p.scope
@@ -227,11 +231,8 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					pos = p.tok.position()
 					p.check(.key_elseif)
 					
+					cond = p.expr(0) or { p.error("invalid condition in if") }
 					
-					cond = p.expr(0)
-					
-					
-
 					p.open_scope()
 					stmts = p.stmts()
 					scope = p.scope
@@ -267,7 +268,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 
 				p.check(.key_endif)
 
-				s << ast.If {
+				result_stmts << ast.If {
 					pos: pos
 					branches: branches
 					has_else: has_else
@@ -276,11 +277,8 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 			.key_while {
 				mut pos := p.tok.position()
 				p.next()
-				//p.check(.lpar)
 				
-				mut cond := p.expr(0)
-				//p.check(.rpar)
-				
+				mut cond := p.expr(0) or { p.error("invalid condition in while") }
 				
 				p.open_scope()
 				mut stmts := p.stmts()
@@ -289,7 +287,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 
 				p.check(.key_endwhile)
 				
-				s << ast.While {
+				result_stmts << ast.While {
 					pos: pos
 					cond: cond
 					stmts: stmts
@@ -302,10 +300,10 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 					continue
 				}
 				else if p.parsed_type != 0 {
-					s << p.var_decl(false)
+					result_stmts << p.var_decl(false)
 				}
 				else {
-					s << p.parse_expr_stmt()
+					result_stmts << p.parse_expr_stmt()
 				}
 			}
 			.number,
@@ -320,7 +318,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 			.minus,
 			.not,
 			.lpar {
-				s << p.parse_expr_stmt()
+				result_stmts << p.parse_expr_stmt()
 			}
 			//типы перед переменными
 			.key_bool,
@@ -346,11 +344,10 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 		}
 	}
 
-	return s
+	return result_stmts
 }
 
 pub fn (mut p Parser) script_decl() ast.ScriptDecl {
-	
 	pos := p.tok.position()
 
 	if p.tok.kind == .key_scriptname {
@@ -429,6 +426,17 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	name := p.check_name()
 
 	p.cur_state_name = name
+
+	mut sym := p.table.get_type_symbol(p.cur_object)
+
+	if !sym.has_state(name) {
+		sym.register_state(ast.State{
+			name: name
+			obj_name: p.cur_obj_name
+			pos: pos
+			is_auto: is_auto
+		})
+	}
 	
 	mut fns := []ast.FnDecl{}
 
@@ -440,6 +448,9 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 		p.parser_bug_check()
 
 		match p.tok.kind {
+			.comment {
+				p.comment()
+			}
 			.name {
 				if !p.next_is_type() {
 					p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
@@ -468,17 +479,6 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 	p.check(.key_endstate)
 	
 	p.cur_state_name = pex.empty_state_name
-
-	mut sym := p.table.get_type_symbol(p.cur_object)
-
-	if !sym.has_state(name) {
-		sym.register_state(ast.State{
-			name: name
-			obj_name: p.cur_obj_name
-			pos: pos
-			is_auto: is_auto
-		})
-	}
 	
 	return ast.StateDecl {
 		name: name
@@ -504,7 +504,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 
 	if p.tok.kind == .assign {
 		p.next()
-		expr = p.expr(0)
+		expr = p.expr(0) or { p.error("invalid expression") }
 	}
 
 	flags := p.parse_flags(pos.line_nr + 1)
@@ -556,6 +556,10 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 				break
 			}
 
+			if p.tok.kind == .comment {
+				p.comment() // skip comments
+			}
+
 			if p.next_is_type() {
 				p.parse_type()
 			}
@@ -603,20 +607,21 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 [inline]
 pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 	pos := p.tok.position()
-	expr := p.expr(0)
+	expr := p.expr(0) or { p.error("invalid expression") }
 
 	if p.tok.kind.is_assign() {
 		op := p.tok.kind
 		p.next()
-		right := p.expr(0)
+		right := p.expr(0) or { p.error("invalid expression in assign") }
 
-		mut a := ast.AssignStmt {
+		mut assign := ast.AssignStmt {
 			op: op
 			pos: pos
 			right: right
 			left: expr
 		}
-		return a
+
+		return assign
 	}
 
 	return ast.ExprStmt{
@@ -636,7 +641,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 
 	if p.tok.kind == .assign {
 		p.next()
-		expr = p.expr(0)
+		expr = p.expr(0) or { p.error("invalid expression") }
 	}
 
 	flags := p.parse_flags(pos.line_nr + 1)
@@ -653,6 +658,14 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 				typ: typ
 			})
 		}
+	}
+	else {
+		p.scope.register(ast.ScopeVar{
+			name: name
+			typ: typ
+			pos: pos
+			is_used: false
+		})
 	}
 
 	return  ast.VarDecl{
@@ -772,14 +785,21 @@ fn (mut p Parser) parser_bug_check() {
 	}
 }
 
+[noreturn]
 pub fn (mut p Parser) error(s string) {
 	p.error_with_pos(s, p.tok.position())
 }
 
+[noreturn]
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
 	if p.pref.output_mode == .stdout {
-		if p.pref.is_verbose {
+		$if debug {
 			print_backtrace()
+		}
+		$else {
+			if p.pref.is_verbose {
+				print_backtrace()
+			}
 		}
 
 		util.show_compiler_message("Parser error:", pos: pos, file_path: p.path, message: s)
@@ -788,4 +808,6 @@ pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
 	else {
 		exit(1)
 	}
+	
+	exit(1)
 }

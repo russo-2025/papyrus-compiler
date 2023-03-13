@@ -2,7 +2,7 @@ module util
 
 import os
 
-pub fn read_file(file_path string) ?string {
+pub fn read_file(file_path string) !string {
 	raw_text := os.read_file(file_path) or { return error('failed to open $file_path') }
 	return skip_bom(raw_text)
 }

@@ -19,6 +19,7 @@ pub mut:
 	pos					int		// текущая позиция
 	line_nr				int		// номер строки
 	last_nl_pos			int		// последняя позиция новой строки
+	line_nr_lt_escaped	int
 	
 	line_ends			[]int	// позиции концов строк // the positions of source lines ends   (i.e. \n signs)
 	nr_lines			int		// кол-во отсканированных строк
@@ -74,6 +75,7 @@ fn (mut s Scanner) text_scan() token.Token {
 		}
 
 		for s.text[s.pos] == `\\`{
+			s.line_nr_lt_escaped = s.line_nr + 1
 			s.pos++ 
 			s.skip_whitespace()
 		}
@@ -378,7 +380,7 @@ fn (mut s Scanner) ident_name() string {
 }
 
 fn (mut s Scanner) ident_number() string {
-	if s.expect('0x', s.pos) {
+	if s.expect('0x', s.pos) || s.expect('0X', s.pos) {
 		return s.ident_hex_number()
 	} else {
 		return s.ident_dec_number()
@@ -473,19 +475,11 @@ fn (mut s Scanner) ident_dec_number() string {
 	for s.pos < s.text.len {
 		c := s.text[s.pos]
 		if !c.is_digit() {
-			if !c.is_letter() {
-				break
-			} else if !has_wrong_digit {
-				has_wrong_digit = true
-				first_wrong_digit_pos = s.pos
-				first_wrong_digit = c
-			}
+			break
 		}
 		s.pos++
 	}
 	
-	mut call_method := false // true for, e.g., 5.str(), 5.5.str(), 5e5.str()
-	mut is_range := false // true for, e.g., 5..10
 	// scan fractional part
 	if s.pos < s.text.len && s.text[s.pos] == `.` {
 		s.pos++
@@ -495,23 +489,12 @@ fn (mut s Scanner) ident_dec_number() string {
 				for s.pos < s.text.len {
 					c := s.text[s.pos]
 					if !c.is_digit() {
-						if !c.is_letter() {
-							// 5.5.str()
-							if c == `.` && s.pos + 1 < s.text.len && s.text[s.pos + 1].is_letter() {
-								call_method = true
-							}
-							break
-						} else if !has_wrong_digit {
-							has_wrong_digit = true
-							first_wrong_digit_pos = s.pos
-							first_wrong_digit = c
-						}
+						break
 					}
 					s.pos++
 				}
 			} else if s.text[s.pos].is_letter() {
 				// 5.str()
-				call_method = true
 				s.pos--
 			}
 		}
@@ -521,10 +504,6 @@ fn (mut s Scanner) ident_dec_number() string {
 		// error check: wrong digit
 		s.pos = first_wrong_digit_pos // adjust error position
 		s.error('this number has unsuitable digit `$first_wrong_digit.str()`')
-	} else if s.pos < s.text.len && s.text[s.pos] == `.` && !is_range && !call_method {
-		// error check: 1.23.4, 123.e+3.4
-		
-		s.error('too many decimal points in number')
 	}
 
 	number := s.num_lit(start_pos, s.pos)
@@ -593,6 +572,7 @@ fn (mut s Scanner) new_token(tok_kind token.Kind, lit string, len int) token.Tok
 		line_nr: s.line_nr + 1
 		pos: s.pos - len
 		len: len
+		lt_escaped: s.line_nr_lt_escaped == s.line_nr
 	}
 }
 
@@ -630,7 +610,7 @@ pub fn (mut s Scanner) warn(msg string) {
 		pos: s.pos
 	}
 	
-	eprintln(util.formatted_error('warning:', msg, s.file_path, pos))
+	eprintln(util.formatted_error('Scanner warning:', msg, s.file_path, pos))
 }
 
 pub fn (mut s Scanner) error(msg string) {
@@ -639,6 +619,6 @@ pub fn (mut s Scanner) error(msg string) {
 		pos: s.pos
 	}
 	
-	eprintln(util.formatted_error('error:', msg, s.file_path, pos))
+	eprintln(util.formatted_error('Scanner error:', msg, s.file_path, pos))
 	exit(1)
 }

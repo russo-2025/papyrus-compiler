@@ -14,7 +14,8 @@ pub enum Backend {
 
 pub enum RunMode {
 	compile
-	read 
+	read
+	create_dump
 }
 
 [heap]
@@ -160,6 +161,14 @@ pub fn parse_args() Preferences {
 			}
 
 			p.mode = .read
+			p.paths << os.real_path(args[1])
+		}
+		"create-dump" {
+			if args.len < 2 {
+				error("invalid number of arguments")
+			}
+
+			p.mode = .create_dump
 			p.paths << os.real_path(args[1])
 		}
 		else {

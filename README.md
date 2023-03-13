@@ -1,6 +1,7 @@
 # Compiler
 
-The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v). Work in progress.
+The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v).
+***Work in progress.***
 
 ## Prerequisites
 
@@ -29,6 +30,8 @@ v -stats test modules
 compile        compile papyrus files
 
 read           read "*.pex" file and output result to console
+
+create-dump    ...
 ```
 
 #### Сompile command arguments:
@@ -52,9 +55,11 @@ read           read "*.pex" file and output result to console
 #### Examples:
 
 ```
+papyrus compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
 papyrus compile -nocache -i "../test-files/compiler" -o "../test-files/compiled"
 papyrus compile -i "../../RH-workspace/scripts" -o ""../../RH-workspace/compiled""
 papyrus read "../test-files/compiled/ABCD.pex"
+papyrus create-dump "../folder_with_pex_files"
 ```
 
 ## List of supported language features
@@ -74,7 +79,7 @@ papyrus read "../test-files/compiled/ABCD.pex"
   - [x] ` == != >  <  >= <= || &&`
   - [x] `! () [] , .  ""`
   - [x] casts [docs](https://www.creationkit.com/index.php?title=Cast_Reference)
-- [x] **Variables** [docs](https://www.creationkit.com/index.php?title=Variable_Reference)
+- [ ] **Variables** [docs](https://www.creationkit.com/index.php?title=Variable_Reference)
   - [x] declaration
   - [x] assign
   - [x] object variables
@@ -85,7 +90,7 @@ papyrus read "../test-files/compiled/ABCD.pex"
   - [x] constructor
   - [x] length
   - [x] array acces
-  - [x] find
+  - [ ] find
 - [x] **If** [docs](https://www.creationkit.com/index.php?title=Statement_Reference#If_Statement)
 - [x] **While** [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_Statement)
   - [ ] Variable Lifetime??? [docs](https://www.creationkit.com/index.php?title=Statement_Reference#While_and_Variable_Lifetime)
@@ -97,11 +102,11 @@ papyrus read "../test-files/compiled/ABCD.pex"
   - [x] special variables (`Self`, `Parent`)
   - [x] default arguments `Function IncrementValue(int howMuch = 1)` `CallFunc(5.0, 2.4, d = 2.0)`
   - [x] `return`
-- [x] **Events** [docs](https://www.creationkit.com/index.php?title=Events_Reference)
+- [ ] **Events** [docs](https://www.creationkit.com/index.php?title=Events_Reference)
   - [x] declaration
   - [x] special variables (`Self`, `Parent`) 
   - [x] calling
-- [x] **Properties** [docs](https://www.creationkit.com/index.php?title=Property_Reference)
+- [ ] **Properties** [docs](https://www.creationkit.com/index.php?title=Property_Reference)
   - [x] declaration
   - [x] read only
   - [x] assign
@@ -110,21 +115,21 @@ papyrus read "../test-files/compiled/ABCD.pex"
     - [x] `Conditional`
     - [x] `Auto`
     - [x] `AutoReadOnly`
-- [x] **States** [docs](https://www.creationkit.com/index.php?title=State_Reference)
+- [ ] **States** [docs](https://www.creationkit.com/index.php?title=State_Reference)
   - [x] declaration
   - [x] flag `auto`
   - [x] empty state
-  - [x] `OnBeginState`
-  - [x] switching states `GotoState`
-  - [x] getting current state `GetState`
-  - [x] `onEndState`
+  - [ ] `OnBeginState`
+  - [ ] switching states `GotoState`
+  - [ ] getting current state `GetState`
+  - [ ] `onEndState`
   - [ ] effect of states on functions and events???
-- [ ] **Imports** [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
+- [x] **Imports** [docs 1](https://www.creationkit.com/index.php?title=Script_File_Structure#Imports) [docs 2](https://www.creationkit.com/index.php?title=Function_Reference#Calling_Functions)
 - [x] **Comments**
   - [x] single line
   - [x] multi line
   - [ ] documentation comments
-- [x] **Line Terminators** `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
+- [ ] **Line Terminators** `\` [docs](https://www.creationkit.com/index.php?title=Script_File_Structure#Line_Terminators)
 
 ## Links
 

@@ -74,7 +74,7 @@ pub:
 	pos							token.Position
 pub mut:
 	typ							ast.Type
-	is_object_var_or_prpperty	bool
+	is_object_property_or_var	bool
 }
 
 pub struct RedefinedOptionalArg {
@@ -104,6 +104,7 @@ pub mut:
 	redefined_args	map[string]RedefinedOptionalArg // `d = 2.0` in `Foo(5.0, 2.4, d = 2.0)`
 	return_type		ast.Type
 	is_global		bool
+	is_array_find	bool
 }
 
 // `foo.bar`

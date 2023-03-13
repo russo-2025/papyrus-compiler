@@ -15,6 +15,14 @@ const (
 		crutches_enabled: false
 	}
 
+	other_src = 
+"Scriptname OtherScript
+Function Foo()
+EndFunction
+Function Foz()
+EndFunction\n
+"
+
 	parent_src =
 "Scriptname CDFG
 Function ParentFoz(int n1, int n2)
@@ -59,6 +67,10 @@ EndProperty
 Event OnInit()
 EndEvent
 
+OtherScript Function GetOtherObject() global
+return None
+EndFunction
+
 Function Foo(int n1, int n2) global
 EndFunction
 
@@ -73,6 +85,7 @@ fn compile_top(src string) &pex.PexFile {
 		parent: 0
 	}
 	
+	parser.parse_text("::gen_test.v/other::", other_src, table, prefs, global_scope)
 	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, table, prefs, global_scope)
 	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
 
@@ -90,12 +103,13 @@ fn compile_top(src string) &pex.PexFile {
 }
 
 fn compile(src string) &pex.PexFile {
-	full_src := "${src_template}Function Bar(string v, ABCD obj)\n${src}\nEndFunction\n"
+	full_src := "${src_template}Function Bar(string v, ABCD obj, OtherScript obj2)\n${src}\nEndFunction\n"
 	table := ast.new_table()
 	global_scope := &ast.Scope{
 		parent: 0
 	}
 	
+	parser.parse_text("::gen_test.v/other::", other_src, table, prefs, global_scope)
 	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, table, prefs, global_scope)
 	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
 
@@ -612,7 +626,7 @@ fn test_static_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ABCD"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "Foo"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 11
 	assert ins[0].args[5].to_integer() == 12
 
@@ -626,7 +640,7 @@ fn test_static_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ABCD"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "Foo"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 13
 	assert ins[0].args[5].to_integer() == 14
 }
@@ -642,7 +656,7 @@ fn test_method_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 15
 	assert ins[0].args[5].to_integer() == 16
 
@@ -656,7 +670,7 @@ fn test_method_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 17
 	assert ins[0].args[5].to_integer() == 18
 
@@ -670,7 +684,7 @@ fn test_method_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 25
 	assert ins[0].args[5].to_integer() == 26
 
@@ -708,7 +722,7 @@ fn test_method_call() {
 	assert pex_file.get_string(ins[3].args[0].to_string_id()) == "Foz"
 	assert pex_file.get_string(ins[3].args[1].to_string_id()) == "::temp3"
 	assert pex_file.get_string(ins[3].args[2].to_string_id()) == "::NoneVar"
-	assert ins[3].args[3].to_integer() == 2
+	assert ins[3].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[3].args[4].to_integer() == 25
 	assert ins[3].args[5].to_integer() == 26
 }
@@ -724,7 +738,7 @@ fn test_parent_method_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 19
 	assert ins[0].args[5].to_integer() == 20
 
@@ -737,7 +751,7 @@ fn test_parent_method_call() {
 	assert ins[0].op == pex.OpCode.callparent
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "::NoneVar"
-	assert ins[0].args[2].to_integer() == 2
+	assert ins[0].args[2].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[3].to_integer() == 21
 	assert ins[0].args[4].to_integer() == 22
 
@@ -751,7 +765,7 @@ fn test_parent_method_call() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "ParentFoz"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 2
+	assert ins[0].args[3].to_integer() == 2 // number of additional arguments
 	assert ins[0].args[4].to_integer() == 23
 	assert ins[0].args[5].to_integer() == 24
 }
@@ -768,7 +782,7 @@ fn test_call_event() {
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "OnInit"
 	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "self"
 	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
-	assert ins[0].args[3].to_integer() == 0
+	assert ins[0].args[3].to_integer() == 0 // number of additional arguments
 }
 
 fn test_property_assign() {
@@ -823,6 +837,52 @@ fn test_property_get() {
 	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "::temp0"
 	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp0"
 	assert ins[1].args[2].to_integer() == 14
+}
+
+fn test_call() {
+	mut pex_file := compile("obj2.Foz()")
+	mut ins := get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.callmethod
+	assert ins[0].args.len == 4
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj2"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 0 // number of additional arguments
+	
+	pex_file = compile("obj2.Foo()")
+	ins = get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.callmethod
+	assert ins[0].args.len == 4
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "Foo"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj2"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::NoneVar"
+	assert ins[0].args[3].to_integer() == 0 // number of additional arguments
+
+	pex_file = compile("GetOtherObject().Foo()")
+	ins = get_instructions(pex_file)
+
+	assert ins.len == 2
+	assert ins[0].op == pex.OpCode.callstatic
+	assert ins[1].op == pex.OpCode.callmethod
+	assert ins[1].args.len == 4
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "Foo"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
+	assert pex_file.get_string(ins[1].args[2].to_string_id()) == "::NoneVar"
+	assert ins[1].args[3].to_integer() == 0 // number of additional arguments
+
+	pex_file = compile("GetOtherObject().Foz()")
+	ins = get_instructions(pex_file)
+
+	assert ins.len == 2
+	assert ins[0].op == pex.OpCode.callstatic
+	assert ins[1].op == pex.OpCode.callmethod
+	assert ins[1].args.len == 4
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "Foz"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
+	assert pex_file.get_string(ins[1].args[2].to_string_id()) == "::NoneVar"
+	assert ins[1].args[3].to_integer() == 0 // number of additional arguments
 }
 
 fn test_foo() { // ???

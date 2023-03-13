@@ -1,6 +1,9 @@
 module ast
 
 import papyrus.token
+//import os
+//import json
+//import x.json2
 
 [heap]
 pub struct Table {
@@ -10,7 +13,19 @@ pub mut:
 	type_idxs			map[string]int
 
 	fns					map[string]Fn
+
+	allow_override		bool
 }
+/*
+pub fn (t Table) to_json() string {
+	//result := json.encode_pretty(t)
+	//result := json2.encode_pretty[Table](t)
+	return ""
+}
+
+pub fn (t Table) save_as_json(file string) {
+	os.write_file(file, t.to_json()) or { panic(err) }
+}*/
 
 pub struct Param {
 pub mut:
@@ -27,6 +42,11 @@ pub:
 	obj_name	string
 	is_auto		bool //flag
 	pos			token.Position
+pub mut:
+	methods		[]Fn
+	//props		map[string]Prop
+	//states	map[string]State
+	//vars		map[string]Var
 }
 
 pub struct Prop {
@@ -61,7 +81,7 @@ pub mut:
 	is_native		bool
 }
 
-pub fn (t Table) has_object(name string) bool {
+pub fn (t &Table) has_object(name string) bool {
 	return name.to_lower() in t.object_names
 }
 
@@ -77,6 +97,31 @@ pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
 	return t
+}
+
+pub fn (t &Table) typ_is_parent(child_type int, parent_type int) bool {
+	child_sym := t.get_type_symbol(child_type)
+	parent_sym := t.get_type_symbol(parent_type)
+
+	if child_sym.parent_idx == 0 {
+		return false
+	}
+
+	mut tsym := t.get_type_symbol(child_sym.parent_idx)
+	for {
+		if tsym.name == parent_sym.name {
+			return true
+		}
+
+		if tsym.parent_idx != 0 {
+			tsym = t.get_type_symbol(tsym.parent_idx)
+			continue
+		}
+		
+		break
+	}
+
+	return false
 }
 
 pub fn (t &Table) has_fn(obj_name string, name string) bool {
@@ -115,7 +160,12 @@ pub fn (mut t Table) add_placeholder_type(name string) int {
 
 [inline]
 pub fn (mut t Table) register_type_symbol(typ TypeSymbol) int {
-
+	$if test {
+		if typ.kind == .script {
+			assert t.has_object(typ.name)
+		}
+	}
+	
 	existing_idx := t.type_idxs[typ.name.to_lower()]
 	if existing_idx > 0 {
 		ex_type := t.types[existing_idx]
@@ -128,31 +178,22 @@ pub fn (mut t Table) register_type_symbol(typ TypeSymbol) int {
 				}
 				return existing_idx
 			}
-			else {/*
-				// builtin
-				// this will override the already registered builtin types
-				// with the actual v struct declaration in the source
-				if (existing_idx >= string_type_idx && existing_idx <= map_type_idx)
-					|| existing_idx == error_type_idx {
-					if existing_idx == string_type_idx {
-						// existing_type := t.types[existing_idx]
-						t.types[existing_idx] = TypeSymbol{
-							...typ
-							kind: ex_type.kind
-						}
-					} else {
-						t.types[existing_idx] = typ
+			else {
+				if t.allow_override {
+					t.types[existing_idx] = TypeSymbol{
+						...typ
+						methods: ex_type.methods
 					}
 					return existing_idx
-				}*/
-				//panic("WARNING: $typ.name, $existing_idx")
-				//return -1
-
-				panic("Warning: override type - table.register_type_symbol()")
-				return existing_idx
+				}
+				else {
+					panic("Warning: override type(${typ.name}) - table.register_type_symbol()")
+					return existing_idx
+				}
 			}
 		}
 	}
+	
 	typ_idx := t.types.len
 	t.types << typ
 	t.type_idxs[typ.name.to_lower()] = typ_idx
@@ -168,11 +209,19 @@ pub fn (t &Table) known_type(name string) bool {
 	return t.find_type_idx(name) != 0
 }
 
+pub fn (mut t Table) find_or_add_placeholder_type(name string) int {
+	if !t.known_type(name) {
+		return t.add_placeholder_type(name)
+	}
+
+	return t.find_type_idx(name)
+}
+
 [inline]
-pub fn (t &Table) find_type(name string) ?TypeSymbol {
+pub fn (t &Table) find_type(name string) ?&TypeSymbol {
 	idx := t.type_idxs[name.to_lower()]
 	if idx > 0 {
-		return t.types[idx]
+		return &t.types[idx]
 	}
 	return none
 }
@@ -192,6 +241,16 @@ pub fn (t &Table) get_type_symbol(typ Type) &TypeSymbol {
 pub fn (t &Table) array_name(elem_type Type) string {
 	elem_type_sym := t.get_type_symbol(elem_type)
 	return '$elem_type_sym.name[]'
+}
+
+[inline]
+pub fn (t &Table) type_is_array(typ Type) bool {
+	if typ > 0 {
+		sym := t.get_type_symbol(typ)
+		return sym.kind == .array
+	}
+	
+	return false
 }
 
 pub fn (mut t Table) find_or_register_array(elem_type Type) int {

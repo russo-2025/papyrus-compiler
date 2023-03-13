@@ -12,7 +12,7 @@ pub mut:
 	name		string
 	methods		[]Fn
 	props		map[string]Prop
-	states		map[string]State
+	states		map[string]&State
 	vars		map[string]Var
 }
 
@@ -158,17 +158,11 @@ pub fn (t &TypeSymbol) find_method(name string) ?Fn {
 }
 
 pub fn (mut t TypeSymbol) register_method(new_fn Fn) int {
-	// returns a method index, stored in the ast.FnDecl
-	// for faster lookup in the checker's fn_decl method
-	// println('reg me $new_fn.name nr_args=$new_fn.args.len')
-	//println("register method: $new_fn.obj_name . $new_fn.name, $new_fn.is_static, $new_fn.return_type")
-	
 	t.methods << new_fn
-	
 	return t.methods.len - 1
 }
 
-pub fn (t TypeSymbol) has_property(name string) bool {
+pub fn (t &TypeSymbol) has_property(name string) bool {
 	key := name.to_lower()
 	
 	if _ := t.props[key] {
@@ -178,7 +172,7 @@ pub fn (t TypeSymbol) has_property(name string) bool {
 	return false
 }
 
-pub fn (t TypeSymbol) find_property(name string) ?Prop {
+pub fn (t &TypeSymbol) find_property(name string) ?Prop {
 	key := name.to_lower()
 	
 	if p := t.props[key] {
@@ -194,7 +188,7 @@ pub fn (mut t TypeSymbol) register_property(p Prop) {
 	t.props[key] = p
 }
 
-pub fn (t TypeSymbol) has_state(name string) bool {
+pub fn (t &TypeSymbol) has_state(name string) bool {
 	key := name.to_lower()
 	
 	if _ := t.states[key] {
@@ -204,7 +198,7 @@ pub fn (t TypeSymbol) has_state(name string) bool {
 	return false
 }
 
-pub fn (t TypeSymbol) find_state(name string) ?State {
+pub fn (t &TypeSymbol) find_state(name string) ?&State {
 	key := name.to_lower()
 	
 	if s := t.states[key] {
@@ -216,10 +210,10 @@ pub fn (t TypeSymbol) find_state(name string) ?State {
 
 pub fn (mut t TypeSymbol) register_state(s State) {
 	key := s.name.to_lower()
-	t.states[key] = s
+	t.states[key] = &s
 }
 
-pub fn (t TypeSymbol) has_var(name string) bool {
+pub fn (t &TypeSymbol) has_var(name string) bool {
 	key := name.to_lower()
 	
 	if _ := t.vars[key] {
@@ -229,7 +223,7 @@ pub fn (t TypeSymbol) has_var(name string) bool {
 	return false
 }
 
-pub fn (t TypeSymbol) find_var(name string) ?Var {
+pub fn (t &TypeSymbol) find_var(name string) ?Var {
 	key := name.to_lower()
 	
 	if s := t.vars[key] {
@@ -242,4 +236,31 @@ pub fn (t TypeSymbol) find_var(name string) ?Var {
 pub fn (mut t TypeSymbol) register_var(s Var) {
 	key := s.name.to_lower()
 	t.vars[key] = s
+}
+
+pub fn (t &TypeSymbol) has_method_in_state(state_name string, name string) bool {
+	t.find_method_in_state(state_name, name) or { return false }
+	return true
+}
+
+pub fn (t &TypeSymbol) find_method_in_state(state_name string, name string) ?Fn {
+	key := state_name.to_lower()
+	state := t.states[key] or { return none}
+
+	s := name.to_lower()
+	for method in state.methods {
+		if method.lname == s {
+			return method
+		}
+	}
+
+	return none
+}
+
+pub fn (mut t TypeSymbol) register_method_in_state(state_name string, new_fn Fn) int {
+	key := state_name.to_lower()
+	mut state := t.states[key] or { panic("state not found") }
+
+	state.methods << new_fn
+	return state.methods.len - 1
 }

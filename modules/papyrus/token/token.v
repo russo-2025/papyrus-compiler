@@ -2,12 +2,13 @@ module token
 
 pub struct Token {
 pub:
-	kind    Kind // the token number/enum; for quick comparisons
-	lit     string // literal representation of the token
-	line_nr int // the line number in the source where the token occured
-	pos     int // the position of the token in scanner text
-	len     int // length of the literal
-	tidx    int // the index of the token
+	kind		Kind // the token number/enum; for quick comparisons
+	lit			string // literal representation of the token
+	line_nr		int // the line number in the source where the token occured
+	pos			int // the position of the token in scanner text
+	len			int // length of the literal
+	tidx		int // the index of the token
+	lt_escaped	bool
 }
 
 pub enum Kind {

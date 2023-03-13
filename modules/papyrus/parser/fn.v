@@ -65,7 +65,7 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	name := p.check_name()
 	
 	params := p.fn_args()
-	flags := p.parse_flags(pos.line_nr + 1)
+	flags := p.parse_flags(p.tok.line_nr + 1)
 	is_native := token.Kind.key_native in flags
 	is_global := token.Kind.key_global in flags
 
@@ -79,40 +79,47 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 	scope := p.scope
 	p.close_scope()
 	
-	if p.is_empty_state() && !p.inside_property {
-		if is_global {
-			if !p.table.has_fn(p.cur_obj_name, name) {
-				p.table.register_fn(ast.Fn{
-					pos: pos
-					params: params
-					return_type: return_type
-					state_name: p.cur_state_name
-					obj_name: p.cur_obj_name
-					name: name
-					lname: name.to_lower()
-					is_global: is_global
-					is_native: is_native
-				})
+	table_func := ast.Fn{
+		pos: pos
+		params: params
+		return_type: return_type
+		state_name: p.cur_state_name
+		obj_name: p.cur_obj_name
+		name: name
+		lname: name.to_lower()
+		is_global: is_global
+		is_native: is_native
+	}
+
+	if p.is_empty_state() {
+		if !p.inside_property {
+			if is_global {
+				if !p.table.has_fn(p.cur_obj_name, name) {
+					p.table.register_fn(table_func)
+				}
 			}
+			else {
+				mut sym := p.table.get_type_symbol(p.cur_object)
+				
+				if !sym.has_method(name) {
+					sym.register_method(table_func)
+				}
+			}
+		}
+	}
+	else {
+		if is_global {
+			eprintln("Parser TODO: global fn in state. wtf?")
 		}
 		else {
 			mut sym := p.table.get_type_symbol(p.cur_object)
 			
-			if !sym.has_method(name) {
-				sym.register_method(ast.Fn{
-					pos: pos
-					params: params
-					return_type: return_type
-					state_name: p.cur_state_name
-					obj_name: p.cur_obj_name
-					name: name
-					lname: name.to_lower()
-					is_global: is_global
-					is_native: is_native
-				})
+			if !sym.has_method_in_state(p.cur_state_name, name) {
+				sym.register_method_in_state(p.cur_state_name, table_func)
 			}
 		}
 	}
+
 
 	return ast.FnDecl{
 		name: name
@@ -144,7 +151,7 @@ fn (mut p Parser) fn_args() []ast.Param {
 			if p.tok.kind == .assign {
 				p.next()
 
-				default_value := p.expr(0)
+				default_value := p.expr(0) or { ast.EmptyExpr{} }
 
 				if default_value is ast.StringLiteral { param.default_value = default_value.val }
 				else if default_value is ast.BoolLiteral { param.default_value = default_value.val }
@@ -152,8 +159,8 @@ fn (mut p Parser) fn_args() []ast.Param {
 				else if default_value is ast.FloatLiteral { param.default_value = default_value.val }
 				else if default_value is ast.NoneLiteral { param.default_value = "None" }
 				else {
-						println(default_value)
-						p.error("default value is not literal")
+					println(default_value)
+					p.error("default value is not literal")
 				}
 
 				param.is_optional = true
@@ -194,7 +201,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 
 			name := p.check_name()
 			p.check(.assign)
-			expr := p.expr(0)
+			expr := p.expr(0) or { p.error("invalid expression") }
 			pos := arg_start_pos.extend(p.prev_tok.position())
 			
 			if name in redefined_args {
@@ -212,7 +219,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 				p.error("parameter is expected in the format 'name = value`") // ожидается параметр в формате `name = value`
 			}
 
-			e := p.expr(0)
+			e := p.expr(0) or { p.error("invalid expression") }
 			pos := arg_start_pos.extend(p.prev_tok.position())
 			args << ast.CallArg{
 				expr: e

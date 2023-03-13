@@ -118,7 +118,7 @@ pub fn (mut w Writer) write[T](v T) {
 }
 
 [inline]
-fn (mut r Reader) read_string_ref() ?u16 {
+fn (mut r Reader) read_string_ref() !u16 {
 	val := r.read[u16]()
 	
 	if val >= r.pex.string_table.len {

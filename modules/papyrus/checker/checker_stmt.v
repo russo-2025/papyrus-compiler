@@ -10,6 +10,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			c.cur_obj_name = node.name
 			c.cur_parent_obj_name = node.parent_name
 			c.cur_obj = c.table.find_type_idx(node.name)
+			c.auto_state_is_exist = false
 
 			if node.parent_name != "" {
 				if !c.table.known_type(node.parent_name) {
@@ -18,17 +19,13 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			}
 		}
 		ast.StateDecl {
-			mut i := 0
-			
 			c.cur_state_name = node.name
-
+			
+			mut i := 0
 			for i < node.fns.len {
 				c.fn_decl(mut node.fns[i])
 				i++
 			}
-
-			c.temp_state_fns = map[string]bool{}
-			c.cur_state_name = pex.empty_state_name
 
 			if node.is_auto {
 				if !c.auto_state_is_exist {
@@ -39,12 +36,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 				}
 			}
 
-			sym := c.table.get_type_symbol(c.cur_obj)
-			if t_state := sym.find_state(node.name) {
-				if t_state.pos.pos != node.pos.pos {
-					c.error("state with this name already exists", node.pos)
-				}
-			}
+			c.cur_state_name = pex.empty_state_name
 		}
 		ast.FnDecl {
 			c.fn_decl(mut node)
@@ -91,7 +83,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.Return {
 			typ := c.expr(mut node.expr)
 			
-			if c.valid_type(typ, c.cur_fn.return_type) {}
+			if c.valid_type(c.cur_fn.return_type, typ) {}
 			else if c.can_cast(typ, c.cur_fn.return_type) {
 				new_expr := ast.CastExpr {
 					expr: node.expr
@@ -219,7 +211,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 		else {
 			type_name := c.get_type_name(param.typ)
-			c.error("invalid param type `$type_name`", node.pos)
+			c.error("unknown type of function argument `$type_name`", node.pos)
 		}
 	}
 	
@@ -240,13 +232,11 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.stmts(mut node.stmts)
 
 	if !c.is_empty_state() {
-		if !c.temp_state_fns[node.name] {
-			if !c.inside_property {
-				c.temp_state_fns[node.name] = true
+		mut sym := c.table.get_type_symbol(c.cur_obj)
+		if tfunc := sym.find_method_in_state(c.cur_state_name, node.name) {
+			if tfunc.pos.pos != node.pos.pos {
+				c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
 			}
-		}
-		else {
-			c.error("function with this name already exists: ${c.cur_obj_name}.${node.name}", node.pos)
 		}
 
 		if func := c.find_fn(c.cur_obj, c.cur_obj_name, node.name) {
@@ -334,18 +324,11 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	}
 
 	if obj := c.cur_scope.find_var(node.name) {
-		if node.pos.pos >= obj.pos.pos {
+		if node.pos.pos != obj.pos.pos {
 			c.error("variable with name `$node.name` already exists", node.pos)
 			return
 		}
 	}
-
-	c.cur_scope.register(ast.ScopeVar{
-		name: node.name
-		typ: node.typ
-		pos: node.pos
-		is_used: false
-	})
 	
 	c.stmt(mut node.assign)
 }

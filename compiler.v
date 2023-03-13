@@ -1,6 +1,8 @@
 module main
 
 import time
+import os
+import json
 import builder
 import pref
 import pex
@@ -18,6 +20,11 @@ fn main() {
 		.read {
 			pex_file := pex.read_from_file(prefs.paths[0])
 			pex_file.print()
+		}
+		.create_dump {
+			dump_objects := pex.create_dump_from_pex_dir(prefs.paths[0])
+			json_data := json.encode_pretty(dump_objects)
+			os.write_file(os.real_path("Dump.json"), json_data) or { panic(err) }
 		}
 	}
 

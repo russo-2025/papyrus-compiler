@@ -2,12 +2,14 @@ module builder
 
 import os
 import time
+//import json
 
 import pref
 import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 import gen.gen_pex
+//import pex
 
 const (
 	cache_path = os.real_path('./.papyrus')
@@ -19,11 +21,12 @@ struct Builder {
 mut:
 	timers			map[string]time.StopWatch
 pub:
-	output_dir	string
+	output_dir		string
 	pref			&pref.Preferences
 	checker			checker.Checker
 	global_scope	&ast.Scope
 pub mut:
+	files_names		[]string
 	parsed_files	[]ast.File
 	table			&ast.Table
 }
@@ -44,10 +47,10 @@ fn new_builder(prefs &pref.Preferences) Builder{
 	}
 }
 
-pub fn compile(prefs &pref.Preferences) {
+pub fn compile(prefs &pref.Preferences) bool {
 	if prefs.backend == .original {
 		compile_original(prefs)
-		return
+		return true
 	}
 
 	os.ensure_folder_is_writable(prefs.paths[0]) or {
@@ -56,18 +59,27 @@ pub fn compile(prefs &pref.Preferences) {
 
 	mut b := new_builder(prefs)
 	mut c := checker.new_checker(b.table, b.pref)
-	
-	b.start_timer('load headers files')
-	b.load_headers_files()
-	b.print_timer('load headers files')
 
+	files, files_names := find_all_src_files(b.pref.paths)
+	b.files_names = files_names
+
+	b.start_timer('parse headers files')
+	b.parse_headers_files()
+	b.print_timer('parse headers files')
+
+	println("${files.len} files in total")
 	b.start_timer('parse files')
-	files := get_all_src_files(b.pref.paths)
-	mut parsed_files := parser.parse_files(files, b.table, b.pref, b.global_scope)
+	b.parsed_files = parser.parse_files(files, b.table, b.pref, b.global_scope)
 	b.print_timer('parse files')
 
+	/*$if debug {
+		b.table.save_as_json("Table.json")
+	}*/
+	
+	//fns_dump.load("FunctionsDump.json", mut b.table) or { panic(err) }
+
 	b.start_timer('check files')
-	c.check_files(mut parsed_files)
+	c.check_files(mut b.parsed_files)
 	b.print_timer('check files')
 
 	if !os.exists(cache_path) {
@@ -75,28 +87,44 @@ pub fn compile(prefs &pref.Preferences) {
 	}
 
 	if c.errors.len != 0 {
-		assert false, "checker.errors.len != 0"
-		return
+		println("failed to compile files, ${c.errors.len} errors")
+
+		$if test {
+			assert false, "checker.errors.len != 0"
+		}
+
+		return false
 	}
-	
+/*
+	b.save_info()
+*/
 	b.start_timer('gen files')
 	
 	match b.pref.backend {
 		.pex {
-			b.compile_pex(parsed_files)
+			b.compile_pex(b.parsed_files)
 		}
 		else { panic('invalid compiler backend') }
 	}
 
 	b.print_timer('gen files')
+	return true
 }
 
 fn (b Builder) compile_pex(parsed_files []ast.File) {
+	mut print_func := fn(file_name string) {
+		println('gen `$file_name`')
+	}
+
+	if b.pref.output_mode == .silent || (b.pref.no_cache && b.parsed_files.len > 30) {
+		print_func = fn(str string){}
+	}
+	
 	for pfile in parsed_files {
 		if is_outdated(pfile, b.pref) {
 			output_file_name := pfile.file_name + ".pex"
 			output_file_path := os.join_path(b.pref.out_dir[0], output_file_name)
-			b.print('gen `$output_file_name`')
+			print_func(output_file_name)
 			gen_pex.gen(pfile, output_file_path, b.table, b.pref)
 			
 			if b.pref.out_dir.len > 1 {
@@ -106,10 +134,12 @@ fn (b Builder) compile_pex(parsed_files []ast.File) {
 	}
 }
 
+[inline]
 fn (mut b Builder) start_timer(name string) {
 	b.timers[name] = time.new_stopwatch()
 }
 
+[inline]
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
 		time_ms := f32(sw.elapsed().microseconds()) / 1000
@@ -120,22 +150,148 @@ fn (mut b Builder) print_timer(name string) {
 		panic('invalid timer')
 	}
 }
+/*
+fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
+	mut parent_idx := 0
 
-fn (mut b Builder) load_headers_files()  {
+	if dump_obj.parent_name != "" {
+		parent_idx = b.table.find_or_add_placeholder_type(dump_obj.parent_name)
+	}
+
+	b.table.register_object(dump_obj.name)
+	b.table.register_type_symbol(
+		parent_idx: parent_idx
+		kind: .script
+		name: dump_obj.name
+		obj_name: dump_obj.name
+		methods: []ast.Fn{}
+	)
+
+	mut sym := b.table.find_type(dump_obj.name) or { panic("failed to find type") }
+
+	for dump_method in dump_obj.methods {
+		if !sym.has_method(dump_method.name) {
+			mut tmethod := ast.Fn {
+				return_type: b.table.find_or_add_placeholder_type(dump_method.return_type)
+				obj_name: dump_obj.name
+				state_name: pex.empty_state_name
+				params: []ast.Param{}
+				name: dump_method.name
+				lname: dump_method.name.to_lower()
+				is_native: dump_method.is_native
+			}
+
+			for dump_arg in dump_method.arguments {
+				tmethod.params << ast.Param{
+					name: dump_arg.name
+					typ: b.table.find_or_add_placeholder_type(dump_arg.typ)
+					//is_optional		bool
+					//default_value	string
+				}
+			}
+
+			sym.register_method(tmethod)
+		}
+	}
+}
+*/
+fn (mut b Builder) parse_headers_files()  {
+	if !os.is_dir(b.pref.papyrus_headers_dir) {
+		panic("invalid papyrus headers dir - `${b.pref.papyrus_headers_dir}`")
+	}
+	/*
+	mut dump_objects := []pex.DumpObject{}
+	b.table.allow_override = true
+
+	// load headers from Dump.json 
+	if os.is_file("Dump.json") {
+		json_data := os.read_file("Dump.json") or { panic(err) }
+		dump_objects = json.decode([]pex.DumpObject, json_data) or { panic(err) }
+		println("obj len: ${dump_objects.len}")
+
+		for dump_obj in dump_objects {
+			// if a file with this name already exists, skip it
+			if dump_obj.name.to_lower() in b.files_names {
+				continue
+			}
+
+			b.register_info_from_dump(dump_obj)
+		}
+	}
+
+	// load headers from pex files
+	files_pex := os.walk_ext(b.pref.papyrus_headers_dir, ".pex")
+	dump_objects = pex.create_dump_from_pex_files(files_pex)
+	println("obj len: ${dump_objects.len}")
+
+	for dump_obj in dump_objects {
+		// if a file with this name already exists, skip it
+		if dump_obj.name.to_lower() in b.files_names {
+			continue
+		}
+
+		b.register_info_from_dump(dump_obj)
+	}
+*/
+
+	// load headers from psc(source) files 
 	if b.pref.papyrus_headers_dir in b.pref.paths {
 		// no need to parse the same file many times
 		return 
 	}
+	
+	mut header_files := []string{}
+	mut ref_header_files := &header_files
+	os.walk(b.pref.papyrus_headers_dir, fn[b, mut ref_header_files](file string) {
+		name := os.file_name(file).all_before_last(".").to_lower()
+		if os.is_file(file) && name !in b.files_names {
+			ref_header_files << file
+		}
+	})
 
-	if os.is_dir(b.pref.papyrus_headers_dir) {
-		files := os.walk_ext(b.pref.papyrus_headers_dir, ".psc")
-		parser.parse_files(files, b.table, b.pref, b.global_scope)
-	}
-	else {
-		panic("invalid papyrus headers dir - `${b.pref.papyrus_headers_dir}`")
-	}
+	parser.parse_files(header_files, b.table, b.pref, b.global_scope)
 }
+/*
+fn (b Builder) save_info() {
+	mut all_fns_count := 0
+	mut methods_count := 0
+	mut methods_native_count := 0
+	mut global_fns_count := 0
+	mut global_native_fns_count := 0
 
+	for tsym in b.table.types {
+		for tmethod in tsym.methods {
+			all_fns_count++
+
+			if tmethod.is_native {
+				methods_native_count++
+			}
+			else {
+				methods_count++
+			}
+		}
+	}
+
+	for _, tfunc in b.table.fns {
+		all_fns_count++
+
+		if tfunc.is_native {
+			global_native_fns_count++
+		}
+		else {
+			global_fns_count++
+		}
+	}
+
+	println("total functions(all): ${all_fns_count}")
+	println("total methods(no native): ${methods_count}")
+	println("total methods(native): ${methods_native_count}")
+	println("total global func`s(no native): ${global_fns_count}")
+	println("total global func`s(native): ${global_native_fns_count}")
+	
+}
+*/
+[inline]
 fn (b Builder) print(msg string) {
 	if b.pref.output_mode == .silent {
 		return
@@ -144,12 +300,17 @@ fn (b Builder) print(msg string) {
 	println(msg)
 }
 
-fn get_all_src_files(paths []string) []string {
+fn find_all_src_files(paths []string) ([]string, []string) {
 	mut files := []string{}
+	mut names := []string{}
 
 	for path in paths {
 		files << os.walk_ext(path, ".psc")
 	}
 
-	return files
+	for file in files {
+		names << os.file_name(file).all_before_last(".").to_lower()
+	}
+
+	return files, names
 }

@@ -50,6 +50,7 @@ pub enum OpCode as u8 {
 }
 
 pub const (
+	// https://open-papyrus.github.io/docs/Pex_File_Format/Endianness.html
 	//LITTLE_ENDIAN
 	le_magic_number = u32(0xFA57C0DE)
 	
@@ -78,7 +79,7 @@ pub mut:
 	machine_name		string	// Machine name used to compile the script
 
 	//String Table
-	string_table		[]string //StringTable to look up member names and other stuff from
+	string_table		[]string // StringTable to look up member names and other stuff from
 
 	//Debug Info
 	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
@@ -191,10 +192,18 @@ pub mut:
 	return_type			StringId
 	docstring			StringId
 	user_flags			u32	
-	flags				byte //первый бит - global, второй бит - native
+	flags				byte //1 bit - global, 2 bit - native
 	params				[]VariableType
 	locals				[]VariableType
 	instructions		[]Instruction
+}
+
+pub fn (info FunctionInfo) is_global() bool {
+	return info.flags & 0b1 != 0
+}
+
+pub fn (info FunctionInfo) is_native() bool {
+	return info.flags & 0b10 != 0
 }
 
 pub struct VariableType {
@@ -325,7 +334,7 @@ pub fn (p PexFile) get_state(obj &Object, name string) ?&State {
 	return none
 }
 
-fn (p PexFile) get_empty_state(obj &Object) ?&State {
+pub fn (p PexFile) get_empty_state(obj &Object) ?&State {
 	name := ""
 
 	for i := 0; i < obj.states.len; i++ {
@@ -338,7 +347,7 @@ fn (p PexFile) get_empty_state(obj &Object) ?&State {
 	return none
 }
 
-fn (p PexFile) get_default_state(obj &Object) ?&State {
+pub fn (p PexFile) get_default_state(obj &Object) ?&State {
 	name := p.get_string(obj.auto_state_name)
 
 	for i := 0; i < obj.states.len; i++ {
@@ -351,7 +360,7 @@ fn (p PexFile) get_default_state(obj &Object) ?&State {
 	return none
 }
 
-fn (p PexFile) get_function_from_state(state &State, func_name string) ?&Function {
+pub fn (p PexFile) get_function_from_state(state &State, func_name string) ?&Function {
 	for i := 0; i < state.functions.len; i++ {
 		tname := p.get_string(state.functions[i].name)
 		if tname == func_name {

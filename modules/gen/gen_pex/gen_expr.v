@@ -222,9 +222,7 @@ fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableValue {
 	//opcode: 'callmethod', args: [ident(Foo), ident(a), ident(::NoneVar), integer(123)]
 	//opcode: 'callparent', args: [ident(Foo), ident(::NoneVar), integer(123)]
 
-	lname := expr.name.to_lower()
-
-	if lname == "find" || lname == "rfind"  {
+	if expr.is_array_find {
 		return g.gen_array_find_element(mut expr)
 	}
 
@@ -262,7 +260,7 @@ fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableValue {
 fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue {
 	lname := expr.name.to_lower()
 	
-	assert lname == "find" || lname == "rfind" 
+	assert lname == "find" || lname == "rfind"
 	assert expr.args.len == 2
 
 	//массив для поиска
@@ -363,7 +361,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 			result_value = g.gen_prefix_operator(mut &expr)
 		}
 		ast.Ident {
-			if expr.is_object_var_or_prpperty {
+			if expr.is_object_property_or_var {
 				sym := g.table.get_type_symbol(g.cur_obj_type)
 				if prop := sym.find_property(expr.name) {
 					
@@ -522,14 +520,12 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
 			}
 		}
-
 		.logical_and {
 			panic("Gen error: infix operator: `and`")
 		}
 		.logical_or {
 			panic("Gen error: infix operator: `or`")
 		}
-
 		.eq {
 			return .cmp_eq
 		}
@@ -548,7 +544,6 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 		.le {
 			return .cmp_le
 		}
-
 		else {
 			panic("Gen error: invalid infix operator: `$kind`")
 		}

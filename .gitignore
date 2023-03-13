@@ -1,5 +1,6 @@
 bin/*.papyrus
 bin/*.exe
+bin/*.lib
 bin/*.pdb
 bin/*.ilk
 bin/*.rar

@@ -3,9 +3,9 @@ module parser
 import papyrus.ast
 import papyrus.token
 
-pub fn (mut p Parser) expr(precedence int) ast.Expr {
+pub fn (mut p Parser) expr(precedence int) ?ast.Expr {
 	mut node := ast.Expr(ast.EmptyExpr{ pos:p.tok.position() })
-	
+
 	match p.tok.kind {
 		.key_new {
 			node = p.new_expr()
@@ -58,7 +58,7 @@ pub fn (mut p Parser) expr(precedence int) ast.Expr {
 		.lpar {
 			mut pos := p.tok.position()
 			p.check(.lpar)
-			node = p.expr(0)
+			node = p.expr(0) or { ast.EmptyExpr{} }
 			p.check(.rpar)
 			
 			node = ast.ParExpr{
@@ -66,9 +66,8 @@ pub fn (mut p Parser) expr(precedence int) ast.Expr {
 				pos: pos.extend(p.prev_tok.position())
 			}
 		}
-
 		else {
-			return ast.EmptyExpr{}
+			return none
 		}
 	}
 
@@ -79,22 +78,25 @@ pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	mut node := left
 
 	for p.tok.precedence() > precedence {
-		if p.tok.kind == .dot {
+		//println("aaaasw ${left} ${p.tok}")
+		line_check := p.tok.line_nr - 1 == left.pos.line_nr || p.tok.lt_escaped
+		if p.tok.kind == .dot && line_check {
 			node = p.dot_expr(node)
 		}
-		else if p.tok.kind == .lsbr {
+		else if p.tok.kind == .lsbr && line_check {
 			node = p.index_expr(node)
 		}
 		else if p.tok.kind == .key_as {
 			node = p.cast_expr(node)
 		}
-		else if p.tok.kind.is_infix() {
+		else if p.tok.kind.is_infix() && line_check {
 			node = p.infix_expr(node)
 		}
 		else {
 			return node
 		}
 	}
+	
 	return node
 }
 
@@ -107,8 +109,7 @@ pub fn (mut p Parser) new_expr() ast.Expr {
 	elem_type := p.get_parsed_type()
 
 	p.check(.lsbr)
-
-	expr_len := p.expr(0)
+	expr_len := p.expr(0) or { p.error("invalid index expression") }
 	p.check(.rsbr)
 
 	typ := ast.new_type(p.table.find_or_register_array(elem_type))
@@ -209,10 +210,11 @@ pub fn (mut p Parser) string_expr() ast.StringLiteral {
 pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	p.check(.dot)
 
+	name_line_nr := p.tok.line_nr
 	name_pos := p.tok.position()
 	field_name := p.check_name()
 
-	if p.tok.kind == .lpar {
+	if p.tok.kind == .lpar && p.tok.line_nr == name_line_nr {
 		p.next()
 		args, redefined_args := p.call_args()
 		p.check(.rpar)
@@ -243,7 +245,7 @@ pub fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
 	start_pos := p.tok.position()
 	
 	p.check(.lsbr)
-	expr := p.expr(0)
+	expr := p.expr(0) or { p.error("invalid index expression") }
 	// [expr]
 	pos := start_pos.extend(p.tok.position())
 	p.check(.rsbr)
@@ -272,7 +274,7 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 
 	p.next()
-	mut right := p.expr(precedence)
+	mut right := p.expr(precedence) or { p.error("invalid right operand in infix expression") }
 
 	pos.update_last_line(p.prev_tok.line_nr)
 
@@ -290,7 +292,7 @@ pub fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 	op := p.tok.kind
 	p.next()
 
-	mut right := p.expr( int(token.Precedence.prefix) )
+	mut right := p.expr( int(token.Precedence.prefix) ) or { p.error("invalid right operand in prefix expression") }
 
 	pos.update_last_line(p.prev_tok.line_nr)
 
@@ -303,11 +305,10 @@ pub fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 
 [inline]
 pub fn (mut p Parser) name_expr() ast.Expr {
-	if p.tok.kind == .name && p.peek_tok.kind == .lpar {
+	if p.tok.kind == .name && p.peek_tok.kind == .lpar && p.peek_tok.line_nr == p.tok.line_nr {
 		name_pos := p.tok.position()
 		name := p.tok.lit
 		p.next()
-		//left := p.parse_ident()
 		p.check(.lpar)
 		args, redefined_args := p.call_args()
 		p.check(.rpar)

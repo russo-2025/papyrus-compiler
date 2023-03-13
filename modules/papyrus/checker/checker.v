@@ -25,8 +25,6 @@ pub mut:
 	cur_parent_obj_name	string
 	cur_obj				ast.Type
 	cur_state_name		string
-
-	temp_state_fns		map[string]bool
 }
 
 pub fn new_checker(table &ast.Table, prefs &pref.Preferences) Checker {
@@ -70,23 +68,22 @@ fn (c Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
 
-//может ли тип t2 иметь значение с типом t1
-pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
-	if t1 == t2 {
+//может ли тип var_typ иметь значение с типом value_typ
+pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type) bool {
+	assert var_typ != 0
+	assert value_typ != 0
+
+	if var_typ == value_typ {
 		return true
 	}
-
-	s1 := c.table.get_type_symbol(t1)
-	s2 := c.table.get_type_symbol(t2)
-
-	if isnil(s1) || isnil(s2) {
-		return false
-	}
 	
-	match s1.kind {
+	var_sym := c.table.get_type_symbol(var_typ)
+	value_sym := c.table.get_type_symbol(value_typ)
+	
+	match var_sym.kind {
 		.array,
 		.script {
-			if s2.kind == .none_ {
+			if value_sym.kind == .none_ {
 				return true
 			}
 		}
@@ -97,34 +94,70 @@ pub fn (mut c Checker) valid_type(t1 ast.Type, t2 ast.Type) bool {
 }
 
 //можно ли кастануть тип from_type к типу to_type
-pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
-	assert !c.valid_type(to_type, from_type)
-
+pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
+	assert from_type != 0
+	assert to_type != 0
+	assert from_type != to_type
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
 
-	if isnil(from_sym) || isnil(to_sym) {
-		return false
+	match to_sym.kind {
+		.placeholder { panic("wtf") }
+		.none_ {
+			return false
+		}
+		.int {
+			return false
+		}
+		.float {
+			match from_sym.kind {
+				.int { return true }
+				else { return false }
+			}
+
+			return false
+		}
+		.string {
+			return true
+		}
+		.bool {
+			return true
+		}
+		.array {
+			return false
+		}
+		.script {
+			return c.table.typ_is_parent(from_type, to_type)
+		}
 	}
+
+	return false
+}
+
+//можно ли кастануть тип from_type к типу to_type
+pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
+	assert from_type != 0
+	assert to_type != 0
+	assert from_type != to_type
+	
+	from_sym := c.table.get_type_symbol(from_type)
+	to_sym := c.table.get_type_symbol(to_type)
 
 	match from_sym.kind {
 		.placeholder { panic("wtf") }
 		.none_ {
 			match to_sym.kind {
-				.array,
-				.script,
 				.string,
 				.bool { return true }
-				else { return false }
+				else {}
 			}
-			return false
 		}
 		.int {
 			match to_sym.kind {
 				.float,
 				.string,
 				.bool { return true }
-				else { return false}
+				else {}
 			}
 		}
 		.float {
@@ -132,7 +165,7 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 				.int,
 				.string,
 				.bool { return true }
-				else { return false}
+				else {}
 			}
 		}
 		.string {
@@ -140,25 +173,35 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 				.int,
 				.float,
 				.bool { return true }
-				else { return false}
+				else {}
 			}
 		}
 		.bool {
-			return true
+			match to_sym.kind {
+				.int,
+				.float,
+				.string { return true }
+				else { }
+			}
+			
 		}
 		.array {
 			match to_sym.kind {
 				.string,
 				.bool { return true }
-				else { return false}
+				else {}
 			}
 		}
 		.script {
 			match to_sym.kind {
 				.string,
-				.bool,
-				.script { return true }
-				else { return false}
+				.bool { return true }
+				.script {
+					if c.table.typ_is_parent(from_type, to_type) || c.table.typ_is_parent(to_type, from_type) {
+						return true
+					}
+				}
+				else {}
 			}
 		}
 	}
@@ -183,21 +226,7 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	return &new_node
 }
 
-pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?ast.Fn {
-	mut typ := a_typ
-
-	if typ == 0 {
-		typ = c.table.find_type_idx(obj_name)
-	}
-
-	if func := c.table.find_fn(obj_name, name) {
-		return func
-	}
-
-	if typ == 0 {
-		return none
-	}
-	
+pub fn (mut c Checker) find_method(typ ast.Type, name string) ?ast.Fn {
 	mut sym := c.table.get_type_symbol(typ)
 
 	mut tsym := sym
@@ -270,6 +299,97 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?as
 			is_global: false
 		}
 	}
+
+	return none
+}
+
+pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?&ast.Fn {
+	mut typ := a_typ
+
+	if typ == 0 {
+		typ = c.table.find_type_idx(obj_name)
+	}
+
+	if func := c.table.find_fn(obj_name, name) {
+		return &func
+	}
+
+	if typ == 0 {
+		return none
+	}
+	
+	mut sym := c.table.get_type_symbol(typ)
+
+	mut tsym := sym
+	for {
+		if func := tsym.find_method(name) {
+			return &func
+		}
+
+		if tsym.parent_idx > 0 {
+			tsym = c.table.get_type_symbol(tsym.parent_idx)
+			continue
+		}
+
+		break
+	}
+
+	if sym.kind == .array {
+		//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
+		//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
+		
+		lname := name.to_lower()
+		if lname == "find" || lname == "rfind" {
+			elem_type := (sym.info as ast.Array).elem_type
+			
+			return &ast.Fn{
+				params: [
+					ast.Param{
+						name: "value"
+						typ: elem_type
+						is_optional: false
+						default_value: ""
+					},
+					ast.Param{
+						name: "startIndex"
+						typ: ast.int_type
+						is_optional: true
+						default_value: if lname == "find" { "0" } else { "-1" }
+					}
+				]
+				return_type: ast.int_type
+				obj_name: 'builtin'
+				name: name
+				lname: name.to_lower()
+				is_global: false
+			}
+		}
+	}
+	
+	if name.to_lower() == 'getstate' {
+		return &ast.Fn{
+			return_type: ast.string_type
+			obj_name: c.cur_obj_name
+			name: 'GetState'
+			lname: 'getstate'
+			is_global: false
+		}
+	}
+	else if name.to_lower() == 'gotostate' {
+		return &ast.Fn{
+			params: [
+				ast.Param{
+					name: "name"
+					typ: ast.string_type
+				}
+			]
+			return_type: ast.none_type
+			obj_name: c.cur_obj_name
+			name: 'GoToState'
+			lname: 'gotostate'
+			is_global: false
+		}
+	}
 	
 	return none
 }
@@ -300,31 +420,16 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 	}
 }
 
-fn (c Checker) find_var(typ ast.Type, name string) ?ast.Var {
+fn (c Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {
 	mut sym := c.table.get_type_symbol(typ)
 
 	for {
-		if p := sym.find_var(name) {
-			return p
+		if prop := sym.find_property(name) {
+			return prop.typ
 		}
 
-		if sym.parent_idx > 0 {
-			sym = c.table.get_type_symbol(sym.parent_idx)
-			continue
-		}
-
-		break
-	}
-
-	return none
-}
-
-fn (c Checker) find_property(typ ast.Type, name string) ?ast.Prop {
-	mut sym := c.table.get_type_symbol(typ)
-
-	for {
-		if p := sym.find_property(name) {
-			return p
+		if var := sym.find_var(name) {
+			return var.typ
 		}
 
 		if sym.parent_idx > 0 {

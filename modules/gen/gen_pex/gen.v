@@ -46,8 +46,8 @@ pub fn gen(file &ast.File, output_file_path string, table &ast.Table, prefs &pre
 			game_id: .skyrim
 			compilation_time: time.utc().unix_time()
 			src_file_name: file.path_base
-			user_name: os.loginname()
-			machine_name: os.hostname()
+			user_name: os.loginname() or { "::USERNAME::" }
+			machine_name: os.hostname() or { "::MACHINENAME::" }
 		}
 
 		table: table
@@ -69,8 +69,8 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &
 			game_id: .skyrim
 			compilation_time: time.utc().unix_time()
 			src_file_name: file.path_base
-			user_name: os.loginname()
-			machine_name: os.hostname()
+			user_name: os.loginname() or { "::USERNAME::" }
+			machine_name: os.hostname() or { "::MACHINENAME::" }
 
 			has_debug_info: byte(1) //debug info обязательна?!
 			modification_time: i64(1616261626) //TODO
