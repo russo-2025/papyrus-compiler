@@ -7,7 +7,6 @@ import papyrus.token
 const (
 	prefs = pref.Preferences {
 		paths: []string{}
-		out_dir: []string{}
 		mode: .compile
 		backend: .pex
 		no_cache: true

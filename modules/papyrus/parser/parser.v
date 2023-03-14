@@ -364,7 +364,6 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 	name := p.check_name()
 
 	p.cur_obj_name = name
-	p.table.register_object(name)
 
 	mut node := ast.ScriptDecl{
 		pos: pos

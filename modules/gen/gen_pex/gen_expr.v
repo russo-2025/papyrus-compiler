@@ -143,7 +143,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableValue {
 }
 
 [inline]
-fn (mut g Gen) gen_prefix_operator(mut expr ast.PrefixExpr) pex.VariableValue {
+fn (mut g Gen) gen_prefix_operator(mut expr &ast.PrefixExpr) pex.VariableValue {
 	mut op := g.get_prefix_opcode_operator(expr.right_type, expr.op)
 	right_value := g.get_operand_from_expr(mut &expr.right)
 

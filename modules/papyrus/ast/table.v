@@ -8,7 +8,6 @@ import papyrus.token
 [heap]
 pub struct Table {
 pub mut:
-	object_names		[]string
 	types				[]TypeSymbol // aka type_symbols
 	type_idxs			map[string]int
 
@@ -81,18 +80,6 @@ pub mut:
 	is_native		bool
 }
 
-pub fn (t &Table) has_object(name string) bool {
-	return name.to_lower() in t.object_names
-}
-
-pub fn (mut t Table) register_object(name string) {
-	s := name.to_lower()
-	
-	if s !in t.object_names {
-		t.object_names << s
-	}
-}
-
 pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
@@ -148,7 +135,7 @@ pub fn (mut t Table) register_fn(new_fn Fn) {
 	t.fns[new_fn.obj_name.to_lower() + "." + new_fn.name.to_lower()] = new_fn
 }
 
-pub fn (mut t Table) add_placeholder_type(name string) int {
+pub fn (mut t Table) add_placeholder_type(name string) Type {
 	ph_type := TypeSymbol {
 		kind:		.placeholder
 		name:		name
@@ -159,13 +146,7 @@ pub fn (mut t Table) add_placeholder_type(name string) int {
 }
 
 [inline]
-pub fn (mut t Table) register_type_symbol(typ TypeSymbol) int {
-	$if test {
-		if typ.kind == .script {
-			assert t.has_object(typ.name)
-		}
-	}
-	
+pub fn (mut t Table) register_type_symbol(typ TypeSymbol) Type {
 	existing_idx := t.type_idxs[typ.name.to_lower()]
 	if existing_idx > 0 {
 		ex_type := t.types[existing_idx]
@@ -201,7 +182,7 @@ pub fn (mut t Table) register_type_symbol(typ TypeSymbol) int {
 }
 
 [inline]
-pub fn (t &Table) find_type_idx(name string) int {
+pub fn (t &Table) find_type_idx(name string) Type {
 	return t.type_idxs[name.to_lower()]
 }
 
@@ -209,7 +190,7 @@ pub fn (t &Table) known_type(name string) bool {
 	return t.find_type_idx(name) != 0
 }
 
-pub fn (mut t Table) find_or_add_placeholder_type(name string) int {
+pub fn (mut t Table) find_or_add_placeholder_type(name string) Type {
 	if !t.known_type(name) {
 		return t.add_placeholder_type(name)
 	}
@@ -253,7 +234,7 @@ pub fn (t &Table) type_is_array(typ Type) bool {
 	return false
 }
 
-pub fn (mut t Table) find_or_register_array(elem_type Type) int {
+pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 	name := t.array_name(elem_type)
 	// existing
 	existing_idx := t.type_idxs[name.to_lower()]

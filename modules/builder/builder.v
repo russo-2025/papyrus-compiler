@@ -2,6 +2,7 @@ module builder
 
 import os
 import time
+import runtime
 //import json
 
 import pref
@@ -9,7 +10,7 @@ import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 import gen.gen_pex
-//import pex
+import pex
 
 const (
 	cache_path = os.real_path('./.papyrus')
@@ -21,7 +22,6 @@ struct Builder {
 mut:
 	timers			map[string]time.StopWatch
 pub:
-	output_dir		string
 	pref			&pref.Preferences
 	checker			checker.Checker
 	global_scope	&ast.Scope
@@ -32,8 +32,6 @@ pub mut:
 }
 
 fn new_builder(prefs &pref.Preferences) Builder{
-	rdir := prefs.out_dir[0]
-	output_dir := if os.is_dir(rdir) { rdir } else { os.dir(rdir) }
 	mut table := ast.new_table()
 	
 	return Builder{
@@ -42,7 +40,6 @@ fn new_builder(prefs &pref.Preferences) Builder{
 		global_scope: &ast.Scope{
 			parent: 0
 		}
-		output_dir: output_dir
 		table: table
 	}
 }
@@ -102,7 +99,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 	
 	match b.pref.backend {
 		.pex {
-			b.compile_pex(b.parsed_files)
+			b.compile_pex(mut b.parsed_files)
 		}
 		else { panic('invalid compiler backend') }
 	}
@@ -111,26 +108,66 @@ pub fn compile(prefs &pref.Preferences) bool {
 	return true
 }
 
-fn (b Builder) compile_pex(parsed_files []ast.File) {
-	mut print_func := fn(file_name string) {
-		println('gen `$file_name`')
-	}
-
-	if b.pref.output_mode == .silent || (b.pref.no_cache && b.parsed_files.len > 30) {
-		print_func = fn(str string){}
-	}
-	
-	for pfile in parsed_files {
-		if is_outdated(pfile, b.pref) {
-			output_file_name := pfile.file_name + ".pex"
-			output_file_path := os.join_path(b.pref.out_dir[0], output_file_name)
-			print_func(output_file_name)
-			gen_pex.gen(pfile, output_file_path, b.table, b.pref)
-			
-			if b.pref.out_dir.len > 1 {
-				os.cp(output_file_path, os.join_path(b.pref.out_dir[1], output_file_name)) or { panic(err) }
-			}
+fn (b Builder) compile_pex(mut parsed_files []ast.File) {
+	if b.pref.use_threads {
+		mut max_threads_count := runtime.nr_cpus() / 2
+		
+		if max_threads_count > parsed_files.len {
+			max_threads_count = parsed_files.len
 		}
+
+		mut threads := []thread{}
+
+		mut cur_index := 0
+		max_len := parsed_files.len
+		work_len := max_len / max_threads_count
+		
+		b.print("${max_threads_count} threads are used")
+
+		for i in 0 .. max_threads_count {
+			start_index := cur_index
+			cur_index += work_len
+			end_index := if cur_index + work_len > max_len { max_len } else { cur_index }
+			threads << spawn b.create_worker(i, start_index, end_index)
+		}
+
+		threads.wait()
+	}
+	else {
+		mut buff_bytes := []u8{ cap: 2000 }
+
+		for parsed_file in parsed_files{
+			b.gen_to_pex_file(parsed_file, mut buff_bytes)
+			buff_bytes.clear()
+		}
+	}
+}
+
+
+fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes []u8) {
+	if is_outdated(parsed_file, b.pref) {
+		output_file_name := parsed_file.file_name + ".pex"
+		output_file_path := os.join_path(b.pref.output_dir, output_file_name)
+		
+		pex_file := gen_pex.gen_pex_file(parsed_file, b.table, b.pref)
+		
+		pex.write_to_buff(pex_file, mut buff_bytes)
+		
+		mut file := os.create(output_file_path) or { panic(err) }
+		file.write(buff_bytes) or { panic(err) }
+		file.close()
+	}
+}
+
+fn (b Builder) create_worker(worker_id int, start_index int, end_index int) {
+	b.print("gen in task(${worker_id}): ${start_index} - ${end_index}")
+	mut buff_bytes := []u8{ cap: 2000 }
+	
+	for i in start_index .. end_index {
+		parsed_file := b.parsed_files[i]
+
+		b.gen_to_pex_file(parsed_file, mut buff_bytes)
+		buff_bytes.clear()
 	}
 }
 

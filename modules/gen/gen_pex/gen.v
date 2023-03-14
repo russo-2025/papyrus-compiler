@@ -36,29 +36,6 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen(file &ast.File, output_file_path string, table &ast.Table, prefs &pref.Preferences) {
-	mut g := Gen{
-		file: file
-		pex: &pex.PexFile{
-			magic_number: pex.le_magic_number //0xFA57C0DE
-			major_version: 3
-			minor_version: 2
-			game_id: .skyrim
-			compilation_time: time.utc().unix_time()
-			src_file_name: file.path_base
-			user_name: os.loginname() or { "::USERNAME::" }
-			machine_name: os.hostname() or { "::MACHINENAME::" }
-		}
-
-		table: table
-		pref: prefs
-	}
-	
-	g.gen_objects()
-
-	pex.write_to_file(g.pex, output_file_path)
-}
-
 pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &pex.PexFile {
 	mut g := Gen{
 		file: file
@@ -109,7 +86,7 @@ fn (mut g Gen) gen_objects() {
 	}
 }
 
-fn (mut g Gen) stmt(mut stmt ast.Stmt) {
+fn (mut g Gen) stmt(mut stmt &ast.Stmt) {
 	match mut stmt {
 		ast.Return {
 			value := g.get_operand_from_expr(mut &stmt.expr)

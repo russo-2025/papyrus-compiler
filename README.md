@@ -41,7 +41,7 @@ create-dump    ...
 
 -o, -output     folder for compiled files(*.pex)
 
--h, -headers_dir  ...
+-h, -headers-dir  folder with header files
 
 -nocache        compile all files, regardless of the modification date
 
@@ -50,6 +50,8 @@ create-dump    ...
 -silent         disable output of messages and errors to console
 
 -verbose
+
+-use-threads    use threads to generate files
 ```
 
 #### Examples:

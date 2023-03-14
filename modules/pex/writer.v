@@ -1,7 +1,5 @@
 module pex
 
-import os
-
 import pex
 
 pub struct Writer{
@@ -10,18 +8,19 @@ pub mut:
 	bytes	[]u8
 }
 
-pub fn write_to_file(pex_file &PexFile, path string) {
-	bytes := write(pex_file)
-
-	mut file := os.create(path) or { panic(err) }
-	file.write(bytes) or { panic(err) }
-	file.close()
+pub fn write_to_buff(pex_file &PexFile, mut out_buff []u8) {
+	mut w := Writer{
+		pex:	pex_file
+		bytes: 	out_buff
+	}
+	
+	w.write_pex()
 }
 
 pub fn write(pex_file &PexFile) []u8 {
 	mut w := Writer{
 		pex:	pex_file
-		bytes: 	[]u8{}
+		bytes: 	[]u8{ cap: 2000 }
 	}
 	
 	w.write_pex()
@@ -29,6 +28,7 @@ pub fn write(pex_file &PexFile) []u8 {
 	return w.bytes
 }
 
+[inline]
 fn (mut w Writer) write_pex() {
 	//header
 	w.write(w.pex.magic_number)
@@ -86,6 +86,7 @@ fn (mut w Writer) write_pex() {
 	}
 }
 
+[inline]
 fn (mut w Writer) write_object(obj &pex.Object) {
 	w.write(obj.name)
 	start_pos := w.bytes.len
@@ -121,6 +122,7 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 	w.bytes[start_pos + 3] = u8(size)
 }
 
+[inline]
 fn (mut w Writer) write_state(state pex.State) {
 	w.write(state.name)
 	
@@ -158,6 +160,7 @@ fn (mut w Writer) write_function_info(info pex.FunctionInfo) {
 	}
 }
 
+[inline]
 fn (mut w Writer) write_function(func pex.Function) {
 	w.write(func.name)
 	w.write_function_info(func.info)

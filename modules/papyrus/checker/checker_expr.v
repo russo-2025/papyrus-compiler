@@ -2,7 +2,7 @@ module checker
 
 import papyrus.ast
 
-pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
+pub fn (mut c Checker) expr(mut node &ast.Expr) ast.Type {
 	match mut node {
 		ast.InfixExpr {
 			return c.expr_infix(mut node)
@@ -394,7 +394,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		}
 	}
 	else {
-		if node.left is ast.Ident && c.table.has_object((node.left as ast.Ident).name) {
+		if node.left is ast.Ident && c.table.known_type((node.left as ast.Ident).name) {
 			//find global func
 			if mut tfunc := c.table.find_fn((node.left as ast.Ident).name, node.name) {
 				func = &tfunc

@@ -5,7 +5,7 @@ import pref
 const (
 	prefs = pref.Preferences {
 		paths: [ os.real_path('test-files/vm-tests') ]
-		out_dir: [ os.real_path('test-files/compiled') ]
+		output_dir: os.real_path('test-files/compiled')
 		mode: .compile
 		backend: .pex
 		no_cache: true
@@ -16,8 +16,8 @@ const (
 )
 
 fn test_builder() {
-	if !os.is_dir(prefs.out_dir[0]) {
-		os.mkdir(prefs.out_dir[0], os.MkdirParams{}) or { panic(err) }
+	if !os.is_dir(prefs.output_dir) {
+		os.mkdir(prefs.output_dir, os.MkdirParams{}) or { panic(err) }
 	}
 
 	builder.compile(prefs)

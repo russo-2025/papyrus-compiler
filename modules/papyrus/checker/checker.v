@@ -64,7 +64,7 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 }
 
 [inline]
-fn (c Checker) get_type_name(typ ast.Type) string {
+fn (c &Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
 
@@ -420,7 +420,7 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 	}
 }
 
-fn (c Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {
+fn (c &Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {
 	mut sym := c.table.get_type_symbol(typ)
 
 	for {
@@ -444,7 +444,7 @@ fn (c Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {
 }
 
 [inline]
-pub fn (c Checker) is_empty_state() bool {
+pub fn (c &Checker) is_empty_state() bool {
 	return c.cur_state_name == pex.empty_state_name
 }
 

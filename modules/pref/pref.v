@@ -22,7 +22,7 @@ pub enum RunMode {
 pub struct Preferences {
 pub mut:
 	paths				[]string	// folders with files to compile
-	out_dir				[]string	// folders for output files
+	output_dir			string		// folder for output files
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
@@ -30,6 +30,7 @@ pub mut:
 	papyrus_headers_dir	string = os.real_path('./papyrus-headers')
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
+	use_threads			bool
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
@@ -50,7 +51,6 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				
 				for i < args.len {
 					if args[i].starts_with("-") {
-						i--
 						break
 					}
 
@@ -72,30 +72,22 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			"-o",
 			"-output" {
 				i++
-				
-				for i < args.len {
-					if args[i].starts_with("-") {
-						i--
-						break
-					}
 
-					path := os.real_path(args[i])
-
-					if !os.is_dir(path) {
-						error("invalid output path: '$path'")
-					}
-
-					if path in p.out_dir {
-						error("path already exists: '$path'")
-					}
-
-					p.out_dir << path
-
-					i++
+				if p.output_dir != "" {
+					error("output folder is already specified")
 				}
+
+				path := os.real_path(args[i])
+
+				if !os.is_dir(path) {
+					error("invalid output dir: '$path'")
+				}
+
+				p.output_dir = path
+				i++
 			}
 			"-h",
-			"-headers_dir" {
+			"-headers-dir" {
 				i++
 				
 				path := os.real_path(args[i])
@@ -105,28 +97,36 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				}
 
 				p.papyrus_headers_dir = path
+				i++
 			}
 			"-nocache" {
 				p.no_cache = true
+				i++
 			}
 			"-crutches" {
 				p.crutches_enabled = true
+				i++
 			}
 			"-original" {
 				p.backend = .original
+				i++
 			}
 			"-verbose" {
 				p.is_verbose = true
+				i++
+			}
+			"-use-threads" {
+				p.use_threads = true
+				i++
 			}
 			"-silent" {
 				p.output_mode = .silent
+				i++
 			}
 			else {
 				error("invalid argument `${args[i]}`")
 			}
 		}
-
-		i++
 	}
 }
 
@@ -205,6 +205,9 @@ fn help() {
 	println("		read")
 	println("			read \"*.pex\" file and output result to console")
 	println("")
+	println("		create-dump")
+	println("			...")
+	println("")
 	println("")
 	println("Use \"papyrus help <command>\" for more information about a command.")
 	exit(0)
@@ -221,6 +224,9 @@ fn help_command(command string) {
 			println("		-o")
 			println("			folder for compiled files(*.pex)")
 			println("")
+			println("		-h")
+			println("			folder with header files")
+			println("")
 			println("		-nocache")
 			println("			compile all files, regardless of the modification date")
 			println("")
@@ -231,7 +237,11 @@ fn help_command(command string) {
 			println("			disable output of messages and errors to console")
 			println("")
 			println("		-verbose")
-			println("			")
+			println("			...")
+			println("")
+			println("		-use-threads")
+			println("			use threads to generate files")
+			println("")
 		}
 		"read" {
 			println("")

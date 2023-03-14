@@ -88,8 +88,8 @@ fn compile_original(prefs &pref.Preferences) {
 		for path in prefs.paths {
 			b.add_input_path(path)
 		}
-
-		b.set_output_path(prefs.out_dir[0])
+		
+		b.set_output_path(prefs.output_dir)
 
 		b.run()
 	}
