@@ -42,6 +42,7 @@ fn test_build() {
 
 	pex_file := gen_pex.gen_pex_file(file, table, prefs)
 	bytes := pex.write(pex_file)
+	assert bytes.len > 0
 	out_pex_file := pex.read(bytes)
 
 	//string table

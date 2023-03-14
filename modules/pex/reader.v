@@ -24,10 +24,14 @@ pub fn read_from_file(path string) &PexFile {
 
 	mut bytes := os.read_bytes(path) or { panic(err) }
 
+	assert bytes.len > 0
+	
 	return read(bytes)
 }
 
 pub fn read(bytes []byte) &PexFile {
+	assert bytes.len > 0
+	
 	mut r := Reader{
 		bytes: bytes
 		pex: &PexFile{}

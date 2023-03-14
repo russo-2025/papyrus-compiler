@@ -62,33 +62,33 @@ pub fn (mut r Reader) read[T]() T {
 [inline]
 pub fn (mut w Writer) write[T](v T) {
 	$if T is byte {
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is u16 {
-		w.bytes << u8(v>>u16(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v>>u16(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is u32 {
-		w.bytes << u8(v>>u32(24))
-		w.bytes << u8(v>>u32(16))
-		w.bytes << u8(v>>u32(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v>>u32(24))
+		w.buf.bytes << u8(v>>u32(16))
+		w.buf.bytes << u8(v>>u32(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is int {
-		w.bytes << u8(v>>u32(24))
-		w.bytes << u8(v>>u32(16))
-		w.bytes << u8(v>>u32(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v>>u32(24))
+		w.buf.bytes << u8(v>>u32(16))
+		w.buf.bytes << u8(v>>u32(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is i64 {
-		w.bytes << u8(v>>u64(56))
-		w.bytes << u8(v>>u64(48))
-		w.bytes << u8(v>>u64(40))
-		w.bytes << u8(v>>u64(32))
-		w.bytes << u8(v>>u64(24))
-		w.bytes << u8(v>>u64(16))
-		w.bytes << u8(v>>u64(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v>>u64(56))
+		w.buf.bytes << u8(v>>u64(48))
+		w.buf.bytes << u8(v>>u64(40))
+		w.buf.bytes << u8(v>>u64(32))
+		w.buf.bytes << u8(v>>u64(24))
+		w.buf.bytes << u8(v>>u64(16))
+		w.buf.bytes << u8(v>>u64(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is f32 {
 		w.write(cast_f32_to_u32(v))
@@ -96,20 +96,20 @@ pub fn (mut w Writer) write[T](v T) {
 	$else $if T is string {
 		str_len := cast_int_to_u16(v.len)
 		w.write(str_len)
-		w.bytes << v.bytes()
+		w.buf.bytes << v.bytes()
 	}
 	$else $if T is StringId { //u16
 		real_val := u16(v)
-		w.bytes << u8(real_val>>u16(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(real_val>>u16(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is GameType { //u16
 		real_val := u16(v)
-		w.bytes << u8(real_val>>u16(8))
-		w.bytes << u8(v)
+		w.buf.bytes << u8(real_val>>u16(8))
+		w.buf.bytes << u8(v)
 	}
 	$else $if T is ValueType { //byte
-		w.bytes << u8(v)
+		w.buf.bytes << u8(v)
 	}
 	$else {
 		$compile_error('[pex.Reader.read] invalid type')

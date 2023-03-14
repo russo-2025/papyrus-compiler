@@ -135,21 +135,21 @@ fn test_read() {
 
 fn test_write() {
 	mut w := &pex.Writer{
-		pex: unsafe { voidptr(0) }
-		bytes: 	[]u8{}
+		pex:	unsafe { voidptr(0) }
+		buf: 	&pex.Buffer{ bytes: []u8{} }
 	}
 
 	mut i := 0
 	mut ref_i := &i
 
 	next := fn [w, mut ref_i] () byte {
-		val := w.bytes[*ref_i]
+		val := w.buf.bytes[*ref_i]
 		(*ref_i)++
 		return val
 	}
 	
 	is_empty := fn [w, mut ref_i] () bool {
-		return *ref_i >= w.bytes.len
+		return *ref_i >= w.buf.bytes.len
 	}
 
 	//byte

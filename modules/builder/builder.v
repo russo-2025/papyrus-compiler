@@ -110,8 +110,12 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 fn (b Builder) compile_pex(mut parsed_files []ast.File) {
 	if b.pref.use_threads {
-		mut max_threads_count := runtime.nr_cpus() / 2
-		
+		mut max_threads_count := runtime.nr_cpus()
+
+		if max_threads_count > 8 {
+			max_threads_count = 8
+		}
+
 		if max_threads_count > parsed_files.len {
 			max_threads_count = parsed_files.len
 		}
@@ -134,9 +138,11 @@ fn (b Builder) compile_pex(mut parsed_files []ast.File) {
 		threads.wait()
 	}
 	else {
-		mut buff_bytes := []u8{ cap: 2000 }
+		mut buff_bytes := pex.Buffer{ bytes: []u8{ cap: 10000 } }
 
 		for parsed_file in parsed_files{
+			assert buff_bytes.is_empty()
+			
 			b.gen_to_pex_file(parsed_file, mut buff_bytes)
 			buff_bytes.clear()
 		}
@@ -144,7 +150,7 @@ fn (b Builder) compile_pex(mut parsed_files []ast.File) {
 }
 
 
-fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes []u8) {
+fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes pex.Buffer) {
 	if is_outdated(parsed_file, b.pref) {
 		output_file_name := parsed_file.file_name + ".pex"
 		output_file_path := os.join_path(b.pref.output_dir, output_file_name)
@@ -153,17 +159,19 @@ fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes []u8) {
 		
 		pex.write_to_buff(pex_file, mut buff_bytes)
 		
+		assert !buff_bytes.is_empty()
 		mut file := os.create(output_file_path) or { panic(err) }
-		file.write(buff_bytes) or { panic(err) }
+		file.write(buff_bytes.bytes) or { panic(err) }
 		file.close()
 	}
 }
 
 fn (b Builder) create_worker(worker_id int, start_index int, end_index int) {
 	b.print("gen in task(${worker_id}): ${start_index} - ${end_index}")
-	mut buff_bytes := []u8{ cap: 2000 }
-	
+	mut buff_bytes := pex.Buffer{ bytes: []u8{ cap: 10000 } }
+
 	for i in start_index .. end_index {
+		assert buff_bytes.is_empty()
 		parsed_file := b.parsed_files[i]
 
 		b.gen_to_pex_file(parsed_file, mut buff_bytes)

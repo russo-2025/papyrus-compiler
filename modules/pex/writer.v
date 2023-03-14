@@ -2,30 +2,52 @@ module pex
 
 import pex
 
+pub struct Buffer {
+pub mut:
+	bytes []u8
+}
+
+pub fn (b Buffer) is_empty() bool {
+	return b.bytes.len == 0
+}
+
+pub fn (mut b Buffer) clear()  {
+	b.bytes.clear()
+}
+
 pub struct Writer{
 pub mut:
 	pex		&PexFile
-	bytes	[]u8
+	buf		&Buffer
 }
 
-pub fn write_to_buff(pex_file &PexFile, mut out_buff []u8) {
+pub fn write_to_buff(pex_file &PexFile, mut out_buff Buffer) {
+	assert out_buff.is_empty()
+	
 	mut w := Writer{
 		pex:	pex_file
-		bytes: 	out_buff
+		buf:	unsafe { out_buff }
 	}
 	
 	w.write_pex()
+
+	assert w.buf == out_buff
+	assert w.buf.bytes.data == out_buff.bytes.data
+	assert w.buf.bytes.len == out_buff.bytes.len
+	assert w.buf.bytes.cap == out_buff.bytes.cap
+	assert !w.buf.is_empty()
+	assert !out_buff.is_empty()
 }
 
 pub fn write(pex_file &PexFile) []u8 {
 	mut w := Writer{
 		pex:	pex_file
-		bytes: 	[]u8{ cap: 2000 }
+		buf: 	&Buffer{ bytes: []u8{ cap: 2000 } }
 	}
 	
 	w.write_pex()
 
-	return w.bytes
+	return w.buf.bytes
 }
 
 [inline]
@@ -89,7 +111,7 @@ fn (mut w Writer) write_pex() {
 [inline]
 fn (mut w Writer) write_object(obj &pex.Object) {
 	w.write(obj.name)
-	start_pos := w.bytes.len
+	start_pos := w.buf.bytes.len
 	w.write(obj.size)
 	w.write(obj.parent_class_name)
 	w.write(obj.docstring)
@@ -115,11 +137,11 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 	}
 
 	//write object size
-	size := w.bytes.len - start_pos
-	w.bytes[start_pos] = u8(size>>u32(24))
-	w.bytes[start_pos + 1] = u8(size>>u32(16))
-	w.bytes[start_pos + 2] = u8(size>>u32(8))
-	w.bytes[start_pos + 3] = u8(size)
+	size := w.buf.bytes.len - start_pos
+	w.buf.bytes[start_pos] = u8(size>>u32(24))
+	w.buf.bytes[start_pos + 1] = u8(size>>u32(16))
+	w.buf.bytes[start_pos + 2] = u8(size>>u32(8))
+	w.buf.bytes[start_pos + 3] = u8(size)
 }
 
 [inline]
