@@ -1,7 +1,6 @@
 # Compiler
 
-The Papyrus compiler is based on the [V language compiler](https://github.com/vlang/v/tree/master/vlib/v).
-***Work in progress.***
+Open source compiler for the Papyrus scripting language used in Skyrim Special Edition. ***Work in progress.***
 
 ## Prerequisites
 
@@ -137,10 +136,12 @@ papyrus create-dump "../folder_with_pex_files"
 
 - [Creation Kit Papyrus Reference](https://www.creationkit.com/index.php?title=Category:Papyrus)
 - [Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format)
+- [open-papyrus/docs](https://open-papyrus.github.io/docs/Papyrus_Language_Reference/index.html)
 - [Caprica](https://github.com/Orvid/Caprica)
 A compiler for the Papyrus scripting language used by the Creation Engine.
 - [Champollion](https://github.com/Orvid/Champollion)
 A PEX to Papyrus Decompiler for Fallout 4
 - [PapyrusDotNet](https://github.com/zerratar/PapyrusDotNet)
 PapyrusDotNet - A .NET Papyrus Compiler for Fallout 4 and Skyrim
-- [papyrus-compiler](https://github.com/open-papyrus/papyrus-compiler) - (WIP, Rust lang) Open-source compiler for the Papyrus scripting language of Bethesda games.
+
+
