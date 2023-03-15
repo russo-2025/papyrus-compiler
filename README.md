@@ -143,5 +143,6 @@ A compiler for the Papyrus scripting language used by the Creation Engine.
 A PEX to Papyrus Decompiler for Fallout 4
 - [PapyrusDotNet](https://github.com/zerratar/PapyrusDotNet)
 PapyrusDotNet - A .NET Papyrus Compiler for Fallout 4 and Skyrim
+- [open-papyrus/papyrus-compiler](https://github.com/open-papyrus/papyrus-compiler) - (WIP, Rust lang) Open-source compiler for the Papyrus scripting language of Bethesda games.
 
 
