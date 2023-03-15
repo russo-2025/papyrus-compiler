@@ -87,8 +87,20 @@ pub mut:
 	functions			[]DebugFunction
 
 	//Objects
-	user_flags			[]UserFlag
+	user_flags			[]UserFlag // flags from *.flg file
 	objects				[]&Object
+}
+
+pub fn (file PexFile) user_flags_str() string {
+	mut flags := []string{}
+
+	for flag in file.user_flags {
+		hex := "0x" + flag.flag_index.hex()
+		str := file.get_string(flag.name)
+		flags << "${str}(${hex})"
+	}
+
+	return flags.str()
 }
 
 pub struct DebugFunction {
@@ -119,12 +131,31 @@ pub mut:
 	states				[]&State
 }
 
+pub fn (obj Object) user_flags_str() string {
+	mut flags := []string{}
+	return flags.str()
+}
+
 pub struct Variable {
 pub mut:
 	name		StringId
 	type_name	StringId
 	user_flags	u32	
 	data		VariableValue //Default value
+}
+
+pub fn (v Variable) is_conditional() bool {
+	return (v.user_flags & 0b0010) != 0
+}
+
+pub fn (v Variable) user_flags_str() string {
+	mut flags := []string{}
+
+	if v.is_conditional() {
+		flags << "Conditional"
+	}
+
+	return flags.str()
 }
 
 pub enum ValueType as u8 {
@@ -163,16 +194,46 @@ pub mut:
 	write_handler	FunctionInfo //present if (flags & 6) == 2
 }
 
-fn (prop Property) is_autovar() bool {
-	return (prop.flags & 0b0100) != 0
+pub fn (prop Property) is_read() bool {
+	return (prop.flags & 0b0001) != 0
 }
 
-fn (prop Property) is_write() bool {
+pub fn (prop Property) is_write() bool {
 	return (prop.flags & 0b0010) != 0
 }
 
-fn (prop Property) is_read() bool {
-	return (prop.flags & 0b0001) != 0
+pub fn (prop Property) is_autovar() bool {
+	return (prop.flags & 0b0100) != 0
+}
+
+pub fn (prop Property) is_hidden() bool {
+	return (prop.user_flags & 0b0001) != 0
+}
+
+pub fn (prop Property) user_flags_str() string {
+	mut flags := []string{}
+
+	if prop.is_hidden() {
+		flags << "Hidden"
+	}
+
+	return flags.str()
+}
+
+pub fn (prop Property) flags_str() string {
+	mut flags := []string{}
+
+	if prop.is_read() {
+		flags << "Read"
+	}
+	if prop.is_write() {
+		flags << "Write"
+	}
+	if prop.is_autovar() {
+		flags << "AutoVar"
+	}
+
+	return flags.str()
 }
 
 pub struct State {
@@ -204,6 +265,24 @@ pub fn (info FunctionInfo) is_global() bool {
 
 pub fn (info FunctionInfo) is_native() bool {
 	return info.flags & 0b10 != 0
+}
+
+pub fn (info FunctionInfo) user_flags_str() string {
+	return "[]"
+}
+
+pub fn (info FunctionInfo) flags_str() string {
+	mut flags := []string{}
+	
+	if info.is_global() {
+		flags << "Global"
+	}
+
+	if info.is_native() {
+		flags << "Native"
+	}
+
+	return flags.str()
 }
 
 pub struct VariableType {

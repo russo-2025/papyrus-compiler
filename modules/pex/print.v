@@ -30,12 +30,6 @@ fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 	println(tab + "instruction count: $instruction_count")
 }
 
-fn (p PexFile) print_flag(flg UserFlag) {
-	name := p.get_string(flg.name)
-	index := "0x" + flg.flag_index.hex()
-	print("flag{ name: '$name', index: $index }")
-}
-
 pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
@@ -64,23 +58,6 @@ fn (p PexFile) print_variable_type(v VariableType, indentSize int) {
 	println(tab + "$typ $name")
 }
 
-fn (p PexFile) get_formated_fn_flags(info FunctionInfo) string {
-	mut str := ""
-
-	is_global := info.flags & 0b0001
-	in_native := info.flags & 0b0010
-
-	if is_global > 0 {
-		str += "global"
-	}
-	if is_global > 0 && in_native > 0  {
-		str += " "
-	}
-	if in_native > 0 {
-		str += "native"
-	}
-	return str
-}
 
 fn (p PexFile) print_func(f Function, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
@@ -96,14 +73,15 @@ fn (p PexFile) print_func_info(info FunctionInfo, indentSize int) {
 
 	typ :=  p.get_string(info.return_type)
 	doc :=  p.get_string(info.docstring)
-	user_flags :=  "0x" + info.user_flags.hex()
-	flags :=  "0x" + info.flags.hex()
+	user_flags_hex :=  "0x" + info.user_flags.hex()
+	user_flags_str :=  info.user_flags_str()
+	flags_hex :=  "0x" + info.flags.hex()
+	flags_str :=  info.flags_str()
 
 	println(tab + "typ: '$typ'")
 	println(tab + "doc: '$doc'")
-	println(tab + "user_flags: $user_flags")
-	println(tab + "flags: $flags")
-	println(tab + "flags: `${p.get_formated_fn_flags(info)}`")
+	println(tab + "user_flags(${user_flags_hex}): ${user_flags_str}")
+	println(tab + "flags(${flags_hex}): ${flags_str}")
 	println(tab + "params count: '${info.params.len}'")
 	
 	for param in info.params {
@@ -171,15 +149,13 @@ fn (p PexFile) print_variable(v Variable, indentSize int) {
 
 	name := p.get_string(v.name)
 	type_name := p.get_string(v.type_name)
-	mut user_flags := if v.user_flags == 0 { "" } else { "0x" + v.user_flags.hex() }
 
-	if v.user_flags & 0b0010 != 0 {
-		user_flags = "Conditional"
-	}
+	user_flags_hex := if v.user_flags == 0 { "0" } else { "0x" + v.user_flags.hex() }
+	user_flags_str := v.user_flags_str()
 	
 	println(tab + "name: '$name'")
 	println(tab + "type name: '$type_name'")
-	println(tab + "user flags: '$user_flags'")
+	println(tab + "user flags(${user_flags_hex}): $user_flags_str")
 	println(tab + "data: ${p.variable_value_to_str(v.data)}")
 }
 
@@ -189,15 +165,17 @@ fn (p PexFile) print_property(prop Property, indentSize int) {
 	name := p.get_string(prop.name)
 	type_name := p.get_string(prop.typ)
 	docstring := p.get_string(prop.docstring)
-	user_flags := "0x" + prop.user_flags.hex()
-	flags := "0x" + prop.flags.hex()
+	user_flags_hex := "0x" + prop.user_flags.hex()
+	user_flags_str := prop.user_flags_str()
+	flags_hex := "0x" + prop.flags.hex()
+	flags_str := prop.flags_str()
 	auto_var_name := p.get_string(prop.auto_var_name)
 
 	println(tab + "name: '$name'")
 	println(tab + "type name: '$type_name'")
 	println(tab + "doc string: '$docstring'")
-	println(tab + "user flags: '$user_flags'")
-	println(tab + "flags: '$flags'")
+	println(tab + "user flags($user_flags_hex): ${user_flags_str}")
+	println(tab + "flags($flags_hex): '${flags_str}'")
 
 	if prop.is_autovar() {
 		println(tab + "auto var name: '$auto_var_name'")
@@ -221,14 +199,15 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	size := "0x" + obj.size.hex()
 	parent := p.get_string(obj.parent_class_name)
 	doc := p.get_string(obj.docstring)
-	user_flags := "0x" + obj.user_flags.hex()
+	user_flags_hex := "0x" + obj.user_flags.hex()
+	user_flags_str := obj.user_flags_str()
 	auto_state_name := p.get_string(obj.auto_state_name)
 	
 	println(tab + "name: '$name'")
 	println(tab + "size: $size")
 	println(tab + "parent: '$parent'")
 	println(tab + "doc: '$doc'")
-	println(tab + "user flags: $user_flags")
+	println(tab + "user flags(${user_flags_hex}): ${user_flags_str}")
 	println(tab + "auto state name: '$auto_state_name'")
 	
 	println(tab + "variables[${obj.variables.len}]:")
@@ -256,26 +235,6 @@ fn (p PexFile) print_object(obj Object, indentSize int) {
 	}
 }
 
-fn (p PexFile) get_formated_script_flags() string {
-	mut str := ""
-
-	mut i := 0
-	for i < p.user_flags.len {
-		flag := p.user_flags[i]
-		str += "0x" + flag.flag_index.hex()
-		str += " - "
-		str += p.get_string(flag.name)
-		
-		if i < p.user_flags.len - 1 {
-			str += ", "
-		}
-
-		i++
-	}
-
-	return str
-}
-
 pub fn (p PexFile) print() {
 	print_start_block("Header")
 
@@ -288,8 +247,6 @@ pub fn (p PexFile) print() {
 	println("src_file_name: " + p.src_file_name.str())
 	println("user_name: " + p.user_name.str())
 	println("machine_name: " + p.machine_name.str())
-
-	println("flags: " + p.get_formated_script_flags())
 
 	print_end_block("Header")
 
@@ -337,6 +294,9 @@ pub fn (p PexFile) print() {
 	}
 
 	print_start_block("Objects")
+
+	println("user_flags: ${p.user_flags_str()}")
+
 	println("Objects[${p.objects.len}]:")
 	i = 0
 	for i < p.objects.len {

@@ -319,6 +319,9 @@ fn test_property_decl_1() {
 	assert pex_file.get_string(prop.typ).to_lower() == "string"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
 	
 	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
@@ -359,6 +362,7 @@ fn test_property_decl_2() {
 	assert pex_file.get_string(prop.typ).to_lower() == "string"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0001
+	assert prop.is_read()
 
 	//prop.prop.read_handler
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "string"
@@ -388,8 +392,12 @@ fn test_property_decl_3() {
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello3"
 	assert pex_file.get_string(prop.typ).to_lower() == "string"
-	assert prop.user_flags == 1
+	assert prop.user_flags == 0b0001
+	assert prop.is_hidden()
 	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello3_var"
 
 	//var
@@ -422,6 +430,9 @@ fn test_property_decl_4() {
 	assert pex_file.get_string(prop.typ).to_lower() == "string"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello5_var"
 
 	//var
@@ -431,7 +442,8 @@ fn test_property_decl_4() {
 	}
 	assert pex_file.get_string(var.name) == "::Hello5_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
-	assert var.user_flags == 0
+	assert var.user_flags == 0b0010
+	assert var.is_conditional()
 	assert var.data.typ == .str
 	assert pex_file.get_string(var.data.to_string_id()) == "Hello world5!"
 }
@@ -489,6 +501,8 @@ fn test_property_decl_5() {
 	assert pex_file.get_string(prop.typ).to_lower() == "int"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0011
+	assert prop.is_read()
+	assert prop.is_write()
 
 	//prop.prop.read_handler
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"
@@ -551,6 +565,7 @@ fn test_property_decl_6() {
 	assert pex_file.get_string(prop.typ).to_lower() == "int"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0010
+	assert prop.is_write()
 
 	//prop.prop.write_handler
 	assert pex_file.get_string(prop.write_handler.return_type).to_lower() == "none"
@@ -602,6 +617,7 @@ fn test_property_decl_7() {
 	assert pex_file.get_string(prop.typ).to_lower() == "int"
 	assert prop.user_flags == 0
 	assert prop.flags == 0b0001
+	assert prop.is_read()
 
 	//prop.prop.read_handler
 	assert pex_file.get_string(prop.read_handler.return_type).to_lower() == "int"

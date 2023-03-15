@@ -64,7 +64,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 	b.parse_headers_files()
 	b.print_timer('parse headers files')
 
-	println("${files.len} files in total")
+	b.print("${files.len} files in total")
 	b.start_timer('parse files')
 	b.parsed_files = parser.parse_files(files, b.table, b.pref, b.global_scope)
 	b.print_timer('parse files')

@@ -309,7 +309,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	}
 
 	if stmt.is_hidden {
-		prop.user_flags = 1
+		prop.user_flags |= 0b0001
 	}
 
 	if stmt.is_auto {
@@ -322,11 +322,17 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 		} else {
 			g.get_operand_from_expr(mut &stmt.expr)
 		}
+
+		mut var_user_flags := u32(0)
+
+		if stmt.is_conditional {
+			var_user_flags |= 0b0010
+		}
 		
 		g.cur_obj.variables << &pex.Variable{
 			name: g.gen_string_ref(stmt.auto_var_name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
-			user_flags: u32(0)
+			user_flags: var_user_flags
 			data: value
 		}
 	}

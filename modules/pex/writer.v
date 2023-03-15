@@ -47,6 +47,7 @@ pub fn write(pex_file &PexFile) []u8 {
 	
 	w.write_pex()
 
+	assert !w.buf.is_empty()
 	return w.buf.bytes
 }
 
