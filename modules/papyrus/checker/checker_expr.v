@@ -75,10 +75,15 @@ pub fn (mut c Checker) expr(mut node &ast.Expr) ast.Type {
 				node.typ = var.typ
 				return var.typ
 			}
-			else if typ := c.find_var_or_property_type(c.cur_obj, node.name) {
-				node.typ = typ
-				node.is_object_property_or_var = true
-				return typ
+			else if prop := c.table.find_object_property(c.cur_obj, node.name) {
+				node.typ = prop.typ
+				node.is_object_property = true
+				return node.typ
+			}
+			else if var := c.table.find_object_var(c.cur_obj, node.name) {
+				node.typ = var.typ
+				node.is_object_var = true
+				return node.typ
 			}
 			
 			c.error("variable declaration not found: `$node.name`",  node.pos)
@@ -503,23 +508,8 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		return ast.none_type
 	}
 
-	//for find/rfind 
 	if c.table.type_is_array(typ) && (node.name.to_lower() == "find" || node.name.to_lower() == "rfind") {
 		node.is_array_find = true
-		sym := c.table.get_type_symbol(typ)
-
-		if sym.kind == .array {
-			if node.args.len >= 1 {
-				if node.args[0].expr is ast.NoneLiteral {
-					func.params[0] = ast.Param {
-						name: "value"
-						typ: ast.none_type
-						is_optional: false
-						default_value: "none"
-					}
-				}
-			}
-		}
 	}
 
 	mut i := 0

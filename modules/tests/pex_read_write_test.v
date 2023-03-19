@@ -10,11 +10,11 @@ const (
 "Scriptname ABCD
 
 Function Foo(int arg1, float arg2) global
-	int n = arg1 + arg2
+	int n = arg1 + arg2 as int
 EndFunction
 
 Function Bar(int arg1, float arg2)
-	int n = arg1 + arg2
+	int n = arg1 + arg2 as int
 EndFunction
 "
 )
@@ -46,7 +46,7 @@ fn test_build() {
 	out_pex_file := pex.read(bytes)
 
 	//string table
-	assert out_pex_file.string_table.len == 27
+	assert out_pex_file.string_table.len == 26
 
 	//debug info
 	assert out_pex_file.has_debug_info == 1
@@ -59,7 +59,7 @@ fn test_build() {
 	assert out_pex_file.objects.len == 1
 
 	assert out_pex_file.get_string(out_pex_file.objects[0].name) == "ABCD"
-	assert out_pex_file.objects[0].size == 277
+	assert out_pex_file.objects[0].size == 255
 	assert out_pex_file.get_string(out_pex_file.objects[0].parent_class_name) == ""
 	assert out_pex_file.get_string(out_pex_file.objects[0].docstring) == ""
 	assert out_pex_file.objects[0].user_flags == 0
@@ -78,21 +78,25 @@ fn test_build() {
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[2].name) == "onEndState"
 	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[3].name) == "onBeginState"
 
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[4].name) == "Foo"
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[4].info.return_type) == "None"
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[4].info.docstring) == ""
-	assert out_pex_file.objects[0].states[0].functions[4].info.user_flags == 0
-	assert out_pex_file.objects[0].states[0].functions[4].info.flags == 0b01
-	assert out_pex_file.objects[0].states[0].functions[4].info.params.len == 2
-	assert out_pex_file.objects[0].states[0].functions[4].info.locals.len == 3
-	assert out_pex_file.objects[0].states[0].functions[4].info.instructions.len == 4
+	foo_fn := out_pex_file.objects[0].states[0].functions[4]
 
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].name) == "Bar"
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].info.return_type) == "None"
-	assert out_pex_file.get_string(out_pex_file.objects[0].states[0].functions[5].info.docstring) == ""
-	assert out_pex_file.objects[0].states[0].functions[5].info.user_flags == 0
-	assert out_pex_file.objects[0].states[0].functions[5].info.flags == 0b00
-	assert out_pex_file.objects[0].states[0].functions[5].info.params.len == 2
-	assert out_pex_file.objects[0].states[0].functions[5].info.locals.len == 3
-	assert out_pex_file.objects[0].states[0].functions[5].info.instructions.len == 4
+	assert out_pex_file.get_string(foo_fn.name) == "Foo"
+	assert out_pex_file.get_string(foo_fn.info.return_type) == "None"
+	assert out_pex_file.get_string(foo_fn.info.docstring) == ""
+	assert foo_fn.info.user_flags == 0
+	assert foo_fn.info.flags == 0b01
+	assert foo_fn.info.params.len == 2
+	assert foo_fn.info.locals.len == 2
+	assert foo_fn.info.instructions.len == 3
+
+	bar_fn := out_pex_file.objects[0].states[0].functions[5]
+
+	assert out_pex_file.get_string(bar_fn.name) == "Bar"
+	assert out_pex_file.get_string(bar_fn.info.return_type) == "None"
+	assert out_pex_file.get_string(bar_fn.info.docstring) == ""
+	assert bar_fn.info.user_flags == 0
+	assert bar_fn.info.flags == 0b00
+	assert bar_fn.info.params.len == 2
+	assert bar_fn.info.locals.len == 2
+	assert bar_fn.info.instructions.len == 3
 }

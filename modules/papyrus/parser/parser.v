@@ -582,7 +582,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 
 	p.inside_property = false
 	
-	auto_var_name := "::" + node.name + "_var"
+	auto_var_name := pex.get_property_autovar_name(node.name)
 	
 	node.auto_var_name = auto_var_name
 
@@ -667,7 +667,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 		})
 	}
 
-	return  ast.VarDecl{
+	return ast.VarDecl{
 		typ: typ
 		obj_name: p.cur_obj_name
 		name: name

@@ -32,7 +32,6 @@ pub mut:
 	typ				Type
 	is_optional		bool
 	default_value	string
-	
 }
 
 pub struct State {
@@ -80,6 +79,7 @@ pub mut:
 	is_native		bool
 }
 
+[inline]
 pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
@@ -111,6 +111,7 @@ pub fn (t &Table) typ_is_parent(child_type int, parent_type int) bool {
 	return false
 }
 
+[inline]
 pub fn (t &Table) has_fn(obj_name string, name string) bool {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
@@ -121,6 +122,7 @@ pub fn (t &Table) has_fn(obj_name string, name string) bool {
 	return false
 }
 
+[inline]
 pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
@@ -131,10 +133,12 @@ pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
 	return none
 }
 
+[inline]
 pub fn (mut t Table) register_fn(new_fn Fn) {
 	t.fns[new_fn.obj_name.to_lower() + "." + new_fn.name.to_lower()] = new_fn
 }
 
+[inline]
 pub fn (mut t Table) add_placeholder_type(name string) Type {
 	ph_type := TypeSymbol {
 		kind:		.placeholder
@@ -146,15 +150,15 @@ pub fn (mut t Table) add_placeholder_type(name string) Type {
 }
 
 [inline]
-pub fn (mut t Table) register_type_symbol(typ TypeSymbol) Type {
-	existing_idx := t.type_idxs[typ.name.to_lower()]
+pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
+	existing_idx := t.type_idxs[sym.name.to_lower()]
 	if existing_idx > 0 {
 		ex_type := t.types[existing_idx]
 		match ex_type.kind {
 			.placeholder {
 				// override placeholder
 				t.types[existing_idx] = TypeSymbol{
-					...typ
+					...sym
 					methods: ex_type.methods
 				}
 				return existing_idx
@@ -162,13 +166,13 @@ pub fn (mut t Table) register_type_symbol(typ TypeSymbol) Type {
 			else {
 				if t.allow_override {
 					t.types[existing_idx] = TypeSymbol{
-						...typ
+						...sym
 						methods: ex_type.methods
 					}
 					return existing_idx
 				}
 				else {
-					panic("Warning: override type(${typ.name}) - table.register_type_symbol()")
+					panic("Warning: override type(${sym.name}) - table.register_type_symbol()")
 					return existing_idx
 				}
 			}
@@ -176,8 +180,8 @@ pub fn (mut t Table) register_type_symbol(typ TypeSymbol) Type {
 	}
 	
 	typ_idx := t.types.len
-	t.types << typ
-	t.type_idxs[typ.name.to_lower()] = typ_idx
+	t.types << sym
+	t.type_idxs[sym.name.to_lower()] = typ_idx
 	return typ_idx
 }
 
@@ -186,6 +190,7 @@ pub fn (t &Table) find_type_idx(name string) Type {
 	return t.type_idxs[name.to_lower()]
 }
 
+[inline]
 pub fn (t &Table) known_type(name string) bool {
 	return t.find_type_idx(name) != 0
 }
@@ -234,6 +239,37 @@ pub fn (t &Table) type_is_array(typ Type) bool {
 	return false
 }
 
+[inline]
+pub fn (t &Table) find_object_property(typ Type, name string) ?Prop {
+	mut sym := t.get_type_symbol(typ)
+	
+	for {
+		if prop := sym.find_property(name) {
+			return prop
+		}
+
+		if sym.parent_idx > 0 {
+			sym = t.get_type_symbol(sym.parent_idx)
+			continue
+		}
+
+		break
+	}
+
+	return none
+}
+
+[inline]
+pub fn (t &Table) find_object_var(typ Type, name string) ?Var {
+	mut sym := t.get_type_symbol(typ)
+	
+	if var := sym.find_var(name) {
+		return var
+	}
+
+	return none
+}
+
 pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 	name := t.array_name(elem_type)
 	// existing
@@ -241,8 +277,9 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 	if existing_idx > 0 {
 		return existing_idx
 	}
+
 	// register
-	array_type_ := TypeSymbol{
+	mut array_type_ := TypeSymbol{
 		kind: .array
 		name: name
 		info: Array{
@@ -250,5 +287,55 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 		}
 		methods: []Fn{}
 	}
+
+	// int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
+	array_type_.methods << Fn{
+		return_type: int_type
+		obj_name: name
+		params: [
+			Param{
+				name: "value"
+				typ: elem_type
+				is_optional: false
+				default_value: ""
+			},
+			Param{
+				name: "startIndex"
+				typ: int_type
+				is_optional: true
+				default_value: "0"
+			}
+		]
+		name: "Find"
+		lname: "find"
+		is_global: false
+		is_native: false
+	}
+
+	// int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
+	array_type_.methods << Fn{
+		return_type: int_type
+		obj_name: name
+		params: [
+			Param{
+				name: "value"
+				typ: elem_type
+				is_optional: false
+				default_value: ""
+			},
+			Param{
+				name: "startIndex"
+				typ: int_type
+				is_optional: true
+				default_value: "-1"
+			}
+		]
+		name: "RFind"
+		lname: "rfind"
+		is_global: false
+		is_native: false
+	}
+
+
 	return t.register_type_symbol(array_type_)
 }

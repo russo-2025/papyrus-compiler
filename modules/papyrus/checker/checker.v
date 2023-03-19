@@ -76,18 +76,20 @@ pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type) bool {
 	if var_typ == value_typ {
 		return true
 	}
-	
+
+	return false
+}
+
+pub fn (mut c Checker) valid_prop_type(var_typ ast.Type, value_typ ast.Type) bool {
+	if c.valid_type(var_typ, value_typ) {
+		return true
+	}
+
 	var_sym := c.table.get_type_symbol(var_typ)
-	value_sym := c.table.get_type_symbol(value_typ)
-	
-	match var_sym.kind {
-		.array,
-		.script {
-			if value_sym.kind == .none_ {
-				return true
-			}
+	if var_sym.kind == .script || var_sym.kind == .array {
+		if value_typ == ast.none_type {
+			return true
 		}
-		else{}
 	}
 
 	return false
@@ -124,10 +126,21 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 			return true
 		}
 		.array {
+			match from_sym.kind {
+				.none_ { return true }
+				else { return false }
+			}
+
 			return false
 		}
 		.script {
-			return c.table.typ_is_parent(from_type, to_type)
+			match from_sym.kind {
+				.none_ { return true }
+				.script { return c.table.typ_is_parent(from_type, to_type) }
+				else { return false }
+			}
+
+			return false
 		}
 	}
 
@@ -210,11 +223,7 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 }
 
 pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) &ast.Expr {
-	if !c.can_cast(from_type, to_type) {
-		type_name := c.get_type_name(from_type)
-		to_type_name := c.get_type_name(to_type)
-		c.error("cannot cast type `$type_name` to type `$to_type_name`", node.pos)
-	}
+	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
 
 	new_node := ast.CastExpr {
 		expr: node
@@ -332,38 +341,6 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?&a
 		}
 
 		break
-	}
-
-	if sym.kind == .array {
-		//int Function Find(;/element type/; akElement, int aiStartIndex = 0) native
-		//int Function RFind(;/element type/; akElement, int aiStartIndex = -1) native
-		
-		lname := name.to_lower()
-		if lname == "find" || lname == "rfind" {
-			elem_type := (sym.info as ast.Array).elem_type
-			
-			return &ast.Fn{
-				params: [
-					ast.Param{
-						name: "value"
-						typ: elem_type
-						is_optional: false
-						default_value: ""
-					},
-					ast.Param{
-						name: "startIndex"
-						typ: ast.int_type
-						is_optional: true
-						default_value: if lname == "find" { "0" } else { "-1" }
-					}
-				]
-				return_type: ast.int_type
-				obj_name: 'builtin'
-				name: name
-				lname: name.to_lower()
-				is_global: false
-			}
-		}
 	}
 	
 	if name.to_lower() == 'getstate' {

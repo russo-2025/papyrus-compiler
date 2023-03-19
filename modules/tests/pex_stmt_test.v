@@ -24,11 +24,27 @@ EndFunction\n
 
 	parent_src =
 "Scriptname CDFG
+
+CDFG Property ParentObjAutoProp Auto
+
+CDFG Property ParentObjFullProp
+	CDFG Function Get()
+		return none
+	EndFunction
+	Function Set(CDFG value)
+	EndFunction
+EndProperty
+
 Function ParentFoz(int n1, int n2)
 EndFunction\n"
 
 	src_template = 
 "Scriptname ABCD extends CDFG
+
+CDFG ObjVar
+int myValue = 0
+int Property myAutoProp = 123 Auto
+int Property myAutoReadProp = 123 AutoReadOnly
 
 Auto State MyAutoState
     Function Foz(int n1, int n2)
@@ -38,11 +54,6 @@ EndState
 
 State MyState
 EndState
-
-int myValue = 0
-
-int Property myAutoProp = 123 Auto
-int Property myAutoReadProp = 123 AutoReadOnly
 
 int Property myPropGet
 	int Function Get()
@@ -102,7 +113,7 @@ fn compile_top(src string) &pex.PexFile {
 }
 
 fn compile(src string) &pex.PexFile {
-	full_src := "${src_template}Function Bar(string v, ABCD obj, OtherScript obj2)\n${src}\nEndFunction\n"
+	full_src := "${src_template}Function Bar(string v, ABCD obj, OtherScript obj2, int[] intArray)\n${src}\nEndFunction\n"
 	table := ast.new_table()
 	global_scope := &ast.Scope{
 		parent: 0
@@ -167,6 +178,71 @@ fn test_object_var_decl_3() {
 	assert pex_file.get_string(var.name) == "myTestObjectVar3"
 	assert pex_file.get_string(var.type_name) == "ABCD[]"
 	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_4() {
+	pex_file := compile_top('bool waiting')
+	
+	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "waiting"
+	assert pex_file.get_string(var.type_name) == "Bool"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_5() {
+	pex_file := compile_top('int waiting')
+	
+	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "waiting"
+	assert pex_file.get_string(var.type_name) == "Int"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_6() {
+	pex_file := compile_top('ABCD objVarTest = None')
+	
+	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.type_name) == "ABCD"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_7() {
+	pex_file := compile_top('ABCD[] objVarTest = None')
+	
+	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.type_name) == "ABCD[]"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_call_method() {
+	// original:
+	// opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(ObjVar), ident(::temp7)]
+
+	mut pex_file := compile("
+		ObjVar.ParentFoz(123, 111)
+		ObjVar = none")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]"
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(ObjVar), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
 }
 
 fn test_state_decl_1() {
@@ -630,6 +706,161 @@ fn test_property_decl_7() {
 	assert pex_file.get_string(prop.read_handler.instructions[0].args[0].to_string_id()) == "myValue"
 }
 
+fn test_property_decl_8() {
+	mut pex_file := compile_top('int Property Hello Auto')
+	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello"
+	assert pex_file.get_string(prop.typ).to_lower() == "int"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
+	
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "int"
+	assert var.user_flags == 0
+	assert var.data.typ == .null
+}
+
+fn test_property_decl_9() {
+	mut pex_file := compile_top('ABCD Property Hello = None Auto')
+	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello"
+	assert pex_file.get_string(prop.typ).to_lower() == "abcd"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
+	
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "abcd"
+	assert var.user_flags == 0
+	assert var.data.typ == .null
+}
+
+fn test_property_decl_10() {
+	mut pex_file := compile_top('ABCD[] Property Hello = None Auto')
+	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+
+	//prop
+	assert pex_file.get_string(prop.name) == "Hello"
+	assert pex_file.get_string(prop.typ).to_lower() == "abcd[]"
+	assert prop.user_flags == 0
+	assert prop.flags == 0b0111
+	assert prop.is_read()
+	assert prop.is_write()
+	assert prop.is_autovar()
+	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
+	
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
+		assert false, "variable not found"
+		panic("variable not found")
+	}
+	assert pex_file.get_string(var.name) == "::Hello_var"
+	assert pex_file.get_string(var.type_name).to_lower() == "abcd[]"
+	assert var.user_flags == 0
+	assert var.data.typ == .null
+}
+
+fn test_property_get_infix() {
+	//src:			myAutoProp + 4
+	//original:		opcode: 'iadd', args: [ident(::temp2), ident(::myAutoProp_var), integer(4)]
+   
+	mut pex_file := compile("myAutoProp + 4")
+	mut ins := get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.iadd
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "::myAutoProp_var"
+	assert ins[0].args[2].to_integer() == 4
+
+	//src:			obj.myAutoProp + 14
+	//original:		opcode: 'propget', args: [ident(myAutoProp), ident(obj), ident(::temp2)]
+    //				opcode: 'iadd', args: [ident(::temp2), ident(::temp2), integer(14)]
+   
+	pex_file = compile("obj.myAutoProp + 14")
+	ins = get_instructions(pex_file)
+
+	assert ins[0].op == pex.OpCode.propget
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "myAutoProp"
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
+	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::temp0"
+
+	assert ins[1].op == pex.OpCode.iadd
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "::temp0"
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp0"
+	assert ins[1].args[2].to_integer() == 14
+}
+
+fn test_property_get_call_method() {
+	// original:
+	// opcode: 'callmethod', args: [ident(ParentFoz), ident(::ParentObjAutoProp_var), ident(::NoneVar), integer(2), integer(123), integer(111)]
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(::ParentObjAutoProp_var), ident(::temp7)]
+	
+	mut pex_file := compile("
+		ParentObjAutoProp.ParentFoz(123, 111)
+		ParentObjAutoProp = none")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'callmethod', args: [ident(ParentFoz), ident(::ParentObjAutoProp_var), ident(::NoneVar), integer(2), integer(123), integer(111)]"
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(::ParentObjAutoProp_var), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_property_get_call_method2() {
+	// original:
+	// opcode: 'propget', args: [ident(ParentObjFullProp), ident(self), ident(::temp7)]
+	// opcode: 'callmethod', args: [ident(ParentFoz), ident(::temp7), ident(::NoneVar), integer(2), integer(123), integer(111)]
+	// opcode: 'cast', args: [ident(::temp8), none]
+	// opcode: 'assign', args: [ident(::temp7), ident(::temp8)]
+	// opcode: 'propset', args: [ident(ParentObjFullProp), ident(self), ident(::temp7)]
+	
+	mut pex_file := compile("
+		ParentObjFullProp.ParentFoz(123, 111)
+		ParentObjFullProp = none")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'propget', args: [ident(ParentObjFullProp), ident(self), ident(::temp1)]"
+		"opcode: 'callmethod', args: [ident(ParentFoz), ident(::temp1), ident(::NoneVar), integer(2), integer(123), integer(111)]"
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'propset', args: [ident(ParentObjFullProp), ident(self), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
 fn test_static_call() {
 	//src:			Foo(11, 12)
 	//original:		opcode: 'callstatic', args: [ident(ABCD), ident(Foo), ident(::NoneVar), integer(2), integer(11), integer(12)]
@@ -800,6 +1031,127 @@ fn test_call_event() {
 	assert ins[0].args[3].to_integer() == 0 // number of additional arguments
 }
 
+fn test_assign_base_types() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), string('foo 123')]
+	// opcode: 'assign', args: [ident(Var1), ident(::temp7)]
+	// opcode: 'assign', args: [ident(Var2), boolean(01)]
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(Var3), ident(::temp7)]
+	// opcode: 'assign', args: [ident(Var4), integer(123)]
+	// opcode: 'assign', args: [ident(Var5), float(1.1674)]
+	// opcode: 'cast', args: [ident(::temp8), integer(117)]
+	// opcode: 'assign', args: [ident(Var6), ident(::temp8)]
+	// opcode: 'assign', args: [ident(Var7), string('foo 123')]
+	// opcode: 'cast', args: [ident(::temp9), boolean(01)]
+	// opcode: 'assign', args: [ident(Var8), ident(::temp9)]
+	// opcode: 'cast', args: [ident(::temp9), none]
+	// opcode: 'assign', args: [ident(Var9), ident(::temp9)]
+	// opcode: 'cast', args: [ident(::temp9), integer(123)]
+	// opcode: 'assign', args: [ident(Var10), ident(::temp9)]
+
+	mut pex_file := compile("
+		Bool Var1 = \"foo 123\"
+		Bool Var2 = True
+		Bool Var3 = None
+		Int Var4 = 123
+		Float Var5 = 1.1674
+		Float Var6 = 117
+		String Var7 = \"foo 123\"
+		String Var8 = True
+		String Var9 = None
+		String Var10 = 123")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), string('foo 123')]"
+		"opcode: 'assign', args: [ident(Var1), ident(::temp1)]"
+		"opcode: 'assign', args: [ident(Var2), boolean(01)]"
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(Var3), ident(::temp1)]"
+		"opcode: 'assign', args: [ident(Var4), integer(123)]"
+		"opcode: 'assign', args: [ident(Var5), float(1.1674)]"
+		"opcode: 'cast', args: [ident(::temp7), integer(117)]"
+		"opcode: 'assign', args: [ident(Var6), ident(::temp7)]"
+		"opcode: 'assign', args: [ident(Var7), string('foo 123')]"
+		"opcode: 'cast', args: [ident(::temp10), boolean(01)]"
+		"opcode: 'assign', args: [ident(Var8), ident(::temp10)]"
+		"opcode: 'cast', args: [ident(::temp10), none]"
+		"opcode: 'assign', args: [ident(Var9), ident(::temp10)]"
+		"opcode: 'cast', args: [ident(::temp10), integer(123)]"
+		"opcode: 'assign', args: [ident(Var10), ident(::temp10)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_assign_array() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(myArray1), ident(::temp7)]
+	// opcode: 'array_create', args: [ident(::temp7), integer(7)]
+	// opcode: 'assign', args: [ident(myArray2), ident(::temp7)]
+	
+	mut pex_file := compile("
+		ABCD[] myArray1 = none
+		ABCD[] myArray2 = new ABCD[7]")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(myArray1), ident(::temp1)]"
+		"opcode: 'array_create', args: [ident(::temp1), integer(7)]"
+		"opcode: 'assign', args: [ident(myArray2), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_assign_obj() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(var1), ident(::temp7)]
+	// opcode: 'assign', args: [ident(var2), ident(obj)]
+	// opcode: 'cast', args: [ident(::temp7), ident(obj2)]
+	// opcode: 'assign', args: [ident(var3), ident(::temp7)]
+	// opcode: 'cast', args: [ident(::temp8), ident(obj)]
+	// opcode: 'assign', args: [ident(var4), ident(::temp8)]
+
+	mut pex_file := compile("
+	ABCD var1 = none
+    ABCD var2 = obj
+    ABCD var3 = obj2 as ABCD
+    CDFG var4 = obj")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(var1), ident(::temp1)]"
+		"opcode: 'assign', args: [ident(var2), ident(obj)]"
+		"opcode: 'cast', args: [ident(::temp1), ident(obj2)]"
+		"opcode: 'assign', args: [ident(var3), ident(::temp1)]"
+		"opcode: 'cast', args: [ident(::temp5), ident(obj)]"
+		"opcode: 'assign', args: [ident(var4), ident(::temp5)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
 fn test_property_assign() {
 	//src:			myAutoProp = 5
 	//original:		opcode: 'assign', args: [ident(::myAutoProp_var), integer(5)]
@@ -824,34 +1176,371 @@ fn test_property_assign() {
 	assert ins[0].args[2].to_integer() == 15
 }
 
-fn test_property_get() {
-	//src:			myAutoProp + 4
-	//original:		opcode: 'iadd', args: [ident(::temp2), ident(::myAutoProp_var), integer(4)]
-   
-	mut pex_file := compile("myAutoProp + 4")
+fn test_new_array() {
+	// original: 
+	// opcode: 'array_create', args: [ident(::temp7), integer(14)]
+	// opcode: 'assign', args: [ident(intVar), ident(::temp7)]
+
+	mut pex_file := compile("Int[] intVar = new Int[14]")
+	mut ins := get_instructions(pex_file)
+	
+	//ins 1
+	assert ins[0].op == pex.OpCode.array_create
+
+	assert ins[0].args[0].typ == .identifier
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp1"
+	
+	assert ins[0].args[1].typ == .integer
+	assert ins[0].args[1].to_integer() == 14
+	
+	//ins 2
+	assert ins[1].op == pex.OpCode.assign
+
+	assert ins[1].args[0].typ == .identifier
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "intVar"
+
+	assert ins[1].args[1].typ == .identifier
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
+}
+
+fn test_array_length() {
+	// original:
+	// opcode: 'array_length', args: [ident(::temp7), ident(intVar)]
+	// opcode: 'assign', args: [ident(len), ident(::temp7)]
+
+	mut pex_file := compile("Int[] intVar\nint len = intVar.Length")
 	mut ins := get_instructions(pex_file)
 
-	assert ins[0].op == pex.OpCode.iadd
-	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp0"
-	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "::myAutoProp_var"
-	assert ins[0].args[2].to_integer() == 4
+	//ins 1
+	assert ins[0].op == pex.OpCode.array_length
 
-	//src:			obj.myAutoProp + 14
-	//original:		opcode: 'propget', args: [ident(myAutoProp), ident(obj), ident(::temp2)]
-    //				opcode: 'iadd', args: [ident(::temp2), ident(::temp2), integer(14)]
-   
-	pex_file = compile("obj.myAutoProp + 14")
-	ins = get_instructions(pex_file)
+	assert ins[0].args[0].typ == .identifier
+	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp2"
 
-	assert ins[0].op == pex.OpCode.propget
-	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "myAutoProp"
-	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "obj"
-	assert pex_file.get_string(ins[0].args[2].to_string_id()) == "::temp0"
+	assert ins[0].args[1].typ == .identifier
+	assert pex_file.get_string(ins[0].args[1].to_string_id()) == "intVar"
 
-	assert ins[1].op == pex.OpCode.iadd
-	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "::temp0"
-	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp0"
-	assert ins[1].args[2].to_integer() == 14
+	//ins 2
+	assert ins[1].op == pex.OpCode.assign
+
+	assert ins[1].args[0].typ == .identifier
+	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "len"
+
+	assert ins[1].args[1].typ == .identifier
+	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp2"
+}
+
+fn test_array_find() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(myArray), ident(::temp7)]
+	// opcode: 'cast', args: [ident(::temp8), none]
+	// opcode: 'array_findelement', args: [ident(myArray), ident(::temp9), ident(::temp8), integer(0)]
+	// opcode: 'assign', args: [ident(myIndex1), ident(::temp9)]
+	// opcode: 'array_findelement', args: [ident(myArray), ident(::temp9), ident(obj), integer(1)]
+	// opcode: 'assign', args: [ident(myIndex2), ident(::temp9)]
+
+	mut pex_file := compile("
+		ABCD[] myArray = none
+		int myIndex1 = myArray.Find(none)
+		int myIndex2 = myArray.Find(obj, 1)")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(myArray), ident(::temp1)]"
+		"opcode: 'cast', args: [ident(::temp4), none]"
+		"opcode: 'array_findelement', args: [ident(myArray), ident(::temp3), ident(::temp4), integer(0)]"
+		"opcode: 'assign', args: [ident(myIndex1), ident(::temp3)]"
+		"opcode: 'array_findelement', args: [ident(myArray), ident(::temp3), ident(obj), integer(1)]"
+		"opcode: 'assign', args: [ident(myIndex2), ident(::temp3)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_array_rfind() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(myArray), ident(::temp7)]
+	// opcode: 'cast', args: [ident(::temp8), none]
+	// opcode: 'array_rfindelement', args: [ident(myArray), ident(::temp9), ident(::temp8), integer(-1)]
+	// opcode: 'assign', args: [ident(myIndex1), ident(::temp9)]
+	// opcode: 'array_rfindelement', args: [ident(myArray), ident(::temp9), ident(obj), integer(6)]
+	// opcode: 'assign', args: [ident(myIndex2), ident(::temp9)]
+
+	mut pex_file := compile("
+		ABCD[] myArray = none
+		int myIndex1 = myArray.RFind(none)
+		int myIndex2 = myArray.RFind(obj, 6)")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(myArray), ident(::temp1)]"
+		"opcode: 'cast', args: [ident(::temp4), none]"
+		"opcode: 'array_rfindelement', args: [ident(myArray), ident(::temp3), ident(::temp4), integer(-1)]"
+		"opcode: 'assign', args: [ident(myIndex1), ident(::temp3)]"
+		"opcode: 'array_rfindelement', args: [ident(myArray), ident(::temp3), ident(obj), integer(6)]"
+		"opcode: 'assign', args: [ident(myIndex2), ident(::temp3)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+
+}
+
+fn test_array_get_element() {
+	//	original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(myArray), ident(::temp7)]
+	// opcode: 'array_getelement', args: [ident(::temp8), ident(myArray), integer(0)]
+	// opcode: 'assign', args: [ident(Var), ident(::temp8)]
+	// opcode: 'cast', args: [ident(::temp9), none]
+	// opcode: 'assign', args: [ident(myArray2), ident(::temp9)]
+	// opcode: 'array_getelement', args: [ident(::temp10), ident(myArray2), integer(0)]
+	// opcode: 'assign', args: [ident(Var2), ident(::temp10)]
+	
+	mut pex_file := compile("
+		ABCD[] myArray = none
+		ABCD Var = myArray[0]
+		String[] myArray2 = none
+		String Var2 = myArray2[0]")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(myArray), ident(::temp1)]"
+		"opcode: 'array_getelement', args: [ident(::temp3), ident(myArray), integer(0)]"
+		"opcode: 'assign', args: [ident(Var), ident(::temp3)]"
+		"opcode: 'cast', args: [ident(::temp5), none]"
+		"opcode: 'assign', args: [ident(myArray2), ident(::temp5)]"
+		"opcode: 'array_getelement', args: [ident(::temp7), ident(myArray2), integer(0)]"
+		"opcode: 'assign', args: [ident(Var2), ident(::temp7)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_array_set_element() {
+	// original:
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(myArray), ident(::temp7)]
+	// opcode: 'cast', args: [ident(::temp9), none]
+	// opcode: 'assign', args: [ident(::temp8), ident(::temp9)]
+	// opcode: 'array_setelement', args: [ident(myArray), integer(0), ident(::temp8)]
+	// opcode: 'assign', args: [ident(::temp9), ident(obj)]
+	// opcode: 'array_setelement', args: [ident(myArray), integer(0), ident(::temp9)]
+	// opcode: 'cast', args: [ident(::temp10), none]
+	// opcode: 'assign', args: [ident(myArray2), ident(::temp10)]
+	// opcode: 'assign', args: [ident(::temp11), string('sadqw')]
+	// opcode: 'array_setelement', args: [ident(myArray2), integer(0), ident(::temp11)]
+	// opcode: 'cast', args: [ident(::temp12), integer(123)]
+	// opcode: 'assign', args: [ident(::temp11), ident(::temp12)]
+	// opcode: 'array_setelement', args: [ident(myArray2), integer(0), ident(::temp11)]
+
+	mut pex_file := compile("
+		ABCD[] myArray = none
+		myArray[0] = none
+		myArray[0] = obj
+		String[] myArray2 = none
+		myArray2[0] = \"sadqw\"
+		myArray2[0] = 123")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(myArray), ident(::temp1)]"
+		"opcode: 'cast', args: [ident(::temp2), none]"
+		//"opcode: 'assign', args: [ident(::temp8), ident(::temp9)]"
+		"opcode: 'array_setelement', args: [ident(myArray), integer(0), ident(::temp2)]"
+		//"opcode: 'assign', args: [ident(::temp9), ident(obj)]"
+		"opcode: 'array_setelement', args: [ident(myArray), integer(0), ident(obj)]"
+		"opcode: 'cast', args: [ident(::temp4), none]"
+		"opcode: 'assign', args: [ident(myArray2), ident(::temp4)]"
+		//"opcode: 'assign', args: [ident(::temp11), string('sadqw')]"
+		"opcode: 'array_setelement', args: [ident(myArray2), integer(0), string('sadqw')]"
+		"opcode: 'cast', args: [ident(::temp5), integer(123)]"
+		//"opcode: 'assign', args: [ident(::temp11), ident(::temp12)]"
+		"opcode: 'array_setelement', args: [ident(myArray2), integer(0), ident(::temp5)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_array_str_concat() {
+	//	original:
+	// opcode: 'strcat', args: [ident(::temp7), string('Hello '), string('World')]
+    // opcode: 'assign', args: [ident(myStr), ident(::temp7)]
+
+	mut pex_file := compile("string myStr = \"Hello \" + \"World\"")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'strcat', args: [ident(::temp1), string('Hello '), string('World')]"
+    	"opcode: 'assign', args: [ident(myStr), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_if() {
+	// original:
+	// opcode: 'assign', args: [ident(val), integer(1)]
+	// opcode: 'cmp_gt', args: [ident(::temp7), ident(val), integer(0)]
+	// opcode: 'jmpf', args: [ident(::temp7), integer(3)]
+	// opcode: 'assign', args: [ident(val), integer(3)]
+	// opcode: 'jmp', args: [integer(5)]
+	// opcode: 'jmpf', args: [boolean(01), integer(3)]
+	// opcode: 'assign', args: [ident(val), integer(4)]
+	// opcode: 'jmp', args: [integer(2)]
+	// opcode: 'assign', args: [ident(val), integer(5)]
+	
+	mut pex_file := compile("
+		int val = 1
+		if val > 0
+			val = 3
+		ElseIf (true)
+			val = 4
+		Else
+			val = 5
+		EndIf")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'assign', args: [ident(val), integer(1)]"
+		"opcode: 'cmp_gt', args: [ident(::temp1), ident(val), integer(0)]"
+		"opcode: 'jmpf', args: [ident(::temp1), integer(3)]"
+		"opcode: 'assign', args: [ident(val), integer(3)]"
+		"opcode: 'jmp', args: [integer(5)]"
+		"opcode: 'jmpf', args: [boolean(01), integer(3)]"
+		"opcode: 'assign', args: [ident(val), integer(4)]"
+		"opcode: 'jmp', args: [integer(2)]"
+		"opcode: 'assign', args: [ident(val), integer(5)]"
+	]
+	
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_while() {
+	// original:
+	// opcode: 'assign', args: [ident(val), integer(1)]
+	// opcode: 'iadd', args: [ident(::temp7), integer(131), integer(125)]
+	// opcode: 'cmp_gt', args: [ident(::temp8), ident(::temp7), integer(1)]
+	// opcode: 'jmpf', args: [ident(::temp8), integer(3)]
+	// opcode: 'assign', args: [ident(val), integer(4)]
+	// opcode: 'jmp', args: [integer(-4)]
+	
+	mut pex_file := compile("
+		int val = 1
+		While (131 + 125) > 1
+			val = 4
+		EndWhile")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'assign', args: [ident(val), integer(1)]"
+		"opcode: 'iadd', args: [ident(::temp1), integer(131), integer(125)]"
+		"opcode: 'cmp_gt', args: [ident(::temp2), ident(::temp1), integer(1)]"
+		"opcode: 'jmpf', args: [ident(::temp2), integer(3)]"
+		"opcode: 'assign', args: [ident(val), integer(4)]"
+		"opcode: 'jmp', args: [integer(-4)]"
+	]
+	
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_while2() {
+	// original:
+	// opcode: 'assign', args: [ident(val), integer(1)]
+    // opcode: 'iadd', args: [ident(::temp7), integer(131), integer(125)]
+    // opcode: 'cmp_gt', args: [ident(::temp8), ident(::temp7), integer(1)]
+    // opcode: 'jmpf', args: [ident(::temp8), integer(12)]
+    // opcode: 'assign', args: [ident(val2), integer(1)]
+    // opcode: 'cmp_gt', args: [ident(::temp9), ident(val2), integer(0)]
+    // opcode: 'jmpf', args: [ident(::temp9), integer(3)]
+    // opcode: 'assign', args: [ident(val2), integer(3)]
+    // opcode: 'jmp', args: [integer(5)]
+    // opcode: 'jmpf', args: [boolean(01), integer(3)]
+    // opcode: 'assign', args: [ident(val2), integer(4)]
+    // opcode: 'jmp', args: [integer(2)]
+    // opcode: 'assign', args: [ident(val2), integer(5)]
+    // opcode: 'assign', args: [ident(val), integer(5)]
+    // opcode: 'jmp', args: [integer(-13)]
+	
+	mut pex_file := compile("
+		int val = 1
+		While (131 + 125) > 1
+			int val2 = 1
+			if val2 > 0
+				val2 = 3
+			ElseIf (true)
+				val2 = 4
+			Else
+				val2 = 5
+			EndIf
+			val = 5
+		EndWhile")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'assign', args: [ident(val), integer(1)]"
+        "opcode: 'iadd', args: [ident(::temp1), integer(131), integer(125)]"
+        "opcode: 'cmp_gt', args: [ident(::temp2), ident(::temp1), integer(1)]"
+        "opcode: 'jmpf', args: [ident(::temp2), integer(12)]"
+        "opcode: 'assign', args: [ident(val2), integer(1)]"
+        "opcode: 'cmp_gt', args: [ident(::temp2), ident(val2), integer(0)]"
+        "opcode: 'jmpf', args: [ident(::temp2), integer(3)]"
+        "opcode: 'assign', args: [ident(val2), integer(3)]"
+        "opcode: 'jmp', args: [integer(5)]"
+        "opcode: 'jmpf', args: [boolean(01), integer(3)]"
+        "opcode: 'assign', args: [ident(val2), integer(4)]"
+        "opcode: 'jmp', args: [integer(2)]"
+        "opcode: 'assign', args: [ident(val2), integer(5)]"
+        "opcode: 'assign', args: [ident(val), integer(5)]"
+        "opcode: 'jmp', args: [integer(-13)]"
+	]
+
+	assert ins.len == expected.len
+	
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
 }
 
 fn test_call() {

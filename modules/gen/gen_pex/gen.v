@@ -179,6 +179,14 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 		}
 	}
 
+	g.pex.functions << pex.DebugFunction{
+		object_name: g.cur_obj.name
+		state_name: g.cur_state.name
+		function_name: g.gen_string_ref("GetState")
+		function_type: 0 // TODO выяснить что это
+		instruction_line_numbers: []u16{}
+	}
+	
 	//GotoState
 	state.functions << &pex.Function{
 		name: g.gen_string_ref("GotoState")
@@ -232,33 +240,45 @@ fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
 		}
 	}
 
-	//onEndState
-	state.functions << &pex.Function{
-		name: g.gen_string_ref("onEndState")
-		info: pex.FunctionInfo{
-			return_type: g.gen_string_ref("None")
-			docstring: g.gen_string_ref("Event received when this state is switched away from")
-			user_flags: 0
-			flags: 0
-			
-			params: []pex.VariableType{}
-			locals: []pex.VariableType{}
-			instructions: []pex.Instruction{}
-		}
+	g.pex.functions << pex.DebugFunction{
+		object_name: g.cur_obj.name
+		state_name: g.cur_state.name
+		function_name: g.gen_string_ref("GotoState")
+		function_type: 0 // TODO выяснить что это
+		instruction_line_numbers: []u16{}
 	}
+	
+	sym := g.table.get_type_symbol(g.cur_obj_type)
+	if sym.parent_idx == 0 {
+	
+	//onEndState
+		state.functions << &pex.Function{
+			name: g.gen_string_ref("onEndState")
+			info: pex.FunctionInfo{
+				return_type: g.gen_string_ref("None")
+				docstring: g.gen_string_ref("Event received when this state is switched away from")
+				user_flags: 0
+				flags: 0
+				
+				params: []pex.VariableType{}
+				locals: []pex.VariableType{}
+				instructions: []pex.Instruction{}
+			}
+		}
 
-	//onBeginState
-	state.functions << &pex.Function{
-		name: g.gen_string_ref("onBeginState")
-		info: pex.FunctionInfo{
-			return_type: g.gen_string_ref("None")
-			docstring: g.gen_string_ref("Event received when this state is switched to")
-			user_flags: 0
-			flags: 0
-			
-			params: []pex.VariableType{}
-			locals: []pex.VariableType{}
-			instructions: []pex.Instruction{}
+		//onBeginState
+		state.functions << &pex.Function{
+			name: g.gen_string_ref("onBeginState")
+			info: pex.FunctionInfo{
+				return_type: g.gen_string_ref("None")
+				docstring: g.gen_string_ref("Event received when this state is switched to")
+				user_flags: 0
+				flags: 0
+				
+				params: []pex.VariableType{}
+				locals: []pex.VariableType{}
+				instructions: []pex.Instruction{}
+			}
 		}
 	}
 }

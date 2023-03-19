@@ -361,10 +361,8 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 			result_value = g.gen_prefix_operator(mut &expr)
 		}
 		ast.Ident {
-			if expr.is_object_property_or_var {
-				sym := g.table.get_type_symbol(g.cur_obj_type)
-				if prop := sym.find_property(expr.name) {
-					
+			if expr.is_object_property {
+				if prop := g.table.find_object_property(g.cur_obj_type, expr.name) {
 					if prop.is_auto {
 						return pex.value_ident(g.gen_string_ref(prop.auto_var_name))
 					}
@@ -437,7 +435,6 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 
 	return result_value
 }
-
 
 [inline]
 fn (mut g Gen) get_prefix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCode {

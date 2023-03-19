@@ -48,6 +48,22 @@ fn (mut c Checker) top_stmt(mut node &ast.TopStmt) {
 			if c.type_is_valid(node.typ) {
 				c.inside_property = true
 
+				if node.expr !is ast.EmptyExpr {
+					if !node.expr.is_literal() {
+						c.error("expression in object property can only be a literal", node.pos)
+					}
+
+					left_type := node.typ
+					mut right_type := c.expr(mut node.expr)
+
+					if c.valid_prop_type(left_type, right_type) {}
+					else {
+						ltype_name := c.get_type_name(left_type)
+						rtype_name := c.get_type_name(right_type)
+						c.error("value with type `$rtype_name` cannot be assigned to a property with type `$ltype_name`",  node.pos)
+					}
+				}
+
 				if mut node.read is ast.FnDecl {
 					c.top_stmt(mut &node.read)
 				}
@@ -85,7 +101,7 @@ fn (mut c Checker) stmt(mut node &ast.Stmt) {
 			typ := c.expr(mut node.expr)
 			
 			if c.valid_type(c.cur_fn.return_type, typ) {}
-			else if c.can_cast(typ, c.cur_fn.return_type) {
+			else if c.can_autocast(typ, c.cur_fn.return_type) {
 				new_expr := ast.CastExpr {
 					expr: node.expr
 					pos: node.expr.pos
@@ -149,7 +165,7 @@ fn (mut c Checker) stmt(mut node &ast.Stmt) {
 				node.typ = left_type
 
 				if c.valid_type(left_type, right_type) {}
-				else if c.can_cast(right_type, left_type) {
+				else if c.can_autocast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
 					right_type = left_type
 				}
@@ -302,34 +318,49 @@ fn (mut c Checker) fn_decl(mut node &ast.FnDecl) {
 }
 
 pub fn (mut c Checker) var_decl(mut node &ast.VarDecl) {
-	if node.assign.right is ast.EmptyExpr {
-		node.assign.right = c.get_default_value(node.typ)
-	}
-
-	left_type := node.typ
-	mut right_type := c.expr(mut node.assign.right)
-
-	if c.valid_type(left_type, right_type) {}
-	else if c.can_cast(right_type, left_type) {
-		node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
-	}
-	else {
-		ltype_name := c.get_type_name(left_type)
-		rtype_name := c.get_type_name(right_type)
-		c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
-	}
-
-	if !c.type_is_valid(node.typ) {
-		c.error("invalid type in variable declaration", node.pos)
-		return
-	}
-
 	if obj := c.cur_scope.find_var(node.name) {
 		if node.pos.pos != obj.pos.pos {
 			c.error("variable with name `$node.name` already exists", node.pos)
 			return
 		}
 	}
+
+	if !c.type_is_valid(node.typ) {
+		c.error("invalid type in variable declaration", node.pos)
+		return
+	}
 	
-	c.stmt(mut node.assign)
+	if node.assign.right !is ast.EmptyExpr {
+		if node.is_object_var {
+			if !node.assign.right.is_literal() {
+				c.error("expression in object variable can only be a literal", node.pos)
+			}
+
+			left_type := node.typ
+			mut right_type := c.expr(mut node.assign.right)
+			if c.valid_prop_type(left_type, right_type) {}
+			else {
+				ltype_name := c.get_type_name(left_type)
+				rtype_name := c.get_type_name(right_type)
+				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+			}
+		}
+		else {
+			left_type := node.typ
+			mut right_type := c.expr(mut node.assign.right)
+
+			if c.valid_type(left_type, right_type) {}
+			else if c.can_autocast(right_type, left_type) {
+				node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
+			}
+			else {
+				ltype_name := c.get_type_name(left_type)
+				rtype_name := c.get_type_name(right_type)
+				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+			}
+		}
+
+		
+		c.stmt(mut node.assign)
+	}
 }

@@ -92,7 +92,7 @@ fn test_autocast() {
 	assert c.can_autocast(array_typ, ast.bool_type)
 
 	//autocast to array
-	assert !c.can_autocast(ast.none_type, array_typ)
+	assert c.can_autocast(ast.none_type, array_typ)
 	assert !c.can_autocast(ast.int_type, array_typ)
 	assert !c.can_autocast(ast.float_type, array_typ)
 	assert !c.can_autocast(ast.string_type, array_typ)
@@ -101,7 +101,7 @@ fn test_autocast() {
 	//assert c.can_autocast(array_typ, array_typ)
 
 	//autocast to object
-	assert !c.can_autocast(ast.none_type, object_typ)
+	assert c.can_autocast(ast.none_type, object_typ)
 	assert !c.can_autocast(ast.int_type, object_typ)
 	assert !c.can_autocast(ast.float_type, object_typ)
 	assert !c.can_autocast(ast.string_type, object_typ)
@@ -219,13 +219,9 @@ fn test_cast2() {
 	int_array_typ := table.find_type_idx("Int[]")
 	assert int_array_typ != 0
 
-	//OtherScript myVar2 = None ; valid
-	assert c.valid_type(typ, ast.none_type)
-	//OtherScript myVar2 = None as OtherScript; invalid
-	assert !c.can_cast(ast.none_type, typ)
+	assert !c.valid_type(typ, ast.none_type)
+	assert c.can_autocast(ast.none_type, typ)
 	
-	//int[] myVar1 = None ; valid
-	assert c.valid_type(int_array_typ, ast.none_type)
-	//int[] myVar1 = None as int[]; invalid
-	assert !c.can_cast(ast.none_type, int_array_typ)
+	assert !c.valid_type(int_array_typ, ast.none_type)
+	assert c.can_autocast(ast.none_type, int_array_typ)
 }

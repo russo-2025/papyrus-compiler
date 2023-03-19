@@ -30,25 +30,6 @@ fn (p PexFile)  print_debug_function(f DebugFunction, indentSize int) {
 	println(tab + "instruction count: $instruction_count")
 }
 
-pub fn (p PexFile) print_instruction(inst Instruction, indentSize int) {
-	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
-
-	mut args := ""
-	
-	mut i := 0
-	for i < inst.args.len {
-		args += p.variable_value_to_str(inst.args[i])
-		
-		if i < inst.args.len - 1 {
-			args += ", "
-		}
-
-		i++
-	}
-
-	println(tab + "opcode: '$inst.op', args: [$args]")
-}
-
 fn (p PexFile) print_variable_type(v VariableType, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 	
@@ -97,7 +78,7 @@ fn (p PexFile) print_func_info(info FunctionInfo, indentSize int) {
 	println(tab + "instructions count: '${info.instructions.len}'")
 	
 	for inst in info.instructions {
-		p.print_instruction(inst, indentSize + 1)
+		println(tab + "\t" + inst.to_string(p))
 	}
 }
 
@@ -117,33 +98,6 @@ fn (p PexFile) print_state(st State, indentSize int){
 	}
 }
 
-fn (p PexFile) variable_value_to_str(v VariableValue) string {
-	mut value_str := ""
-
-	match v.typ {
-		.null {
-			value_str = "none"
-		}
-		.identifier {
-			value_str = "ident(${p.string_table[v.to_string_id()]})"
-		}
-		.str {
-			value_str = "string('${p.string_table[v.to_string_id()]}')"
-		}
-		.integer {
-			value_str = "integer(${v.to_integer().str()})"
-		}
-		.float {
-			value_str = "float(${v.to_float().str()})"
-		}
-		.boolean {
-			value_str = "boolean(${v.to_boolean().hex()})"
-		}
-	}
-	
-	return value_str
-}
-
 fn (p PexFile) print_variable(v Variable, indentSize int) {
 	tab := if indentSize > 0 { strings.repeat(`	`, indentSize) } else { '' }
 
@@ -156,7 +110,7 @@ fn (p PexFile) print_variable(v Variable, indentSize int) {
 	println(tab + "name: '$name'")
 	println(tab + "type name: '$type_name'")
 	println(tab + "user flags(${user_flags_hex}): $user_flags_str")
-	println(tab + "data: ${p.variable_value_to_str(v.data)}")
+	println(tab + "data: ${v.data.to_string(p)}")
 }
 
 fn (p PexFile) print_property(prop Property, indentSize int) {

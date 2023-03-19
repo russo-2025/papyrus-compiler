@@ -309,10 +309,6 @@ fn test_ident() {
 	assert expr is ast.Ident
 	assert (expr as ast.Ident).typ == ast.int_type
 
-	expr, _ = compile_expr('myParentObjectVar') //parent object var
-	assert expr is ast.Ident
-	assert (expr as ast.Ident).typ == ast.string_type
-
 	expr, _ = compile_expr('myAutoParentProp') //parent object property
 	assert expr is ast.Ident
 	assert (expr as ast.Ident).typ == ast.float_type
@@ -386,11 +382,8 @@ fn test_object_vars() {
 	expr, _ = compile_expr('myObjectVar')
 	assert (expr as ast.Ident).typ == ast.bool_type
 	
-	expr, _ = compile_expr('obj.myParentObjectVar')
+	expr, _ = compile_expr('pobj.myParentObjectVar')
 	assert (expr as ast.SelectorExpr).typ == ast.string_type
-
-	expr, _ = compile_expr('myParentObjectVar')
-	assert (expr as ast.Ident).typ == ast.string_type
 }
 
 fn test_call_expr() {
@@ -589,16 +582,16 @@ fn test_array() {
 	expr, _ = compile_expr('(new string[20]).find("one", 2)')
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 
-	expr, _ = compile_expr('(new float[20]).find(none)')
+	expr, _ = compile_expr('(new float[20]).find(1.223)')
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 	
-	expr, _ = compile_expr('(new string[20]).find(none, 2)')
+	expr, _ = compile_expr('(new string[20]).find("sss", 2)')
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 
-	expr, _ = compile_expr('(new string[20]).rfind(none)')
+	expr, _ = compile_expr('(new string[20]).rfind(122)')
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 
-	expr, _ = compile_expr('(new bool[20]).rfind(none, -1)')
+	expr, _ = compile_expr('(new bool[20]).rfind(False, -1)')
 	assert (expr as ast.CallExpr).return_type == ast.int_type
 }
 

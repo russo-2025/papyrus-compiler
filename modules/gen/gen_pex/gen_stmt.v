@@ -32,17 +32,18 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 
 	g.cur_state = state
 	g.empty_state = state
-	
-	g.add_default_functions_to_state(mut g.empty_state)
+
+	g.pex.user_flags << pex.UserFlag{
+		name: g.gen_string_ref("conditional")
+		flag_index: 1
+	}
 
 	g.pex.user_flags << pex.UserFlag{
 		name: g.gen_string_ref("hidden")
 		flag_index: 0
 	}
-	g.pex.user_flags << pex.UserFlag{
-		name: g.gen_string_ref("conditional")
-		flag_index: 1
-	}
+	
+	g.add_default_functions_to_state(mut g.empty_state)
 }
 
 [inline]
@@ -190,15 +191,13 @@ fn (mut g Gen) fn_decl(mut node &ast.FnDecl) {
 
 [inline]
 fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
-	if stmt.right is ast.EmptyExpr {
-		return
-	}
+	assert stmt.right !is ast.EmptyExpr
 
 	if mut stmt.left is ast.Ident {
 		mut name := stmt.left.name
 
-		sym := g.table.get_type_symbol(g.cur_obj_type)
-		if prop := sym.find_property(name) {
+		//sym := g.table.get_type_symbol(g.cur_obj_type)
+		if prop := g.table.find_object_property(g.cur_obj_type, name) {
 			if prop.is_auto {
 				name = prop.auto_var_name
 			}
@@ -279,12 +278,22 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 		if token.Kind.key_conditional in stmt.flags {
 			user_flags |= 0b0010
 		}
+
+		mut data := pex.value_none()
+		
+		if stmt.assign.right !is ast.EmptyExpr  {
+			if !stmt.assign.right.is_literal() {
+				panic("wtf ${stmt}")
+			}
+
+			data = g.get_operand_from_expr(mut &stmt.assign.right)
+		}
 		
 		g.cur_obj.variables << &pex.Variable{
 			name: g.gen_string_ref(stmt.name)
 			type_name: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 			user_flags: user_flags
-			data: g.get_operand_from_expr(mut &stmt.assign.right)
+			data: data
 		}
 	}
 	else {
@@ -293,7 +302,9 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 			typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
 		}
 
-		g.assign(mut stmt.assign)
+		if stmt.assign.right !is ast.EmptyExpr  {
+			g.assign(mut stmt.assign)
+		}
 	}
 }
  
@@ -317,10 +328,14 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 
 		prop.auto_var_name = g.gen_string_ref(stmt.auto_var_name)
 		
-		value := if stmt.expr is ast.EmptyExpr {
-			pex.value_none()
-		} else {
-			g.get_operand_from_expr(mut &stmt.expr)
+		mut value := pex.value_none()
+		
+		if stmt.expr !is ast.EmptyExpr {
+			if !stmt.expr.is_literal() {
+				panic("wtf ${stmt}")
+			}
+
+			value = g.get_operand_from_expr(mut &stmt.expr)
 		}
 
 		mut var_user_flags := u32(0)
