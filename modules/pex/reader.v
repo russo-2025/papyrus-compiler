@@ -20,8 +20,6 @@ pub fn read_from_file(path string) &PexFile {
 		exit(1)
 	}
 
-	println("read file: `$path`")
-
 	mut bytes := os.read_bytes(path) or { panic(err) }
 
 	assert bytes.len > 0

@@ -30,6 +30,7 @@ pub mut:
 	cur_state		&pex.State = unsafe{ voidptr(0) }
 	cur_fn			&pex.Function = unsafe{ voidptr(0) }
 
+	states			map[string]&pex.State
 	empty_state		&pex.State = unsafe{ voidptr(0) }
 
 	cur_obj_type	ast.Type

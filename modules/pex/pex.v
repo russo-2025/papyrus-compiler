@@ -328,6 +328,14 @@ pub mut:
 	typ		StringId
 }
 
+[inline]
+pub fn (var_type &VariableType) to_string(pex_file &PexFile) string {
+	name := pex_file.get_string(var_type.name)
+	type_name := pex_file.get_string(var_type.typ)
+
+	return "${type_name} ${name}"
+}
+
 pub struct Instruction {
 pub mut:
 	op		OpCode 			//see Opcodes

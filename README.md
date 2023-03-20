@@ -28,7 +28,9 @@ v -stats test modules
 ```
 compile        compile papyrus files
 
-read           read "*.pex" file and output result to console
+read           converts pex file into a readable format and outputs it to console
+
+disassembly     converts pex file into a readable format and writes result to file
 
 create-dump    ...
 ```
@@ -134,15 +136,16 @@ papyrus create-dump "../folder_with_pex_files"
 
 ## Links
 
+- [VS Code Extension: Papyrus Language Tools](https://github.com/joelday/papyrus-lang)
 - [Creation Kit Papyrus Reference](https://www.creationkit.com/index.php?title=Category:Papyrus)
 - [Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format)
-- [open-papyrus/docs](https://open-papyrus.github.io/docs/Papyrus_Language_Reference/index.html)
 - [Caprica](https://github.com/Orvid/Caprica)
 A compiler for the Papyrus scripting language used by the Creation Engine.
 - [Champollion](https://github.com/Orvid/Champollion)
 A PEX to Papyrus Decompiler for Fallout 4
 - [PapyrusDotNet](https://github.com/zerratar/PapyrusDotNet)
 PapyrusDotNet - A .NET Papyrus Compiler for Fallout 4 and Skyrim
+- [open-papyrus/docs](https://open-papyrus.github.io/docs/Papyrus_Language_Reference/index.html)
 - [open-papyrus/papyrus-compiler](https://github.com/open-papyrus/papyrus-compiler) - (WIP, Rust lang) Open-source compiler for the Papyrus scripting language of Bethesda games.
 
 

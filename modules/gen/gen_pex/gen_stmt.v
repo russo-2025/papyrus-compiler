@@ -51,11 +51,18 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	if s.is_auto {
 		g.cur_obj.auto_state_name = g.gen_string_ref(s.name)
 	}
-
-	mut state := g.create_state(s.name)
-	g.cur_obj.states << state
 	
-	g.cur_state = g.cur_obj.states[g.cur_obj.states.len - 1]
+	if s.name.to_lower() in g.states {
+		g.cur_state = g.states[s.name.to_lower()] or { panic("wtf") }
+	}
+	else {
+		mut state := g.create_state(s.name)
+		g.cur_obj.states << state
+		
+		g.cur_state = g.cur_obj.states[g.cur_obj.states.len - 1]
+		g.states[s.name.to_lower()] = g.cur_obj.states[g.cur_obj.states.len - 1]
+	}
+	
 
 	for mut func in s.fns {
 		g.fn_decl(mut &func)
@@ -196,7 +203,6 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	if mut stmt.left is ast.Ident {
 		mut name := stmt.left.name
 
-		//sym := g.table.get_type_symbol(g.cur_obj_type)
 		if prop := g.table.find_object_property(g.cur_obj_type, name) {
 			if prop.is_auto {
 				name = prop.auto_var_name
@@ -283,7 +289,8 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 		
 		if stmt.assign.right !is ast.EmptyExpr  {
 			if !stmt.assign.right.is_literal() {
-				panic("wtf ${stmt}")
+				eprintln(stmt)
+				panic("wtf")
 			}
 
 			data = g.get_operand_from_expr(mut &stmt.assign.right)

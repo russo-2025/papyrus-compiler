@@ -18,8 +18,14 @@ fn main() {
 			builder.compile(prefs)
 		}
 		.read {
+			println("read file: `${prefs.paths[0]}`")
 			pex_file := pex.read_from_file(prefs.paths[0])
-			pex_file.print()
+			println(pex_file.str())
+		}
+		.disassembly {
+			println("disassembly file: `${prefs.paths[0]}` ")
+			pex_file := pex.read_from_file(prefs.paths[0])
+			os.write_file(prefs.paths[0] + ".txt", pex_file.str()) or { panic(err) }
 		}
 		.create_dump {
 			dump_objects := pex.create_dump_from_pex_dir(prefs.paths[0])

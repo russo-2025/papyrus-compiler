@@ -150,100 +150,6 @@ fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
 	return func.info.instructions
 }
 
-fn test_object_var_decl_1() {
-	pex_file := compile_top('ABCD myTestObjectVar')
-	
-	var := pex_file.get_var("ABCD", "myTestObjectVar") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "myTestObjectVar"
-	assert pex_file.get_string(var.type_name) == "ABCD"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_decl_2() {
-	pex_file := compile_top('int myTestObjectVar2 = 10')
-	var := pex_file.get_var("ABCD", "myTestObjectVar2") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "myTestObjectVar2"
-	assert pex_file.get_string(var.type_name) == "Int"
-	assert var.data.typ == .integer
-	assert var.data.to_integer() == 10
-}
-
-fn test_object_var_decl_3() {
-	pex_file := compile_top('ABCD[] myTestObjectVar3')
-	
-	var := pex_file.get_var("ABCD", "myTestObjectVar3") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "myTestObjectVar3"
-	assert pex_file.get_string(var.type_name) == "ABCD[]"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_decl_4() {
-	pex_file := compile_top('bool waiting')
-	
-	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "waiting"
-	assert pex_file.get_string(var.type_name) == "Bool"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_decl_5() {
-	pex_file := compile_top('int waiting')
-	
-	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "waiting"
-	assert pex_file.get_string(var.type_name) == "Int"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_decl_6() {
-	pex_file := compile_top('ABCD objVarTest = None')
-	
-	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "objVarTest"
-	assert pex_file.get_string(var.type_name) == "ABCD"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_decl_7() {
-	pex_file := compile_top('ABCD[] objVarTest = None')
-	
-	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "objVarTest"
-	assert pex_file.get_string(var.type_name) == "ABCD[]"
-	assert var.data.typ == .null
-}
-
-fn test_object_var_call_method() {
-	// original:
-	// opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]
-	// opcode: 'cast', args: [ident(::temp7), none]
-	// opcode: 'assign', args: [ident(ObjVar), ident(::temp7)]
-
-	mut pex_file := compile("
-		ObjVar.ParentFoz(123, 111)
-		ObjVar = none")
-
-	mut ins := get_instructions(pex_file)
-
-	expected := [
-		"opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]"
-		"opcode: 'cast', args: [ident(::temp1), none]"
-		"opcode: 'assign', args: [ident(ObjVar), ident(::temp1)]"
-	]
-
-	assert ins.len == expected.len
-
-	for i in 0 .. expected.len {
-		assert ins[i].to_string(pex_file) == expected[i]
-	}
-}
 
 fn test_state_decl_1() {
 	//src:		
@@ -366,6 +272,138 @@ fn test_state_decl_3() {
 	assert state.functions.len == 1
 	assert pex_file.get_string(state.functions[0].name) == "Foz"
 	assert pex_file.get_string(state.functions[0].info.return_type) == "None"
+}
+
+fn test_state_decl_4() {
+	pex_file := compile_top('
+		State ready
+			Function ReadyStateFn1()
+			EndFunction
+		EndState
+		
+		State Busy
+		EndState
+		
+		State Ready
+			Function ReadyStateFn2()
+			EndFunction
+			Function ReadyStateFn3()
+			EndFunction
+		EndState
+
+		Function ReadyStateFn1()
+		EndFunction
+		Function ReadyStateFn2()
+		EndFunction
+		Function ReadyStateFn3()
+		EndFunction')
+
+	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	assert pex_file.get_string(obj.auto_state_name) == "MyAutoState"
+
+	assert obj.states.len == 5
+	state := pex_file.get_state(obj, "ready") or { panic("state not found") }
+
+	assert pex_file.get_string(state.name) == "ready"
+	assert state.functions.len == 3
+	assert pex_file.get_string(state.functions[0].name) == "ReadyStateFn1"
+	assert pex_file.get_string(state.functions[1].name) == "ReadyStateFn2"
+	assert pex_file.get_string(state.functions[2].name) == "ReadyStateFn3"
+}
+
+fn test_object_var_decl_1() {
+	pex_file := compile_top('ABCD myTestObjectVar')
+	
+	var := pex_file.get_var("ABCD", "myTestObjectVar") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "myTestObjectVar"
+	assert pex_file.get_string(var.type_name) == "ABCD"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_2() {
+	pex_file := compile_top('int myTestObjectVar2 = 10')
+	var := pex_file.get_var("ABCD", "myTestObjectVar2") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "myTestObjectVar2"
+	assert pex_file.get_string(var.type_name) == "Int"
+	assert var.data.typ == .integer
+	assert var.data.to_integer() == 10
+}
+
+fn test_object_var_decl_3() {
+	pex_file := compile_top('ABCD[] myTestObjectVar3')
+	
+	var := pex_file.get_var("ABCD", "myTestObjectVar3") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "myTestObjectVar3"
+	assert pex_file.get_string(var.type_name) == "ABCD[]"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_4() {
+	pex_file := compile_top('bool waiting')
+	
+	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "waiting"
+	assert pex_file.get_string(var.type_name) == "Bool"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_5() {
+	pex_file := compile_top('int waiting')
+	
+	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "waiting"
+	assert pex_file.get_string(var.type_name) == "Int"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_6() {
+	pex_file := compile_top('ABCD objVarTest = None')
+	
+	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.type_name) == "ABCD"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_decl_7() {
+	pex_file := compile_top('ABCD[] objVarTest = None')
+	
+	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
+
+	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.type_name) == "ABCD[]"
+	assert var.data.typ == .null
+}
+
+fn test_object_var_call_method() {
+	// original:
+	// opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]
+	// opcode: 'cast', args: [ident(::temp7), none]
+	// opcode: 'assign', args: [ident(ObjVar), ident(::temp7)]
+
+	mut pex_file := compile("
+		ObjVar.ParentFoz(123, 111)
+		ObjVar = none")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'callmethod', args: [ident(ParentFoz), ident(ObjVar), ident(::NoneVar), integer(2), integer(123), integer(111)]"
+		"opcode: 'cast', args: [ident(::temp1), none]"
+		"opcode: 'assign', args: [ident(ObjVar), ident(::temp1)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
 }
 
 fn test_property_decl_1() {

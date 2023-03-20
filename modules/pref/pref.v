@@ -15,6 +15,7 @@ pub enum Backend {
 pub enum RunMode {
 	compile
 	read
+	disassembly
 	create_dump
 }
 
@@ -163,6 +164,14 @@ pub fn parse_args() Preferences {
 			p.mode = .read
 			p.paths << os.real_path(args[1])
 		}
+		"disassembly" {
+			if args.len < 2 {
+				error("invalid number of arguments")
+			}
+
+			p.mode = .disassembly
+			p.paths << os.real_path(args[1])
+		}
 		"create-dump" {
 			if args.len < 2 {
 				error("invalid number of arguments")
@@ -203,7 +212,10 @@ fn help() {
 	println("			compile papyrus files")
 	println("")
 	println("		read")
-	println("			read \"*.pex\" file and output result to console")
+	println("			converts pex file into a readable format and outputs it to console")
+	println("")
+	println("		disassembly")
+	println("			converts pex file into a readable format and writes result to file")
 	println("")
 	println("		create-dump")
 	println("			...")
@@ -246,6 +258,10 @@ fn help_command(command string) {
 		"read" {
 			println("")
 			println("papyrus read \"path/to/file.pex\"")
+		}
+		"disassembly" {
+			println("")
+			println("papyrus disassembly \"path/to/file.pex\"")
 		}
 		else {
 		}
