@@ -31,7 +31,7 @@ pub mut:
 	name			string
 	typ				Type
 	is_optional		bool
-	default_value	string
+	default_value	Expr
 }
 
 pub struct State {
@@ -230,6 +230,16 @@ pub fn (t &Table) array_name(elem_type Type) string {
 }
 
 [inline]
+pub fn (t &Table) type_is_script(typ Type) bool {
+	if typ > 0 {
+		sym := t.get_type_symbol(typ)
+		return sym.kind == .script
+	}
+	
+	return false
+}
+
+[inline]
 pub fn (t &Table) type_is_array(typ Type) bool {
 	if typ > 0 {
 		sym := t.get_type_symbol(typ)
@@ -297,13 +307,13 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 				name: "value"
 				typ: elem_type
 				is_optional: false
-				default_value: ""
+				default_value: EmptyExpr{}
 			},
 			Param{
 				name: "startIndex"
 				typ: int_type
 				is_optional: true
-				default_value: "0"
+				default_value: IntegerLiteral{ val: "0" }
 			}
 		]
 		name: "Find"
@@ -321,13 +331,13 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) Type {
 				name: "value"
 				typ: elem_type
 				is_optional: false
-				default_value: ""
+				default_value: EmptyExpr{}
 			},
 			Param{
 				name: "startIndex"
 				typ: int_type
 				is_optional: true
-				default_value: "-1"
+				default_value: IntegerLiteral{ val: "-1" }
 			}
 		]
 		name: "RFind"

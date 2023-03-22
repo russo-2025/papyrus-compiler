@@ -35,6 +35,10 @@ CDFG Property ParentObjFullProp
 	EndFunction
 EndProperty
 
+ABCD Function GetChildObj()
+	return none
+EndFunction
+
 Function ParentFoz(int n1, int n2)
 EndFunction\n"
 
@@ -77,6 +81,15 @@ EndProperty
 Event OnInit()
 EndEvent
 
+Function FuncWithPObjArg(CDFG arg1)
+EndFunction
+
+Function FuncWithObjArg(ABCD arg1)
+EndFunction
+
+Function FuncWithOptionalObjArg(ABCD arg1 = none)
+EndFunction
+
 OtherScript Function GetOtherObject() global
 return None
 EndFunction
@@ -113,7 +126,7 @@ fn compile_top(src string) &pex.PexFile {
 }
 
 fn compile(src string) &pex.PexFile {
-	full_src := "${src_template}Function Bar(string v, ABCD obj, OtherScript obj2, int[] intArray)\n${src}\nEndFunction\n"
+	full_src := "${src_template}Function Bar(string v, ABCD obj, CDFG pobj, OtherScript obj2, int[] intArray)\n${src}\nEndFunction\n"
 	table := ast.new_table()
 	global_scope := &ast.Scope{
 		parent: 0
@@ -1625,6 +1638,70 @@ fn test_call() {
 	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
 	assert pex_file.get_string(ins[1].args[2].to_string_id()) == "::NoneVar"
 	assert ins[1].args[3].to_integer() == 0 // number of additional arguments
+}
+
+fn test_call_cast() {
+	// original:
+	//opcode: 'cast', args: [ident(::temp7), ident(obj)]
+	//opcode: 'callmethod', args: [ident(FuncWithPObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp7)]
+	//opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]
+	//opcode: 'cast', args: [ident(::temp8), none]
+	//opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp8)]
+	//opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]
+	//opcode: 'cast', args: [ident(::temp8), none]
+	//opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp8)]
+	//opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), none]
+	
+	mut pex_file := compile("
+		FuncWithPObjArg(obj)
+		FuncWithObjArg(obj)
+		FuncWithObjArg(none)
+		FuncWithOptionalObjArg(obj)
+		FuncWithOptionalObjArg(none)
+		FuncWithOptionalObjArg()")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'cast', args: [ident(::temp1), ident(obj)]"
+		"opcode: 'callmethod', args: [ident(FuncWithPObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp1)]"
+		"opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]"
+		"opcode: 'cast', args: [ident(::temp2), none]"
+		"opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
+		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]"
+		"opcode: 'cast', args: [ident(::temp2), none]"
+		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
+		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), none]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
+}
+
+fn test_free_temp_var() {
+	// original:
+	// opcode: 'callmethod', args: [ident(GetChildObj), ident(obj), ident(::temp7), integer(0)]
+	// opcode: 'callmethod', args: [ident(GetChildObj), ident(pobj), ident(::temp8), integer(0)]
+	// opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(::temp7), ident(::NoneVar), integer(1), ident(::temp8)]
+	
+	mut pex_file := compile("obj.GetChildObj().FuncWithObjArg(pobj.GetChildObj())")
+
+	mut ins := get_instructions(pex_file)
+
+	expected := [
+		"opcode: 'callmethod', args: [ident(GetChildObj), ident(obj), ident(::temp1), integer(0)]"
+		"opcode: 'callmethod', args: [ident(GetChildObj), ident(pobj), ident(::temp2), integer(0)]"
+		"opcode: 'callmethod', args: [ident(FuncWithObjArg), ident(::temp1), ident(::NoneVar), integer(1), ident(::temp2)]"
+	]
+
+	assert ins.len == expected.len
+
+	for i in 0 .. expected.len {
+		assert ins[i].to_string(pex_file) == expected[i]
+	}
 }
 
 fn test_foo() { // ???

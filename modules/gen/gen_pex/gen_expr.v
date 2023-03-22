@@ -183,7 +183,10 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 		else {
 			left_obj := g.get_operand_from_expr(mut &expr.left)
 			args << left_obj
-			g.free_temp(left_obj)
+			
+			defer {
+				g.free_temp(left_obj)
+			}
 		}
 	}
 
@@ -275,6 +278,9 @@ fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue 
 
 	//индекс с которого начинать
 	mut value_start_index := g.get_operand_from_expr(mut &expr.args[1].expr)
+
+	g.free_temp(value)
+	g.free_temp(value_start_index)
 
 	//добавляем инструкцию в функцию
 	g.cur_fn.info.instructions << pex.Instruction{

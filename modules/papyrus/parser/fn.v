@@ -153,16 +153,12 @@ fn (mut p Parser) fn_args() []ast.Param {
 
 				default_value := p.expr(0) or { ast.EmptyExpr{} }
 
-				if default_value is ast.StringLiteral { param.default_value = default_value.val }
-				else if default_value is ast.BoolLiteral { param.default_value = default_value.val }
-				else if default_value is ast.IntegerLiteral { param.default_value = default_value.val }
-				else if default_value is ast.FloatLiteral { param.default_value = default_value.val }
-				else if default_value is ast.NoneLiteral { param.default_value = "None" }
-				else {
+				if !default_value.is_literal() {
 					println(default_value)
 					p.error("default value is not literal")
 				}
 
+				param.default_value = default_value
 				param.is_optional = true
 			}
 

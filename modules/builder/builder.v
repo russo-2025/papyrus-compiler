@@ -59,6 +59,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 	files, files_names := find_all_src_files(b.pref.paths)
 	b.files_names = files_names
+	assert b.files_names.len == files.len
 
 	b.start_timer('parse headers files')
 	b.parse_headers_files()
@@ -67,6 +68,8 @@ pub fn compile(prefs &pref.Preferences) bool {
 	b.print("${files.len} files in total")
 	b.start_timer('parse files')
 	b.parsed_files = parser.parse_files(files, b.table, b.pref, b.global_scope)
+	assert b.parsed_files.len == files.len
+
 	b.print_timer('parse files')
 
 	/*$if debug {

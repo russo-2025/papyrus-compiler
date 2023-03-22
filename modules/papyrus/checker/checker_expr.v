@@ -430,12 +430,36 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 		return ast.none_type
 	}
 
+	if c.table.type_is_array(typ) && (node.name.to_lower() == "find" || node.name.to_lower() == "rfind") {
+		node.is_array_find = true
+	}
+
+	mut i := 0
+	for i < node.args.len {
+		arg_typ := c.expr(mut node.args[i].expr)
+		node.args[i].typ = arg_typ
+		func_arg_type := func.params[i].typ
+		
+		if c.valid_type(func_arg_type, arg_typ) {}
+		else if c.can_autocast(arg_typ, func_arg_type) {
+			node.args[i].expr = c.cast_to_type(node.args[i].expr, arg_typ, func_arg_type)
+			
+		}
+		else {
+			left_type_name := c.get_type_name(func_arg_type)
+			right_type_name := c.get_type_name(arg_typ)
+			c.error("cannot convert type `$right_type_name` to type `$left_type_name`", node.pos)
+		}
+
+		i++
+	}
+
 	// adding redefined parameters
 	// `d = 2.0` in `Foo(5.0, 2.4, d = 2.0)`
 	if node.args.len < func.params.len {
-		mut i := node.args.len
+		i = node.args.len
 		for i < func.params.len {
-			param := func.params[i]
+			mut param := func.params[i]
 
 			lname := param.name.to_lower()
 			if lname in node.redefined_args {
@@ -453,46 +477,26 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 				continue
 			}
 
-			value := param.default_value
-			match param.typ {
-				ast.int_type {
-					node.args << ast.CallArg {
-						expr: ast.IntegerLiteral{ val: value }
-						typ: ast.int_type 
-					}
-				}
-				ast.float_type {
-					node.args << ast.CallArg {
-						expr: ast.FloatLiteral{ val: value }
-						typ: ast.float_type 
-					}
-				}
-				ast.string_type {
-					node.args << ast.CallArg {
-						expr: ast.StringLiteral{ val: value }
-						typ: ast.string_type 
-					}
-				}
-				ast.bool_type {
-					node.args << ast.CallArg {
-						expr: ast.BoolLiteral{ val: value }
-						typ: ast.bool_type
-					}
-				}
-				ast.none_type {
-					node.args << ast.CallArg {
-						expr: ast.NoneLiteral{ val: "None" }
-						typ: ast.none_type
-					}
-				}
-				else {
-					node.args << ast.CallArg {
-						expr: ast.NoneLiteral{ val: "None" }
-						typ: func.params[i].typ
-					}
-				}
+			assert param.is_optional
+			assert param.default_value.is_literal()
+			assert param.default_value !is ast.EmptyExpr
+
+			default_value_typ := c.expr(mut param.default_value)
+	
+			optional_is_valid := c.table.type_is_script(param.typ) && default_value_typ == ast.none_type
+
+			if c.valid_type(param.typ, default_value_typ) || optional_is_valid {}
+			else {
+				arg_type_name := c.get_type_name(param.typ)
+				expr_type_name := c.get_type_name(default_value_typ)
+				c.error("an expression with type `${expr_type_name}` cannot be used in an argument with type `${arg_type_name}`", node.pos)
 			}
 
+			node.args << ast.CallArg {
+				expr: param.default_value
+				typ: param.typ
+			}
+			
 			i++
 		}
 
@@ -506,30 +510,6 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	if node.args.len != func.params.len {
 		c.error("function takes $func.params.len parameters not $node.args.len", node.pos)
 		return ast.none_type
-	}
-
-	if c.table.type_is_array(typ) && (node.name.to_lower() == "find" || node.name.to_lower() == "rfind") {
-		node.is_array_find = true
-	}
-
-	mut i := 0
-	for i < node.args.len {
-		arg_typ := c.expr(mut node.args[i].expr)
-		node.args[i].typ = arg_typ
-		func_arg_type := func.params[i].typ
-
-		if c.valid_type(func_arg_type, arg_typ) {}
-		else if c.can_autocast(arg_typ, func_arg_type) {
-			node.args[i].expr = c.cast_to_type(node.args[i].expr, arg_typ, func_arg_type)
-			
-		}
-		else {
-			left_type_name := c.get_type_name(func_arg_type)
-			right_type_name := c.get_type_name(arg_typ)
-			c.error("cannot convert type `$right_type_name` to type `$left_type_name`", node.pos)
-		}
-
-		i++
 	}
 
 	return node.return_type

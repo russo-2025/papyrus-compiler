@@ -266,13 +266,13 @@ pub fn (mut c Checker) find_method(typ ast.Type, name string) ?ast.Fn {
 						name: "value"
 						typ: elem_type
 						is_optional: false
-						default_value: ""
+						default_value: ast.EmptyExpr{}
 					},
 					ast.Param{
 						name: "startIndex"
 						typ: ast.int_type
 						is_optional: true
-						default_value: if lname == "find" { "0" } else { "-1" }
+						default_value: ast.IntegerLiteral{ val: if lname == "find" { "0" } else { "-1" } }
 					}
 				]
 				return_type: ast.int_type
