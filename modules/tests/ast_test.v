@@ -10,7 +10,6 @@ const (
 		mode: .compile
 		backend: .pex
 		no_cache: true
-		crutches_enabled: false
 	}
 
 	other_src = 

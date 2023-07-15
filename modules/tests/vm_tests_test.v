@@ -25,7 +25,6 @@ fn test_builder() {
 		mode: .compile
 		backend: .pex
 		no_cache: true
-		crutches_enabled: false
 		papyrus_headers_dir: os.real_path('bin/papyrus-headers')
 		output_mode: pref.OutputMode.silent
 	}

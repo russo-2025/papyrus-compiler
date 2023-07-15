@@ -27,7 +27,6 @@ pub mut:
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
-	crutches_enabled	bool
 	papyrus_headers_dir	string = os.real_path('./papyrus-headers')
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
@@ -102,10 +101,6 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 			"-nocache" {
 				p.no_cache = true
-				i++
-			}
-			"-crutches" {
-				p.crutches_enabled = true
 				i++
 			}
 			"-original" {

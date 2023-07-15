@@ -25,7 +25,6 @@ fn test_build() {
 		mode: .compile
 		backend: .pex
 		no_cache: true
-		crutches_enabled: false
 	}
 	table := ast.new_table()
 	global_scope := &ast.Scope{

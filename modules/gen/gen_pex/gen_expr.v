@@ -391,23 +391,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 			return pex.value_none()
 		}
 		ast.IntegerLiteral {
-			if g.pref.crutches_enabled && expr.val.starts_with("0x") {
-				result_value = g.get_free_temp(ast.int_type)
-
-				g.cur_fn.info.instructions << pex.Instruction{
-					op: pex.OpCode.callstatic
-					args: [
-						pex.value_ident(g.gen_string_ref("m")),
-						pex.value_ident(g.gen_string_ref("StringToInt"))
-						result_value,
-						pex.value_integer(1),
-						pex.value_string(g.gen_string_ref(expr.val))
-					]
-				}
-			}
-			else {
-				return pex.value_integer(expr.val.int())
-			}
+			return pex.value_integer(expr.val.int())
 			
 		}
 		ast.FloatLiteral {
