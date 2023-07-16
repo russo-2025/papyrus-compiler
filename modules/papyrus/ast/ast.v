@@ -1,6 +1,5 @@
 module ast
 
-import papyrus.ast
 import papyrus.token
 
 pub type TopStmt = ScriptDecl | FnDecl | Comment | PropertyDecl | VarDecl | StateDecl
@@ -42,7 +41,7 @@ pub mut:
 pub struct FnArg {
 pub mut:
 	name			string
-	typ				ast.Type
+	typ				Type
 	default_value	Expr
 }
 
@@ -50,10 +49,10 @@ pub struct FnDecl {
 pub mut:
 	name			string
 	pos				token.Position
-	params			[]ast.Param
+	params			[]Param
 	
 	stmts			[]Stmt
-	return_type		ast.Type
+	return_type		Type
 	flags			[]token.Kind
 	scope			&Scope
 	is_native		bool //flag
@@ -68,7 +67,7 @@ pub struct PropertyDecl {
 pub mut:
 	name				string
 	pos					token.Position
-	typ					ast.Type
+	typ					Type
 	auto_var_name		string
 	expr				Expr
 	read				Handler
@@ -125,12 +124,12 @@ pub mut:
 	op			token.Kind
 	right		Expr
 	left		Expr
-	typ		 	ast.Type
+	typ		 	Type
 }
 
 pub struct VarDecl {
 pub mut:
-	typ				ast.Type
+	typ				Type
 	obj_name		string
 	name			string
 	assign			AssignStmt

@@ -31,6 +31,7 @@ pub mut:
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
 	use_threads			bool
+	stats_enabled		bool
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
@@ -117,6 +118,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 			"-silent" {
 				p.output_mode = .silent
+				i++
+			}
+			"-stats" {
+				p.stats_enabled = true
 				i++
 			}
 			else {
@@ -244,7 +249,10 @@ fn help_command(command string) {
 			println("			disable output of messages and errors to console")
 			println("")
 			println("		-verbose")
-			println("			...")
+			println("			...TODO")
+			println("")
+			println("		-stats")
+			println("			...TODO")
 			println("")
 			println("		-use-threads")
 			println("			use threads to generate files")

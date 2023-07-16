@@ -95,9 +95,11 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 		return false
 	}
-/*
-	b.save_info()
-*/
+	
+	if b.pref.stats_enabled {
+		b.save_stats()
+	}
+
 	b.start_timer('gen files')
 	
 	match b.pref.backend {
@@ -299,46 +301,14 @@ fn (mut b Builder) parse_headers_files()  {
 
 	parser.parse_files(header_files, b.table, b.pref, b.global_scope)
 }
-/*
-fn (b Builder) save_info() {
-	mut all_fns_count := 0
-	mut methods_count := 0
-	mut methods_native_count := 0
-	mut global_fns_count := 0
-	mut global_native_fns_count := 0
 
-	for tsym in b.table.types {
-		for tmethod in tsym.methods {
-			all_fns_count++
-
-			if tmethod.is_native {
-				methods_native_count++
-			}
-			else {
-				methods_count++
-			}
-		}
-	}
-
-	for _, tfunc in b.table.fns {
-		all_fns_count++
-
-		if tfunc.is_native {
-			global_native_fns_count++
-		}
-		else {
-			global_fns_count++
-		}
-	}
-
-	println("total functions(all): ${all_fns_count}")
-	println("total methods(no native): ${methods_count}")
-	println("total methods(native): ${methods_native_count}")
-	println("total global func`s(no native): ${global_fns_count}")
-	println("total global func`s(native): ${global_native_fns_count}")
-	
+fn (b Builder) save_stats() {
+	mut stats := Stats{}
+	stats.from_table(b.table)
+	stats.from_files(b.parsed_files)
+	stats.save()
 }
-*/
+
 [inline]
 fn (b Builder) print(msg string) {
 	if b.pref.output_mode == .silent {

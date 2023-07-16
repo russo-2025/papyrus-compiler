@@ -50,7 +50,11 @@ create-dump    ...
 
 -silent         disable output of messages and errors to console
 
--verbose
+-silent         disable output of messages and errors to console
+
+-verbose        ...TODO
+
+-stats          ...TODO
 
 -use-threads    use threads to generate files
 ```

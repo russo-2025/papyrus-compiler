@@ -1,7 +1,5 @@
 module pex
 
-import pex
-
 pub struct Buffer {
 pub mut:
 	bytes []u8
@@ -110,7 +108,7 @@ fn (mut w Writer) write_pex() {
 }
 
 [inline]
-fn (mut w Writer) write_object(obj &pex.Object) {
+fn (mut w Writer) write_object(obj &Object) {
 	w.write(obj.name)
 	start_pos := w.buf.bytes.len
 	w.write(obj.size)
@@ -146,7 +144,7 @@ fn (mut w Writer) write_object(obj &pex.Object) {
 }
 
 [inline]
-fn (mut w Writer) write_state(state pex.State) {
+fn (mut w Writer) write_state(state State) {
 	w.write(state.name)
 	
 	w.write(cast_int_to_u16(state.functions.len))
@@ -157,7 +155,7 @@ fn (mut w Writer) write_state(state pex.State) {
 }
 
 [inline]
-fn (mut w Writer) write_function_info(info pex.FunctionInfo) {
+fn (mut w Writer) write_function_info(info FunctionInfo) {
 	w.write(info.return_type)
 	w.write(info.docstring)
 
@@ -184,13 +182,13 @@ fn (mut w Writer) write_function_info(info pex.FunctionInfo) {
 }
 
 [inline]
-fn (mut w Writer) write_function(func pex.Function) {
+fn (mut w Writer) write_function(func Function) {
 	w.write(func.name)
 	w.write_function_info(func.info)
 }
 
 [inline]
-fn (mut w Writer) write_instruction(inst pex.Instruction) {
+fn (mut w Writer) write_instruction(inst Instruction) {
 	w.write(byte(inst.op))
 	
 	mut i := 0
@@ -202,7 +200,7 @@ fn (mut w Writer) write_instruction(inst pex.Instruction) {
 }
 
 [inline]
-fn (mut w Writer) write_variable(var pex.Variable) {
+fn (mut w Writer) write_variable(var Variable) {
 	w.write(var.name)
 	w.write(var.type_name)
 	w.write(var.user_flags)
@@ -210,7 +208,7 @@ fn (mut w Writer) write_variable(var pex.Variable) {
 }
 
 [inline]
-fn (mut w Writer) write_property(prop pex.Property) {
+fn (mut w Writer) write_property(prop Property) {
 	w.write(prop.name)
 	w.write(prop.typ)
 	w.write(prop.docstring)
@@ -231,7 +229,7 @@ fn (mut w Writer) write_property(prop pex.Property) {
 }
 
 [inline]
-fn (mut w Writer) write_variable_value(value pex.VariableValue) {
+fn (mut w Writer) write_variable_value(value VariableValue) {
 	w.write(value.typ)
 
 	match value.typ {
@@ -253,7 +251,7 @@ fn (mut w Writer) write_variable_value(value pex.VariableValue) {
 }
 
 [inline]
-fn (mut w Writer) write_variable_type(typ pex.VariableType) {
+fn (mut w Writer) write_variable_type(typ VariableType) {
 	w.write(typ.name)
 	w.write(typ.typ)
 }

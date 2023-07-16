@@ -1,6 +1,5 @@
 module ast
 
-import papyrus.ast
 import papyrus.token
 
 [heap]
@@ -23,7 +22,7 @@ pub struct ScopeVar {
 pub:
 	name		string
 pub mut:
-	typ			ast.Type
+	typ			Type
 	pos			token.Position
 	is_used		bool
 }

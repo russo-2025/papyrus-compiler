@@ -1,7 +1,6 @@
 module ast
 
 import papyrus.token
-import papyrus.ast
 
 pub type Expr = InfixExpr | IntegerLiteral | FloatLiteral | BoolLiteral | StringLiteral | Ident | CallExpr | SelectorExpr | IndexExpr |
 	ParExpr | PrefixExpr | EmptyExpr | ArrayInit | NoneLiteral | CastExpr
@@ -23,7 +22,7 @@ pub:
 	type_name	string
 pub mut:
 	expr		Expr
-	typ			ast.Type
+	typ			Type
 }
 
 [heap]
@@ -33,9 +32,9 @@ pub mut:
 	left        Expr
 	right       Expr
 	pos         token.Position
-	left_type	ast.Type
-	right_type	ast.Type
-	result_type ast.Type
+	left_type	Type
+	right_type	Type
+	result_type Type
 }
 
 pub struct IntegerLiteral {
@@ -73,7 +72,7 @@ pub:
 	name				string
 	pos					token.Position
 pub mut:
-	typ					ast.Type
+	typ					Type
 	is_object_property	bool
 	is_object_var		bool
 }
@@ -92,7 +91,7 @@ pub:
 	pos		token.Position
 pub mut:
 	expr	Expr
-	typ		ast.Type
+	typ		Type
 }
 
 pub struct CallExpr {
@@ -103,7 +102,7 @@ pub mut:
 	name			string	// `name` in bar.name()
 	args			[]CallArg
 	redefined_args	map[string]RedefinedOptionalArg // `d = 2.0` in `Foo(5.0, 2.4, d = 2.0)`
-	return_type		ast.Type
+	return_type		Type
 	is_global		bool
 	is_array_find	bool
 }
@@ -114,7 +113,7 @@ pub mut:
 	pos			token.Position
 	expr		Expr	// `expr` in expr.field_name
 	field_name	string
-	typ			ast.Type
+	typ			Type
 }
 
 //arr[1]
@@ -124,7 +123,7 @@ pub:
 pub mut:
 	left	Expr
 	index	Expr
-	typ		ast.Type
+	typ		Type
 }
 
 pub struct ParExpr {
@@ -142,13 +141,13 @@ pub:
 pub mut:
 	right		Expr
 	//checker
-	right_type	ast.Type
+	right_type	Type
 }
 
 pub struct ArrayInit {
 pub:
-	typ			ast.Type
-	elem_type	ast.Type
+	typ			Type
+	elem_type	Type
 	pos			token.Position
 pub mut:
 	len			Expr
