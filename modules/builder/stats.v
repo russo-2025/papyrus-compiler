@@ -12,9 +12,17 @@ pub mut:
 	count		u32
 }
 
+struct ObjInfo {
+pub mut:
+	name		string
+	count		u32
+}
+
 struct Stats {
 pub mut:
 	count_objects				u32
+
+	obj_info					map[string]ObjInfo
 
 	count_all_methods			u32
 	count_native_methods		u32
@@ -59,7 +67,19 @@ fn (mut s Stats) from_files(parsed_files []ast.File) {
 
 fn (mut s Stats) from_top_stmt(stmt ast.TopStmt) {
 	match stmt {
-		ast.ScriptDecl {}
+		ast.ScriptDecl {
+			key := stmt.parent_name.to_lower()
+
+			if key in s.obj_info {
+				s.obj_info[key].count++
+			}
+			else {
+				s.obj_info[key] = ObjInfo {
+					name: stmt.parent_name
+					count: 1
+				}
+			}
+		}
 		ast.FnDecl {
 			for fstmt in stmt.stmts {
 				s.from_stmt(fstmt)
@@ -117,9 +137,7 @@ fn (mut s Stats) from_expr(expr ast.Expr) {
 			key := expr.obj_name.to_lower() + "." + expr.name.to_lower()
 
 			if key in s.call_info {
-				mut fn_call_info := s.call_info[key]
-				fn_call_info.count++
-				s.call_info[key] = fn_call_info
+				s.call_info[key].count++
 			}
 			else {
 				s.call_info[key] = FnInfo{
@@ -156,9 +174,23 @@ fn (s Stats) save() {
 	b.writeln("| native methods | ${s.count_native_methods}")
 	os.write_file("stats.md", b.str()) or { panic(err) }
 
+	mut obj_info_arr := s.obj_info.values()
+	obj_info_arr.sort(a.count > b.count)
+
+	// extends
+	b = strings.new_builder(100)
+	b.writeln("| name | count |")
+	b.writeln("|---|------|")
+
+	for obj_info in obj_info_arr {
+		b.writeln("| ${obj_info.name} | ${obj_info.count} | ")
+	}
+
+	os.write_file("obj_extends_count.md", b.str()) or { panic(err) }
+
 	mut call_info_arr := s.call_info.values()
 	call_info_arr.sort(a.count > b.count)
-
+	
 	// all fns
 	b = strings.new_builder(100)
 	b.writeln("| name | count |")
