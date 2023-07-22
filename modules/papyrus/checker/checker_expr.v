@@ -424,6 +424,7 @@ pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
 	node.obj_name = func.obj_name
 	node.return_type = func.return_type
 	node.is_global = func.is_global
+	node.is_native = func.is_native
 
 	if node.args.len > func.params.len {
 		c.error("function takes $func.params.len parameters not $node.args.len", node.pos)

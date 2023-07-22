@@ -8,6 +8,7 @@ struct FnInfo {
 pub mut:
 	name		string
 	obj_name	string
+	is_native	bool
 	count		u32
 }
 
@@ -125,6 +126,7 @@ fn (mut s Stats) from_expr(expr ast.Expr) {
 					obj_name: expr.obj_name
 					name: expr.name
 					count: 1
+					is_native: expr.is_native
 				}
 			}
 		}
@@ -145,19 +147,36 @@ fn (mut s Stats) from_expr(expr ast.Expr) {
 fn (s Stats) save() {
 	mut b := strings.new_builder(100)
 	b.writeln("count objects: ${s.count_objects}")
-	b.writeln("count all static fns: ${s.count_all_static_fns}")
-	b.writeln("count native static fns: ${s.count_native_static_fns}")
+	b.writeln("count all global fns: ${s.count_all_static_fns}")
+	b.writeln("count native global fns: ${s.count_native_static_fns}")
 	b.writeln("count all methods: ${s.count_all_methods}")
 	b.writeln("count native methods: ${s.count_native_methods}")
 	os.write_file("stats.md", b.str()) or { panic(err) }
 
+	mut call_info_arr := s.call_info.values()
+	call_info_arr.sort(a.count > b.count)
+
+	// all fns
 	b = strings.new_builder(100)
 	b.writeln("| name | count |")
 	b.writeln("|---|------|")
 
-	for key, value in s.call_info {
-		b.writeln("| ${key} | ${value.count} | ")
+	for call_info in call_info_arr {
+		b.writeln("| ${call_info.obj_name}.${call_info.name} | ${call_info.count} | ")
 	}
 	
-	os.write_file("stats_call.md", b.str()) or { panic(err) }
+	os.write_file("all_fns_count.md", b.str()) or { panic(err) }
+
+	// only native
+	b = strings.new_builder(100)
+	b.writeln("| name | count |")
+	b.writeln("|---|------|")
+
+	for call_info in call_info_arr {
+		if call_info.is_native {
+			b.writeln("| ${call_info.obj_name}.${call_info.name} | ${call_info.count} | ")
+		}
+	}
+
+	os.write_file("native_fns_count.md", b.str()) or { panic(err) }
 }
