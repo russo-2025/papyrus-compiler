@@ -146,11 +146,12 @@ fn (mut s Stats) from_expr(expr ast.Expr) {
 
 fn (s Stats) save() {
 	mut b := strings.new_builder(100)
-	b.writeln("count objects: ${s.count_objects}")
-	b.writeln("count all global fns: ${s.count_all_static_fns}")
-	b.writeln("count native global fns: ${s.count_native_static_fns}")
-	b.writeln("count all methods: ${s.count_all_methods}")
-	b.writeln("count native methods: ${s.count_native_methods}")
+	b.writeln("|----------|")
+	b.writeln("| count objects: ${s.count_objects} |")
+	b.writeln("| count all global fns: ${s.count_all_static_fns} |")
+	b.writeln("| count native global fns: ${s.count_native_static_fns} |")
+	b.writeln("| count all methods: ${s.count_all_methods} |")
+	b.writeln("| count native methods: ${s.count_native_methods} |")
 	os.write_file("stats.md", b.str()) or { panic(err) }
 
 	mut call_info_arr := s.call_info.values()
