@@ -1,6 +1,6 @@
 # Compiler
 
-Open source compiler for the Papyrus scripting language used in Skyrim Special Edition. ***Work in progress.***
+Open source compiler for the Papyrus scripting language used in Skyrim Special Edition.
 
 ## Prerequisites
 
