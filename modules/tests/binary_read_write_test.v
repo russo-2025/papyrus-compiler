@@ -4,7 +4,7 @@ import math
 fn test_read() {
 	mut r := &pex.Reader{
 		pex: unsafe { voidptr(0) }
-		bytes: 	[]byte{}
+		bytes: 	[]u8{}
 	}
 
 	is_empty := fn [r] () bool {
@@ -13,11 +13,11 @@ fn test_read() {
 
 	//byte
 	r.bytes << 0x12
-	assert r.read[byte]() == byte(0x12)
+	assert r.read[u8]() == u8(0x12)
 	assert is_empty()
 
 	r.bytes << 0xff
-	assert r.read[byte]() == byte(0xff)
+	assert r.read[u8]() == u8(0xff)
 	assert is_empty()
 
 	//u16
@@ -142,7 +142,7 @@ fn test_write() {
 	mut i := 0
 	mut ref_i := &i
 
-	next := fn [w, mut ref_i] () byte {
+	next := fn [w, mut ref_i] () u8 {
 		val := w.buf.bytes[*ref_i]
 		(*ref_i)++
 		return val
@@ -153,11 +153,11 @@ fn test_write() {
 	}
 
 	//byte
-	w.write(byte(0xff))
+	w.write(u8(0xff))
 	assert next() == 0xff
 	assert is_empty()
 
-	w.write(byte(0x56))
+	w.write(u8(0x56))
 	assert next() == 0x56
 	assert is_empty()
 

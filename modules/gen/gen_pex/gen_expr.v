@@ -398,7 +398,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 			return pex.value_float(expr.val.f32())
 		}
 		ast.BoolLiteral {
-			return pex.value_bool(if expr.val.to_lower().bool() { byte(1) } else { byte(0) })
+			return pex.value_bool(if expr.val.to_lower().bool() { u8(1) } else { u8(0) })
 		}
 		ast.StringLiteral {
 			return pex.value_string(g.gen_string_ref(expr.val))

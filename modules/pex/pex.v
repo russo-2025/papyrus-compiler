@@ -75,8 +75,8 @@ pub struct PexFile {
 pub mut:
 	//Header
 	magic_number		u32			// 0xFA57C0DE (FASTCODE?)
-	major_version		byte		// 3
-	minor_version		byte		// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
+	major_version		u8		// 3
+	minor_version		u8		// 1 (Dawnguard, Hearthfire and Dragonborn scripts are 2)
 	game_id				GameType	// 1 = Skyrim?
 	compilation_time	i64
 	src_file_name		string	// Name of the source file this file was compiled from (.psc extension).
@@ -87,7 +87,7 @@ pub mut:
 	string_table		[]string // StringTable to look up member names and other stuff from
 
 	//Debug Info
-	has_debug_info		byte //Flag, if zero then no debug info is present and the rest of the record is skipped
+	has_debug_info		u8 //Flag, if zero then no debug info is present and the rest of the record is skipped
 	modification_time 	i64 // time_t
 	functions			[]DebugFunction
 
@@ -114,14 +114,14 @@ pub mut:
 	object_name					StringId
 	state_name					StringId
 	function_name				StringId
-	function_type				byte //valid values 0-3
+	function_type				u8 //valid values 0-3
 	instruction_line_numbers	[]u16 //Maps instructions to their original lines in the source.
 }
 
 pub struct UserFlag {
 pub mut:
 	name		StringId
-	flag_index	byte	//Bit index
+	flag_index	u8	//Bit index
 }
 
 pub struct Object {
@@ -200,7 +200,7 @@ pub mut:
 	string_id	StringId
 	integer		int	//present for integer types only
 	float		f32	//present for float types only
-	boolean		byte //present for bool types only
+	boolean		u8 //present for bool types only
 }
 
 pub struct VariableValue {
@@ -216,7 +216,7 @@ pub mut:
 	typ				StringId
 	docstring		StringId
 	user_flags		u32	
-	flags			byte //bitfield: 1(bit 1) = read, 2(bit 2) = write, 4(bit 3) = autovar. For example, Property in a source script contains only get() or is defined AutoReadOnly then the flags is 0x1, contains get() and set() then the flags is 0x3.
+	flags			u8 //bitfield: 1(bit 1) = read, 2(bit 2) = write, 4(bit 3) = autovar. For example, Property in a source script contains only get() or is defined AutoReadOnly then the flags is 0x1, contains get() and set() then the flags is 0x3.
 	auto_var_name	StringId //present if (flags & 4) != 0
 	read_handler	FunctionInfo //present if (flags & 5) == 1
 	write_handler	FunctionInfo //present if (flags & 6) == 2
@@ -286,7 +286,7 @@ pub mut:
 	return_type			StringId
 	docstring			StringId
 	user_flags			u32	
-	flags				byte //1 bit - global, 2 bit - native
+	flags				u8 //1 bit - global, 2 bit - native
 	params				[]VariableType
 	locals				[]VariableType
 	instructions		[]Instruction
@@ -398,7 +398,7 @@ pub fn value_float(v f32) VariableValue {
 }
 
 [inline]
-pub fn value_bool(v byte) VariableValue {
+pub fn value_bool(v u8) VariableValue {
 	return VariableValue{
 		typ: .boolean,
 		data: ValueData{ boolean: v }
@@ -424,7 +424,7 @@ pub fn (value VariableValue) to_float() f32 {
 }
 
 [inline]
-pub fn (value VariableValue) to_boolean() byte {
+pub fn (value VariableValue) to_boolean() u8 {
 	assert value.typ == .boolean
 	return unsafe { value.data.boolean }
 }
@@ -617,8 +617,8 @@ fn build_opcode_str() []string {
 }
 
 [inline]
-pub fn opcode_from_byte(v byte) OpCode {
-	if v >= byte(OpCode._opcode_end) {
+pub fn opcode_from_byte(v u8) OpCode {
+	if v >= u8(OpCode._opcode_end) {
 		panic("invalid opcode: 0x" + v.hex())
 	}
 

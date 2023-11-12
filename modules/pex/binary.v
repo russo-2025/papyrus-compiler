@@ -4,7 +4,7 @@ import encoding.binary
 
 [inline]
 pub fn (mut r Reader) read[T]() T {
-	$if T is byte {
+	$if T is u8 {
 		val := r.bytes[r.pos]
 		r.pos++
 		return val
@@ -20,6 +20,11 @@ pub fn (mut r Reader) read[T]() T {
 		return val
 	}
 	$else $if T is int {
+		val := binary.big_endian_u32(r.bytes[r.pos..r.pos+4])
+		r.pos += 4
+		return int(val)
+	}
+	$else $if T is i32 {
 		val := binary.big_endian_u32(r.bytes[r.pos..r.pos+4])
 		r.pos += 4
 		return int(val)
@@ -61,7 +66,7 @@ pub fn (mut r Reader) read[T]() T {
 
 [inline]
 pub fn (mut w Writer) write[T](v T) {
-	$if T is byte {
+	$if T is u8 {
 		w.buf.bytes << u8(v)
 	}
 	$else $if T is u16 {
@@ -69,6 +74,12 @@ pub fn (mut w Writer) write[T](v T) {
 		w.buf.bytes << u8(v)
 	}
 	$else $if T is u32 {
+		w.buf.bytes << u8(v>>u32(24))
+		w.buf.bytes << u8(v>>u32(16))
+		w.buf.bytes << u8(v>>u32(8))
+		w.buf.bytes << u8(v)
+	}
+	$else $if T is i32 {
 		w.buf.bytes << u8(v>>u32(24))
 		w.buf.bytes << u8(v>>u32(16))
 		w.buf.bytes << u8(v>>u32(8))
@@ -112,7 +123,7 @@ pub fn (mut w Writer) write[T](v T) {
 		w.buf.bytes << u8(v)
 	}
 	$else {
-		$compile_error('[pex.Reader.read] invalid type')
+		$compile_error('[pex.Reader.write] invalid type')
 		panic('[pex.Writer.write] invalid type ${T.name}')
 	}
 }

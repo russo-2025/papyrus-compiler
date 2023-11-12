@@ -50,7 +50,7 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &
 			user_name: os.loginname() or { "::USERNAME::" }
 			machine_name: os.hostname() or { "::MACHINENAME::" }
 
-			has_debug_info: byte(1) //debug info обязательна?!
+			has_debug_info: u8(1) //debug info обязательна?!
 			modification_time: i64(1616261626) //TODO
 		}
 

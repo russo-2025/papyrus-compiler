@@ -189,7 +189,7 @@ fn (mut w Writer) write_function(func Function) {
 
 [inline]
 fn (mut w Writer) write_instruction(inst Instruction) {
-	w.write(byte(inst.op))
+	w.write(u8(inst.op))
 	
 	mut i := 0
 	for i < inst.args.len {

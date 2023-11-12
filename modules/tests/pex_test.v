@@ -9,5 +9,4 @@ fn test_enum() {
 	assert u8(pex.ValueType.integer) == 3
 	assert u8(pex.ValueType.float) == 4
 	assert u8(pex.ValueType.boolean) == 5
-	
 }

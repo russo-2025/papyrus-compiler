@@ -4,7 +4,7 @@ import os
 
 pub struct Reader{
 pub mut:
-	bytes	[]byte
+	bytes	[]u8
 	pos		int
 	pex		&PexFile
 }
@@ -27,7 +27,7 @@ pub fn read_from_file(path string) &PexFile {
 	return read(bytes)
 }
 
-pub fn read(bytes []byte) &PexFile {
+pub fn read(bytes []u8) &PexFile {
 	assert bytes.len > 0
 	
 	mut r := Reader{
@@ -47,8 +47,8 @@ fn (mut r Reader) read_pex() ! {
 		return error("invalid magic number(${r.pex.magic_number})")
 	}
 
-	r.pex.major_version = r.read[byte]()
-	r.pex.minor_version = r.read[byte]()
+	r.pex.major_version = r.read[u8]()
+	r.pex.minor_version = r.read[u8]()
 	game_id := r.read[u16]()
 	r.pex.game_id = unsafe { pex.GameType(game_id) }
 
@@ -68,7 +68,7 @@ fn (mut r Reader) read_pex() ! {
 		i++
 	}
 	
-	r.pex.has_debug_info = r.read[byte]()
+	r.pex.has_debug_info = r.read[u8]()
 	
 	if r.pex.has_debug_info != 0
 	{
@@ -82,7 +82,7 @@ fn (mut r Reader) read_pex() ! {
 			d.object_name = r.read_string_ref() or { return err }
 			d.state_name = r.read_string_ref() or { return err }
 			d.function_name = r.read_string_ref() or { return err }
-			d.function_type = r.read[byte]()
+			d.function_type = r.read[u8]()
 			instruction_line_numbers_len := r.read[u16]()
 
 			mut k := 0
@@ -101,7 +101,7 @@ fn (mut r Reader) read_pex() ! {
 	i = 0
 	for i < user_flag_len {
 		name := r.read_string_ref() or { return err }
-		flag_index := r.read[byte]()
+		flag_index := r.read[u8]()
 
 		r.pex.user_flags << UserFlag { 
 			name: name, 
@@ -191,7 +191,7 @@ fn (mut r Reader) read_property() !&Property{
 	p.typ = r.read[u16]()
 	p.docstring = r.read[u16]()
 	p.user_flags = r.read[u32]()
-	p.flags = r.read[byte]()
+	p.flags = r.read[u8]()
 
 	if p.is_autovar() {
 		p.auto_var_name = r.read[u16]()
@@ -214,7 +214,7 @@ fn (mut r Reader) read_function() !FunctionInfo{
 	func.return_type = r.read_string_ref() or { return err }
 	func.docstring = r.read_string_ref() or { return err }
 	func.user_flags = r.read[u32]()
-	func.flags = r.read[byte]()
+	func.flags = r.read[u8]()
 	
 	params_len := r.read[u16]()
 	mut i := 0
@@ -244,7 +244,7 @@ fn (mut r Reader) read_function() !FunctionInfo{
 fn (mut r Reader) read_instruction() !Instruction{
 	mut inst := Instruction{}
 
-	inst.op = opcode_from_byte(r.read[byte]())
+	inst.op = opcode_from_byte(r.read[u8]())
 	mut len := inst.op.get_count_arguments()
 
 	mut i := 0
@@ -296,7 +296,7 @@ fn (mut r Reader) read_variable() !&Variable{
 fn (mut r Reader) read_variable_value() !VariableValue {
 	mut value := VariableValue{}
 
-	typ := r.read[byte]()
+	typ := r.read[u8]()
 	assert typ <= 5
 	value.typ = unsafe { pex.ValueType(typ) }
 
@@ -313,7 +313,7 @@ fn (mut r Reader) read_variable_value() !VariableValue {
 			value.data.float = r.read[f32]()
 		}
 		.boolean {
-			value.data.boolean = r.read[byte]()
+			value.data.boolean = r.read[u8]()
 		}
 	}
 

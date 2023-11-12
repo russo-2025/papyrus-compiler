@@ -310,7 +310,7 @@ fn (mut s Scanner) text_scan() token.Token {
 }
 
 [inline]
-fn (s Scanner) look_ahead(n int) byte {
+fn (s Scanner) look_ahead(n int) u8 {
 	if s.pos + n < s.text.len {
 		return s.text[s.pos + n]
 	} else {
