@@ -5,7 +5,6 @@ Open source compiler for the Papyrus scripting language used in Skyrim Special E
 ## Prerequisites
 
   - [V compiler e9a3817(weekly.2023.08)](https://github.com/vlang/v/releases/tag/weekly.2023.08)
-  - Visual Studio
 
 ## Building
 
@@ -55,8 +54,6 @@ create-dump    ...
 -verbose        ...TODO
 
 -stats          ...TODO
-
--use-threads    use threads to generate files
 ```
 
 #### Examples:
