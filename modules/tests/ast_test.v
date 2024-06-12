@@ -62,16 +62,14 @@ OtherScript Property OtherScript2 Auto\n"
 
 fn compile(src string) (&ast.File, &ast.Table) {
 	mut table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut global_scope := &ast.Scope{}
 	
 	full_src := "${src_template}${src}"
 
-	mut other_file := parser.parse_text("::gen_test.v/other-src::", other_src, table, prefs, global_scope)
-	mut other2_file := parser.parse_text("::gen_test.v/other2-src::", other2_src, table, prefs, global_scope)
-	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	mut other_file := parser.parse_text("::gen_test.v/other-src::", other_src, mut table, prefs, mut global_scope)
+	mut other2_file := parser.parse_text("::gen_test.v/other2-src::", other2_src, mut table, prefs, mut global_scope)
+	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 

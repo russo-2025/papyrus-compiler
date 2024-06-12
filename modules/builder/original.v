@@ -83,7 +83,7 @@ fn compile_original(prefs &pref.Preferences) {
 	$if windows {
 		mut b := BuilderOrigin{}
 		
-		b.set_headers_path(prefs.papyrus_headers_dir)
+		b.set_headers_path(prefs.header_dirs[0])
 
 		for path in prefs.paths {
 			b.add_input_path(path)

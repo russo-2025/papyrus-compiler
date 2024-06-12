@@ -119,12 +119,13 @@ const (
 // build_keys genereates a map with keywords' string values:
 // Keywords['return'] == .key_return
 fn build_keys() map[string]Kind {
-	assert token_str.len > 0 // call build_keys before calling build_token_str
+	//assert token_str.len > 0 // call build_keys before calling build_token_str
 	
 	mut res := map[string]Kind{}
 	for t in int(Kind.keyword_beg) + 1 .. int(Kind.keyword_end) {
-		key := token.token_str[t]
-		res[key] = unsafe { Kind(t) }
+		tk := unsafe { Kind(t) }
+		key := token.token_str[tk]
+		res[key] = tk
 	}
 	return res
 }
@@ -224,10 +225,10 @@ pub fn is_key(key string) bool {
 }
 
 pub fn (t Kind) str() string {
-	return token_str[int(t)]
+	return token_str[t]
 }
 
-[inline]
+@[inline]
 pub fn (tok &Token) position() Position {
 	return Position{
 		len: tok.len

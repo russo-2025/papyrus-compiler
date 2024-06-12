@@ -102,14 +102,12 @@ EndFunction\n"
 
 fn compile_top(src string) &pex.PexFile {
 	full_src := "${src_template}${src}"
-	table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut table := ast.new_table()
+	mut global_scope := &ast.Scope{}
 	
-	parser.parse_text("::gen_test.v/other::", other_src, table, prefs, global_scope)
-	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	parser.parse_text("::gen_test.v/other::", other_src, mut table, prefs, mut global_scope)
+	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 
@@ -118,22 +116,20 @@ fn compile_top(src string) &pex.PexFile {
 
 	assert c.errors.len == 0
 
-	pex_file := gen_pex.gen_pex_file(file, table, prefs)
-	bytes := pex.write(pex_file)
+	mut pex_file := gen_pex.gen_pex_file(mut file, mut table, prefs)
+	bytes := pex.write(mut pex_file)
 	out_pex_file := pex.read(bytes)
 	return out_pex_file
 }
 
 fn compile(src string) &pex.PexFile {
 	full_src := "${src_template}Function Bar(string v, ABCD obj, CDFG pobj, OtherScript obj2, int[] intArray)\n${src}\nEndFunction\n"
-	table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut table := ast.new_table()
+	mut global_scope := &ast.Scope{}
 	
-	parser.parse_text("::gen_test.v/other::", other_src, table, prefs, global_scope)
-	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	parser.parse_text("::gen_test.v/other::", other_src, mut table, prefs, mut global_scope)
+	mut parent_file := parser.parse_text("::gen_test.v/parent::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 
@@ -142,8 +138,8 @@ fn compile(src string) &pex.PexFile {
 
 	assert c.errors.len == 0
 
-	pex_file := gen_pex.gen_pex_file(file, table, prefs)
-	bytes := pex.write(pex_file)
+	mut pex_file := gen_pex.gen_pex_file(mut file, mut table, prefs)
+	bytes := pex.write(mut pex_file)
 	out_pex_file := pex.read(bytes)
 	return out_pex_file
 }

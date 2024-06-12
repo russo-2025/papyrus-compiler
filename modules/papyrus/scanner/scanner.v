@@ -309,7 +309,7 @@ fn (mut s Scanner) text_scan() token.Token {
 	return s.end_of_file()
 }
 
-[inline]
+@[inline]
 fn (s Scanner) look_ahead(n int) u8 {
 	if s.pos + n < s.text.len {
 		return s.text[s.pos + n]
@@ -319,7 +319,7 @@ fn (s Scanner) look_ahead(n int) u8 {
 }
 
 
-[inline]
+@[inline]
 fn (mut s Scanner) skip_whitespace() {
 	for s.pos < s.text.len && s.text[s.pos].is_space() {
 		if util.is_nl(s.text[s.pos]) && !s.expect('\r\n', s.pos - 1) {
@@ -343,20 +343,20 @@ fn (mut s Scanner) end_of_file() token.Token {
 	return s.new_token(.eof, '', 1)
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) ignore_line() {
 	s.eat_to_end_of_line()
 	s.inc_line_number()
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) eat_to_end_of_line() {
 	for s.pos < s.text.len && s.text[s.pos] != `\n` {
 		s.pos++
 	}
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) inc_line_number() {
 	s.last_nl_pos = math.min(s.text.len - 1, s.pos)
 	s.line_nr++
@@ -367,7 +367,7 @@ fn (mut s Scanner) inc_line_number() {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) ident_name() string {
 	start := s.pos
 	s.pos++
@@ -553,7 +553,7 @@ fn (mut s Scanner) ident_hex_number() string {
 	return number
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) new_multiline_token(tok_kind token.Kind, lit string, len int, start_line int) token.Token {
 	return token.Token{
 		kind: tok_kind
@@ -564,7 +564,7 @@ fn (mut s Scanner) new_multiline_token(tok_kind token.Kind, lit string, len int,
 	}
 }
 
-[inline]
+@[inline]
 fn (mut s Scanner) new_token(tok_kind token.Kind, lit string, len int) token.Token {
 	return token.Token{
 		kind: tok_kind
@@ -576,7 +576,7 @@ fn (mut s Scanner) new_token(tok_kind token.Kind, lit string, len int) token.Tok
 	}
 }
 
-[inline]
+@[inline]
 fn (s &Scanner) expect(want string, start_pos int) bool {
 	end_pos := start_pos + want.len
 	if start_pos < 0 || end_pos < 0 || start_pos >= s.text.len || end_pos > s.text.len {

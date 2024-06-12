@@ -5,7 +5,7 @@ import papyrus.token
 pub type TopStmt = ScriptDecl | FnDecl | Comment | PropertyDecl | VarDecl | StateDecl
 pub type Stmt =  Return | If | While | ExprStmt | AssignStmt | VarDecl | Comment
 
-[heap]
+@[heap]
 pub struct File {
 pub mut:
 	path			string // '..../src/file.psc'

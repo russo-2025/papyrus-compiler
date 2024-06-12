@@ -1,5 +1,4 @@
 import pex
-import math
 
 fn test_read() {
 	mut r := &pex.Reader{
@@ -51,14 +50,14 @@ fn test_read() {
 	r.bytes << 0x00
 	r.bytes << 0x00
 	r.bytes << 0x00
-	assert r.read[int]() == int(math.min_i32)
+	assert r.read[int]() == int(min_i32)
 	assert is_empty()
 
 	r.bytes << 0x7f
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read[int]() == int(math.max_i32)
+	assert r.read[int]() == int(max_i32)
 	assert is_empty()
 
 	//i64
@@ -81,7 +80,7 @@ fn test_read() {
 	r.bytes << 0x00
 	r.bytes << 0x00
 	r.bytes << 0x00
-	assert r.read[i64]() == i64(math.min_i64)
+	assert r.read[i64]() == i64(min_i64)
 	assert is_empty()
 
 	r.bytes << 0x7f
@@ -92,7 +91,7 @@ fn test_read() {
 	r.bytes << 0xff
 	r.bytes << 0xff
 	r.bytes << 0xff
-	assert r.read[i64]() == i64(math.max_i64)
+	assert r.read[i64]() == i64(max_i64)
 	assert is_empty()
 
 	//f32
@@ -202,14 +201,14 @@ fn test_write() {
 	assert next() == 0xfa
 	assert is_empty()
 
-	w.write(math.min_i32)
+	w.write(min_i32)
 	assert next() == 0x80
 	assert next() == 0x00
 	assert next() == 0x00
 	assert next() == 0x00
 	assert is_empty()
 
-	w.write(math.max_i32)
+	w.write(max_i32)
 	assert next() == 0x7f
 	assert next() == 0xff
 	assert next() == 0xff
@@ -228,7 +227,7 @@ fn test_write() {
 	assert next() == 0x78
 	assert is_empty()
 
-	w.write(i64(math.min_i64))
+	w.write(i64(min_i64))
 	assert next() == 0x80
 	assert next() == 0x00
 	assert next() == 0x00
@@ -239,7 +238,7 @@ fn test_write() {
 	assert next() == 0x00
 	assert is_empty()
 
-	w.write(i64(math.max_i64))
+	w.write(i64(max_i64))
 	assert next() == 0x7f
 	assert next() == 0xff
 	assert next() == 0xff

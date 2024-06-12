@@ -19,7 +19,7 @@ pub enum RunMode {
 	create_dump
 }
 
-[heap]
+@[heap]
 pub struct Preferences {
 pub mut:
 	paths				[]string	// folders with files to compile
@@ -27,7 +27,7 @@ pub mut:
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
-	papyrus_headers_dir	string = os.real_path('./papyrus-headers')
+	header_dirs			[]string = [ os.real_path('./papyrus-headers') ]
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
 	use_threads			bool
@@ -96,8 +96,8 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				if !os.is_dir(path) {
 					error("invalid headers dir: '$path'")
 				}
-
-				p.papyrus_headers_dir = path
+				
+				p.header_dirs << path
 				i++
 			}
 			"-nocache" {

@@ -4,7 +4,7 @@ import papyrus.ast
 import pex
 import papyrus.token
 
-[inline]
+@[inline]
 fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableValue {
 	assert typ != 0
 
@@ -35,7 +35,7 @@ fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableValue {
 	return value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) free_temp(value pex.VariableValue) {
 	if value.typ != .identifier {
 		return
@@ -50,7 +50,7 @@ fn (mut g Gen) free_temp(value pex.VariableValue) {
 
 //v1 what to convert to and where to put the result
 //v2 what to convert
-[inline]
+@[inline]
 fn (mut g Gen) gen_cast(v1 pex.VariableValue, v2 pex.VariableValue) {
 	g.cur_fn.info.instructions << pex.Instruction{
 		op: pex.OpCode.cast
@@ -58,7 +58,7 @@ fn (mut g Gen) gen_cast(v1 pex.VariableValue, v2 pex.VariableValue) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableValue {
 	if expr.op == .ne {
 		mut e := expr
@@ -142,7 +142,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableValue {
 	
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_prefix_operator(mut expr &ast.PrefixExpr) pex.VariableValue {
 	mut op := g.get_prefix_opcode_operator(expr.right_type, expr.op)
 	right_value := g.get_operand_from_expr(mut &expr.right)
@@ -159,7 +159,7 @@ fn (mut g Gen) gen_prefix_operator(mut expr &ast.PrefixExpr) pex.VariableValue {
 	return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.VariableValue {
 	result_value := g.get_free_temp(expr.return_type)
 	mut args := []pex.VariableValue{}
@@ -218,7 +218,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 	return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableValue {
 	//opcode: 'callstatic', args: [ident(m), ident(Log), ident(::NoneVar), string('Hello World')]
 	//opcode: 'callmethod', args: [ident(Bar), ident(arg), ident(::NoneVar)]
@@ -243,7 +243,7 @@ fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableValue {
 		//opcode: 'array_create', args: [ident(::temp0), integer(3)]
 		//массив
@@ -259,7 +259,7 @@ fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableValue {
 		return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue {
 	lname := expr.name.to_lower()
 	
@@ -290,7 +290,7 @@ fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue 
 	return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_array_get_element(mut expr &ast.IndexExpr) pex.VariableValue {
 	//opcode: 'array_getelement', args: [ident(::temp1), ident(arr), integer(0)]
 	//массив
@@ -308,7 +308,7 @@ fn (mut g Gen) gen_array_get_element(mut expr &ast.IndexExpr) pex.VariableValue 
 	return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_selector(mut expr &ast.SelectorExpr) pex.VariableValue {
 
 	if expr.field_name.to_lower() == "length" {
@@ -426,7 +426,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 	return result_value
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) get_prefix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCode {
 	match kind {
 		.minus {
@@ -449,7 +449,7 @@ fn (mut g Gen) get_prefix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpC
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCode {
 	match kind {
 		.plus {

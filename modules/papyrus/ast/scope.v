@@ -2,11 +2,11 @@ module ast
 
 import papyrus.token
 
-[heap]
+@[heap]
 pub struct Scope {
 pub mut:
 	objects              map[string]ScopeObject
-	parent               &Scope
+	parent               &Scope = unsafe { voidptr(0) }
 	children             []&Scope
 	start_pos            int
 	end_pos              int

@@ -100,7 +100,7 @@ pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	return node
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) new_expr() ast.Expr {
 	pos := p.tok.position()
 	p.check(.key_new)
@@ -122,7 +122,7 @@ pub fn (mut p Parser) new_expr() ast.Expr {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut p Parser) cast_expr(expr ast.Expr) ast.CastExpr {
 	pos := p.tok.position()
 	p.check(.key_as)
@@ -138,7 +138,7 @@ fn (mut p Parser) cast_expr(expr ast.Expr) ast.CastExpr {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) parse_bool_literal() ast.Expr {
 	lit := p.tok.lit
 	pos := p.tok.position()
@@ -151,7 +151,7 @@ pub fn (mut p Parser) parse_bool_literal() ast.Expr {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) parse_number_literal() ast.Expr {
 	mut is_neg := false
 	mut is_float := false
@@ -194,7 +194,7 @@ pub fn (mut p Parser) parse_number_literal() ast.Expr {
 	return node
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) string_expr() ast.StringLiteral {
 	node := ast.StringLiteral{ 
 		val: p.tok.lit
@@ -206,7 +206,7 @@ pub fn (mut p Parser) string_expr() ast.StringLiteral {
 	return node
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	p.check(.dot)
 
@@ -240,7 +240,7 @@ pub fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
 	start_pos := p.tok.position()
 	
@@ -259,7 +259,7 @@ pub fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
 	return node
 }
 
-[inline]
+@[inline]
 fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	op := p.tok.kind
 	precedence := p.tok.precedence()
@@ -286,7 +286,7 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 	mut pos := p.tok.position()
 	op := p.tok.kind
@@ -303,7 +303,7 @@ pub fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) name_expr() ast.Expr {
 	if p.tok.kind == .name && p.peek_tok.kind == .lpar && p.peek_tok.line_nr == p.tok.line_nr {
 		name_pos := p.tok.position()
@@ -328,7 +328,7 @@ pub fn (mut p Parser) name_expr() ast.Expr {
 	return p.parse_ident()
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) parse_ident() ast.Ident {
 	pos := p.tok.position()
 	name := p.check_name()

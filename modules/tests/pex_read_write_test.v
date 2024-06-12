@@ -20,18 +20,16 @@ EndFunction
 )
 
 fn test_build() {
-	prefs := pref.Preferences {
+	mut prefs := pref.Preferences {
 		paths: []string{}
 		mode: .compile
 		backend: .pex
 		no_cache: true
 	}
-	table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut table := ast.new_table()
+	mut global_scope := &ast.Scope{}
 
-	mut file := parser.parse_text("::rw_text.v::", src, table, prefs, global_scope)
+	mut file := parser.parse_text("::rw_text.v::", src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 
@@ -39,8 +37,8 @@ fn test_build() {
 
 	assert c.errors.len == 0
 
-	pex_file := gen_pex.gen_pex_file(file, table, prefs)
-	bytes := pex.write(pex_file)
+	mut pex_file := gen_pex.gen_pex_file(mut file, mut table, prefs)
+	bytes := pex.write(mut pex_file)
 	assert bytes.len > 0
 	out_pex_file := pex.read(bytes)
 

@@ -7,6 +7,8 @@ import builder
 import pref
 import pex
 
+//#flag -lucrtd
+
 fn main() {
 	prefs := pref.parse_args()
 
@@ -30,7 +32,7 @@ fn main() {
 		.create_dump {
 			dump_objects := pex.create_dump_from_pex_dir(prefs.paths[0])
 			json_data := json.encode_pretty(dump_objects)
-			os.write_file(os.real_path("Dump.json"), json_data) or { panic(err) }
+			os.write_file(os.real_path("dump.json"), json_data) or { panic(err) }
 		}
 	}
 

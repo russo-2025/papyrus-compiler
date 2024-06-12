@@ -2,7 +2,7 @@ module pex
 
 import encoding.binary
 
-[inline]
+@[inline]
 pub fn (mut r Reader) read[T]() T {
 	$if T is u8 {
 		val := r.bytes[r.pos]
@@ -64,7 +64,7 @@ pub fn (mut r Reader) read[T]() T {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut w Writer) write[T](v T) {
 	$if T is u8 {
 		w.buf.bytes << u8(v)
@@ -128,7 +128,7 @@ pub fn (mut w Writer) write[T](v T) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut r Reader) read_string_ref() !u16 {
 	val := r.read[u16]()
 	
@@ -139,24 +139,24 @@ fn (mut r Reader) read_string_ref() !u16 {
 	return val
 }
 
-[inline]
+@[inline]
 fn (mut r Reader) read_time() i64 {
 	return r.read[i64]()
 }
 
-[inline]
+@[inline]
 pub fn cast_int_to_u16(v int) u16 {
 	assert u32(v) <= 0xFFFF
 	return u16(v)
 }
 
-[inline]
+@[inline]
 fn cast_f32_to_u32(v f32) u32 {
 	v_u32 := unsafe { &u32(&v) }
 	return *v_u32
 }
 
-[inline]
+@[inline]
 fn cast_u32_to_f32(v u32) f32 {
 	v_f32 := unsafe { &f32(&v) }
 	return *v_f32

@@ -4,7 +4,7 @@ import papyrus.ast
 import papyrus.token
 import pex
 
-[inline]
+@[inline]
 fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	mut obj := g.create_obj(s.name, s.parent_name)
 
@@ -46,7 +46,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 	g.add_default_functions_to_state(mut g.empty_state)
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	if s.is_auto {
 		g.cur_obj.auto_state_name = g.gen_string_ref(s.name)
@@ -71,7 +71,7 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 	g.cur_state = g.empty_state
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) if_stmt(mut s &ast.If) {
 	//opcode: 'assign', args: [ident(ff), integer(11)]
 	//opcode: 'jmpf', args: [integer(1), integer(3)]
@@ -135,7 +135,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
@@ -191,12 +191,12 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 	return &f
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) fn_decl(mut node &ast.FnDecl) {
 	g.cur_state.functions << g.gen_fn(mut node)
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	assert stmt.right !is ast.EmptyExpr
 
@@ -276,7 +276,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 	if stmt.is_object_var {
 		mut user_flags := u32(0)
@@ -315,7 +315,7 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 	}
 }
  
-[inline]
+@[inline]
 fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	mut prop := pex.Property{
 		name: g.gen_string_ref(stmt.name)
@@ -389,7 +389,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 	g.cur_obj.properties << &prop
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) while_stmt(mut s &ast.While) {
 	//original
 	//opcode: 'assign', args: [ident(ff), integer(0)]

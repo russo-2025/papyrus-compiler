@@ -22,10 +22,10 @@ struct Builder {
 mut:
 	timers			map[string]time.StopWatch
 pub:
-	pref			&pref.Preferences
 	checker			checker.Checker
-	global_scope	&ast.Scope
 pub mut:
+	pref			&pref.Preferences
+	global_scope	&ast.Scope
 	files_names		[]string
 	parsed_files	[]ast.File
 	table			&ast.Table
@@ -37,9 +37,7 @@ fn new_builder(prefs &pref.Preferences) Builder{
 	return Builder{
 		pref: prefs
 		checker: checker.new_checker(table, prefs)
-		global_scope: &ast.Scope{
-			parent: 0
-		}
+		global_scope: &ast.Scope{}
 		table: table
 	}
 }
@@ -67,7 +65,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 	b.print("${files.len} files in total")
 	b.start_timer('parse files')
-	b.parsed_files = parser.parse_files(files, b.table, b.pref, b.global_scope)
+	b.parsed_files = parser.parse_files(files, mut b.table, b.pref, mut b.global_scope)
 	assert b.parsed_files.len == files.len
 
 	b.print_timer('parse files')
@@ -113,7 +111,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 	return true
 }
 
-fn (b Builder) compile_pex(mut parsed_files []ast.File) {
+fn (mut b Builder) compile_pex(mut parsed_files []ast.File) {
 	if b.pref.use_threads {
 		mut max_threads_count := runtime.nr_cpus()
 
@@ -145,24 +143,24 @@ fn (b Builder) compile_pex(mut parsed_files []ast.File) {
 	else {
 		mut buff_bytes := pex.Buffer{ bytes: []u8{ cap: 10000 } }
 
-		for parsed_file in parsed_files{
+		for mut parsed_file in parsed_files{
 			assert buff_bytes.is_empty()
 			
-			b.gen_to_pex_file(parsed_file, mut buff_bytes)
+			b.gen_to_pex_file(mut parsed_file, mut buff_bytes)
 			buff_bytes.clear()
 		}
 	}
 }
 
 
-fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes pex.Buffer) {
+fn (mut b Builder) gen_to_pex_file(mut parsed_file &ast.File, mut buff_bytes pex.Buffer) {
 	if is_outdated(parsed_file, b.pref) {
 		output_file_name := parsed_file.file_name + ".pex"
 		output_file_path := os.join_path(b.pref.output_dir, output_file_name)
 		
-		pex_file := gen_pex.gen_pex_file(parsed_file, b.table, b.pref)
+		mut pex_file := gen_pex.gen_pex_file(mut parsed_file, mut b.table, b.pref)
 		
-		pex.write_to_buff(pex_file, mut buff_bytes)
+		pex.write_to_buff(mut pex_file, mut buff_bytes)
 		
 		assert !buff_bytes.is_empty()
 		mut file := os.create(output_file_path) or { panic(err) }
@@ -171,25 +169,25 @@ fn (b Builder) gen_to_pex_file(parsed_file &ast.File, mut buff_bytes pex.Buffer)
 	}
 }
 
-fn (b Builder) create_worker(worker_id int, start_index int, end_index int) {
+fn (mut b Builder) create_worker(worker_id int, start_index int, end_index int) {
 	b.print("gen in task(${worker_id}): ${start_index} - ${end_index}")
 	mut buff_bytes := pex.Buffer{ bytes: []u8{ cap: 10000 } }
 
 	for i in start_index .. end_index {
 		assert buff_bytes.is_empty()
-		parsed_file := b.parsed_files[i]
+		mut parsed_file := b.parsed_files[i]
 
-		b.gen_to_pex_file(parsed_file, mut buff_bytes)
+		b.gen_to_pex_file(mut parsed_file, mut buff_bytes)
 		buff_bytes.clear()
 	}
 }
 
-[inline]
+@[inline]
 fn (mut b Builder) start_timer(name string) {
 	b.timers[name] = time.new_stopwatch()
 }
 
-[inline]
+@[inline]
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
 		time_ms := f32(sw.elapsed().microseconds()) / 1000
@@ -246,60 +244,10 @@ fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 }
 */
 fn (mut b Builder) parse_headers_files()  {
-	if !os.is_dir(b.pref.papyrus_headers_dir) {
-		panic("invalid papyrus headers dir - `${b.pref.papyrus_headers_dir}`")
-	}
-	/*
-	mut dump_objects := []pex.DumpObject{}
-	b.table.allow_override = true
-
-	// load headers from Dump.json 
-	if os.is_file("Dump.json") {
-		json_data := os.read_file("Dump.json") or { panic(err) }
-		dump_objects = json.decode([]pex.DumpObject, json_data) or { panic(err) }
-		println("obj len: ${dump_objects.len}")
-
-		for dump_obj in dump_objects {
-			// if a file with this name already exists, skip it
-			if dump_obj.name.to_lower() in b.files_names {
-				continue
-			}
-
-			b.register_info_from_dump(dump_obj)
-		}
-	}
-
-	// load headers from pex files
-	files_pex := os.walk_ext(b.pref.papyrus_headers_dir, ".pex")
-	dump_objects = pex.create_dump_from_pex_files(files_pex)
-	println("obj len: ${dump_objects.len}")
-
-	for dump_obj in dump_objects {
-		// if a file with this name already exists, skip it
-		if dump_obj.name.to_lower() in b.files_names {
-			continue
-		}
-
-		b.register_info_from_dump(dump_obj)
-	}
-*/
-
-	// load headers from psc(source) files 
-	if b.pref.papyrus_headers_dir in b.pref.paths {
-		// no need to parse the same file many times
-		return 
-	}
-	
-	mut header_files := []string{}
-	mut ref_header_files := &header_files
-	os.walk(b.pref.papyrus_headers_dir, fn[b, mut ref_header_files](file string) {
-		name := os.file_name(file).all_before_last(".").to_lower()
-		if os.is_file(file) && name !in b.files_names {
-			ref_header_files << file
-		}
-	})
-
-	parser.parse_files(header_files, b.table, b.pref, b.global_scope)
+	b.pref.header_dirs.filter(os.is_dir(it))
+	headers := b.find_all_headers(b.pref.header_dirs)
+	parser.parse_files(headers, mut b.table, b.pref, mut b.global_scope)
+	headers.filter(it !in b.pref.paths)
 }
 
 fn (b Builder) save_stats() {
@@ -309,13 +257,35 @@ fn (b Builder) save_stats() {
 	stats.save()
 }
 
-[inline]
+@[inline]
 fn (b Builder) print(msg string) {
 	if b.pref.output_mode == .silent {
 		return
 	}
 
 	println(msg)
+}
+
+fn (mut b Builder) find_all_headers(dirs []string) []string{
+	rev_dirs := dirs.reverse()
+	mut headers := []string{}
+	mut found_names := []string{}
+
+	mut ref_headers := &headers
+	mut ref_found_names := &found_names
+
+	for dir in rev_dirs {
+		os.walk(dir, fn[b, mut ref_headers, mut ref_found_names](file string) {
+			name := os.file_name(file).all_before_last(".").to_lower()
+
+			if os.is_file(file) && os.file_ext(file).to_lower() == ".psc" && name !in b.files_names && name !in ref_found_names {
+				ref_headers << file
+				ref_found_names << name
+			}
+		})
+	}
+
+	return headers
 }
 
 fn find_all_src_files(paths []string) ([]string, []string) {

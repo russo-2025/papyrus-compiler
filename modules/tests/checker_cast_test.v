@@ -26,13 +26,11 @@ EndFunction\n"
 fn test_autocast() {
 	full_src := "${src_template}\n"
 	mut table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut global_scope := &ast.Scope{}
 
-	parser.parse_text("::gen_test.v/other-src::", other_src, table, prefs, global_scope)
-	parser.parse_text("::gen_test.v/parent-src::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	parser.parse_text("::gen_test.v/other-src::", other_src, mut table, prefs, mut global_scope)
+	parser.parse_text("::gen_test.v/parent-src::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 
@@ -113,13 +111,11 @@ fn test_autocast() {
 fn test_can_cast() {
 	full_src := "${src_template}\n"
 	mut table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut global_scope := &ast.Scope{}
 
-	parser.parse_text("::gen_test.v/other-src::", other_src, table, prefs, global_scope)
-	parser.parse_text("::gen_test.v/parent-src::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	parser.parse_text("::gen_test.v/other-src::", other_src, mut table, prefs, mut global_scope)
+	parser.parse_text("::gen_test.v/parent-src::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 
@@ -203,13 +199,11 @@ fn test_can_cast() {
 fn test_cast2() {
 	full_src := "${src_template}\n"
 	mut table := ast.new_table()
-	global_scope := &ast.Scope{
-		parent: 0
-	}
+	mut global_scope := &ast.Scope{}
 
-	parser.parse_text("::gen_test.v/other-src::", other_src, table, prefs, global_scope)
-	parser.parse_text("::gen_test.v/parent-src::", parent_src, table, prefs, global_scope)
-	mut file := parser.parse_text("::gen_test.v/src::", full_src, table, prefs, global_scope)
+	parser.parse_text("::gen_test.v/other-src::", other_src, mut table, prefs, mut global_scope)
+	parser.parse_text("::gen_test.v/parent-src::", parent_src, mut table, prefs, mut global_scope)
+	mut file := parser.parse_text("::gen_test.v/src::", full_src, mut table, prefs, mut global_scope)
 
 	mut c := checker.new_checker(table, prefs)
 	

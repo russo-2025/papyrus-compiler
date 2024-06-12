@@ -110,12 +110,12 @@ pub fn (k Kind) str() string {
 	return k_str
 }
 
-[inline]
+@[inline]
 pub fn (t Type) idx() int {
 	return u16(t)
 }
 
-[inline]
+@[inline]
 pub fn new_type(idx int) Type {
 	if idx < 1 || idx > 65535 {
 		panic('new_type: idx($idx) must be between 1 & 65535')

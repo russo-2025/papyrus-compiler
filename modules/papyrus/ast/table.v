@@ -5,7 +5,7 @@ import papyrus.token
 //import json
 //import x.json2
 
-[heap]
+@[heap]
 pub struct Table {
 pub mut:
 	types				[]TypeSymbol // aka type_symbols
@@ -79,7 +79,7 @@ pub mut:
 	is_native		bool
 }
 
-[inline]
+@[inline]
 pub fn new_table() &Table {
 	mut t := &Table{}
 	t.register_builtin_type_symbols()
@@ -111,7 +111,7 @@ pub fn (t &Table) typ_is_parent(child_type int, parent_type int) bool {
 	return false
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) has_fn(obj_name string, name string) bool {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
@@ -122,7 +122,7 @@ pub fn (t &Table) has_fn(obj_name string, name string) bool {
 	return false
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
 	key := obj_name.to_lower() + "." + name.to_lower()
 	
@@ -133,12 +133,12 @@ pub fn (t &Table) find_fn(obj_name string, name string) ?Fn {
 	return none
 }
 
-[inline]
+@[inline]
 pub fn (mut t Table) register_fn(new_fn Fn) {
 	t.fns[new_fn.obj_name.to_lower() + "." + new_fn.name.to_lower()] = new_fn
 }
 
-[inline]
+@[inline]
 pub fn (mut t Table) add_placeholder_type(name string) Type {
 	ph_type := TypeSymbol {
 		kind:		.placeholder
@@ -149,7 +149,7 @@ pub fn (mut t Table) add_placeholder_type(name string) Type {
 	return t.register_type_symbol(ph_type)
 }
 
-[inline]
+@[inline]
 pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
 	existing_idx := t.type_idxs[sym.name.to_lower()]
 	if existing_idx > 0 {
@@ -185,12 +185,12 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
 	return typ_idx
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) find_type_idx(name string) Type {
 	return t.type_idxs[name.to_lower()]
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) known_type(name string) bool {
 	return t.find_type_idx(name) != 0
 }
@@ -203,7 +203,7 @@ pub fn (mut t Table) find_or_add_placeholder_type(name string) Type {
 	return t.find_type_idx(name)
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) find_type(name string) ?&TypeSymbol {
 	idx := t.type_idxs[name.to_lower()]
 	if idx > 0 {
@@ -212,7 +212,7 @@ pub fn (t &Table) find_type(name string) ?&TypeSymbol {
 	return none
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) get_type_symbol(typ Type) &TypeSymbol {
 	idx := typ.idx()
 	if idx > 0 {
@@ -223,13 +223,13 @@ pub fn (t &Table) get_type_symbol(typ Type) &TypeSymbol {
 	return 0
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) array_name(elem_type Type) string {
 	elem_type_sym := t.get_type_symbol(elem_type)
 	return '$elem_type_sym.name[]'
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) type_is_script(typ Type) bool {
 	if typ > 0 {
 		sym := t.get_type_symbol(typ)
@@ -239,7 +239,7 @@ pub fn (t &Table) type_is_script(typ Type) bool {
 	return false
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) type_is_array(typ Type) bool {
 	if typ > 0 {
 		sym := t.get_type_symbol(typ)
@@ -249,7 +249,7 @@ pub fn (t &Table) type_is_array(typ Type) bool {
 	return false
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) find_object_property(typ Type, name string) ?Prop {
 	mut sym := t.get_type_symbol(typ)
 	
@@ -269,7 +269,7 @@ pub fn (t &Table) find_object_property(typ Type, name string) ?Prop {
 	return none
 }
 
-[inline]
+@[inline]
 pub fn (t &Table) find_object_var(typ Type, name string) ?Var {
 	mut sym := t.get_type_symbol(typ)
 	

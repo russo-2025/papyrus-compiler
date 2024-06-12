@@ -23,7 +23,7 @@ pub fn skip_bom(file_content string) string {
 	return raw_text
 }
 
-[inline]
+@[inline]
 pub fn imin(a int, b int) int {
 	return if a < b {
 		a
@@ -32,7 +32,7 @@ pub fn imin(a int, b int) int {
 	}
 }
 
-[inline]
+@[inline]
 pub fn imax(a int, b int) int {
 	return if a > b {
 		a

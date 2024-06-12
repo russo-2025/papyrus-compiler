@@ -7,7 +7,7 @@ import papyrus.errors
 import papyrus.util
 import pex
 
-[heap]
+@[heap]
 pub struct Checker {
 	pref				&pref.Preferences
 pub mut:
@@ -20,7 +20,7 @@ pub mut:
 	inside_property		bool
 	auto_state_is_exist	bool
 	cur_fn				&ast.FnDecl = unsafe { voidptr(0) }
-	cur_scope			&ast.Scope = voidptr(0)
+	cur_scope			&ast.Scope = unsafe { voidptr(0) }
 	cur_obj_name		string
 	cur_parent_obj_name	string
 	cur_obj				ast.Type
@@ -31,7 +31,6 @@ pub fn new_checker(table &ast.Table, prefs &pref.Preferences) Checker {
 	return Checker{
 		table: table
 		pref: prefs
-		cur_fn: 0
 	}
 }
 
@@ -63,7 +62,7 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	return true
 }
 
-[inline]
+@[inline]
 fn (c &Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
@@ -371,7 +370,7 @@ pub fn (mut c Checker) find_fn(a_typ ast.Type, obj_name string, name string) ?&a
 	return none
 }
 
-[inline]
+@[inline]
 pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 	match c.table.get_type_symbol(typ).kind {
 		.int {
@@ -420,7 +419,7 @@ fn (c &Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {
 	return none
 }
 
-[inline]
+@[inline]
 pub fn (c &Checker) is_empty_state() bool {
 	return c.cur_state_name == pex.empty_state_name
 }

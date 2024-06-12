@@ -4,7 +4,7 @@ pub const (
 	empty_state_name = ""
 )
 
-[inline]
+@[inline]
 pub fn get_property_autovar_name(prop_name string) string {
 	return "::" + prop_name + "_var"
 }
@@ -70,7 +70,7 @@ pub enum GameType as u16 {
 
 type StringId = u16
 
-[heap]
+@[heap]
 pub struct PexFile {
 pub mut:
 	//Header
@@ -96,7 +96,7 @@ pub mut:
 	objects				[]&Object
 }
 
-[inline]
+@[inline]
 pub fn (file PexFile) user_flags_str() string {
 	mut flags := []string{}
 
@@ -137,17 +137,17 @@ pub mut:
 	states				[]&State
 }
 
-[inline]
+@[inline]
 pub fn (obj Object) is_hidden() bool {
 	return (obj.user_flags & 0b0001) != 0
 }
 
-[inline]
+@[inline]
 pub fn (obj Object) is_conditional() bool {
 	return (obj.user_flags & 0b0010) != 0
 }
 
-[inline]
+@[inline]
 pub fn (obj Object) user_flags_str() string {
 	mut flags := []string{}
 
@@ -170,12 +170,12 @@ pub mut:
 	data		VariableValue //Default value
 }
 
-[inline]
+@[inline]
 pub fn (v Variable) is_conditional() bool {
 	return (v.user_flags & 0b0010) != 0
 }
 
-[inline]
+@[inline]
 pub fn (v Variable) user_flags_str() string {
 	mut flags := []string{}
 
@@ -222,12 +222,12 @@ pub mut:
 	write_handler	FunctionInfo //present if (flags & 6) == 2
 }
 
-[inline]
+@[inline]
 pub fn (prop Property) is_read() bool {
 	return (prop.flags & 0b0001) != 0
 }
 
-[inline]
+@[inline]
 pub fn (prop Property) is_write() bool {
 	return (prop.flags & 0b0010) != 0
 }
@@ -236,12 +236,12 @@ pub fn (prop Property) is_autovar() bool {
 	return (prop.flags & 0b0100) != 0
 }
 
-[inline]
+@[inline]
 pub fn (prop Property) is_hidden() bool {
 	return (prop.user_flags & 0b0001) != 0
 }
 
-[inline]
+@[inline]
 pub fn (prop Property) user_flags_str() string {
 	mut flags := []string{}
 
@@ -252,7 +252,7 @@ pub fn (prop Property) user_flags_str() string {
 	return flags.str()
 }
 
-[inline]
+@[inline]
 pub fn (prop Property) flags_str() string {
 	mut flags := []string{}
 
@@ -292,22 +292,22 @@ pub mut:
 	instructions		[]Instruction
 }
 
-[inline]
+@[inline]
 pub fn (info FunctionInfo) is_global() bool {
 	return info.flags & 0b1 != 0
 }
 
-[inline]
+@[inline]
 pub fn (info FunctionInfo) is_native() bool {
 	return info.flags & 0b10 != 0
 }
 
-[inline]
+@[inline]
 pub fn (info FunctionInfo) user_flags_str() string {
 	return "[]"
 }
 
-[inline]
+@[inline]
 pub fn (info FunctionInfo) flags_str() string {
 	mut flags := []string{}
 	
@@ -328,7 +328,7 @@ pub mut:
 	typ		StringId
 }
 
-[inline]
+@[inline]
 pub fn (var_type &VariableType) to_string(pex_file &PexFile) string {
 	name := pex_file.get_string(var_type.name)
 	type_name := pex_file.get_string(var_type.typ)
@@ -342,7 +342,7 @@ pub mut:
 	args	[]VariableValue	//[changes depending on opcode]	Length is dependent on opcode, also varargs
 }
 
-[inline]
+@[inline]
 pub fn (inst &Instruction) to_string(pex_file &PexFile) string {
 	mut args := ""
 	
@@ -360,12 +360,12 @@ pub fn (inst &Instruction) to_string(pex_file &PexFile) string {
 	return "opcode: '$inst.op', args: [$args]"
 }
 
-[inline]
+@[inline]
 pub fn value_none() VariableValue {
 	return VariableValue{ typ: .null }
 }
 
-[inline]
+@[inline]
 pub fn value_ident(v StringId) VariableValue {
 	return VariableValue{
 		typ: .identifier,
@@ -373,7 +373,7 @@ pub fn value_ident(v StringId) VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 pub fn value_string(v StringId) VariableValue {
 	return VariableValue{
 		typ: .str,
@@ -381,7 +381,7 @@ pub fn value_string(v StringId) VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 pub fn value_integer(v int) VariableValue {
 	return VariableValue{
 		typ: .integer,
@@ -389,7 +389,7 @@ pub fn value_integer(v int) VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 pub fn value_float(v f32) VariableValue {
 	return VariableValue{
 		typ: .float,
@@ -397,7 +397,7 @@ pub fn value_float(v f32) VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 pub fn value_bool(v u8) VariableValue {
 	return VariableValue{
 		typ: .boolean,
@@ -405,25 +405,25 @@ pub fn value_bool(v u8) VariableValue {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (value VariableValue) to_string_id() StringId {
 	assert value.typ == .identifier || value.typ == .str
 	return unsafe { value.data.string_id }
 }
 
-[inline]
+@[inline]
 pub fn (value VariableValue) to_integer() int {
 	assert value.typ == .integer
 	return unsafe { value.data.integer }
 }
 
-[inline]
+@[inline]
 pub fn (value VariableValue) to_float() f32 {
 	assert value.typ == .float
 	return unsafe { value.data.float }
 }
 
-[inline]
+@[inline]
 pub fn (value VariableValue) to_boolean() u8 {
 	assert value.typ == .boolean
 	return unsafe { value.data.boolean }
@@ -456,7 +456,7 @@ pub fn (value &VariableValue) to_string(pex_file &PexFile) string {
 	return result
 }
 
-[inline]
+@[inline]
 pub fn (p PexFile) get_string[T](v T) string {
 	$if T is int {
 		index := v
@@ -616,7 +616,7 @@ fn build_opcode_str() []string {
 	return s
 }
 
-[inline]
+@[inline]
 pub fn opcode_from_byte(v u8) OpCode {
 	if v >= u8(OpCode._opcode_end) {
 		panic("invalid opcode: 0x" + v.hex())
@@ -625,12 +625,12 @@ pub fn opcode_from_byte(v u8) OpCode {
 	return unsafe { OpCode(v) }
 }
 
-[inline]
+@[inline]
 pub fn (op OpCode) str() string {
 	return opcode_str[int(op)]
 }
 
-[inline]
+@[inline]
 fn (op OpCode) get_count_arguments() int {
 	match op {
 		.nop {

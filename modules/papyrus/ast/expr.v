@@ -25,7 +25,7 @@ pub mut:
 	typ			Type
 }
 
-[heap]
+@[heap]
 pub struct InfixExpr {
 pub mut:
 	op			token.Kind

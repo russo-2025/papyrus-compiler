@@ -15,16 +15,16 @@ pub mut:
 }
 
 struct Gen {
+	pref			&pref.Preferences
 pub mut:
-	file	&ast.File = unsafe{ voidptr(0) }
-	pex		&pex.PexFile = unsafe{ voidptr(0) }
+	file			&ast.File = unsafe{ voidptr(0) }
+	pex				&pex.PexFile = unsafe{ voidptr(0) }
 	
 	string_table	map[string]u16
 	
 	temp_locals		[]TempVariable //массив временных переменных
 
 	table			&ast.Table
-	pref			&pref.Preferences
 	
 	cur_obj			&pex.Object = unsafe{ voidptr(0) }
 	cur_state		&pex.State = unsafe{ voidptr(0) }
@@ -37,7 +37,7 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &pex.PexFile {
+pub fn gen_pex_file(mut file &ast.File, mut table &ast.Table, prefs &pref.Preferences) &pex.PexFile {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -45,7 +45,7 @@ pub fn gen_pex_file(file &ast.File, table &ast.Table, prefs &pref.Preferences) &
 			major_version: 3
 			minor_version: 2
 			game_id: .skyrim
-			compilation_time: time.utc().unix_time()
+			compilation_time: time.utc().unix()
 			src_file_name: file.path_base
 			user_name: os.loginname() or { "::USERNAME::" }
 			machine_name: os.hostname() or { "::MACHINENAME::" }
@@ -119,7 +119,7 @@ fn (mut g Gen) stmt(mut stmt &ast.Stmt) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut g Gen) gen_string_ref(str string) u16 {
 	if str in g.string_table {
 		return g.string_table[str]

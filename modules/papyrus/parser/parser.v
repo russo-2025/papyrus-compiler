@@ -48,17 +48,17 @@ pub mut:
 	errors				[]errors.Error
 }
 
-pub fn parse_files(paths []string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) []ast.File {
+pub fn parse_files(paths []string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) []ast.File {
 	mut files := []ast.File{}
 
 	for path in paths {
-		files << parse_file(path, table, prefs, global_scope)
+		files << parse_file(path, mut table, prefs, mut global_scope)
 	}
 
 	return files
 }
 
-pub fn parse_file(path string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_file(path string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner_file(path, prefs)
 		pref: prefs
@@ -75,7 +75,7 @@ pub fn parse_file(path string, table &ast.Table, prefs &pref.Preferences, global
 	return p.parse()
 }
 
-pub fn parse_text(path string, text string, table &ast.Table, prefs &pref.Preferences, global_scope &ast.Scope) &ast.File {
+pub fn parse_text(path string, text string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner(text, prefs)
 		pref: prefs
@@ -400,7 +400,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 	return node
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) comment() ast.Comment {
 	node := ast.Comment{
 		text: p.tok.lit,
@@ -603,7 +603,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 	return node
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 	pos := p.tok.position()
 	expr := p.expr(0) or { p.error("invalid expression") }
@@ -629,7 +629,7 @@ pub fn (mut p Parser) parse_expr_stmt() ast.Stmt {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 	mut pos := p.tok.position()
 
@@ -688,7 +688,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) parse_flags(line int) []token.Kind {
 	mut flags := []token.Kind{}
 
@@ -711,7 +711,7 @@ pub fn (mut p Parser) read_first_token() {
 	p.next()
 }
 
-[inline]
+@[inline]
 fn (mut p Parser) next() {
 	p.prev_tok = p.tok
 	p.tok = p.peek_tok
@@ -720,14 +720,14 @@ fn (mut p Parser) next() {
 	p.peek_tok3 = p.scanner.scan()
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) check_name() string {
 	name := p.tok.lit
 	p.check(.name)
 	return name
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) check(expected token.Kind) {
 	if p.tok.kind == expected {
 		p.next()
@@ -738,19 +738,19 @@ pub fn (mut p Parser) check(expected token.Kind) {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) check_extended_lang() {
 	if !p.is_extended_lang {
 		p.error("This feature is only available in p++")
 	}
 }
 
-[inline]
+@[inline]
 pub fn (p Parser) is_empty_state() bool {
 	return p.cur_state_name == pex.empty_state_name
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) open_scope() {
 	p.scope = &ast.Scope{
 		parent: p.scope
@@ -758,7 +758,7 @@ pub fn (mut p Parser) open_scope() {
 	}
 }
 
-[inline]
+@[inline]
 pub fn (mut p Parser) close_scope() {
 	// p.scope.end_pos = p.tok.pos
 	// NOTE: since this is usually called after `p.parse_block()`
@@ -784,12 +784,12 @@ fn (mut p Parser) parser_bug_check() {
 	}
 }
 
-[noreturn]
+@[noreturn]
 pub fn (mut p Parser) error(s string) {
 	p.error_with_pos(s, p.tok.position())
 }
 
-[noreturn]
+@[noreturn]
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
 	if p.pref.output_mode == .stdout {
 		$if debug {

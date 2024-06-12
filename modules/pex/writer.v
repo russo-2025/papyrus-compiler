@@ -19,7 +19,7 @@ pub mut:
 	buf		&Buffer
 }
 
-pub fn write_to_buff(pex_file &PexFile, mut out_buff Buffer) {
+pub fn write_to_buff(mut pex_file &PexFile, mut out_buff Buffer) {
 	assert out_buff.is_empty()
 	
 	mut w := Writer{
@@ -37,7 +37,7 @@ pub fn write_to_buff(pex_file &PexFile, mut out_buff Buffer) {
 	assert !out_buff.is_empty()
 }
 
-pub fn write(pex_file &PexFile) []u8 {
+pub fn write(mut pex_file &PexFile) []u8 {
 	mut w := Writer{
 		pex:	pex_file
 		buf: 	&Buffer{ bytes: []u8{ cap: 2000 } }
@@ -49,7 +49,7 @@ pub fn write(pex_file &PexFile) []u8 {
 	return w.buf.bytes
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_pex() {
 	//header
 	w.write(w.pex.magic_number)
@@ -107,7 +107,7 @@ fn (mut w Writer) write_pex() {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_object(obj &Object) {
 	w.write(obj.name)
 	start_pos := w.buf.bytes.len
@@ -143,7 +143,7 @@ fn (mut w Writer) write_object(obj &Object) {
 	w.buf.bytes[start_pos + 3] = u8(size)
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_state(state State) {
 	w.write(state.name)
 	
@@ -154,7 +154,7 @@ fn (mut w Writer) write_state(state State) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_function_info(info FunctionInfo) {
 	w.write(info.return_type)
 	w.write(info.docstring)
@@ -181,13 +181,13 @@ fn (mut w Writer) write_function_info(info FunctionInfo) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_function(func Function) {
 	w.write(func.name)
 	w.write_function_info(func.info)
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_instruction(inst Instruction) {
 	w.write(u8(inst.op))
 	
@@ -199,7 +199,7 @@ fn (mut w Writer) write_instruction(inst Instruction) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_variable(var Variable) {
 	w.write(var.name)
 	w.write(var.type_name)
@@ -207,7 +207,7 @@ fn (mut w Writer) write_variable(var Variable) {
 	w.write_variable_value(var.data)
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_property(prop Property) {
 	w.write(prop.name)
 	w.write(prop.typ)
@@ -228,7 +228,7 @@ fn (mut w Writer) write_property(prop Property) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_variable_value(value VariableValue) {
 	w.write(value.typ)
 
@@ -250,7 +250,7 @@ fn (mut w Writer) write_variable_value(value VariableValue) {
 	}
 }
 
-[inline]
+@[inline]
 fn (mut w Writer) write_variable_type(typ VariableType) {
 	w.write(typ.name)
 	w.write(typ.typ)

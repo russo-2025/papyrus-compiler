@@ -80,7 +80,8 @@ pub fn create_dump_from_pex_files(files []string) []DumpObject {
 
 	for file in files {
 		if !os.is_file(file) {
-			panic("invalid file: `${file}`")
+			println("file not found: ${file}")
+			continue
 		}
 
 		dump_objects << create_dump_from_pex(file)
@@ -91,19 +92,22 @@ pub fn create_dump_from_pex_files(files []string) []DumpObject {
 
 pub fn create_dump_from_pex_dir(dir string) []DumpObject {
 	if !os.is_dir(dir) {
-		panic("invalid dir: `${dir}`")
+		println("invalid dir: `${dir}`")
+		exit(1)
 	}
 
+	pex_files := os.walk_ext(dir, ".pex")
+	
+	/*
 	mut files := []string{}
-
 	for obj_name in base_object_names {
 		file := os.join_path(dir, obj_name + ".pex")
 		files << file
-	}
+	}*/
 
-	return create_dump_from_pex_files(files)
+	return create_dump_from_pex_files(pex_files)
 }
-
+/*
 const (
 	skse_object_names = [
 		"ActorValueInfo", "ArmorAddon", "Art", "ColorForm", "CombatStyle", "DefaultObjectManager", "EquipSlot", "HeadPart", "Input", "ModEvent", "NetImmerse", "SKSE", 
@@ -124,4 +128,4 @@ const (
 	"Spell", "Static", "TalkingActivator", "TextureSet",
 	"Topic", "TopicInfo", "Utility", "VisualEffect", "VoiceType",
 	"Weapon", "Weather","WordOfPower", "WorldSpace"]
-)
+)*/
