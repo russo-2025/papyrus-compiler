@@ -14,7 +14,8 @@ pub mut:
 	free	bool
 }
 
-struct Gen {
+pub struct Gen {
+pub:
 	pref			&pref.Preferences
 pub mut:
 	file			&ast.File = unsafe{ voidptr(0) }
@@ -58,6 +59,26 @@ pub fn gen_pex_file(mut file &ast.File, mut table &ast.Table, prefs &pref.Prefer
 		pref: prefs
 	}
 	
+	g.gen_objects()
+	return g.pex
+}
+
+pub fn (mut g Gen) gen(mut file &ast.File) &pex.PexFile {
+	g.file = file
+	g.pex = &pex.PexFile{
+		magic_number: pex.le_magic_number //0xFA57C0DE
+		major_version: 3
+		minor_version: 2
+		game_id: .skyrim
+		compilation_time: time.utc().unix()
+		src_file_name: file.path_base
+		user_name: os.loginname() or { "::USERNAME::" }
+		machine_name: os.hostname() or { "::MACHINENAME::" }
+
+		has_debug_info: u8(1) //debug info обязательна?!
+		modification_time: i64(1616261626) //TODO
+	}
+
 	g.gen_objects()
 	return g.pex
 }

@@ -24,6 +24,7 @@ mut:
 pub:
 	checker			checker.Checker
 pub mut:
+	generator		gen_pex.Gen
 	pref			&pref.Preferences
 	global_scope	&ast.Scope
 	files_names		[]string
@@ -37,6 +38,10 @@ fn new_builder(prefs &pref.Preferences) Builder{
 	return Builder{
 		pref: prefs
 		checker: checker.new_checker(table, prefs)
+		generator: gen_pex.Gen {
+			table: table
+			pref: prefs
+		}
 		global_scope: &ast.Scope{}
 		table: table
 	}
@@ -70,9 +75,7 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 	b.print_timer('parse files')
 
-	/*$if debug {
-		b.table.save_as_json("Table.json")
-	}*/
+	//$if debug { b.table.save_as_json("Table.json") }
 	
 	//fns_dump.load("FunctionsDump.json", mut b.table) or { panic(err) }
 
@@ -158,7 +161,8 @@ fn (mut b Builder) gen_to_pex_file(mut parsed_file &ast.File, mut buff_bytes pex
 		output_file_name := parsed_file.file_name + ".pex"
 		output_file_path := os.join_path(b.pref.output_dir, output_file_name)
 		
-		mut pex_file := gen_pex.gen_pex_file(mut parsed_file, mut b.table, b.pref)
+		//mut pex_file := gen_pex.gen_pex_file(mut parsed_file, mut b.table, b.pref)
+		mut pex_file := b.generator.gen(mut parsed_file)
 		
 		pex.write_to_buff(mut pex_file, mut buff_bytes)
 		
