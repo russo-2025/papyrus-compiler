@@ -64,12 +64,12 @@ pub fn gen_pex_file(mut file ast.File, mut table ast.Table, prefs &pref.Preferen
 }
 
 pub fn (mut g Gen) cleanup() {
-	g.string_table.clear()
-	g.temp_locals.clear()
+	g.string_table = map[string]u16{} // g.string_table.clear()
+	g.temp_locals = []TempVariable{} // g.temp_locals.clear()
 	g.cur_obj = unsafe{ voidptr(0) }
 	g.cur_state = unsafe{ voidptr(0) }
 	g.cur_fn = unsafe{ voidptr(0) }
-	g.states.clear()
+	g.states = map[string]&pex.State{} //g.states.clear()
 	g.empty_state = unsafe{ voidptr(0) }
 	g.cur_obj_type = ast.Type(0)
 	g.cur_obj_name = ""

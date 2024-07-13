@@ -47,7 +47,7 @@ fn test_builder() {
 
 	pex1 := pex.read_from_file(out_file1)
 	assert pex1.src_file_name == "AAATestObject.psc"
-	assert pex1.string_table.len == 29
+	assert pex1.string_table.len == 26
 	assert pex1.objects.len == 1
 	assert pex1.get_string(pex1.objects[0].name) == "AAATestObject"
 	assert pex1.objects[0].size == 231
@@ -63,10 +63,7 @@ fn test_builder() {
 
 	pex2 := pex.read_from_file(out_file2)
 	assert pex2.src_file_name == "LatentTest.psc"
-	println("=================================================")
-	println(pex2.string_table)
-	println("=================================================")
-	assert pex2.string_table.len == 35
+	assert pex2.string_table.len == 31
 	assert pex2.objects.len == 1
 	assert pex2.get_string(pex2.objects[0].name) == "LatentTest"
 	assert pex2.objects[0].size == 427
@@ -82,7 +79,7 @@ fn test_builder() {
 
 	pex3 := pex.read_from_file(out_file3)
 	assert pex3.src_file_name == "OpcodesTest.psc"
-	assert pex3.string_table.len == 219
+	assert pex3.string_table.len == 158
 	assert pex3.objects.len == 1
 	assert pex3.get_string(pex3.objects[0].name) == "OpcodesTest"
 	assert pex3.objects[0].size == 8503
