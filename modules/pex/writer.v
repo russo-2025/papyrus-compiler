@@ -19,7 +19,7 @@ pub mut:
 	buf		&Buffer
 }
 
-pub fn write_to_buff(mut pex_file &PexFile, mut out_buff Buffer) {
+pub fn write_to_buff(mut pex_file PexFile, mut out_buff Buffer) {
 	assert out_buff.is_empty()
 	
 	mut w := Writer{
@@ -37,7 +37,7 @@ pub fn write_to_buff(mut pex_file &PexFile, mut out_buff Buffer) {
 	assert !out_buff.is_empty()
 }
 
-pub fn write(mut pex_file &PexFile) []u8 {
+pub fn write(mut pex_file PexFile) []u8 {
 	mut w := Writer{
 		pex:	pex_file
 		buf: 	&Buffer{ bytes: []u8{ cap: 2000 } }

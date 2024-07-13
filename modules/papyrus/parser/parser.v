@@ -48,7 +48,7 @@ pub mut:
 	errors				[]errors.Error
 }
 
-pub fn parse_files(paths []string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) []ast.File {
+pub fn parse_files(paths []string, mut table ast.Table, prefs &pref.Preferences, mut global_scope ast.Scope) []ast.File {
 	mut files := []ast.File{}
 
 	for path in paths {
@@ -58,7 +58,7 @@ pub fn parse_files(paths []string, mut table &ast.Table, prefs &pref.Preferences
 	return files
 }
 
-pub fn parse_file(path string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) &ast.File {
+pub fn parse_file(path string, mut table ast.Table, prefs &pref.Preferences, mut global_scope ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner_file(path, prefs)
 		pref: prefs
@@ -75,7 +75,7 @@ pub fn parse_file(path string, mut table &ast.Table, prefs &pref.Preferences, mu
 	return p.parse()
 }
 
-pub fn parse_text(path string, text string, mut table &ast.Table, prefs &pref.Preferences, mut global_scope &ast.Scope) &ast.File {
+pub fn parse_text(path string, text string, mut table ast.Table, prefs &pref.Preferences, mut global_scope ast.Scope) &ast.File {
 	mut p := Parser{
 		scanner: scanner.new_scanner(text, prefs)
 		pref: prefs

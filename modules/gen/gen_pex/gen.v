@@ -38,7 +38,7 @@ pub mut:
 	cur_obj_name	string
 }
 
-pub fn gen_pex_file(mut file &ast.File, mut table &ast.Table, prefs &pref.Preferences) &pex.PexFile {
+pub fn gen_pex_file(mut file ast.File, mut table ast.Table, prefs &pref.Preferences) &pex.PexFile {
 	mut g := Gen{
 		file: file
 		pex: &pex.PexFile{
@@ -63,7 +63,22 @@ pub fn gen_pex_file(mut file &ast.File, mut table &ast.Table, prefs &pref.Prefer
 	return g.pex
 }
 
-pub fn (mut g Gen) gen(mut file &ast.File) &pex.PexFile {
+pub fn (mut g Gen) cleanup() {
+	g.string_table.clear()
+	g.temp_locals.clear()
+	g.cur_obj = unsafe{ voidptr(0) }
+	g.cur_state = unsafe{ voidptr(0) }
+	g.cur_fn = unsafe{ voidptr(0) }
+	g.states.clear()
+	g.empty_state = unsafe{ voidptr(0) }
+	g.cur_obj_type = ast.Type(0)
+	g.cur_obj_name = ""
+}
+
+
+pub fn (mut g Gen) gen(mut file ast.File) &pex.PexFile {
+	g.cleanup()
+
 	g.file = file
 	g.pex = &pex.PexFile{
 		magic_number: pex.le_magic_number //0xFA57C0DE
@@ -79,7 +94,18 @@ pub fn (mut g Gen) gen(mut file &ast.File) &pex.PexFile {
 		modification_time: i64(1616261626) //TODO
 	}
 
+	assert g.string_table.len == 0
+	assert g.temp_locals.len == 0
+	assert g.cur_obj == voidptr(0)
+	assert g.cur_state == voidptr(0)
+	assert g.cur_fn == voidptr(0)
+	assert g.states.len == 0
+	assert g.empty_state == voidptr(0)
+	assert g.cur_obj_type == ast.Type(0)
+	assert g.cur_obj_name == ""
+
 	g.gen_objects()
+
 	return g.pex
 }
 
@@ -108,7 +134,7 @@ fn (mut g Gen) gen_objects() {
 	}
 }
 
-fn (mut g Gen) stmt(mut stmt &ast.Stmt) {
+fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 	match mut stmt {
 		ast.Return {
 			value := g.get_operand_from_expr(mut &stmt.expr)
@@ -178,7 +204,7 @@ fn (mut g Gen) create_state(name string) &pex.State {
 	}
 }
 
-fn (mut g Gen) add_default_functions_to_state(mut state &pex.State) {
+fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 	//GetState
 	state.functions << &pex.Function{
 		name: g.gen_string_ref("GetState")

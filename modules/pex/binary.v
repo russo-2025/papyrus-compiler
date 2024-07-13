@@ -111,6 +111,7 @@ pub fn (mut w Writer) write[T](v T) {
 	}
 	$else $if T is StringId { //u16
 		real_val := u16(v)
+		assert real_val < w.pex.string_table.len
 		w.buf.bytes << u8(real_val>>u16(8))
 		w.buf.bytes << u8(v)
 	}

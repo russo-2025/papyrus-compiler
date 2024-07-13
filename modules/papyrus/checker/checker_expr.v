@@ -2,7 +2,7 @@ module checker
 
 import papyrus.ast
 
-pub fn (mut c Checker) expr(mut node &ast.Expr) ast.Type {
+pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	match mut node {
 		ast.InfixExpr {
 			return c.expr_infix(mut node)
@@ -179,7 +179,7 @@ pub fn (mut c Checker) expr(mut node &ast.Expr) ast.Type {
 	panic("expression not processed in file: `$c.file.path`")
 }
 
-pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
+pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 	if !node.op.is_infix() {
 		c.error("invalid infix operator: `$node.op`",  node.pos)
 	}
@@ -376,7 +376,7 @@ pub fn (mut c Checker) expr_infix(mut node &ast.InfixExpr) ast.Type {
 	return node.result_type
 }
 
-pub fn (mut c Checker) call_expr(mut node &ast.CallExpr) ast.Type {
+pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	mut typ := 0
 	mut func := unsafe { &ast.Fn(voidptr(0)) }
 

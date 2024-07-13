@@ -5,7 +5,7 @@ import papyrus.token
 import pex
 
 @[inline]
-fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
+fn (mut g Gen) script_decl(mut s ast.ScriptDecl) {
 	mut obj := g.create_obj(s.name, s.parent_name)
 
 	g.pex.objects << obj
@@ -47,7 +47,7 @@ fn (mut g Gen) script_decl(mut s &ast.ScriptDecl) {
 }
 
 @[inline]
-fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
+fn (mut g Gen) state_decl(mut s ast.StateDecl) {
 	if s.is_auto {
 		g.cur_obj.auto_state_name = g.gen_string_ref(s.name)
 	}
@@ -63,7 +63,6 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 		g.states[s.name.to_lower()] = g.cur_obj.states[g.cur_obj.states.len - 1]
 	}
 	
-
 	for mut func in s.fns {
 		g.fn_decl(mut &func)
 	}
@@ -72,7 +71,7 @@ fn (mut g Gen) state_decl(mut s &ast.StateDecl) {
 }
 
 @[inline]
-fn (mut g Gen) if_stmt(mut s &ast.If) {
+fn (mut g Gen) if_stmt(mut s ast.If) {
 	//opcode: 'assign', args: [ident(ff), integer(11)]
 	//opcode: 'jmpf', args: [integer(1), integer(3)]
 	//opcode: 'assign', args: [ident(ff), integer(22)]
@@ -136,7 +135,7 @@ fn (mut g Gen) if_stmt(mut s &ast.If) {
 }
 
 @[inline]
-fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
+fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
 		info: pex.FunctionInfo{
@@ -192,12 +191,12 @@ fn (mut g Gen) gen_fn(mut node &ast.FnDecl) &pex.Function {
 }
 
 @[inline]
-fn (mut g Gen) fn_decl(mut node &ast.FnDecl) {
+fn (mut g Gen) fn_decl(mut node ast.FnDecl) {
 	g.cur_state.functions << g.gen_fn(mut node)
 }
 
 @[inline]
-fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
+fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 	assert stmt.right !is ast.EmptyExpr
 
 	if mut stmt.left is ast.Ident {
@@ -277,7 +276,7 @@ fn (mut g Gen) assign(mut stmt &ast.AssignStmt) {
 }
 
 @[inline]
-fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
+fn (mut g Gen) var_decl(mut stmt ast.VarDecl) {
 	if stmt.is_object_var {
 		mut user_flags := u32(0)
 
@@ -316,7 +315,7 @@ fn (mut g Gen) var_decl(mut stmt &ast.VarDecl) {
 }
  
 @[inline]
-fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
+fn (mut g Gen) prop_decl(mut stmt ast.PropertyDecl) {
 	mut prop := pex.Property{
 		name: g.gen_string_ref(stmt.name)
 		typ: g.gen_string_ref(g.table.type_to_str(stmt.typ))
@@ -390,7 +389,7 @@ fn (mut g Gen) prop_decl(mut stmt &ast.PropertyDecl) {
 }
 
 @[inline]
-fn (mut g Gen) while_stmt(mut s &ast.While) {
+fn (mut g Gen) while_stmt(mut s ast.While) {
 	//original
 	//opcode: 'assign', args: [ident(ff), integer(0)]
 	//opcode: 'assign', args: [ident(i), integer(0)]

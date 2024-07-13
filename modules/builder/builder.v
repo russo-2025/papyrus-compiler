@@ -156,7 +156,7 @@ fn (mut b Builder) compile_pex(mut parsed_files []ast.File) {
 }
 
 
-fn (mut b Builder) gen_to_pex_file(mut parsed_file &ast.File, mut buff_bytes pex.Buffer) {
+fn (mut b Builder) gen_to_pex_file(mut parsed_file ast.File, mut buff_bytes pex.Buffer) {
 	if is_outdated(parsed_file, b.pref) {
 		output_file_name := parsed_file.file_name + ".pex"
 		output_file_path := os.join_path(b.pref.output_dir, output_file_name)

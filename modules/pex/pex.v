@@ -437,10 +437,10 @@ pub fn (value &VariableValue) to_string(pex_file &PexFile) string {
 			result = "none"
 		}
 		.identifier {
-			result = "ident(${pex_file.string_table[value.to_string_id()]})"
+			result = "ident(${pex_file.get_string(value.to_string_id())})"
 		}
 		.str {
-			result = "string('${pex_file.string_table[value.to_string_id()]}')"
+			result = "string('${pex_file.get_string(value.to_string_id())}')"
 		}
 		.integer {
 			result = "integer(${value.to_integer().str()})"

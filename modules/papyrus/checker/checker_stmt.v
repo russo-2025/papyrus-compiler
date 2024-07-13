@@ -4,7 +4,7 @@ import papyrus.ast
 import papyrus.token
 import pex
 
-fn (mut c Checker) top_stmt(mut node &ast.TopStmt) {
+fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 	match mut node {
 		ast.ScriptDecl {
 			c.cur_obj_name = node.name
@@ -95,7 +95,7 @@ fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
 	}
 }
 
-fn (mut c Checker) stmt(mut node &ast.Stmt) {
+fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.Return {
 			typ := c.expr(mut node.expr)
@@ -210,7 +210,7 @@ fn (mut c Checker) stmt(mut node &ast.Stmt) {
 	}
 }
 
-fn (mut c Checker) fn_decl(mut node &ast.FnDecl) {
+fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	unsafe {
 		c.cur_fn = node
 	}
@@ -317,7 +317,7 @@ fn (mut c Checker) fn_decl(mut node &ast.FnDecl) {
 	c.cur_scope = c.cur_scope.parent
 }
 
-pub fn (mut c Checker) var_decl(mut node &ast.VarDecl) {
+pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	if obj := c.cur_scope.find_var(node.name) {
 		if node.pos.pos != obj.pos.pos {
 			c.error("variable with name `$node.name` already exists", node.pos)

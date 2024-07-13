@@ -59,7 +59,7 @@ fn (mut g Gen) gen_cast(v1 pex.VariableValue, v2 pex.VariableValue) {
 }
 
 @[inline]
-fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableValue {
+fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 	if expr.op == .ne {
 		mut e := expr
 		e.op = .eq
@@ -143,7 +143,7 @@ fn (mut g Gen) gen_infix_operator(mut expr &ast.InfixExpr) pex.VariableValue {
 }
 
 @[inline]
-fn (mut g Gen) gen_prefix_operator(mut expr &ast.PrefixExpr) pex.VariableValue {
+fn (mut g Gen) gen_prefix_operator(mut expr ast.PrefixExpr) pex.VariableValue {
 	mut op := g.get_prefix_opcode_operator(expr.right_type, expr.op)
 	right_value := g.get_operand_from_expr(mut &expr.right)
 
@@ -160,7 +160,7 @@ fn (mut g Gen) gen_prefix_operator(mut expr &ast.PrefixExpr) pex.VariableValue {
 }
 
 @[inline]
-fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.VariableValue {
+fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr ast.CallExpr) pex.VariableValue {
 	result_value := g.get_free_temp(expr.return_type)
 	mut args := []pex.VariableValue{}
 
@@ -219,7 +219,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr &ast.CallExpr) pex.Variabl
 }
 
 @[inline]
-fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableValue {
+fn (mut g Gen) gen_call_expr(mut expr ast.CallExpr) pex.VariableValue {
 	//opcode: 'callstatic', args: [ident(m), ident(Log), ident(::NoneVar), string('Hello World')]
 	//opcode: 'callmethod', args: [ident(Bar), ident(arg), ident(::NoneVar)]
 	//opcode: 'callmethod', args: [ident(Foo), ident(a), ident(::NoneVar), integer(123)]
@@ -244,7 +244,7 @@ fn (mut g Gen) gen_call_expr(mut expr &ast.CallExpr) pex.VariableValue {
 }
 
 @[inline]
-fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableValue {
+fn (mut g Gen) gen_array_init(mut expr ast.ArrayInit) pex.VariableValue {
 		//opcode: 'array_create', args: [ident(::temp0), integer(3)]
 		//массив
 		len_value := g.get_operand_from_expr(mut &expr.len)
@@ -260,7 +260,7 @@ fn (mut g Gen) gen_array_init(mut expr &ast.ArrayInit) pex.VariableValue {
 }
 
 @[inline]
-fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue {
+fn (mut g Gen) gen_array_find_element(mut expr ast.CallExpr) pex.VariableValue {
 	lname := expr.name.to_lower()
 	
 	assert lname == "find" || lname == "rfind"
@@ -291,7 +291,7 @@ fn (mut g Gen) gen_array_find_element(mut expr &ast.CallExpr) pex.VariableValue 
 }
 
 @[inline]
-fn (mut g Gen) gen_array_get_element(mut expr &ast.IndexExpr) pex.VariableValue {
+fn (mut g Gen) gen_array_get_element(mut expr ast.IndexExpr) pex.VariableValue {
 	//opcode: 'array_getelement', args: [ident(::temp1), ident(arr), integer(0)]
 	//массив
 	left_value := g.get_operand_from_expr(mut &expr.left)
@@ -309,7 +309,7 @@ fn (mut g Gen) gen_array_get_element(mut expr &ast.IndexExpr) pex.VariableValue 
 }
 
 @[inline]
-fn (mut g Gen) gen_selector(mut expr &ast.SelectorExpr) pex.VariableValue {
+fn (mut g Gen) gen_selector(mut expr ast.SelectorExpr) pex.VariableValue {
 
 	if expr.field_name.to_lower() == "length" {
 		//opcode: 'array_length', args: [ident(::temp1), ident(myArray)]
@@ -350,21 +350,21 @@ fn (mut g Gen) gen_selector(mut expr &ast.SelectorExpr) pex.VariableValue {
 	return result_value
 }
 
-fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
+fn (mut g Gen) get_operand_from_expr(mut expr ast.Expr) pex.VariableValue {
 	mut result_value := pex.value_none()
 
 	match mut expr {
 		ast.InfixExpr {
-			result_value = g.gen_infix_operator(mut &expr)
+			result_value = g.gen_infix_operator(mut expr)
 		}
 		ast.ParExpr {
-			result_value = g.get_operand_from_expr(mut &expr.expr)
+			result_value = g.get_operand_from_expr(mut expr.expr)
 		}
 		ast.CallExpr {
-			result_value = g.gen_call_expr(mut &expr)
+			result_value = g.gen_call_expr(mut expr)
 		}
 		ast.PrefixExpr {
-			result_value = g.gen_prefix_operator(mut &expr)
+			result_value = g.gen_prefix_operator(mut expr)
 		}
 		ast.Ident {
 			if expr.is_object_property {
@@ -373,7 +373,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 						return pex.value_ident(g.gen_string_ref(prop.auto_var_name))
 					}
 
-					return g.gen_selector(mut &ast.SelectorExpr{
+					return g.gen_selector(mut ast.SelectorExpr{
 						expr: ast.Ident {
 							name: 'self'
 							typ: ast.Type(g.table.find_type_idx(g.cur_obj_name))
@@ -404,16 +404,16 @@ fn (mut g Gen) get_operand_from_expr(mut expr &ast.Expr) pex.VariableValue {
 			return pex.value_string(g.gen_string_ref(expr.val))
 		}
 		ast.ArrayInit {
-			result_value = g.gen_array_init(mut &expr)
+			result_value = g.gen_array_init(mut expr)
 		}
 		ast.SelectorExpr {
-			result_value = g.gen_selector(mut &expr)
+			result_value = g.gen_selector(mut expr)
 		}
 		ast.IndexExpr {
-			result_value = g.gen_array_get_element(mut &expr)
+			result_value = g.gen_array_get_element(mut expr)
 		}
 		ast.CastExpr {
-			expr_value := g.get_operand_from_expr(mut &expr.expr)
+			expr_value := g.get_operand_from_expr(mut expr.expr)
 			g.free_temp(expr_value)
 			result_value = g.get_free_temp(&expr.typ)
 			g.gen_cast(result_value, expr_value)

@@ -41,7 +41,7 @@ pub fn (mut c Checker) check_files(mut ast_files []ast.File) {
 	}
 }
 
-pub fn (mut c Checker) check(mut ast_file &ast.File) {
+pub fn (mut c Checker) check(mut ast_file ast.File) {
 	c.file = ast_file
 	c.cur_scope = c.file.scope
 
