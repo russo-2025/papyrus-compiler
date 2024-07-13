@@ -63,6 +63,9 @@ fn test_builder() {
 
 	pex2 := pex.read_from_file(out_file2)
 	assert pex2.src_file_name == "LatentTest.psc"
+	println("=================================================")
+	println(pex2.string_table)
+	println("=================================================")
 	assert pex2.string_table.len == 35
 	assert pex2.objects.len == 1
 	assert pex2.get_string(pex2.objects[0].name) == "LatentTest"
