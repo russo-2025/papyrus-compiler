@@ -1,4 +1,5 @@
-bin/*.papyrus
+.papyrus
+bin/.papyrus
 bin/*.exe
 bin/*.exp
 bin/*.lib
@@ -10,3 +11,7 @@ test-files/compiler
 test-files/*.*
 *.bat
 vls.log
+fast.log
+table.html
+papyrus_fast.exe
+papyrus_fast.c
