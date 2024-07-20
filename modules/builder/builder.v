@@ -28,7 +28,7 @@ pub mut:
 	pref			&pref.Preferences
 	global_scope	&ast.Scope
 	files_names		[]string
-	parsed_files	[]ast.File
+	parsed_files	[]&ast.File
 	table			&ast.Table
 }
 
@@ -105,16 +105,17 @@ pub fn compile(prefs &pref.Preferences) bool {
 	
 	match b.pref.backend {
 		.pex {
-			b.compile_pex(mut b.parsed_files)
+			b.compile_pex()
 		}
 		else { panic('invalid compiler backend') }
 	}
 
 	b.print_timer('gen files')
+
 	return true
 }
 
-fn (mut b Builder) compile_pex(mut parsed_files []ast.File) {
+fn (mut b Builder) compile_pex() {
 	if b.pref.use_threads {
 		mut max_threads_count := runtime.nr_cpus()
 
@@ -122,14 +123,14 @@ fn (mut b Builder) compile_pex(mut parsed_files []ast.File) {
 			max_threads_count = 8
 		}
 
-		if max_threads_count > parsed_files.len {
-			max_threads_count = parsed_files.len
+		if max_threads_count > b.parsed_files.len {
+			max_threads_count = b.parsed_files.len
 		}
 
 		mut threads := []thread{}
 
 		mut cur_index := 0
-		max_len := parsed_files.len
+		max_len := b.parsed_files.len
 		work_len := max_len / max_threads_count
 		
 		b.print("${max_threads_count} threads are used")
@@ -146,10 +147,10 @@ fn (mut b Builder) compile_pex(mut parsed_files []ast.File) {
 	else {
 		mut buff_bytes := pex.Buffer{ bytes: []u8{ cap: 10000 } }
 
-		for mut parsed_file in parsed_files{
+		for i := 0; i < b.parsed_files.len; i++ {
 			assert buff_bytes.is_empty()
 			
-			b.gen_to_pex_file(mut parsed_file, mut buff_bytes)
+			b.gen_to_pex_file(mut b.parsed_files[i], mut buff_bytes)
 			buff_bytes.clear()
 		}
 	}
@@ -163,13 +164,16 @@ fn (mut b Builder) gen_to_pex_file(mut parsed_file ast.File, mut buff_bytes pex.
 		
 		//mut pex_file := gen_pex.gen_pex_file(mut parsed_file, mut b.table, b.pref)
 		mut pex_file := b.generator.gen(mut parsed_file)
-		
+
 		pex.write_to_buff(mut pex_file, mut buff_bytes)
 		
 		assert !buff_bytes.is_empty()
+		
 		mut file := os.create(output_file_path) or { panic(err) }
 		file.write(buff_bytes.bytes) or { panic(err) }
 		file.close()
+		
+		//os.write_file_array(output_file_path, buff_bytes.bytes) or { panic(err) }
 	}
 }
 

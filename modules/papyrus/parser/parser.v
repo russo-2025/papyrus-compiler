@@ -48,8 +48,8 @@ pub mut:
 	errors				[]errors.Error
 }
 
-pub fn parse_files(paths []string, mut table ast.Table, prefs &pref.Preferences, mut global_scope ast.Scope) []ast.File {
-	mut files := []ast.File{}
+pub fn parse_files(paths []string, mut table ast.Table, prefs &pref.Preferences, mut global_scope ast.Scope) []&ast.File {
+	mut files := []&ast.File{}
 
 	for path in paths {
 		files << parse_file(path, mut table, prefs, mut global_scope)

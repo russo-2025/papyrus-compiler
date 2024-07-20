@@ -3,6 +3,11 @@ import os
 import pref
 import pex
 
+fn check_duplicates(string_table []string) {
+	// TODO
+	// assert false
+}
+
 fn test_builder() {
 	input_dir := os.real_path('test-files/vm-tests')
 	output_dir := os.real_path('test-files/compiled')

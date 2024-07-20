@@ -34,9 +34,9 @@ pub fn new_checker(table &ast.Table, prefs &pref.Preferences) Checker {
 	}
 }
 
-pub fn (mut c Checker) check_files(mut ast_files []ast.File) {
+pub fn (mut c Checker) check_files(mut ast_files []&ast.File) {
 	for i in 0 .. ast_files.len {
-		mut file := unsafe { &ast_files[i] }
+		mut file := ast_files[i]
 		c.check(mut file)
 	}
 }

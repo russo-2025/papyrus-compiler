@@ -57,7 +57,7 @@ fn (mut s Stats) from_table(table &ast.Table) {
 	s.count_all_static_fns = u32(table.fns.len)
 }
 
-fn (mut s Stats) from_files(parsed_files []ast.File) {
+fn (mut s Stats) from_files(parsed_files []&ast.File) {
 	for file in parsed_files {
 		for stmt in file.stmts {
 			s.from_top_stmt(stmt)
