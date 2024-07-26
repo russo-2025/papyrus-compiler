@@ -27,14 +27,14 @@ papyrus <command> [arguments]
 ### Arguments for the `compile` command:
 The following arguments can be used with the `compile` command:
 
-- `-i`, `--input`: Specifies the directory with `.psc` files to compile.
-- `-o`, `--output`: Specifies the directory where the compiled `.pex` files will be placed.
-- `-h`, `--headers-dir`: Specifies the directory with `.psc` files that will be analyzed by the compiler but not compiled. Used to let the compiler know about existing scripts (`Form`, `ObjectReference`, `Actor`) and their methods/functions/properties/variables. See the "Header/Import Files" section.
-- `--nocache`: Forces the compiler to compile all files, regardless of their modification dates.
-- `--silent`: Disables output of error messages to the console.
-- `--original`: ...
-- `--verbose`: ...
-- `--stats`: ...
+- `-i`, `-input`: Specifies the directory with `.psc` files to compile.
+- `-o`, `-output`: Specifies the directory where the compiled `.pex` files will be placed.
+- `-h`, `-headers-dir`: Specifies the directory with `.psc` files that will be analyzed by the compiler but not compiled. Used to let the compiler know about existing scripts (`Form`, `ObjectReference`, `Actor`) and their methods/functions/properties/variables. See the "Header/Import Files" section.
+- `-nocache`: Forces the compiler to compile all files, regardless of their modification dates.
+- `-silent`: Disables output of error messages to the console.
+- `-original`: ...
+- `-verbose`: ...
+- `-stats`: ...
 
 ### Examples
 Below are several examples demonstrating the use of various compiler commands and arguments for compiling scripts, reading compiled scripts, etc.
