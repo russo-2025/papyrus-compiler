@@ -63,7 +63,7 @@ fn main() {
 	println(diff2)
 	
 	html_message := message.replace_each(['<', '&lt;', '>', '&gt;'])
-	table := os.read_file('table.html')!
+	table := os.read_file('fast-assets/table.html')!
 	new_table :=
 		'	<tr>
 		<td>${date.format()}</td>
@@ -78,12 +78,12 @@ fn main() {
 		<td>${cgen}ms</td>
 	</tr>\n' +
 		table.trim_space() + '\n'
-	os.write_file('table.html', new_table)!
+	os.write_file('fast-assets/table.html', new_table)!
 
 	// regenerate index.html
-	header := os.read_file('header.html')!
-	footer := os.read_file('footer.html')!
-	mut res := os.create('index.html')!
+	header := os.read_file('fast-assets/header.html')!
+	footer := os.read_file('fast-assets/footer.html')!
+	mut res := os.create('fast-assets/index.html')!
 	res.writeln(header)!
 	res.writeln(new_table)!
 	res.writeln(footer)!
