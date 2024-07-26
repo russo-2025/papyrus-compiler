@@ -1,0 +1,53 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version for the release'
+        required: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+  
+      - name: Install V
+        uses: vlang/setup-v@v1
+        with:
+          check-latest: true
+     
+      - name: Build Project
+        run: v -prod -gc none -o papyrus.exe compiler.v
+      
+      - name: Get the date
+        id: date
+        run: echo "::set-output name=today::$(date +'%Y%m%d')"
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: 'Release of version ${{ github.event.inputs.version }}'
+          draft: false
+          prerelease: false
+
+      - name: Archiving product binaries as a ZIP
+        run: |
+          zip -r papyrus_${{ steps.date.outputs.today }}.zip papyrus.exe
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./papyrus_${{ steps.date.outputs.today }}.zip
+          asset_name: papyrus_${{ steps.date.outputs.today }}.zip
+          asset_content_type: application/zip
