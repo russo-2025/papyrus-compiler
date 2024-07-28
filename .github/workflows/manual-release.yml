@@ -8,7 +8,29 @@ on:
         required: true
 
 jobs:
-  release:
+  create_release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Get the date
+        id: date
+        run: echo "::set-output name=today::$(date +'%Y%m%d')"
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }} (${{ steps.date.outputs.today }})
+          body: 'Release of version ${{ github.event.inputs.version }}'
+          draft: false
+          prerelease: false
+
+  build_and_upload:
+    needs: create_release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -17,9 +39,9 @@ jobs:
           - os: windows-latest
             artifact: papyrus_windows.zip
           - os: ubuntu-latest
-            artifact: papyrus_linux.zip
+            artifact: papyrus_linux.tar.gz
           - os: macos-latest
-            artifact: papyrus_macos.zip
+            artifact: papyrus_macos.tar.gz
 
     steps:
       - name: Checkout Code
@@ -38,38 +60,25 @@ jobs:
         run: echo "::set-output name=today::$(date +'%Y%m%d')"
       
       - name: Rename bin directory
-        run: |
-          mv bin papyrus_${{ steps.date.outputs.today }}
+        run: mv bin papyrus_${{ steps.date.outputs.today }}
       
-      - name: Create ZIP archive
+      - name: Create Archive
         shell: bash
         run: |
           if [[ $RUNNER_OS == 'Windows' ]]; then
             7z a -tzip ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
-          else
-            zip -r9 --symlinks ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
+          elif [[ $RUNNER_OS == 'Linux' ]]; then
+            tar -czf ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
+          elif [[ $RUNNER_OS == 'macOS' ]]; then
+            tar -czf ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
           fi
-          zipinfo ${{ matrix.artifact }}
-      
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.version }}_${{ steps.date.outputs.today }}
-          release_name: Release ${{ github.event.inputs.version }} (${{ steps.date.outputs.today }})
-          body: 'Release of version ${{ github.event.inputs.version }}'
-          draft: false
-          prerelease: false
       
       - name: Upload Release Asset
-        id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.create_release.outputs.release_upload_url }}
           asset_path: ./${{ matrix.artifact }}
           asset_name: ${{ matrix.artifact }}
           asset_content_type: application/zip
