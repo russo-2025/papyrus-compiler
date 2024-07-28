@@ -9,7 +9,18 @@ on:
 
 jobs:
   release:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact: papyrus_windows.zip
+          - os: ubuntu-latest
+            artifact: papyrus_linux.zip
+          - os: macos-latest
+            artifact: papyrus_macos.zip
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -20,11 +31,25 @@ jobs:
           check-latest: true
      
       - name: Build Project
-        run: v -prod -gc none -o papyrus.exe compiler.v
+        run: v -prod -gc none -o "bin/papyrus" compiler.v
       
       - name: Get the date
         id: date
         run: echo "::set-output name=today::$(date +'%Y%m%d')"
+      
+      - name: Rename bin directory
+        run: |
+          mv bin papyrus_${{ steps.date.outputs.today }}
+      
+      - name: Create ZIP archive
+        shell: bash
+        run: |
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            7z a -tzip ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
+          else
+            zip -r9 --symlinks ${{ matrix.artifact }} papyrus_${{ steps.date.outputs.today }}/
+          fi
+          zipinfo ${{ matrix.artifact }}
       
       - name: Create Release
         id: create_release
@@ -32,22 +57,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          release_name: Release ${{ github.event.inputs.version }}
+          tag_name: ${{ github.event.inputs.version }}_${{ steps.date.outputs.today }}
+          release_name: Release ${{ github.event.inputs.version }} (${{ steps.date.outputs.today }})
           body: 'Release of version ${{ github.event.inputs.version }}'
           draft: false
           prerelease: false
-
-      - name: Archiving product binaries as a ZIP
-        run: |
-          zip -r papyrus_${{ steps.date.outputs.today }}.zip papyrus.exe
-
+      
       - name: Upload Release Asset
+        id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./papyrus_${{ steps.date.outputs.today }}.zip
-          asset_name: papyrus_${{ steps.date.outputs.today }}.zip
+          asset_path: ./${{ matrix.artifact }}
+          asset_name: ${{ matrix.artifact }}
           asset_content_type: application/zip
