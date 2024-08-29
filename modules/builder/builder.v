@@ -64,14 +64,31 @@ pub fn compile(prefs &pref.Preferences) bool {
 	b.files_names = files_names
 	assert b.files_names.len == files.len
 
-	b.start_timer('parse headers files')
-	b.parse_headers_files()
-	b.print_timer('parse headers files')
-
 	b.print("${files.len} files in total")
 	b.start_timer('parse files')
 	b.parsed_files = parser.parse_files(files, mut b.table, b.pref, mut b.global_scope)
+
+	mut not_exist_scripts := []string
+	for sym in b.table.types {
+		if sym.name == "reserved_0" {
+			continue
+		}
+
+		if sym.kind	== .placeholder {
+			not_exist_scripts << sym.name
+
+			if sym.parent_idx != 0 {
+				// todo
+			}
+		}
+	}
+	println(not_exist_scripts)
+
 	assert b.parsed_files.len == files.len
+
+	b.start_timer('parse headers files')
+	b.parse_headers_files(not_exist_scripts)
+	b.print_timer('parse headers files')
 
 	b.print_timer('parse files')
 
@@ -251,11 +268,11 @@ fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 	}
 }
 */
-fn (mut b Builder) parse_headers_files()  {
+fn (mut b Builder) parse_headers_files(header_names []string)  {
 	b.pref.header_dirs.filter(os.is_dir(it))
-	headers := b.find_all_headers(b.pref.header_dirs)
-	parser.parse_files(headers, mut b.table, b.pref, mut b.global_scope)
-	headers.filter(it !in b.pref.paths)
+	headers_paths := b.find_all_headers(b.pref.header_dirs, header_names)
+	parser.parse_files(headers_paths, mut b.table, b.pref, mut b.global_scope)
+	headers_paths.filter(it !in b.pref.paths)
 }
 
 fn (b Builder) save_stats() {
@@ -274,7 +291,26 @@ fn (b Builder) print(msg string) {
 	println(msg)
 }
 
-fn (mut b Builder) find_all_headers(dirs []string) []string{
+fn (mut b Builder) find_all_headers(dirs []string, names []string) []string {
+	rev_dirs := dirs.reverse()
+	mut headers := []string{}
+
+	for_names: for name in names {
+		for_dirs: for dir in rev_dirs {
+			file := os.join_path(dir, name + ".psc")
+			
+			if !os.is_file(file) {
+				continue
+			}
+
+			headers << file
+
+			continue for_names
+		}
+	}
+
+	println(headers)
+	/*
 	rev_dirs := dirs.reverse()
 	mut headers := []string{}
 	mut found_names := []string{}
@@ -292,6 +328,7 @@ fn (mut b Builder) find_all_headers(dirs []string) []string{
 			}
 		})
 	}
+	*/
 
 	return headers
 }
