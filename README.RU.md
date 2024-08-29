@@ -41,7 +41,7 @@ papyrus <command> [arguments]
 
 #### Скомпилировать все скрипты в директории, игнорируя кэш:
 ```bash
-papyrus compile --nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
+papyrus compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
 ```
 Эта команда компилирует все скрипты (кэш игнорируется), расположенные в `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source`, и помещает скомпилированные `.pex` файлы в каталог `../test-files/compiled/skyrimSources`.
 
@@ -53,7 +53,7 @@ papyrus compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
 
 #### Скомпилировать все скрипты в директории, используя аргумент `-h` (headers/imports):
 ```bash
-papyrus compile --nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
+papyrus compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
 ```
 Эта команда скомпилирует все скрипты из каталога `../test-files/compiler` в каталог `../test-files/compiled`, а недостающая информация об объектах (`Form`, `ObjectReference`, `Actor` и т.д.) будет взята из `.psc` файлов в каталоге `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source`.
 

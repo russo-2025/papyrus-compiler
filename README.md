@@ -41,7 +41,7 @@ Below are several examples demonstrating the use of various compiler commands an
 
 #### Compile all scripts in a directory, ignoring the cache:
 ```bash
-papyrus compile --nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
+papyrus compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
 ```
 This command compiles all scripts (ignoring the cache) located in `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source` and places the compiled `.pex` files in the `../test-files/compiled/skyrimSources` directory.
 
@@ -53,7 +53,7 @@ This command compiles all scripts located in `../../RH-workspace/scripts` and pl
 
 #### Compile all scripts in a directory using the `-h` (headers/imports) argument:
 ```bash
-papyrus compile --nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
+papyrus compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
 ```
 This command will compile all scripts from the `../test-files/compiler` directory to the `../test-files/compiled` directory, and missing information about objects (`Form`, `ObjectReference`, `Actor`, etc.) will be taken from `.psc` files in the `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source` directory.
 
