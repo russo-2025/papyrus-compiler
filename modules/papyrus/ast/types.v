@@ -14,6 +14,7 @@ pub mut:
 	props		map[string]Prop
 	states		map[string]&State
 	vars		map[string]Var
+	deps		[]string
 }
 
 pub type TypeInfo = Array | EmptyInfo

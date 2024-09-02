@@ -129,6 +129,8 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 		}
 	}
+
+	p.header_dirs = p.header_dirs.reverse()
 }
 
 pub fn parse_args() Preferences {

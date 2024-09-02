@@ -142,7 +142,8 @@ fn (mut p Parser) fn_args() []ast.Param {
 	if p.tok.kind != .rpar {
 		for {
 			mut param := ast.Param{}
-
+			
+			mut pos := p.tok.position()
 			p.parse_type()
 			param.typ = p.get_parsed_type()
 			
@@ -161,8 +162,17 @@ fn (mut p Parser) fn_args() []ast.Param {
 				param.default_value = default_value
 				param.is_optional = true
 			}
-
+			
+			pos = pos.extend(p.prev_tok.position())
+			
 			args << param
+
+			p.scope.register(ast.ScopeVar{
+				name: param.name
+				typ: param.typ
+				pos: pos
+				is_used: false
+			})
 
 			if p.tok.kind == .comma {
 				p.next()

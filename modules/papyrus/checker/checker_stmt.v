@@ -219,14 +219,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.inside_fn = true
 
 	for param in node.params {
-		if c.type_is_valid(param.typ) {
-			c.cur_scope.register(ast.ScopeVar{
-				name: param.name
-				typ: param.typ
-				is_used: false
-			})
-		}
-		else {
+		if !c.type_is_valid(param.typ) {
 			type_name := c.get_type_name(param.typ)
 			c.error("unknown type of function argument `$type_name`", node.pos)
 		}

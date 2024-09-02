@@ -1,13 +1,14 @@
 module parser
 
+import os
+import datatypes
 import papyrus.scanner
 import papyrus.token
-import os
-import pref
 import papyrus.ast
 import papyrus.util
-import pex
 import papyrus.errors
+import pref
+import pex
 
 const (
 	max_trigger_count = 10
@@ -44,6 +45,7 @@ mut:
 
 	parsed_type			ast.Type //спаршеный тип
 	is_extended_lang	bool
+	deps				datatypes.Set[string]
 pub mut:
 	errors				[]errors.Error
 }
@@ -111,6 +113,10 @@ pub fn (mut p Parser) parse() &ast.File {
 		stmts << p.top_stmt() or { break }
 	}
 
+	deps := p.deps.rest() or { []string{} }
+	mut sym := p.table.get_type_symbol(p.cur_object)
+	sym.deps = deps
+
 	return &ast.File{
 		path: p.path
 		path_base: os.base(p.path)
@@ -121,6 +127,7 @@ pub fn (mut p Parser) parse() &ast.File {
 		scope: p.scope
 		last_mod_time: os.file_last_mod_unix(p.path)
 		used_indents: p.used_indents
+		deps: deps
 	}
 }
 

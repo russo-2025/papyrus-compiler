@@ -3,6 +3,7 @@ module builder
 import os
 import time
 import runtime
+import datatypes
 //import json
 
 import pref
@@ -66,15 +67,19 @@ pub fn compile(prefs &pref.Preferences) bool {
 
 	b.print("${files.len} files in total")
 	b.start_timer('parse files')
+
 	b.parsed_files = parser.parse_files(files, mut b.table, b.pref, mut b.global_scope)
 
-	mut not_exist_scripts := []string
-	for sym in b.table.types {
+	mut not_exist_scripts := []string{}
+	for mut sym in b.table.types {
 		if sym.name == "reserved_0" {
 			continue
 		}
-
-		if sym.kind	== .placeholder {
+		
+		if sym.kind	== .script {
+			not_exist_scripts << sym.deps
+		}
+		else if sym.kind == .placeholder {
 			not_exist_scripts << sym.name
 
 			if sym.parent_idx != 0 {
@@ -87,7 +92,8 @@ pub fn compile(prefs &pref.Preferences) bool {
 	assert b.parsed_files.len == files.len
 
 	b.start_timer('parse headers files')
-	b.parse_headers_files(not_exist_scripts)
+	//b.parse_headers_files(not_exist_scripts)
+	b.parse_deps(not_exist_scripts)
 	b.print_timer('parse headers files')
 
 	b.print_timer('parse files')
@@ -268,11 +274,32 @@ fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 	}
 }
 */
+
+/*
 fn (mut b Builder) parse_headers_files(header_names []string)  {
-	b.pref.header_dirs.filter(os.is_dir(it))
-	headers_paths := b.find_all_headers(b.pref.header_dirs, header_names)
-	parser.parse_files(headers_paths, mut b.table, b.pref, mut b.global_scope)
-	headers_paths.filter(it !in b.pref.paths)
+	//b.pref.header_dirs.filter(os.is_dir(it))
+	//headers_paths := b.find_all_headers(header_names)
+	//parser.parse_files(headers_paths, mut b.table, b.pref, mut b.global_scope)
+	//headers_paths.filter(it !in b.pref.paths)
+
+	b.parse_deps(header_names)
+}
+*/
+fn (mut b Builder) parse_deps(arg_deps []string)  {
+	mut deps := []string{}
+	deps << arg_deps
+	for dep in deps {
+		name := dep
+		typ := b.table.find_type_idx(name)
+		if typ != 0 && b.table.type_is_script(typ) {
+			continue
+		}
+		path := b.find_header(name) or { continue }
+		file := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
+		deps << file.deps
+
+		//println("header `${path}` parsed")
+	}
 }
 
 fn (b Builder) save_stats() {
@@ -291,12 +318,23 @@ fn (b Builder) print(msg string) {
 	println(msg)
 }
 
-fn (mut b Builder) find_all_headers(dirs []string, names []string) []string {
-	rev_dirs := dirs.reverse()
+fn (mut b Builder) find_header(name string) ?string {
+	for dir in b.pref.header_dirs {
+		file := os.join_path(dir, name + ".psc")
+		
+		if os.is_file(file) {
+			return file
+		}
+	}
+
+	return none
+}
+/*
+fn (mut b Builder) find_all_headers(names []string) []string {
 	mut headers := []string{}
 
 	for_names: for name in names {
-		for_dirs: for dir in rev_dirs {
+		for_dirs: for dir in b.pref.header_dirs {
 			file := os.join_path(dir, name + ".psc")
 			
 			if !os.is_file(file) {
@@ -332,7 +370,7 @@ fn (mut b Builder) find_all_headers(dirs []string, names []string) []string {
 
 	return headers
 }
-
+*/
 fn find_all_src_files(paths []string) ([]string, []string) {
 	mut files := []string{}
 	mut names := []string{}
