@@ -3,8 +3,6 @@ module builder
 import os
 import time
 import runtime
-import datatypes
-//import json
 
 import pref
 import papyrus.ast
@@ -28,6 +26,7 @@ pub mut:
 	generator		gen_pex.Gen
 	pref			&pref.Preferences
 	global_scope	&ast.Scope
+	files			[]string
 	files_names		[]string
 	parsed_files	[]&ast.File
 	table			&ast.Table
@@ -54,46 +53,34 @@ pub fn compile(prefs &pref.Preferences) bool {
 		return true
 	}
 
-	os.ensure_folder_is_writable(prefs.paths[0]) or {
-		panic(err)
-	}
-
 	mut b := new_builder(prefs)
+	
+	for path in b.pref.paths {
+		if os.is_dir(path) {
+			b.pref.header_dirs << path
+		}
+		else if os.is_file(path) && os.file_ext(path).to_lower() == ".psc" {
+			b.pref.header_dirs << os.dir(path)
+		}
+	}
+	
+	b.pref.header_dirs = b.pref.header_dirs.reverse()
+
+	println("headers dirs ${b.pref.header_dirs}")
+
 	mut c := checker.new_checker(b.table, b.pref)
 
-	files, files_names := find_all_src_files(b.pref.paths)
-	b.files_names = files_names
-	assert b.files_names.len == files.len
+	b.find_all_src_files()
 
-	b.print("${files.len} files in total")
+	b.print("${b.files.len} files in total")
 	b.start_timer('parse files')
 
-	b.parsed_files = parser.parse_files(files, mut b.table, b.pref, mut b.global_scope)
+	b.parsed_files = parser.parse_files(b.files, mut b.table, b.pref, mut b.global_scope)
 
-	mut not_exist_scripts := []string{}
-	for mut sym in b.table.types {
-		if sym.name == "reserved_0" {
-			continue
-		}
-		
-		if sym.kind	== .script {
-			not_exist_scripts << sym.deps
-		}
-		else if sym.kind == .placeholder {
-			not_exist_scripts << sym.name
-
-			if sym.parent_idx != 0 {
-				// todo
-			}
-		}
-	}
-	println(not_exist_scripts)
-
-	assert b.parsed_files.len == files.len
+	assert b.parsed_files.len == b.files.len
 
 	b.start_timer('parse headers files')
-	//b.parse_headers_files(not_exist_scripts)
-	b.parse_deps(not_exist_scripts)
+	b.parse_deps()
 	b.print_timer('parse headers files')
 
 	b.print_timer('parse files')
@@ -120,6 +107,10 @@ pub fn compile(prefs &pref.Preferences) bool {
 		return false
 	}
 	
+	if prefs.backend == .check {
+		return true
+	}
+
 	if b.pref.stats_enabled {
 		b.save_stats()
 	}
@@ -212,6 +203,76 @@ fn (mut b Builder) create_worker(worker_id int, start_index int, end_index int) 
 		buff_bytes.clear()
 	}
 }
+fn (mut b Builder) parse_deps()  {
+	mut deps := []string{}
+
+	for mut sym in b.table.types {
+		if sym.name == "reserved_0" {
+			continue
+		}
+		
+		if sym.kind	== .script {
+			deps << sym.deps
+		}
+		else if sym.kind == .placeholder {
+			deps << sym.name
+
+			if sym.parent_idx != 0 {
+				// todo
+			}
+		}
+	}
+	
+	println(deps)
+	
+	for dep in deps {
+		name := dep
+		typ := b.table.find_type_idx(name)
+		if typ != 0 && b.table.type_is_script(typ) {
+			continue
+		}
+		path := b.find_header(name) or { continue }
+		file := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
+		deps << file.deps
+
+		//println("header `${path}` parsed")
+	}
+}
+
+fn (mut b Builder) find_header(name string) ?string {
+	for dir in b.pref.header_dirs {
+		file := os.join_path(dir, name + ".psc")
+		
+		if os.is_file(file) {
+			return file
+		}
+	}
+
+	return none
+}
+
+fn (mut b Builder) find_all_src_files() {
+	mut files := []string{}
+	mut names := []string{}
+	
+	for path in b.pref.paths {
+		if os.is_dir(path) {
+			files << os.walk_ext(path, ".psc")
+		}
+		else if os.is_file(path) && os.file_ext(path).to_lower() == ".psc" {
+			files << path
+		}
+	}
+
+	for file in files {
+		names << os.file_name(file).all_before_last(".").to_lower()
+	}
+
+	b.files = files
+	b.files_names = names
+
+	assert names.len == files.len
+}
 
 @[inline]
 fn (mut b Builder) start_timer(name string) {
@@ -228,6 +289,22 @@ fn (mut b Builder) print_timer(name string) {
 	else {
 		panic('invalid timer')
 	}
+}
+
+fn (b Builder) save_stats() {
+	mut stats := Stats{}
+	stats.from_table(b.table)
+	stats.from_files(b.parsed_files)
+	stats.save()
+}
+
+@[inline]
+fn (b Builder) print(msg string) {
+	if b.pref.output_mode == .silent {
+		return
+	}
+
+	println(msg)
 }
 /*
 fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
@@ -274,114 +351,3 @@ fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 	}
 }
 */
-
-/*
-fn (mut b Builder) parse_headers_files(header_names []string)  {
-	//b.pref.header_dirs.filter(os.is_dir(it))
-	//headers_paths := b.find_all_headers(header_names)
-	//parser.parse_files(headers_paths, mut b.table, b.pref, mut b.global_scope)
-	//headers_paths.filter(it !in b.pref.paths)
-
-	b.parse_deps(header_names)
-}
-*/
-fn (mut b Builder) parse_deps(arg_deps []string)  {
-	mut deps := []string{}
-	deps << arg_deps
-	for dep in deps {
-		name := dep
-		typ := b.table.find_type_idx(name)
-		if typ != 0 && b.table.type_is_script(typ) {
-			continue
-		}
-		path := b.find_header(name) or { continue }
-		file := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
-		deps << file.deps
-
-		//println("header `${path}` parsed")
-	}
-}
-
-fn (b Builder) save_stats() {
-	mut stats := Stats{}
-	stats.from_table(b.table)
-	stats.from_files(b.parsed_files)
-	stats.save()
-}
-
-@[inline]
-fn (b Builder) print(msg string) {
-	if b.pref.output_mode == .silent {
-		return
-	}
-
-	println(msg)
-}
-
-fn (mut b Builder) find_header(name string) ?string {
-	for dir in b.pref.header_dirs {
-		file := os.join_path(dir, name + ".psc")
-		
-		if os.is_file(file) {
-			return file
-		}
-	}
-
-	return none
-}
-/*
-fn (mut b Builder) find_all_headers(names []string) []string {
-	mut headers := []string{}
-
-	for_names: for name in names {
-		for_dirs: for dir in b.pref.header_dirs {
-			file := os.join_path(dir, name + ".psc")
-			
-			if !os.is_file(file) {
-				continue
-			}
-
-			headers << file
-
-			continue for_names
-		}
-	}
-
-	println(headers)
-	/*
-	rev_dirs := dirs.reverse()
-	mut headers := []string{}
-	mut found_names := []string{}
-
-	mut ref_headers := &headers
-	mut ref_found_names := &found_names
-
-	for dir in rev_dirs {
-		os.walk(dir, fn[b, mut ref_headers, mut ref_found_names](file string) {
-			name := os.file_name(file).all_before_last(".").to_lower()
-
-			if os.is_file(file) && os.file_ext(file).to_lower() == ".psc" && name !in b.files_names && name !in ref_found_names {
-				ref_headers << file
-				ref_found_names << name
-			}
-		})
-	}
-	*/
-
-	return headers
-}
-*/
-fn find_all_src_files(paths []string) ([]string, []string) {
-	mut files := []string{}
-	mut names := []string{}
-
-	for path in paths {
-		files << os.walk_ext(path, ".psc")
-	}
-
-	for file in files {
-		names << os.file_name(file).all_before_last(".").to_lower()
-	}
-
-	return files, names
-}

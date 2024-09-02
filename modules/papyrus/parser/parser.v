@@ -1,7 +1,6 @@
 module parser
 
 import os
-import datatypes
 import papyrus.scanner
 import papyrus.token
 import papyrus.ast
@@ -45,7 +44,7 @@ mut:
 
 	parsed_type			ast.Type //спаршеный тип
 	is_extended_lang	bool
-	deps				datatypes.Set[string]
+	deps				map[string]u8
 pub mut:
 	errors				[]errors.Error
 }
@@ -112,8 +111,8 @@ pub fn (mut p Parser) parse() &ast.File {
 
 		stmts << p.top_stmt() or { break }
 	}
-
-	deps := p.deps.rest() or { []string{} }
+	
+	deps := p.deps.keys()
 	mut sym := p.table.get_type_symbol(p.cur_object)
 	sym.deps = deps
 
@@ -154,6 +153,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 			.key_import {
 				p.next()
 				name := p.check_name()
+				p.add_to_deps(name)
 				p.imports << name
 			}
 			.comment {
@@ -386,6 +386,8 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 
 		node.parent_pos = p.tok.position()
 		node.parent_name = p.check_name()
+		
+		p.add_to_deps(node.parent_name)
 
 		parent_idx = p.table.find_type_idx(node.parent_name)
 		
@@ -708,6 +710,15 @@ pub fn (mut p Parser) parse_flags(line int) []token.Kind {
 	}
 
 	return flags
+}
+
+fn (mut p Parser) add_to_deps(name string) {
+	lname := name.to_lower()
+	if lname.to_lower() in p.deps {
+		return
+	}
+
+	p.deps[lname] = 1
 }
 
 pub fn (mut p Parser) read_first_token() {

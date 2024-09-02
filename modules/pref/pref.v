@@ -9,6 +9,7 @@ pub enum OutputMode {
 
 pub enum Backend {
 	pex
+	check
 	original // use a vanilla compiler to compile files
 }
 
@@ -100,6 +101,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				p.header_dirs << path
 				i++
 			}
+			"-check" {
+				p.backend = .check
+				i++
+			}
 			"-nocache" {
 				p.no_cache = true
 				i++
@@ -129,8 +134,6 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 		}
 	}
-
-	p.header_dirs = p.header_dirs.reverse()
 }
 
 pub fn parse_args() Preferences {
@@ -153,7 +156,6 @@ pub fn parse_args() Preferences {
 
 			help()
 		}
-		"-compile", // outdated
 		"compile" {
 			p.mode = .compile
 			p.parse_compile_args(args[1..])

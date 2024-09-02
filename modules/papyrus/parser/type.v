@@ -17,7 +17,7 @@ pub fn (mut p Parser) get_parsed_type() ast.Type {
 			name = name.all_before("[]")
 		}
 		
-		p.deps.add(name)
+		p.add_to_deps(name)
 	}
 
 	return ast.new_type(typ)

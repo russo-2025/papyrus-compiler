@@ -339,7 +339,7 @@ pub fn (mut p Parser) parse_ident() ast.Ident {
 	else if _ := p.table.find_object_property(p.cur_object, name) {}
 	else if _ := p.table.find_object_var(p.cur_object, name) {}
 	else {
-		p.deps.add(name)
+		p.add_to_deps(name)
 	}
 
 	return ast.Ident{
