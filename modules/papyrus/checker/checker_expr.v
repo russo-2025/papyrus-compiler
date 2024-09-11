@@ -382,29 +382,6 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	mut typ := 0
 	mut func := unsafe { &ast.Fn(voidptr(0)) }
-
-	if node.name.to_lower() in base_objects_events {
-		if node.left is ast.EmptyExpr || (node.left is ast.Ident && node.left.name.to_lower() == "self") {
-			func = &ast.Fn {
-				return_type: ast.none_type
-				obj_name: c.cur_obj_name
-				state_name: pex.empty_state_name
-				params: []ast.Param{}
-				name: node.name
-				lname: node.name.to_lower()
-			}
-		}
-		else if node.left is ast.Ident && node.left.name.to_lower() == "parent" {
-			func = &ast.Fn {
-				return_type: ast.none_type
-				obj_name: c.cur_parent_obj_name
-				state_name: pex.empty_state_name
-				params: []ast.Param{}
-				name: node.name
-				lname: node.name.to_lower()
-			}
-		}
-	}
 	
 	if node.left is ast.EmptyExpr {
 		//find global func in cur obj
