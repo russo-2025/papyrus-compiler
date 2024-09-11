@@ -8,7 +8,7 @@ pub:
 pub mut:
 	info		TypeInfo
 	kind		Kind
-	obj_name	string
+	obj_name	string // TODO чем отличается от name? (см register_builtin_type_symbols)
 	name		string
 	methods		[]Fn
 	props		map[string]Prop
@@ -36,23 +36,19 @@ pub enum Kind {
 	script
 }
 
-pub const (
-	none_type_idx = 1
-	int_type_idx = 2
-	float_type_idx = 3
-	string_type_idx = 4
-	bool_type_idx = 5
-	array_type_idx = 6
-)
+pub const none_type_idx = 1
+pub const int_type_idx = 2
+pub const float_type_idx = 3
+pub const string_type_idx = 4
+pub const bool_type_idx = 5
+pub const array_type_idx = 6
 
-pub const (
-	none_type		= new_type(none_type_idx)	//1
-	int_type		= new_type(int_type_idx)	//2
-	float_type		= new_type(float_type_idx)	//3
-	string_type		= new_type(string_type_idx)	//4
-	bool_type		= new_type(bool_type_idx)	//5
-	array_type		= new_type(array_type_idx)	//6
-)
+pub const none_type		= new_type(none_type_idx)	//1
+pub const int_type		= new_type(int_type_idx)	//2
+pub const float_type	= new_type(float_type_idx)	//3
+pub const string_type	= new_type(string_type_idx)	//4
+pub const bool_type		= new_type(bool_type_idx)	//5
+pub const array_type	= new_type(array_type_idx)	//6
 
 
 pub fn (mut t Table) register_builtin_type_symbols() {
@@ -119,7 +115,7 @@ pub fn (t Type) idx() int {
 @[inline]
 pub fn new_type(idx int) Type {
 	if idx < 1 || idx > 65535 {
-		panic('new_type: idx($idx) must be between 1 & 65535')
+		panic('new_type: idx(${idx}) must be between 1 & 65535')
 	}
 	return idx
 }

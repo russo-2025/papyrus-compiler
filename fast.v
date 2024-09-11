@@ -47,9 +47,11 @@ fn main() {
 	os.mkdir("____fast_vm_tests", os.MkdirParams{}) !
 
 	// measure
-	diff1 := measure('papyrus_fast compile -i ".\\test-files\\vm-tests" -o "____fast_vm_tests"', 'vm tests')
+	diff1 := measure('papyrus_fast compile -i ".\\test-files\\vm-tests" -o "____fast_vm_tests"', 'skymp vm tests src')
 	// measure
-	diff2 := measure('papyrus_fast compile -i "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'skyrim sources')
+	diff2 := measure('papyrus_fast compile -i "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'skyrim src')
+	// measure
+	diff3 := measure('papyrus_fast compile -i "modules\\tests\\iEquip" -h "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'iEquip src')
 
 	lexec('v -o papyrus_fast.c -prod -gc none compiler.v')
 	cpapyrus_size := os.file_size('papyrus_fast.c') / 1000
@@ -61,6 +63,7 @@ fn main() {
 	println(date)
 	println(diff1)
 	println(diff2)
+	println(diff3)
 	
 	html_message := message.replace_each(['<', '&lt;', '>', '&gt;'])
 	table := os.read_file('fast-assets/table.html')!
@@ -71,6 +74,7 @@ fn main() {
 		<td>${html_message}</td>
 		<td>${diff1}ms</td>
 		<td>${diff2}ms</td>
+		<td>${diff3}ms</td>
 		<td>${cpapyrus_size} KB</td>
 		<td>${scan}ms</td>
 		<td>${parse}ms</td>

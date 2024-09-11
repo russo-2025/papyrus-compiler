@@ -3,25 +3,23 @@ import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 
-const (
-	prefs = pref.Preferences {
+const prefs = pref.Preferences {
 		paths: []string{}
 		mode: .compile
 		backend: .pex
 		no_cache: true
 	}
 
-	other_src = 
+const other_src = 
 "Scriptname Other\n"
 
-	parent_src = 
+const parent_src = 
 "Scriptname CDFG\n"
 
-	src_template = 
+const src_template = 
 "Scriptname ABCD extends CDFG\n
 Function Bar(string arg1, int arg2, float arg3, bool arg4, ABCD obj, CDFG pobj)\n
 EndFunction\n"
-)
 
 fn test_autocast() {
 	full_src := "${src_template}\n"

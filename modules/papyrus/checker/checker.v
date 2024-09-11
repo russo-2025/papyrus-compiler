@@ -54,8 +54,10 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	if typ == 0 {
 		return false
 	}
-
-	if c.table.types[typ.idx()].kind == .placeholder {
+	
+	sym := c.table.get_type_symbol(typ)
+	assert sym.kind != .placeholder, sym.name
+	if sym.kind == .placeholder {
 		return false
 	}
 
@@ -101,6 +103,8 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	assert from_type != to_type
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
+	assert from_sym.kind != .placeholder, from_sym.name
+	assert to_sym.kind != .placeholder, to_sym.name
 
 	match to_sym.kind {
 		.placeholder { panic("wtf") }
@@ -154,6 +158,8 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 	
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
+	assert from_sym.kind != .placeholder, from_sym.name
+	assert to_sym.kind != .placeholder, to_sym.name
 
 	match from_sym.kind {
 		.placeholder { panic("wtf") }
@@ -239,6 +245,8 @@ pub fn (mut c Checker) find_method(typ ast.Type, name string) ?ast.Fn {
 
 	mut tsym := sym
 	for {
+		assert tsym.kind != .placeholder, tsym.name
+
 		if func := tsym.find_method(name) {
 			return func
 		}

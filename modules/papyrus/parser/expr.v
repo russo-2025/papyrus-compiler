@@ -335,13 +335,10 @@ pub fn (mut p Parser) parse_ident() ast.Ident {
 
 	p.used_indents << name
 
-	if _ := p.scope.find_var(name) {}
-	else if _ := p.table.find_object_property(p.cur_object, name) {}
-	else if _ := p.table.find_object_var(p.cur_object, name) {}
-	else {
+	if !p.scope.has_var(name) && !p.table.has_object_var(p.cur_object, name) && !p.table.has_object_property(p.cur_object, name) {
 		p.add_to_deps(name)
 	}
-
+	
 	return ast.Ident{
 		name: name
 		pos: pos

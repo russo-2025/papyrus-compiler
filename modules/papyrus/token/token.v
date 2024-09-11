@@ -111,10 +111,8 @@ pub enum Kind {
 	_end_
 }
 
-const (
-	token_str = build_token_str()
-	keywords  = build_keys()
-)
+const token_str = build_token_str()
+const keywords  = build_keys()
 
 // build_keys genereates a map with keywords' string values:
 // Keywords['return'] == .key_return
@@ -318,11 +316,11 @@ pub fn build_precedences() []Precedence {
 
 	return p
 }
-const (
-	precedences = build_precedences()
-)
+
+const precedences = build_precedences()
 
 // precedence returns a tokens precedence if defined, otherwise lowest_prec
+@[direct_array_access; inline]
 pub fn (tok Token) precedence() int {
 	return int(precedences[tok.kind])
 }

@@ -4,6 +4,12 @@ import os
 import pref
 import builder
 
+const loaded_objects = ["testselectiveloading", "testselectiveloadingparent", 
+	"utility", "objectreference", "game", "form"] // used in src
+
+const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect", 
+	"enchantment"] // used in headers
+
 fn test_selective_headers_loading() {
 	src_file := os.real_path('modules/tests/psc/TestSelectiveLoading.psc')
 	output_dir := os.real_path('test-files/compiled')
@@ -22,9 +28,25 @@ fn test_selective_headers_loading() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ os.real_path('bin/papyrus-headers') ]
-		//output_mode: pref.OutputMode.silent
+		header_dirs: [ os.real_path('modules/tests/psc_deps') ]
 	}
 
-	builder.compile(&prefs)
+	mut b := builder.new_builder(&prefs)
+	b.run()
+
+	for obj_name in loaded_objects {
+		if sym := b.table.find_type(obj_name) {
+			assert sym.kind == .script, obj_name
+		}
+	}
+
+	/*
+	// нужно проверить все ли необходимые типы загружены.
+	// есть те типы которые могут быть placeholder, но они не нужны??????????????????????????????????????????????
+	for obj_name in placeholder_objects {
+		if sym := b.table.find_type(obj_name) {
+			assert sym.kind == .placeholder, obj_name
+		}
+	}
+	*/
 }

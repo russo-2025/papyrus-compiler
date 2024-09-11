@@ -28,7 +28,7 @@ pub mut:
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
-	header_dirs			[]string = [ os.real_path('./papyrus-headers') ]
+	header_dirs			[]string = []
 	output_mode			OutputMode = .stdout
 	is_verbose			bool
 	use_threads			bool
@@ -57,9 +57,9 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 					}
 
 					path := os.real_path(args[i])
-					
-					if !os.is_dir(path) {
-						error("invalid input path: '$path'")
+
+					if !os.is_dir(path) && (!os.is_file(path) || os.file_ext(path).to_lower() != ".psc") {
+						error("invalid input dir: '$path'")
 					}
 
 					if path in p.paths {

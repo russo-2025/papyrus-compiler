@@ -8,27 +8,33 @@ const delta = 18;
         : table.querySelectorAll("tr");
     trs.forEach(function (tr, idx) {
         if (idx != 0 && idx + 1 < trs.length) {
-            var vc = 3, vv = 4;
+            var vc = 3, vv = 4, va = 5;
             var textContent = {
                 vc: tr.children[vc].textContent,
-                vv: tr.children[vv].textContent
+                vv: tr.children[vv].textContent,
+                va: tr.children[va].textContent
             };
             var currentData = {
                 vc: int(textContent.vc.slice(0, -2)),
-                vv: int(textContent.vv.slice(0, -2))
+                vv: int(textContent.vv.slice(0, -2)),
+                va: int(textContent.va.slice(0, -2))
             };
             var prevData = {
                 vc: int(trs[idx + 1].children[vc].textContent.slice(0, -2)),
-                vv: int(trs[idx + 1].children[vv].textContent.slice(0, -2))
+                vv: int(trs[idx + 1].children[vv].textContent.slice(0, -2)),
+                va: int(trs[idx + 1].children[va].textContent.slice(0, -2))
             };
             var result = {
                 vc: currentData.vc - prevData.vc,
-                vv: currentData.vv - prevData.vv
+                vv: currentData.vv - prevData.vv,
+                va: currentData.va - prevData.va
             };
             if (Math.abs(result.vc) > delta)
                 tr.children[vc].appendChild(createElement(result.vc));
             if (Math.abs(result.vv) > delta * 2)
                 tr.children[vv].appendChild(createElement(result.vv));
+            if (Math.abs(result.va) > delta * 2)
+                tr.children[va].appendChild(createElement(result.va));
         }
     });
     function int(src) {
