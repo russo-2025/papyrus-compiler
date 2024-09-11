@@ -1017,3 +1017,49 @@ fn test_return() {
 	ret_stmt := func.stmts.last() as ast.Return
 	assert (ret_stmt.expr as ast.NoneLiteral).val == "None"
 }
+
+fn test_line_nr_bug() {
+	mut stmts := []ast.Stmt{}
+
+	start_line := 26
+
+	stmts, _ = compile_stmts("\r\n\r\nInt MyBugVar = 123")
+	assert stmts.len == 1
+	assert (((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("\n\nInt MyBugVar = 123")
+	assert stmts.len == 1
+	assert (((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("	; 		asdasdwqe12фыв\r\n	; 		asdasdwqe12фыв\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("	; 		asdasdwqe12фыв\n	; 		asdasdwqe12фыв\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" { asdasdwqe12фыв }\n { asdasdwqe12фыв }\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" { asdasdwqe12фыв }\r\n { asdasdwqe12фыв }\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" ;/ asdasdwqe12фыв /;\n ;/ asdasdwqe12фыв /;\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" ;/ asdasdwqe12фыв /;\r\n ;/ asdasdwqe12фыв /;\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+}
