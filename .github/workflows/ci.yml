@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [master]
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
 
 jobs:
   build:
@@ -14,7 +16,7 @@ jobs:
       - name: Install V
         uses: vlang/setup-v@v1
         with:
-          check-latest: true
+          version: 0.4.7
 
       - name: Checkout ${{ github.event.repository.name }}
         uses: actions/checkout@v2
