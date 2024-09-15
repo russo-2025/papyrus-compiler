@@ -415,7 +415,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr ast.Expr) pex.VariableValue {
 		ast.CastExpr {
 			expr_value := g.get_operand_from_expr(mut expr.expr)
 			g.free_temp(expr_value)
-			result_value = g.get_free_temp(&expr.typ)
+			result_value = g.get_free_temp(expr.typ)
 			g.gen_cast(result_value, expr_value)
 		}
 		ast.EmptyExpr {
