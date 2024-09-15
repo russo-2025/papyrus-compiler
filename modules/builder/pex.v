@@ -3,7 +3,7 @@ module builder
 import os
 import runtime
 import pex
-import datatypes
+//import datatypes
 import papyrus.ast
 import papyrus.parser
 import papyrus.checker
@@ -129,52 +129,32 @@ fn (mut b Builder) create_worker(worker_id int, start_index int, end_index int) 
 	}
 }
 
-@[inline]
+@[direct_array_access; inline]
 fn (mut b Builder) parse_deps()  {
-	//mut deps := []string{}
-	mut q := datatypes.Queue[string]{}
-
 	for mut sym in b.table.types {
 		if sym.name == "reserved_0" {
 			continue
 		}
 		
-		if sym.kind == .script {
-			//deps << sym.deps
-			for tdep in sym.deps {
-				q.push(tdep)
-			}
-
-		}
-		else if sym.kind == .placeholder {
-			//deps << sym.name
-			q.push(sym.name)
+		if sym.kind == .placeholder {
+			b.table.deps.push(sym.name)
 		}
 	}
 
-	println(q.array().sorted())
+	//println(b.table.deps.array().sorted())
 
-
-	for !q.is_empty() {
-		name := q.pop() or { continue }
-	//for dep in deps {
-	//	name := dep
+	for !b.table.deps.is_empty() {
+		name := b.table.deps.pop() or { continue }
 		typ := b.table.find_type_idx(name)
 		if typ != 0 && b.table.type_is_script(typ) {
 			continue
 		}
 		path := b.find_header(name) or {
-			//println("header not found `${name}`")
 			continue
 		}
 		
-		file := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
-		//deps << file.deps
-		for tdep in file.deps {
-			q.push(tdep)
-		}
-
-		println("header `${name}` - `${path}` parsed, deps: ${file.deps}")
+		_ := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
+		//println("header `${name}` - `${path}` parsed")
 	}
 	/*
 	mut udeps := map[string]u8{}

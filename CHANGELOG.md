@@ -1,17 +1,29 @@
 ## Next release
 
-#### Improvements
-- изменена/улучшена логика работы с заголовочными файлами
-	- убрана папка `bin\papyrus-headers`
-	- убрана папка `bin\papyrus-headers` из путей поиска заголовочных файлов по умолчанию.
-	- добавлены в пути поиска заголовочных файлов папки из аргументов `-i "..."` (если указан файл `-i "src/MyPapyrusFile.psc"`, то папка `src` будет добавлена к путям)
-	- заголовочные файлы теперь парсятся выборочно. (то есть если вы используете только `Form` и `Game`, то парсится из папок с заголовочными файлами будут только они).
-- изменена логика работы аргумента `-i "..."`. Теперь можно указать не только папки с исходниками, но
-	и конкретные файлы исходников. например: `-i "src/MyPapyrusFile.psc"`
-- улучшена работа компилятора с аргументом `-original`. Теперь аргументы `-i`, `-h`, `-o`
-	прокидываются в оригинальный компилятор более корректно.
-- улучшена совместимость с последней `V 0.4.7 3300e59` версией компилятора языка `v`.
-- добавлен аргумент `-check` 
+### Improvements
 
-#### Fixes
-- исправлен баг с неверным отображением номера строки
+- **Header File Parsing Enhanced**
+  - Header files are now parsed selectively. For instance, if you only use `Form` and `Game`, only these headers will be parsed from the directories.
+  - Header search paths now include folders from the `-i "..."` arguments. For instance, if `-i "src/MyPapyrusFile.psc"` is specified, the `src` folder is added to the search paths.
+  - The default search path no longer includes `bin\papyrus-headers`.
+  - The `bin\papyrus-headers` folder has been removed.
+
+- **Updated `-i` Argument Handling**
+  - The `-i "..."` argument now supports both source directories and specific source files. For example: `-i "src/MyPapyrusFile.psc"`.
+
+- **Improved Original Compiler Integration**
+  - Arguments `-i`, `-h`, and `-o` are now passed to the original compiler more accurately when using the `-original` flag.
+
+- **Compatibility Enhancements**
+  - Improved and fixed compatibility with the latest V compiler version [V compiler da228e9 (weekly.2024.36)](https://github.com/vlang/v/releases/tag/weekly.2024.36).
+
+- **New Arguments Added**
+  - Added the `-check` argument.
+  - Added the `-stats` argument.
+
+- **CI/CD and Benchmarking**
+
+### Fixes
+
+- **Line Number Display Bug Fix**
+  - Fixed the bug related to incorrect line number display.

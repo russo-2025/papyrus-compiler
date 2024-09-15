@@ -1,0 +1,1 @@
+https://github.com/pijaczkar8/iEquip

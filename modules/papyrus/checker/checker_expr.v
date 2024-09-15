@@ -1,7 +1,6 @@
 module checker
 
 import papyrus.ast
-import pex
 
 const base_objects_events = [ "oninit", "onbeginstate", "onendstate" ]
 

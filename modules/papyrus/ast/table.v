@@ -4,6 +4,8 @@ import papyrus.token
 //import os
 //import json
 //import x.json2
+import datatypes
+
 
 @[heap]
 pub struct Table {
@@ -14,7 +16,7 @@ pub mut:
 	fns					map[string]Fn
 
 	allow_override		bool
-	deps				map[string]u8
+	deps				datatypes.Stack[string]
 }
 /*
 pub fn (t Table) to_json() string {

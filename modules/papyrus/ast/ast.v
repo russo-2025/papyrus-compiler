@@ -17,7 +17,6 @@ pub mut:
 	scope			&Scope
 	last_mod_time	i64
 	used_indents	[]string
-	deps			[]string
 }
 
 pub struct ScriptDecl {

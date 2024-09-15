@@ -8,14 +8,20 @@ table, td, th {
 th {
 	background-color: lightgray;
 	color: black;
-	padding: 5px;
+	padding: 1px;
+	width: 70px !important;
+	overflow-wrap: anywhere;
+	white-space: normal !important;
 }
 td {
 	padding: 5px;
 	position: relative;
 }
+table td:nth-child(1) {
+	width: 150px!important;
+}
 table td:nth-child(3) {
-	width: 650px!important;
+	width: 350px!important;
 	overflow: hidden;
 	display: block;
 	border: 0px;
@@ -39,7 +45,6 @@ table td:nth-child(3) {
 .equal {
 	background-color: rgb(113, 68, 172);
 }
-
 table {
 	counter-reset: rowNumber -1;
 }

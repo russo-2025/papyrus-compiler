@@ -2,17 +2,27 @@
 
 An open-source compiler for the Papyrus scripting language. Currently, the compiler only supports Skyrim (tested on Skyrim SE/AE).
 
-Reasons for creating the compiler:
-1. Desire to better understand how programming languages work.
-2. Desire to try the V programming language.
-3. Very slow compilation when using the standard compiler.
-4. Significantly more readable and understandable error messages.
+The compiler was created for the following purposes:
+1. **Understanding Programming Languages:** The project is designed to gain a deeper understanding of how programming languages work.
+2. **Experimenting with the V Language:** It uses the V programming language for implementation.
+3. **Speeding Up Compilation:** The standard Papyrus compiler is very slow, so this project aims to optimize that process.
+4. **Improved Error Messages:** Provides higher quality and more understandable error messages to simplify debugging.
+
+## Сontent
+- [Usage](#usage)
+  - [Commands](#commands)
+  - [Arguments for the `compile` command](#arguments-for-the-compile-command)
+  - [Examples](#examples)
+  - [Header/Import Files](#headerimport-files)
+- [Building](#building)
+  - [Requirements](#requirements)
+- [Testing](#testing)
+- [References](#references)
 
 ## Usage
-1. Go to the [Github Releases](https://github.com/russo-2025/papyrus-compiler/releases) page.
-2. Download the archive with the compiler and extract it.
-3. Open the console in the directory where you extracted the compiler.
-4. Use the following syntax:
+1. Download the archive with the compiler from the [Github Releases](https://github.com/russo-2025/papyrus-compiler/releases) page and extract it.
+2. Open a console in the directory where you extracted the compiler.
+3. Use the following syntax to work with the compiler:
 
 ```
 papyrus <command> [arguments]
@@ -20,22 +30,22 @@ papyrus <command> [arguments]
 
 ### Commands:
 - `compile`: Compiles `.psc` files into the binary `.pex` format.
-- `read`: Converts a `.pex` file into a human-readable format and outputs the result to the console.
-- `disassemble`: Converts a `.pex` file into a human-readable format and writes the result to a text file.
+- `read`: Reads a `.pex` file and outputs its contents in a human-readable format to the console.
+- `disassemble`: Disassembles a `.pex` file and saves the result to a text file.
 - `create-dump`: Creates a JSON file `dump.json` with information about `.pex` files in the specified directory.
 
 ### Arguments for the `compile` command:
 The following arguments can be used with the `compile` command:
 
-- `-i`, `-input`: Specifies the directory with `.psc` files to compile.
+- `-i`, `-input`: Specifies the directory with `.psc` files or a `.psc` file to compile.
 - `-o`, `-output`: Specifies the directory where the compiled `.pex` files will be placed.
-- `-h`, `-headers-dir`: Specifies the directory with `.psc` files that will be analyzed by the compiler but not compiled. Used to let the compiler know about existing scripts (`Form`, `ObjectReference`, `Actor`) and their methods/functions/properties/variables. See the "Header/Import Files" section.
-- `-nocache`: Forces the compiler to compile all files, regardless of their modification dates.
+- `-h`, `-headers-dir`: Specifies the directory with `.psc` header/import files that will be analyzed by the compiler but not compiled. Used to let the compiler know about existing scripts (`Form`, `ObjectReference`, `Actor`, ...) and their methods/functions/properties/variables. See the "Header/Import Files" section.
+- `-nocache`: Ignores the cache and forces compilation of all files.
 - `-silent`: Disables output of error messages to the console.
-- `-original`: ...
+- `-original`: Uses the original Papyrus compiler for compilation.
+- `-stats`: Saves statistics on compiled files to .md files (number of function calls, inheritances, files).
+- `-check`: Checks the syntax of .psc files without generating .pex files.
 - `-verbose`: ...
-- `-stats`: ...
-- `-check`: ...
 
 ### Examples
 Below are several examples demonstrating the use of various compiler commands and arguments for compiling scripts, reading compiled scripts, etc.
@@ -52,19 +62,19 @@ papyrus compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
 ```
 This command compiles all scripts located in `../../RH-workspace/scripts` and places the compiled `.pex` files in the `../../RH-workspace/compiled` directory.
 
-#### Compile all scripts in a directory using the `-h` (headers/imports) argument:
+#### Compile scripts using header/import files:
 ```bash
 papyrus compile --nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
 ```
 This command will compile all scripts from the `../test-files/compiler` directory to the `../test-files/compiled` directory, and missing information about objects (`Form`, `ObjectReference`, `Actor`, etc.) will be taken from `.psc` files in the `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source` directory.
 
-#### Reading compiled `.pex` files:
+#### Reading a compiled `.pex` file:
 ```bash
 papyrus read "../test-files/compiled/ABCD.pex"
 ```
 
-#### Creating a dump:
-```bash  
+#### Creating a JSON dump of `.pex` files:
+```bash
 papyrus create-dump "../folder_with_pex_files"
 ```
 Creates a JSON file `dump.json` containing some information about all `.pex` files located in the `../folder_with_pex_files` directory. Here's what it will look like:
@@ -114,7 +124,7 @@ Scripts from the directory specified by the `-h "..."` argument will NOT be comp
 ## Building
 
 ### Requirements:
-- [V compiler e9a3817 (weekly.2023.08)](https://github.com/vlang/v/releases/tag/weekly.2023.08)
+- [V compiler da228e9 (weekly.2024.36)](https://github.com/vlang/v/releases/tag/weekly.2024.36)
 
 ```bash
 v -o "bin\papyrus.exe" -prod -gc none compiler.v

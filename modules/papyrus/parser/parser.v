@@ -42,7 +42,6 @@ mut:
 
 	parsed_type			ast.Type // parsed type
 	is_extended_lang	bool
-	deps				map[string]u8
 pub mut:
 	errors				[]errors.Error
 }
@@ -109,10 +108,6 @@ pub fn (mut p Parser) parse() &ast.File {
 
 		stmts << p.top_stmt() or { break }
 	}
-	
-	deps := p.deps.keys()
-	mut sym := p.table.get_type_symbol(p.cur_object)
-	sym.deps = deps
 
 	return &ast.File {
 		path: p.path
@@ -124,7 +119,6 @@ pub fn (mut p Parser) parse() &ast.File {
 		scope: p.scope
 		last_mod_time: os.file_last_mod_unix(p.path)
 		used_indents: p.used_indents
-		deps: deps
 	}
 }
 
@@ -710,18 +704,20 @@ pub fn (mut p Parser) parse_flags(line int) []token.Kind {
 	return flags
 }
 
+@[direct_array_access]
 fn (mut p Parser) add_to_deps(name string) {
-	/*sym := p.table.find_type(name)
-	if  {
-		if sym
-	}*/
+	if sym := p.table.find_type(name) {
+		if sym.kind == .script {
+			return
+		}
+	}
 
 	lname := name.to_lower()
-	if lname.to_lower() in p.deps {
+	if lname.to_lower() in p.table.deps.array() {
 		return
 	}
 
-	p.deps[lname] = 1
+	p.table.deps.push(lname)
 }
 
 pub fn (mut p Parser) read_first_token() {
