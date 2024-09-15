@@ -72,7 +72,7 @@ fn main() {
 	html_message := message.replace_each(['<', '&lt;', '>', '&gt;'])
 	table := os.read_file('fast-assets/table.html')!
 	new_table :=
-		'	<tr>
+	'	<tr>
 		<td>${date.format()}</td>
 		<td><a target=_blank href="https://github.com/russo-2025/papyrus-compiler/commit/${commit}">${commit}</a></td>
 		<td>${html_message}</td>
@@ -86,7 +86,7 @@ fn main() {
 		<td>${parse}ms</td>
 		<td>${check}ms</td>
 		<td>${cgen}ms</td>
-	</tr>\n' +
+</tr>\n' +
 		table.trim_space() + '\n'
 	os.write_file('fast-assets/table.html', new_table)!
 

@@ -137,6 +137,7 @@ v -stats test modules
 ```
 
 ## Ссылки
+- [Papyrus docs](https://ck.uesp.net/wiki/Category:Papyrus)
 - [VS Code Extension: Papyrus Language Tools](https://github.com/joelday/papyrus-lang)
 - [Creation Kit Papyrus Reference](https://www.creationkit.com/index.php?title=Category:Papyrus)
 - [Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format)
