@@ -46,7 +46,7 @@ jobs:
       - name: Install V
         uses: vlang/setup-v@v1
         with:
-          version: 0.4.7
+          version: weekly.2024.36
      
       - name: Build Project
         run: v -prod -gc none -o "bin/papyrus" compiler.v
