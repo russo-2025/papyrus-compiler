@@ -19,7 +19,7 @@ fn test_selective_headers_loading() {
 		assert false, "invalid input file ${src_file}"
 	}
 
-	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "form.psc")) {
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
 		assert false, "invalid header dir ${header_dir}"
 	}
 

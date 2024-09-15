@@ -3,7 +3,6 @@ module builder
 import os
 import runtime
 import pex
-//import datatypes
 import papyrus.ast
 import papyrus.parser
 import papyrus.checker
@@ -131,6 +130,26 @@ fn (mut b Builder) create_worker(worker_id int, start_index int, end_index int) 
 
 @[direct_array_access; inline]
 fn (mut b Builder) parse_deps()  {
+	$if linux {
+		for hdir in b.pref.header_dirs {
+			os.walk(hdir, fn[mut b](path string) {
+				if os.file_ext(path).to_lower() != ".psc" {
+					return
+				}
+
+				low_name := os.file_name(path).all_before(".").to_lower()
+				if low_name in b.header_from_name {
+					return
+				}
+
+				b.header_from_name[low_name] = path
+			})
+		}
+		
+		//println(b.header_from_name.keys())
+	}
+
+
 	for mut sym in b.table.types {
 		if sym.name == "reserved_0" {
 			continue
@@ -150,12 +169,14 @@ fn (mut b Builder) parse_deps()  {
 			continue
 		}
 		path := b.find_header(name) or {
+			//println("header not found `${name}`")
 			continue
 		}
 		
 		_ := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
 		//println("header `${name}` - `${path}` parsed")
 	}
+	
 	/*
 	mut udeps := map[string]u8{}
 	mut udeps_ptr := &udeps

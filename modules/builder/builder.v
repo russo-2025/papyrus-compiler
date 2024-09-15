@@ -14,17 +14,18 @@ const compiler_flags_path = os.real_path('./Original Compiler/TESV_Papyrus_Flags
 
 struct Builder {
 mut:
-	timers			map[string]time.StopWatch
+	timers				map[string]time.StopWatch
+	header_from_name	map[string]string // only for linux
 pub:
-	checker			checker.Checker
+	checker				checker.Checker
 pub mut:
-	generator		gen_pex.Gen
-	pref			&pref.Preferences
-	global_scope	&ast.Scope
-	files			[]string
-	files_names		[]string
-	parsed_files	[]&ast.File
-	table			&ast.Table
+	generator			gen_pex.Gen
+	pref				&pref.Preferences
+	global_scope		&ast.Scope
+	files				[]string
+	files_names			[]string
+	parsed_files		[]&ast.File
+	table				&ast.Table
 }
 
 @[inline]
@@ -46,6 +47,7 @@ pub fn new_builder(prefs &pref.Preferences) Builder{
 		}
 		global_scope: &ast.Scope{}
 		table: table
+		header_from_name: map[string]string{} 
 	}
 }
 
@@ -86,15 +88,25 @@ pub fn (mut b Builder) run() bool {
 
 @[inline]
 fn (mut b Builder) find_header(name string) ?string {
-	for dir in b.pref.header_dirs {
-		file := os.join_path(dir, name + ".psc")
-		
-		if os.is_file(file) {
-			return file
+	$if linux {
+		lname := name.to_lower()
+		if lname in b.header_from_name {
+			return b.header_from_name[name.to_lower()]
 		}
-	}
 
-	return none
+		return none
+	}
+	$else {
+		for dir in b.pref.header_dirs {
+			file := os.join_path(dir, name + ".psc")
+			
+			if os.is_file(file) {
+				return file
+			}
+		}
+		
+		return none
+	}
 }
 
 @[inline]
