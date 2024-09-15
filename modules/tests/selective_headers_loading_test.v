@@ -11,15 +11,20 @@ const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect",
 	"enchantment"] // used in headers
 
 fn test_selective_headers_loading() {
-	src_file := os.real_path('modules/tests/psc/TestSelectiveLoading.psc')
-	output_dir := os.real_path('test-files/compiled')
+	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestSelectiveLoading.psc"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 
 	if !os.is_file(src_file) {
 		assert false, "invalid input file ${src_file}"
 	}
 
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
 	if !os.is_dir(output_dir) {
-		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create a folder" }
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
 	}
 
 	prefs := pref.Preferences {
@@ -28,7 +33,7 @@ fn test_selective_headers_loading() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ os.real_path('modules/tests/psc_deps') ]
+		header_dirs: [ header_dir ]
 	}
 
 	mut b := builder.new_builder(&prefs)
