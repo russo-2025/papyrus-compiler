@@ -40,16 +40,21 @@ fn main() {
 	elog('	Building compiler')
 	lexec('v -o papyrus_fast -prod -gc none compiler.v')
 
-	if os.is_dir("____fast_vm_tests") {
-		os.rmdir("____fast_vm_tests") !
+	if !os.is_dir("____fast_vm_tests") {
+		//os.rmdir("____fast_vm_tests") !
+		os.mkdir("____fast_vm_tests", os.MkdirParams{}) !
 	}
 
-	os.mkdir("____fast_vm_tests", os.MkdirParams{}) !
-
 	// measure
-	diff1 := measure('papyrus_fast compile -i ".\\test-files\\vm-tests" -o "____fast_vm_tests"', 'vm tests')
+	diff1 := measure('papyrus_fast compile -i ".\\test-files\\vm-tests" -o "____fast_vm_tests"', 'skymp vm tests src')
 	// measure
-	diff2 := measure('papyrus_fast compile -i "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'skyrim sources')
+	diff1nc := measure('papyrus_fast compile -i ".\\test-files\\vm-tests" -o "____fast_vm_tests" -nocache', 'skymp vm tests src(nocache)')
+	// measure
+	diff2 := measure('papyrus_fast compile -i "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'skyrim src')
+	// measure
+	diff3 := measure('papyrus_fast compile -i "modules\\tests\\iEquip" -h "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests"', 'iEquip src')
+	// measure
+	diff3nc := measure('papyrus_fast compile -i "modules\\tests\\iEquip" -h "M:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "____fast_vm_tests" -nocache', 'iEquip src(nocache)')
 
 	lexec('v -o papyrus_fast.c -prod -gc none compiler.v')
 	cpapyrus_size := os.file_size('papyrus_fast.c') / 1000
@@ -61,16 +66,21 @@ fn main() {
 	println(date)
 	println(diff1)
 	println(diff2)
+	println(diff3)
+	println(diff3nc)
 	
 	html_message := message.replace_each(['<', '&lt;', '>', '&gt;'])
 	table := os.read_file('fast-assets/table.html')!
 	new_table :=
 		'	<tr>
 		<td>${date.format()}</td>
-		<td><a target=_blank href="https://github.com/vlang/v/commit/${commit}">${commit}</a></td>
+		<td><a target=_blank href="https://github.com/russo-2025/papyrus-compiler/commit/${commit}">${commit}</a></td>
 		<td>${html_message}</td>
 		<td>${diff1}ms</td>
+		<td>${diff1nc}ms</td>
 		<td>${diff2}ms</td>
+		<td>${diff3}ms</td>
+		<td>${diff3nc}ms</td>
 		<td>${cpapyrus_size} KB</td>
 		<td>${scan}ms</td>
 		<td>${parse}ms</td>

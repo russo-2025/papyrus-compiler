@@ -124,14 +124,15 @@ fn (mut s Stats) from_stmt(stmt ast.Stmt) {
 
 fn (mut s Stats) from_expr(expr ast.Expr) {
 	match expr {
-		ast.InfixExpr {
-			s.from_expr(expr.left)
-			s.from_expr(expr.right)
-		}
 		ast.IntegerLiteral {}
 		ast.FloatLiteral {}
 		ast.BoolLiteral {}
 		ast.StringLiteral {}
+		ast.NoneLiteral {}
+		ast.InfixExpr {
+			s.from_expr(expr.left)
+			s.from_expr(expr.right)
+		}
 		ast.Ident {}
 		ast.CallExpr {
 			key := expr.obj_name.to_lower() + "." + expr.name.to_lower()
@@ -155,10 +156,9 @@ fn (mut s Stats) from_expr(expr ast.Expr) {
 		}
 		ast.ParExpr { s.from_expr(expr.expr) }
 		ast.PrefixExpr { s.from_expr(expr.right) }
-		ast.EmptyExpr {}
 		ast.ArrayInit { s.from_expr(expr.len) }
-		ast.NoneLiteral {}
 		ast.CastExpr { s.from_expr(expr.expr) }
+		ast.EmptyExpr {}
 	}
 }
 

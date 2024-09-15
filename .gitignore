@@ -10,8 +10,7 @@ test-files/compiled
 test-files/compiler
 test-files/*.*
 *.bat
-vls.log
-fast.log
-table.html
+*.log
 papyrus_fast.exe
 papyrus_fast.c
+____fast_vm_tests

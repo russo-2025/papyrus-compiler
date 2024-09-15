@@ -108,13 +108,12 @@ pub fn create_dump_from_pex_dir(dir string) []DumpObject {
 	return create_dump_from_pex_files(pex_files)
 }
 /*
-const (
-	skse_object_names = [
-		"ActorValueInfo", "ArmorAddon", "Art", "ColorForm", "CombatStyle", "DefaultObjectManager", "EquipSlot", "HeadPart", "Input", "ModEvent", "NetImmerse", "SKSE", 
-		"SoundDescriptor", "SpawnerTask", "StringUtil", "TreeObject", "UI", "UICallback", "WornObject"
-	]
+const skse_object_names = [
+	"ActorValueInfo", "ArmorAddon", "Art", "ColorForm", "CombatStyle", "DefaultObjectManager", "EquipSlot", "HeadPart", "Input", "ModEvent", "NetImmerse", "SKSE", 
+	"SoundDescriptor", "SpawnerTask", "StringUtil", "TreeObject", "UI", "UICallback", "WornObject"
+]
 
-	base_object_names = [
+const base_object_names = [
 	"Action", "Activator", "ActiveMagicEffect", "Actor", "ActorBase", "Alias", "Ammo",
 	"Apparatus", "Armor", "AssociationType", "Book", "Cell", "Class",
 	"ConstructibleObject", "Container", "Debug", "Door", 
@@ -128,4 +127,4 @@ const (
 	"Spell", "Static", "TalkingActivator", "TextureSet",
 	"Topic", "TopicInfo", "Utility", "VisualEffect", "VoiceType",
 	"Weapon", "Weather","WordOfPower", "WorldSpace"]
-)*/
+*/

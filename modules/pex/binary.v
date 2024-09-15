@@ -134,7 +134,7 @@ fn (mut r Reader) read_string_ref() !u16 {
 	val := r.read[u16]()
 	
 	if val >= r.pex.string_table.len {
-		return error("string index($val) >= total strings count($r.pex.string_table.len)")
+		return error("string index(${val}) >= total strings count(${r.pex.string_table.len})")
 	}
 
 	return val

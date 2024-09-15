@@ -1,17 +1,13 @@
 module pex
 
-pub const (
-	empty_state_name = ""
-)
+pub const empty_state_name = ""
 
 @[inline]
 pub fn get_property_autovar_name(prop_name string) string {
 	return "::" + prop_name + "_var"
 }
 
-const (
-	opcode_str = build_opcode_str()
-)
+const opcode_str = build_opcode_str()
 
 pub enum OpCode as u8 {
 	nop = 0				//none		do nothing
@@ -54,14 +50,12 @@ pub enum OpCode as u8 {
 	_opcode_end
 }
 
-pub const (
-	// https://open-papyrus.github.io/docs/Pex_File_Format/Endianness.html
-	//LITTLE_ENDIAN
-	le_magic_number = u32(0xFA57C0DE)
+// https://open-papyrus.github.io/docs/Pex_File_Format/Endianness.html
+//LITTLE_ENDIAN
+pub const le_magic_number = u32(0xFA57C0DE)
 	
 	//BIG_ENDIAN
-	be_magic_number = u32(0xDEC057FA)
-)
+pub const be_magic_number = u32(0xDEC057FA)
 
 pub enum GameType as u16 {
 	unknown = 0
@@ -357,7 +351,7 @@ pub fn (inst &Instruction) to_string(pex_file &PexFile) string {
 		i++
 	}
 
-	return "opcode: '$inst.op', args: [$args]"
+	return "opcode: '${inst.op}', args: [${args}]"
 }
 
 @[inline]

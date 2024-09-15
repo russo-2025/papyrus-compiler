@@ -5,15 +5,14 @@ import pex
 import gen.gen_pex
 import pref
 
-const (
-	prefs = pref.Preferences {
+const prefs = pref.Preferences {
 		paths: []string{}
 		mode: .compile
 		backend: .pex
 		no_cache: true
 	}
 
-	other_src = 
+const other_src = 
 "Scriptname OtherScript
 Function Foo()
 EndFunction
@@ -21,7 +20,7 @@ Function Foz()
 EndFunction\n
 "
 
-	parent_src =
+const parent_src =
 "Scriptname CDFG
 
 CDFG Property ParentObjAutoProp Auto
@@ -41,7 +40,7 @@ EndFunction
 Function ParentFoz(int n1, int n2)
 EndFunction\n"
 
-	src_template = 
+const src_template = 
 "Scriptname ABCD extends CDFG
 
 CDFG ObjVar
@@ -98,7 +97,6 @@ EndFunction
 
 Function Foz(int n1, int n2)
 EndFunction\n"
-)
 
 fn compile_top(src string) &pex.PexFile {
 	full_src := "${src_template}${src}"
@@ -113,7 +111,6 @@ fn compile_top(src string) &pex.PexFile {
 
 	c.check(mut parent_file)
 	c.check(mut file)
-
 	assert c.errors.len == 0
 
 	mut pex_file := gen_pex.gen_pex_file(mut file, mut table, prefs)
@@ -157,7 +154,6 @@ fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
 
 	return func.info.instructions
 }
-
 
 fn test_state_decl_1() {
 	//src:		

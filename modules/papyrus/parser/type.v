@@ -9,6 +9,16 @@ pub fn (mut p Parser) get_parsed_type() ast.Type {
 	
 	typ := p.parsed_type
 	p.parsed_type = 0
+	
+	if !(typ >= ast.none_type_idx && typ <= ast.array_type_idx) {
+		mut name := p.table.get_type_symbol(typ).name
+
+		if name.ends_with("[]") {
+			name = name.all_before("[]")
+		}
+		
+		p.add_to_deps(name)
+	}
 
 	return ast.new_type(typ)
 }

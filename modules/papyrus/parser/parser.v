@@ -1,17 +1,15 @@
 module parser
 
+import os
 import papyrus.scanner
 import papyrus.token
-import os
-import pref
 import papyrus.ast
 import papyrus.util
-import pex
 import papyrus.errors
+import pref
+import pex
 
-const (
-	max_trigger_count = 10
-)
+const max_trigger_count = 10
 
 pub struct Parser {
 	pref				&pref.Preferences
@@ -38,11 +36,11 @@ mut:
 
 	cur_obj_name		string
 	cur_state_name		string = pex.empty_state_name
-	cur_object			ast.Type //current object type
+	cur_object			ast.Type // current object type
 	last_parse_pos		int = -1
 	number_of_triggers_per_token int
 
-	parsed_type			ast.Type //спаршеный тип
+	parsed_type			ast.Type // parsed type
 	is_extended_lang	bool
 pub mut:
 	errors				[]errors.Error
@@ -111,7 +109,7 @@ pub fn (mut p Parser) parse() &ast.File {
 		stmts << p.top_stmt() or { break }
 	}
 
-	return &ast.File{
+	return &ast.File {
 		path: p.path
 		path_base: os.base(p.path)
 		file_name: os.base(p.path).all_before_last(".")
@@ -142,11 +140,12 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 					return p.state_decl()
 				}
 
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "${p.tok.lit}")
+				p.error("(top statement) invalid token: ${p.tok.kind.str()}, ${p.tok.lit}")
 			}
 			.key_import {
 				p.next()
 				name := p.check_name()
+				p.add_to_deps(name)
 				p.imports << name
 			}
 			.comment {
@@ -180,7 +179,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 				return p.state_decl()
 			}
 			else {
-				p.error("(top statement) invalid token: " + p.tok.kind.str() + ", " + "${p.tok.lit}")
+				p.error("(top statement) invalid token: ${p.tok.kind.str()}, ${p.tok.lit}")
 			}
 		}
 	}
@@ -339,7 +338,7 @@ pub fn (mut p Parser) stmts() []ast.Stmt {
 				p.error("unexpected end of file")
 			}
 			else {
-				p.error("(block statement) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				p.error("(block statement) invalid token: ${p.tok.kind.str()}, ${p.tok.lit}")
 			}
 		}
 	}
@@ -358,7 +357,7 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		p.is_extended_lang = true
 	}
 	else {
-		p.error('unexpected `$p.tok.lit`, expecting `scriptname` or `scriptplus`')
+		p.error('unexpected `${p.tok.lit}`, expecting `scriptname` or `scriptplus`')
 	}
 
 	name := p.check_name()
@@ -379,6 +378,8 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 
 		node.parent_pos = p.tok.position()
 		node.parent_name = p.check_name()
+		
+		p.add_to_deps(node.parent_name)
 
 		parent_idx = p.table.find_type_idx(node.parent_name)
 		
@@ -452,7 +453,7 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 			}
 			.name {
 				if !p.next_is_type() {
-					p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+					p.error("(state) invalid token: ${p.tok.kind.str()}, `${p.tok.lit}`")
 				}
 				
 				p.parse_type()
@@ -470,7 +471,7 @@ pub fn (mut p Parser) state_decl() ast.StateDecl {
 				fns << p.event_decl()
 			}
 			else {
-				p.error("(state) invalid token: " + p.tok.kind.str() + ", " + "p.tok.lit")
+				p.error("(state) invalid token: ${p.tok.kind.str()}, `${p.tok.lit}`")
 			}
 		}
 	}
@@ -573,7 +574,7 @@ pub fn (mut p Parser) property_decl() ast.PropertyDecl {
 				node.read = &handler
 			}
 			else {
-				p.error_with_pos("invalid function name: $handler_name, expected `get` or `set`", handler.pos)
+				p.error_with_pos("invalid function name: ${handler_name}, expected `get` or `set`", handler.pos)
 			}
 		}
 		
@@ -703,6 +704,22 @@ pub fn (mut p Parser) parse_flags(line int) []token.Kind {
 	return flags
 }
 
+@[direct_array_access]
+fn (mut p Parser) add_to_deps(name string) {
+	if sym := p.table.find_type(name) {
+		if sym.kind == .script {
+			return
+		}
+	}
+
+	lname := name.to_lower()
+	if lname.to_lower() in p.table.deps.array() {
+		return
+	}
+
+	p.table.deps.push(lname)
+}
+
 pub fn (mut p Parser) read_first_token() {
 	// need to call next() 4 times to get peek token 1,2,3 and current token
 	p.next()
@@ -732,9 +749,9 @@ pub fn (mut p Parser) check(expected token.Kind) {
 	if p.tok.kind == expected {
 		p.next()
 	} else if p.tok.kind == .name {
-		p.error('unexpected name `$p.tok.lit`, expecting `$expected.str()`')
+		p.error('unexpected name `${p.tok.lit}`, expecting `${expected.str()}`')
 	} else {
-		p.error('unexpected `$p.tok.kind.str()`, expecting `$expected.str()`')
+		p.error('unexpected `${p.tok.kind.str()}`, expecting `${expected.str()}`')
 	}
 }
 

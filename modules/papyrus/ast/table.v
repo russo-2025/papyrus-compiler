@@ -4,6 +4,8 @@ import papyrus.token
 //import os
 //import json
 //import x.json2
+import datatypes
+
 
 @[heap]
 pub struct Table {
@@ -14,6 +16,7 @@ pub mut:
 	fns					map[string]Fn
 
 	allow_override		bool
+	deps				datatypes.Stack[string]
 }
 /*
 pub fn (t Table) to_json() string {
@@ -178,7 +181,6 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
 			}
 		}
 	}
-	
 	typ_idx := t.types.len
 	t.types << sym
 	t.type_idxs[sym.name.to_lower()] = typ_idx
@@ -192,7 +194,7 @@ pub fn (t &Table) find_type_idx(name string) Type {
 
 @[inline]
 pub fn (t &Table) known_type(name string) bool {
-	return t.find_type_idx(name) != 0
+	return name.to_lower() in t.type_idxs
 }
 
 pub fn (mut t Table) find_or_add_placeholder_type(name string) Type {
@@ -212,21 +214,21 @@ pub fn (t &Table) find_type(name string) ?&TypeSymbol {
 	return none
 }
 
-@[inline]
+@[direct_array_access]
 pub fn (t &Table) get_type_symbol(typ Type) &TypeSymbol {
 	idx := typ.idx()
 	if idx > 0 {
 		return unsafe { &t.types[idx] }
 	}
 	// this should never happen
-	panic('get_type_symbol: invalid type (typ=$typ idx=$idx). Compiler bug.')
+	panic('get_type_symbol: invalid type (typ=${typ} idx=${idx}). Compiler bug.')
 	return 0
 }
 
 @[inline]
 pub fn (t &Table) array_name(elem_type Type) string {
 	elem_type_sym := t.get_type_symbol(elem_type)
-	return '$elem_type_sym.name[]'
+	return '${elem_type_sym.name}[]'
 }
 
 @[inline]
@@ -250,6 +252,26 @@ pub fn (t &Table) type_is_array(typ Type) bool {
 }
 
 @[inline]
+pub fn (t &Table) has_object_property(typ Type, name string) bool {
+	mut sym := t.get_type_symbol(typ)
+	
+	for {
+		if _ := sym.find_property(name) {
+			return true
+		}
+
+		if sym.parent_idx > 0 {
+			sym = t.get_type_symbol(sym.parent_idx)
+			continue
+		}
+
+		break
+	}
+
+	return false
+}
+
+@[inline]
 pub fn (t &Table) find_object_property(typ Type, name string) ?Prop {
 	mut sym := t.get_type_symbol(typ)
 	
@@ -267,6 +289,17 @@ pub fn (t &Table) find_object_property(typ Type, name string) ?Prop {
 	}
 
 	return none
+}
+
+@[inline]
+pub fn (t &Table) has_object_var(typ Type, name string) bool {
+	mut sym := t.get_type_symbol(typ)
+	
+	if _ := sym.find_var(name) {
+		return true
+	}
+
+	return false
 }
 
 @[inline]

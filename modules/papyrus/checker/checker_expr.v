@@ -2,6 +2,8 @@ module checker
 
 import papyrus.ast
 
+const base_objects_events = [ "oninit", "onbeginstate", "onendstate" ]
+
 pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	match mut node {
 		ast.InfixExpr {
@@ -9,13 +11,13 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		}
 		ast.PrefixExpr {
 			if !node.op.is_prefix() {
-				c.error("invalid prefix operator: `$node.op`",  node.pos)
+				c.error("invalid prefix operator: `${node.op}`",  node.pos)
 			}
 
 			node.right_type = c.expr(mut node.right)
 
 			if node.right is ast.EmptyExpr {
-				c.error("invalid right operand in prefix expression(`$node.op`)",  node.pos)
+				c.error("invalid right operand in prefix expression(`${node.op}`)",  node.pos)
 			}
 
 			match node.op {
@@ -34,13 +36,13 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 					}
 					else {
 						type_name := c.get_type_name(node.right_type)
-						c.error("prefix operator: `!` not support type: `$type_name`",  node.pos)
+						c.error("prefix operator: `!` not support type: `${type_name}`",  node.pos)
 					}
 				}
 				.minus {
 					if node.right_type != ast.int_type && node.right_type != ast.float_type {
 						type_name := c.get_type_name(node.right_type)
-						c.error("prefix operator: `-` not support type: `$type_name`",  node.pos)
+						c.error("prefix operator: `-` not support type: `${type_name}`",  node.pos)
 					}
 				}
 				else {}
@@ -86,7 +88,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				return node.typ
 			}
 			
-			c.error("variable declaration not found: `$node.name`",  node.pos)
+			c.error("variable declaration not found: `${node.name}`",  node.pos)
 			return ast.none_type
 		}
 		ast.CallExpr {
@@ -164,7 +166,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			if !c.can_cast(expr_type, node.typ) {
 				expr_type_name := c.get_type_name(expr_type)
 				type_name := c.get_type_name(node.typ)
-				c.error("cannot convert type `$expr_type_name` to type `$type_name`",  node.pos)
+				c.error("cannot convert type `${expr_type_name}` to type `${type_name}`",  node.pos)
 			}
 			
 			c.error("invalid cast expression", node.pos)
@@ -176,19 +178,19 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	}
 
 	eprintln(node)
-	panic("expression not processed in file: `$c.file.path`")
+	panic("expression not processed in file: `${c.file.path}`")
 }
 
 pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 	if !node.op.is_infix() {
-		c.error("invalid infix operator: `$node.op`",  node.pos)
+		c.error("invalid infix operator: `${node.op}`",  node.pos)
 	}
 
 	node.left_type = c.expr(mut node.left)
 	node.right_type = c.expr(mut node.right)
 
 	if node.right is ast.EmptyExpr {
-		c.error("invalid right operand in infix expression(`$node.op`)",  node.pos)
+		c.error("invalid right operand in infix expression(`${node.op}`)",  node.pos)
 	}
 
 	match node.op {
@@ -197,7 +199,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				//check int, float, string
 				if node.left_type != ast.int_type && node.left_type != ast.float_type && node.left_type != ast.string_type {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 				node.result_type = node.left_type
 			}
@@ -238,7 +240,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 			}
 		}
@@ -247,7 +249,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				//check left int, float
 				if node.left_type != ast.int_type && node.left_type != ast.float_type {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 				node.result_type = node.left_type
 			}
@@ -276,7 +278,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 			}
 		}
@@ -287,7 +289,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				//check left int, float
 				if node.left_type != ast.int_type && node.left_type != ast.float_type {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 			}
 			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
@@ -311,7 +313,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
-					c.error("infix operator `$node.op` not support type `$type_name`",  node.pos)
+					c.error("infix operator `${node.op}` not support type `${type_name}`",  node.pos)
 				}
 			}
 		}
@@ -332,7 +334,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 			else {
 				ltype_name := c.get_type_name(node.left_type)
 				rtype_name := c.get_type_name(node.right_type)
-				c.error("infix operator `$node.op` not support type `$ltype_name`, `$rtype_name`",  node.pos)
+				c.error("infix operator `${node.op}` not support type `${ltype_name}`, `${rtype_name}`",  node.pos)
 			}
 		}
 		.eq, .ne {
@@ -351,7 +353,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				else {
 					ltype_name := c.get_type_name(node.left_type)
 					rtype_name := c.get_type_name(node.right_type)
-					c.error("you can't compare type `$ltype_name` with type `$rtype_name`",  node.pos)
+					c.error("you can't compare type `${ltype_name}` with type `${rtype_name}`",  node.pos)
 				}
 			}
 		}
@@ -369,7 +371,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 			node.result_type = ast.bool_type
 		}
 		else {
-			panic("wtf ($node.op)")
+			panic("wtf (${node.op})")
 		}
 	}
 
@@ -379,7 +381,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	mut typ := 0
 	mut func := unsafe { &ast.Fn(voidptr(0)) }
-
+	
 	if node.left is ast.EmptyExpr {
 		//find global func in cur obj
 		if mut tfunc := c.table.find_fn(c.cur_obj_name, node.name) {
@@ -427,7 +429,7 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	node.is_native = func.is_native
 
 	if node.args.len > func.params.len {
-		c.error("function takes $func.params.len parameters not $node.args.len", node.pos)
+		c.error("function takes ${func.params.len} parameters not ${node.args.len}", node.pos)
 		return ast.none_type
 	}
 
@@ -449,7 +451,7 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 		else {
 			left_type_name := c.get_type_name(func_arg_type)
 			right_type_name := c.get_type_name(arg_typ)
-			c.error("cannot convert type `$right_type_name` to type `$left_type_name`", node.pos)
+			c.error("cannot convert type `${right_type_name}` to type `${left_type_name}`", node.pos)
 		}
 
 		i++

@@ -5,14 +5,10 @@ import term
 import papyrus.token
 import papyrus.errors
 
-const (
-	error_context_before = 2
-	error_context_after  = 2
-)
+const error_context_before = 2
+const error_context_after  = 2
 
-pub const (
-	emanager = new_error_manager()
-)
+pub const emanager = new_error_manager()
 
 pub struct EManager {
 mut:

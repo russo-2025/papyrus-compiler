@@ -4,15 +4,14 @@ import papyrus.parser
 import papyrus.checker
 import papyrus.token
 
-const (
-	prefs = pref.Preferences {
+const prefs = pref.Preferences {
 		paths: []string{}
 		mode: .compile
 		backend: .pex
 		no_cache: true
 	}
 
-	other_src = 
+const other_src = 
 "Scriptname OtherScript
 string Function MethodFoo(bool arg1, bool arg2, bool arg3)
 return \"123\"
@@ -21,10 +20,10 @@ string Function OBar(Float afvalue) Global\n
 return \"123\"
 EndFunction"
 
-	other2_src = 
+const other2_src = 
 "Scriptname OtherScript2"
 
-	parent_src =
+const parent_src =
 "Scriptname CDFG
 int otherProp = 0 ; for ABCD property test
 string myParentObjectVar = \"Hello\"
@@ -32,7 +31,7 @@ float Property myAutoParentProp = 0.2 Auto
 int Function ParentFoz(int n1, int n2)
 EndFunction\n"
 
-	src_template = 
+const src_template = 
 "Scriptname ABCD extends CDFG
 Import OtherScript
 bool myObjectVar = false
@@ -58,7 +57,6 @@ EndFunction
 int Property myAutoProp = 123 Auto
 OtherScript Property otherProp Auto
 OtherScript Property OtherScript2 Auto\n"
-)
 
 fn compile(src string) (&ast.File, &ast.Table) {
 	mut table := ast.new_table()
@@ -79,8 +77,6 @@ fn compile(src string) (&ast.File, &ast.Table) {
 	c.check(mut file)
 
 	assert c.errors.len == 0, src
-
-	//println(file.stmts)
 
 	return file, table
 }
@@ -1016,4 +1012,50 @@ fn test_return() {
 
 	ret_stmt := func.stmts.last() as ast.Return
 	assert (ret_stmt.expr as ast.NoneLiteral).val == "None"
+}
+
+fn test_line_nr_bug() {
+	mut stmts := []ast.Stmt{}
+
+	start_line := 26
+
+	stmts, _ = compile_stmts("\r\n\r\nInt MyBugVar = 123")
+	assert stmts.len == 1
+	assert (((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("\n\nInt MyBugVar = 123")
+	assert stmts.len == 1
+	assert (((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[0] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("	; 		asdasdwqe12фыв\r\n	; 		asdasdwqe12фыв\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts("	; 		asdasdwqe12фыв\n	; 		asdasdwqe12фыв\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" { asdasdwqe12фыв }\n { asdasdwqe12фыв }\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" { asdasdwqe12фыв }\r\n { asdasdwqe12фыв }\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" ;/ asdasdwqe12фыв /;\n ;/ asdasdwqe12фыв /;\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+
+	stmts, _ = compile_stmts(" ;/ asdasdwqe12фыв /;\r\n ;/ asdasdwqe12фыв /;\r\nInt MyBugVar = 123")
+	assert stmts.len == 3
+	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
+	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
 }

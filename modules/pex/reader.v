@@ -11,7 +11,7 @@ pub mut:
 
 pub fn read_from_file(path string) &PexFile {
 	if !os.is_file(path) {
-		eprintln("invalid file path: `$path`")
+		eprintln("invalid file path: `${path}`")
 		exit(1)
 	}
 
@@ -120,7 +120,7 @@ fn (mut r Reader) read_pex() ! {
 	}
 
 	if r.pos != r.bytes.len {
-		return error("number of bytes read($r.pos) != total bytes($r.bytes.len)")
+		return error("number of bytes read(${r.pos}) != total bytes(${r.bytes.len})")
 	}
 }
 

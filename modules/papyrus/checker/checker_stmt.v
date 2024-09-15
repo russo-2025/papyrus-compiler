@@ -14,7 +14,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 
 			if node.parent_name != "" {
 				if !c.table.known_type(node.parent_name) {
-					c.error("invalid parent `$node.parent_name`", node.pos)
+					c.error("invalid parent `${node.parent_name}`", node.pos)
 				}
 			}
 		}
@@ -60,7 +60,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 					else {
 						ltype_name := c.get_type_name(left_type)
 						rtype_name := c.get_type_name(right_type)
-						c.error("value with type `$rtype_name` cannot be assigned to a property with type `$ltype_name`",  node.pos)
+						c.error("value with type `${rtype_name}` cannot be assigned to a property with type `${ltype_name}`",  node.pos)
 					}
 				}
 
@@ -114,7 +114,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 			else {
 				type_name := c.get_type_name(typ)
 				fn_type_name := c.get_type_name(c.cur_fn.return_type)
-				c.error("expected to return a value with type `$fn_type_name` not `$type_name`", node.pos)
+				c.error("expected to return a value with type `${fn_type_name}` not `${type_name}`", node.pos)
 			}
 		}
 		ast.If {
@@ -152,7 +152,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		}
 		ast.AssignStmt {
 			if !node.op.is_assign() {
-				c.error("invalid assign operator: `$node.op`",  node.pos)
+				c.error("invalid assign operator: `${node.op}`",  node.pos)
 			}
 
 			if node.left is ast.Ident || node.left is ast.IndexExpr || node.left is ast.SelectorExpr {
@@ -172,7 +172,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 				else {
 					ltype_name := c.get_type_name(left_type)
 					rtype_name := c.get_type_name(right_type)
-					c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+					c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
 				}
 
 				if node.op != .assign {
@@ -219,16 +219,9 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.inside_fn = true
 
 	for param in node.params {
-		if c.type_is_valid(param.typ) {
-			c.cur_scope.register(ast.ScopeVar{
-				name: param.name
-				typ: param.typ
-				is_used: false
-			})
-		}
-		else {
+		if !c.type_is_valid(param.typ) {
 			type_name := c.get_type_name(param.typ)
-			c.error("unknown type of function argument `$type_name`", node.pos)
+			c.error("unknown type of function argument `${type_name}`", node.pos)
 		}
 	}
 	
@@ -258,11 +251,11 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 
 		if func := c.find_fn(c.cur_obj, c.cur_obj_name, node.name) {
 			if node.is_global != func.is_global {
-				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+				c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 			}
 
 			if node.return_type != func.return_type {
-				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+				c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 			}
 
 			if node.params.len == func.params.len {
@@ -272,27 +265,27 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 					func_param := func.params[i]
 
 					if node_param.typ != func_param.typ {
-						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 					}
 
 					if node_param.is_optional != func_param.is_optional {
-						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 					}
 
 					if node_param.default_value != func_param.default_value {
-						c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 					}
 
 					i++
 				}
 			}
 			else {
-				c.error('declaration of the $node.name function in the $c.cur_state_name state is different from the declaration in the empty state', node.pos)
+				c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 			}
 		}
 		else {
 			if !node.is_event {
-				c.error('function $node.name cannot be defined in state $c.cur_state_name without also being defined in the empty state', node.pos)
+				c.error('function $node.name cannot be defined in state ${c.cur_state_name} without also being defined in the empty state', node.pos)
 			}
 		}
 	}
@@ -320,7 +313,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	if obj := c.cur_scope.find_var(node.name) {
 		if node.pos.pos != obj.pos.pos {
-			c.error("variable with name `$node.name` already exists", node.pos)
+			c.error("variable with name `${node.name}` already exists", node.pos)
 			return
 		}
 	}
@@ -342,7 +335,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 			else {
 				ltype_name := c.get_type_name(left_type)
 				rtype_name := c.get_type_name(right_type)
-				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+				c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
 			}
 		}
 		else {
@@ -356,7 +349,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 			else {
 				ltype_name := c.get_type_name(left_type)
 				rtype_name := c.get_type_name(right_type)
-				c.error("value with type `$rtype_name` cannot be assigned to a variable with type `$ltype_name`",  node.pos)
+				c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
 			}
 		}
 

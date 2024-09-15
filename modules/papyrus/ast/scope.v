@@ -54,6 +54,17 @@ pub fn (mut s Scope) find(name string) ?ScopeObject {
 	return none
 }
 
+pub fn (mut s Scope) has_var(name string) bool {
+	if obj := s.find(name.to_lower()) {
+		match obj {
+			ScopeVar { return true }
+			else {}
+		}
+	}
+
+	return false
+}
+
 pub fn (mut s Scope) find_var(name string) ?ScopeVar {
 	if obj := s.find(name.to_lower()) {
 		match obj {

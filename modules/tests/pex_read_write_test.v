@@ -5,8 +5,7 @@ import papyrus.checker
 import gen.gen_pex
 import pex
 
-const (
-	src =
+const src =
 "Scriptname ABCD
 
 Function Foo(int arg1, float arg2) global
@@ -17,7 +16,6 @@ Function Bar(int arg1, float arg2)
 	int n = arg1 + arg2 as int
 EndFunction
 "
-)
 
 fn test_build() {
 	mut prefs := pref.Preferences {

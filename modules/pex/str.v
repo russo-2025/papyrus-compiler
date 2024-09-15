@@ -44,7 +44,7 @@ fn (mut b PexStrBuilder) object_to_string(obj &Object) {
 	b.writeln("parent: '${parent}'")
 	b.writeln("doc: '${doc}'")
 	b.writeln("user flags(${user_flags_hex}): ${user_flags_str}")
-	b.writeln("auto state name: '$auto_state_name'")
+	b.writeln("auto state name: '${auto_state_name}'")
 	
 	b.writeln("variables[${obj.variables.len}]:")
 	b.indent_size++
@@ -87,7 +87,7 @@ fn (mut b PexStrBuilder) var_to_string(var &Variable) {
 	
 	b.writeln("name: '${name}'")
 	b.writeln("type name: '${type_name}'")
-	b.writeln("user flags(${user_flags_hex}): $user_flags_str")
+	b.writeln("user flags(${user_flags_hex}): ${user_flags_str}")
 	b.writeln("data: ${data}")
 }
 
@@ -101,14 +101,14 @@ fn (mut b PexStrBuilder) prop_to_string(prop &Property) {
 	flags_str := prop.flags_str()
 	auto_var_name := b.pex_file.get_string(prop.auto_var_name)
 
-	b.writeln("name: '$name'")
-	b.writeln("type name: '$type_name'")
-	b.writeln("doc string: '$docstring'")
-	b.writeln("user flags($user_flags_hex): ${user_flags_str}")
-	b.writeln("flags($flags_hex): '${flags_str}'")
+	b.writeln("name: '${name}'")
+	b.writeln("type name: '${type_name}'")
+	b.writeln("doc string: '${docstring}'")
+	b.writeln("user flags(${user_flags_hex}): ${user_flags_str}")
+	b.writeln("flags(${flags_hex}): '${flags_str}'")
 
 	if prop.is_autovar() {
-		b.writeln("auto var name: '$auto_var_name'")
+		b.writeln("auto var name: '${auto_var_name}'")
 	}
 	else {
 		if prop.is_read() {
@@ -129,7 +129,7 @@ fn (mut b PexStrBuilder) prop_to_string(prop &Property) {
 fn (mut b PexStrBuilder) state_to_string(state &State) {
 	name := b.pex_file.get_string(state.name)
 
-	b.writeln("name: '$name'")
+	b.writeln("name: '${name}'")
 	b.writeln("functions[${state.functions.len}]:")
 
 	b.indent_size++
@@ -150,8 +150,8 @@ fn (mut b PexStrBuilder) func_info_to_string(info &FunctionInfo) {
 	flags_hex :=  "0x" + info.flags.hex()
 	flags_str :=  info.flags_str()
 
-	b.writeln("typ: '$typ'")
-	b.writeln("doc: '$doc'")
+	b.writeln("typ: '${typ}'")
+	b.writeln("doc: '${doc}'")
 	b.writeln("user_flags(${user_flags_hex}): ${user_flags_str}")
 	b.writeln("flags(${flags_hex}): ${flags_str}")
 	b.writeln("params count: '${info.params.len}'")
@@ -224,7 +224,7 @@ pub fn (p PexFile) str() string {
 	mut i := 0
 	for i < p.string_table.len {
 		str := p.string_table[i]
-		b.write("string_table[$i] = '$str'")
+		b.write("string_table[$i] = '${str}'")
 
 		if i < p.string_table.len - 1 {
 			b.write(", ")

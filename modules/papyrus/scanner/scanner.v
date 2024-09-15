@@ -1,28 +1,26 @@
 module scanner
 
-import math
 import os
 import pref
 import papyrus.token
 import papyrus.util
 import papyrus.errors
 
-const (
-	single_quote = `\'`
-	double_quote = `"`
-)
+const single_quote = `\'`
+const double_quote = `"`
+const b_lf = 10
+const b_cr = 13
 
 pub struct Scanner {
-pub mut:
-	file_path			string	// путь до файла
-	text				string	// текст файла
-	pos					int		// текущая позиция
-	line_nr				int		// номер строки
-	last_nl_pos			int		// последняя позиция новой строки
+mut:
+	file_path			string	// src file path
+	text				string	// src file text
+	pos					int		// current position
+	line_nr				int		// current line number
+	last_nl_pos			int		// last newline position
 	line_nr_lt_escaped	int
-	
-	line_ends			[]int	// позиции концов строк // the positions of source lines ends   (i.e. \n signs)
-	nr_lines			int		// кол-во отсканированных строк
+	is_crlf				bool	// special check when computing columns
+	nr_lines			int		// number of scanned lines
 	eofs				int
 	pref				&pref.Preferences
 	errors				[]errors.Error
@@ -66,6 +64,7 @@ pub fn (mut s Scanner) scan() token.Token {
 	return s.text_scan()
 }
 
+@[direct_array_access]
 fn (mut s Scanner) text_scan() token.Token {
 	for {
 		s.skip_whitespace()
@@ -259,15 +258,17 @@ fn (mut s Scanner) text_scan() token.Token {
 
 				start := s.pos
 				s.ignore_line()
+				mut comment_line_end := s.pos
 				
-				if s.text[s.pos - 1] == `\r` {
-					s.pos--
+				if s.text[s.pos - 1] == scanner.b_cr {
+					comment_line_end--
+				} else {
 					s.line_nr--
 				}
+				
+				comment := s.text[start + 1..comment_line_end]
 
-				comment := s.text[start+1..s.pos]
-
-				return s.new_token(.comment, comment, comment.len + 1)
+				return s.new_token(.comment, comment, comment.len + 2)
 			}
 			`[` {
 				s.pos++
@@ -302,14 +303,14 @@ fn (mut s Scanner) text_scan() token.Token {
 			return s.end_of_file()
 		}
 
-		s.error('invalid character `$c.ascii_str()`')
+		s.error('invalid character `${c.ascii_str()}`')
 		break
 	}
 
 	return s.end_of_file()
 }
 
-@[inline]
+@[direct_array_access; inline]
 fn (s Scanner) look_ahead(n int) u8 {
 	if s.pos + n < s.text.len {
 		return s.text[s.pos + n]
@@ -319,10 +320,25 @@ fn (s Scanner) look_ahead(n int) u8 {
 }
 
 
-@[inline]
+@[direct_array_access; inline]
 fn (mut s Scanner) skip_whitespace() {
-	for s.pos < s.text.len && s.text[s.pos].is_space() {
-		if util.is_nl(s.text[s.pos]) && !s.expect('\r\n', s.pos - 1) {
+	for s.pos < s.text.len {
+		c := s.text[s.pos]
+		if c == 9 {
+			// tabs are most common
+			s.pos++
+			continue
+		}
+		if util.non_whitespace_table[c] {
+			return
+		}
+		c_is_nl := c == scanner.b_cr || c == scanner.b_lf
+		
+		if s.pos + 1 < s.text.len && c == scanner.b_cr && s.text[s.pos + 1] == scanner.b_lf {
+			s.is_crlf = true
+		}
+		// Count \r\n as one line
+		if c_is_nl && !(s.pos > 0 && s.text[s.pos - 1] == scanner.b_cr && c == scanner.b_lf) {
 			s.inc_line_number()
 		}
 		s.pos++
@@ -349,25 +365,29 @@ fn (mut s Scanner) ignore_line() {
 	s.inc_line_number()
 }
 
-@[inline]
+@[direct_array_access; inline]
 fn (mut s Scanner) eat_to_end_of_line() {
-	for s.pos < s.text.len && s.text[s.pos] != `\n` {
+	for s.pos < s.text.len && s.text[s.pos] != scanner.b_lf {
 		s.pos++
 	}
 }
 
 @[inline]
 fn (mut s Scanner) inc_line_number() {
-	s.last_nl_pos = math.min(s.text.len - 1, s.pos)
+	s.last_nl_pos = s.text.len - 1
+	if s.last_nl_pos > s.pos {
+		s.last_nl_pos = s.pos
+	}
+	if s.is_crlf {
+		s.last_nl_pos++
+	}
 	s.line_nr++
-	s.line_ends << s.pos
-
 	if s.line_nr > s.nr_lines {
 		s.nr_lines = s.line_nr
 	}
 }
 
-@[inline]
+@[direct_array_access; inline]
 fn (mut s Scanner) ident_name() string {
 	start := s.pos
 	s.pos++
@@ -375,7 +395,7 @@ fn (mut s Scanner) ident_name() string {
 		s.pos++
 	}
 	name := s.text[start..s.pos]
-	//s.pos--
+	
 	return name
 }
 
@@ -387,6 +407,7 @@ fn (mut s Scanner) ident_number() string {
 	}
 }
 
+@[direct_array_access]
 fn (mut s Scanner) ident_string() string {
 	
 	q := s.text[s.pos]
@@ -466,6 +487,7 @@ fn trim_slash_line_break(s string) string {
 	return ret_str
 }
 
+@[direct_array_access]
 fn (mut s Scanner) ident_dec_number() string {
 	mut has_wrong_digit := false
 	mut first_wrong_digit_pos := 0
@@ -510,6 +532,7 @@ fn (mut s Scanner) ident_dec_number() string {
 	return number
 }
 
+@[direct_array_access]
 fn (mut s Scanner) ident_hex_number() string {
 	mut has_wrong_digit := false
 	mut first_wrong_digit_pos := 0
@@ -576,7 +599,7 @@ fn (mut s Scanner) new_token(tok_kind token.Kind, lit string, len int) token.Tok
 	}
 }
 
-@[inline]
+@[direct_array_access; inline]
 fn (s &Scanner) expect(want string, start_pos int) bool {
 	end_pos := start_pos + want.len
 	if start_pos < 0 || end_pos < 0 || start_pos >= s.text.len || end_pos > s.text.len {
