@@ -1,6 +1,7 @@
 module pref
 
 import os
+import papyrus.errors
 
 pub enum OutputMode {
 	stdout
@@ -18,6 +19,7 @@ pub enum RunMode {
 	read
 	disassembly
 	create_dump
+	help
 }
 
 @[heap]
@@ -40,7 +42,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 	p.backend = .pex
 
 	if args.len < 3  {
-		error("invalid number of arguments")
+		error("invalid number of arguments") // TODO???
 	}
 
 	mut i := 0
@@ -59,11 +61,11 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 					path := os.real_path(args[i])
 
 					if !os.is_dir(path) && (!os.is_file(path) || os.file_ext(path).to_lower() != ".psc") {
-						error("invalid input dir: '$path'")
+						error(errors.msg_invalid_input_path) // path
 					}
 
 					if path in p.paths {
-						error("path already exists: '$path'")
+						error(errors.msg_duplicate_input_flag) // path
 					}
 
 					p.paths << path
@@ -76,13 +78,13 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				i++
 
 				if p.output_dir != "" {
-					error("output folder is already specified")
+					error(errors.msg_duplicate_output_flag) // path
 				}
 
 				path := os.real_path(args[i])
 
 				if !os.is_dir(path) {
-					error("invalid output dir: '$path'")
+					error(errors.msg_invalid_output_path) // path
 				}
 
 				p.output_dir = path
@@ -95,7 +97,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				path := os.real_path(args[i])
 
 				if !os.is_dir(path) {
-					error("invalid headers dir: '$path'")
+					error(errors.msg_invalid_headers_path) // path
 				}
 				
 				p.header_dirs << path
@@ -130,9 +132,17 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				i++
 			}
 			else {
-				error("invalid argument `${args[i]}`")
+				error(errors.msg_missing_or_incorrect_argument) // args[i]
 			}
 		}
+	}
+
+	if p.paths.len <= 0 {
+		error(errors.msg_missing_input)
+	}
+
+	if p.output_dir == "" {
+		error(errors.msg_missing_output)
 	}
 }
 
@@ -142,19 +152,13 @@ pub fn parse_args() Preferences {
 	args := os.args[1..]
 
 	if args.len == 0 {
-		help()
-		exit(0)
+		p.mode = .help
+		return p
 	}
 
 	match args[0] {
 		"help" {
-			if args.len > 1 {
-				if args[1] == "compile" || args[1] == "read" {
-					help_command(args[1])
-				}
-			}
-
-			help()
+			p.mode = .help
 		}
 		"compile" {
 			p.mode = .compile
@@ -162,27 +166,48 @@ pub fn parse_args() Preferences {
 		}
 		"read" {
 			if args.len < 2 {
-				error("invalid number of arguments")
+				error(errors.msg_wrong_number_of_arguments)
 			}
 
 			p.mode = .read
-			p.paths << os.real_path(args[1])
+			
+			path := os.real_path(args[1])
+
+			if !os.is_file(path) || os.file_ext(path).to_lower() != ".pex" {
+				error(errors.msg_invalid_path_read) //
+			}
+
+			p.paths << path
 		}
 		"disassembly" {
 			if args.len < 2 {
-				error("invalid number of arguments")
+				error(errors.msg_wrong_number_of_arguments)
 			}
 
 			p.mode = .disassembly
-			p.paths << os.real_path(args[1])
+			
+			path := os.real_path(args[1])
+
+			if !os.is_file(path) || os.file_ext(path).to_lower() != ".pex" {
+				error(errors.msg_invalid_path_disassembly) //
+			}
+
+			p.paths << path
 		}
 		"create-dump" {
 			if args.len < 2 {
-				error("invalid number of arguments")
+				error(errors.msg_wrong_number_of_arguments)
 			}
 
 			p.mode = .create_dump
-			p.paths << os.real_path(args[1])
+			
+			path := os.real_path(args[1])
+
+			if !os.is_dir(path) {
+				error(errors.msg_invalid_path_create_dump) //
+			}
+
+			p.paths << path
 		}
 		else {
 			if args[0].starts_with("-") {
@@ -190,7 +215,7 @@ pub fn parse_args() Preferences {
 				p.parse_compile_args(args)
 			}
 			else {
-				error("unknown command: `${args[0]}`")
+				error(errors.msg_missing_or_incorrect_command) // args[0]
 			}
 		}
 	}
@@ -198,81 +223,52 @@ pub fn parse_args() Preferences {
 	return p
 }
 
+@[noreturn]
 fn error(msg string) {
 	eprintln(msg)
+	eprintln("Use \"papyrus help\" for more information.")
 	exit(1)
 }
 
-fn help() {
-	println("Papyrus language compiler")
-	println("")
-	println("Usage:")
-	println("")
-	println("	papyrus <command> [arguments]")
-	println("")
-	println("The commands are:")
-	println("")
-	println("		compile")
-	println("			compile papyrus files")
-	println("")
-	println("		read")
-	println("			converts pex file into a readable format and outputs it to console")
-	println("")
-	println("		disassembly")
-	println("			converts pex file into a readable format and writes result to file")
-	println("")
-	println("		create-dump")
-	println("			...")
-	println("")
-	println("")
-	println("Use \"papyrus help <command>\" for more information about a command.")
+@[noreturn]
+pub fn print_help_info() {
+	println(msg_help_command)
 	exit(0)
 }
 
-fn help_command(command string) {
-	match command {
-		"compile" {
-			println("Arguments:")
-			println("")
-			println("		-i")
-			println("			folder with files(*.psc) to compile")
-			println("")
-			println("		-o")
-			println("			folder for compiled files(*.pex)")
-			println("")
-			println("		-h")
-			println("			folder with header files")
-			println("")
-			println("		-nocache")
-			println("			compile all files, regardless of the modification date")
-			println("")
-			println("		-original")
-			println("			compile using a vanilla compiler")
-			println("")
-			println("		-silent")
-			println("			disable output of messages and errors to console")
-			println("")
-			println("		-verbose")
-			println("			...TODO")
-			println("")
-			println("		-stats")
-			println("			...TODO")
-			println("")
-			println("		-use-threads")
-			println("			use threads to generate files")
-			println("")
-		}
-		"read" {
-			println("")
-			println("papyrus read \"path/to/file.pex\"")
-		}
-		"disassembly" {
-			println("")
-			println("papyrus disassembly \"path/to/file.pex\"")
-		}
-		else {
-		}
-	}
+const msg_help_command = 'papyrus compiler help
 
-	exit(0)
-}
+Usage:
+  papyrus <command> [arguments]
+
+Commands:
+  compile       Compiles files with the `.psc` extension into the binary `.pex` format.
+  read          Reads and disassembles a `.pex` file, outputting its contents in a human-readable format to the console.
+  disassembly   Reads and disassembles a `.pex` file, saving its contents in a human-readable format to a text file.
+  create-dump   Creates a `dump.json` file containing information about `.pex` files located in the specified directory.
+  help          Displays a list of available commands and their descriptions.
+
+Arguments for the "compile" command:
+  -i, -input        Specify the directory with .psc files or a .psc file to compile.
+  -o, -output       Specify the directory where the compiled .pex files will be placed.
+  -h, -headers-dir  Specify the directory with .psc header/import files that will be analyzed by the compiler but not compiled.
+  -nocache          Ignore the cache and force compilation of all files.
+  -original         Use the original Papyrus compiler for compilation.
+  -stats            Save statistics on compiled files to .md files (number of function calls, inheritances, files).
+  -check            Check the syntax of .psc files without generating .pex files.
+
+Examples:
+  Compile all scripts in a directory, ignoring the cache:
+    papyrus compile -nocache -i "D:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -o "../test-files/compiled/skyrimSources"
+
+  Compile all scripts in a directory:
+    papyrus compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
+
+  Compile scripts using header/import files:
+    papyrus compile -nocache -h "D:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\Scripts\\Source" -i "../test-files/compiler" -o "../test-files/compiled"
+
+  Read a compiled .pex file:
+    papyrus read "../test-files/compiled/ABCD.pex"
+
+  Create a JSON dump of .pex files:
+    papyrus create-dump "../folder_with_pex_files"'

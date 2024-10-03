@@ -1,5 +1,10 @@
 ## Next release
 
+### Improvements
+
+- **Error Messaging Improvements**
+  - Enhanced and added error messages for missing or incorrect arguments when using the console.
+
 ## V 0.0.1
 
 ### Improvements

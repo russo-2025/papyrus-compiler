@@ -78,7 +78,7 @@ pub fn (mut b Builder) run() bool {
 				b.compile_original()
 			}
 			$else {
-				println("Original compiler is only available on Windows OS")
+				error("Error: Original compiler is only available on Windows OS")
 			}
 		}
 	}
@@ -164,6 +164,13 @@ fn (b Builder) print(msg string) {
 
 	println(msg)
 }
+
+@[noreturn]
+fn error(msg string) {
+	eprintln(msg)
+	exit(1)
+}
+
 /*
 fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 	mut parent_idx := 0

@@ -20,8 +20,6 @@ fn (mut b Builder) compile_pex() {
 	b.start_timer('parse headers files')
 	b.parse_deps()
 	b.print_timer('parse headers files')
-
-	//$if debug { b.table.save_as_json("Table.json") }
 	
 	//fns_dump.load("FunctionsDump.json", mut b.table) or { panic(err) }
 

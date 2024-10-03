@@ -1,9 +1,6 @@
 module ast
 
 import papyrus.token
-//import os
-//import json
-//import x.json2
 import datatypes
 
 
@@ -18,16 +15,6 @@ pub mut:
 	allow_override		bool
 	deps				datatypes.Stack[string]
 }
-/*
-pub fn (t Table) to_json() string {
-	//result := json.encode_pretty(t)
-	//result := json2.encode_pretty[Table](t)
-	return ""
-}
-
-pub fn (t Table) save_as_json(file string) {
-	os.write_file(file, t.to_json()) or { panic(err) }
-}*/
 
 pub struct Param {
 pub mut:

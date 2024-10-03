@@ -29,10 +29,11 @@ papyrus <command> [arguments]
 ```
 
 ### Commands:
-- `compile`: Compiles `.psc` files into the binary `.pex` format.
-- `read`: Reads a `.pex` file and outputs its contents in a human-readable format to the console.
-- `disassemble`: Disassembles a `.pex` file and saves the result to a text file.
-- `create-dump`: Creates a JSON file `dump.json` with information about `.pex` files in the specified directory.
+- `compile`: Compiles files with the `.psc` extension into the binary `.pex` format.
+- `read`: Reads and disassembles a `.pex` file, outputting its contents in a human-readable format to the console.
+- `disassembly`: Reads and disassembles a `.pex` file, saving its contents in a human-readable format to a text file.
+- `create-dump`: Creates a `dump.json` file containing information about `.pex` files located in the specified directory.
+- `help`: Displays a list of available commands and their descriptions.
 
 ### Arguments for the `compile` command:
 The following arguments can be used with the `compile` command:

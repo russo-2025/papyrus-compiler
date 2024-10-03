@@ -34,6 +34,9 @@ fn main() {
 			json_data := json.encode_pretty(dump_objects)
 			os.write_file(os.real_path("dump.json"), json_data) or { panic(err) }
 		}
+		.help {
+			pref.print_help_info()
+		}
 	}
 
 	ms := f32(sw.elapsed().microseconds()) / 1000
