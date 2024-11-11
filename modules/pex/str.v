@@ -202,7 +202,7 @@ fn (mut b PexStrBuilder) debug_func_to_string(d_func &DebugFunction) {
 
 pub fn (p PexFile) str() string {
 	mut b := PexStrBuilder {
-		pex_file: p
+		pex_file: &p
 		builder: strings.new_builder(4000)
 	}
 
