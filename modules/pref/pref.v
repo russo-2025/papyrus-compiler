@@ -12,6 +12,7 @@ pub enum Backend {
 	pex
 	check
 	original // use a vanilla compiler to compile files
+	v
 }
 
 pub enum RunMode {
@@ -129,6 +130,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 			"-stats" {
 				p.stats_enabled = true
+				i++
+			}
+			"-v" {
+				p.backend = .v
 				i++
 			}
 			else {

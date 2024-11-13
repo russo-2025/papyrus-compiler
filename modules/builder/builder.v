@@ -81,6 +81,9 @@ pub fn (mut b Builder) run() bool {
 				error("Error: Original compiler is only available on Windows OS")
 			}
 		}
+		.v {
+			b.compile_v()
+		}
 	}
 
 	return true

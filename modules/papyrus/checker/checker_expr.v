@@ -149,7 +149,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			return node.typ
 		}
 		ast.CastExpr {
-			expr_type := c.expr(mut node.expr)
+			node.expr_typ = c.expr(mut node.expr)
 
 			idx := c.table.find_type_idx(node.type_name)
 
@@ -163,8 +163,8 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				return idx
 			}
 			
-			if !c.can_cast(expr_type, node.typ) {
-				expr_type_name := c.get_type_name(expr_type)
+			if !c.can_cast(node.expr_typ, node.typ) {
+				expr_type_name := c.get_type_name(node.expr_typ)
 				type_name := c.get_type_name(node.typ)
 				c.error("cannot convert type `${expr_type_name}` to type `${type_name}`",  node.pos)
 			}

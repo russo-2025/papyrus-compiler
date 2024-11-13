@@ -22,6 +22,7 @@ pub:
 	type_name	string
 pub mut:
 	expr		Expr
+	expr_typ 	Type
 	typ			Type
 }
 
