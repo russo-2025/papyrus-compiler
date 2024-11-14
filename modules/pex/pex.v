@@ -53,8 +53,7 @@ pub enum OpCode as u8 {
 // https://open-papyrus.github.io/docs/Pex_File_Format/Endianness.html
 //LITTLE_ENDIAN
 pub const le_magic_number = u32(0xFA57C0DE)
-	
-	//BIG_ENDIAN
+//BIG_ENDIAN
 pub const be_magic_number = u32(0xDEC057FA)
 
 pub enum GameType as u16 {

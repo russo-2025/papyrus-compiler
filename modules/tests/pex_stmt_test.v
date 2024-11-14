@@ -4,6 +4,7 @@ import papyrus.checker
 import pex
 import gen.gen_pex
 import pref
+import papyrus.eval
 
 const prefs = pref.Preferences {
 		paths: []string{}
@@ -96,6 +97,7 @@ Function Foo(int n1, int n2) global
 EndFunction
 
 Function Foz(int n1, int n2)
+3.5 + 1.5 == 5.0
 EndFunction\n"
 
 fn compile_top(src string) &pex.PexFile {
@@ -1707,4 +1709,10 @@ fn test_foo() { // ???
 	assert ins[1].op == pex.OpCode.assign
 	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "n"
 	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
+}
+
+fn test_asda() {
+	pex_file := compile_top('')
+	func := pex_file.get_function_from_empty_state("ABCD", "Foz") or { panic("func not found") }
+	eval.run(pex_file, func)
 }
