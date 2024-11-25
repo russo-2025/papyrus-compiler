@@ -1,4 +1,5 @@
 *.v linguist-language=V text=auto eol=lf
+v.mod linguist-language=V text=auto eol=lf
 *.psc linguist-vendored
 *.html linguist-vendored
 *.css linguist-vendored
