@@ -307,7 +307,7 @@ fn (mut r Reader) read_variable_value() !VariableValue {
 			value.data.string_id = r.read_string_ref() or { return err }
 		}
 		.integer {
-			value.data.integer = r.read[int]()
+			value.data.integer = r.read[i32]()
 		}
 		.float {
 			value.data.float = r.read[f32]()

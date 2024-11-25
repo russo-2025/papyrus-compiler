@@ -53,8 +53,7 @@ pub enum OpCode as u8 {
 // https://open-papyrus.github.io/docs/Pex_File_Format/Endianness.html
 //LITTLE_ENDIAN
 pub const le_magic_number = u32(0xFA57C0DE)
-	
-	//BIG_ENDIAN
+//BIG_ENDIAN
 pub const be_magic_number = u32(0xDEC057FA)
 
 pub enum GameType as u16 {
@@ -192,9 +191,9 @@ pub enum ValueType as u8 {
 pub union ValueData {
 pub mut:
 	string_id	StringId
-	integer		int	//present for integer types only
-	float		f32	//present for float types only
-	boolean		u8 //present for bool types only
+	integer		i32
+	float		f32
+	boolean		u8
 }
 
 pub struct VariableValue {
@@ -379,7 +378,7 @@ pub fn value_string(v StringId) VariableValue {
 pub fn value_integer(v int) VariableValue {
 	return VariableValue{
 		typ: .integer,
-		data: ValueData{ integer: v }
+		data: ValueData{ integer: i32(v) } // todo int to i32
 	}
 }
 
@@ -472,6 +471,17 @@ pub fn (p PexFile) get_string[T](v T) string {
 		assert false, "[pex.PexFile.get_string] invalid argument type ${T.name}"
 		panic("[pex.PexFile.get_string] invalid argument type ${T.name}")
 	}
+}
+
+@[inline]
+pub fn (p PexFile) find_string_id(str string) ?StringId {
+	for i in 0..p.string_table.len {
+		if str == p.string_table[i] {
+			return StringId(i)
+		}
+	}
+
+	return none
 }
 
 pub fn (p PexFile) get_object(name string) ?&Object {

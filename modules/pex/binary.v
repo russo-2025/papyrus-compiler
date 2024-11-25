@@ -27,7 +27,7 @@ pub fn (mut r Reader) read[T]() T {
 	$else $if T is i32 {
 		val := binary.big_endian_u32(r.bytes[r.pos..r.pos+4])
 		r.pos += 4
-		return int(val)
+		return i32(val)
 	}
 	$else $if T is i64 {
 		val := binary.big_endian_u64(r.bytes[r.pos..r.pos+8])
