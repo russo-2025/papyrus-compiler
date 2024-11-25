@@ -1,1 +1,6 @@
 *.v linguist-language=V text=auto eol=lf
+*.psc linguist-vendored
+*.html linguist-vendored
+*.css linguist-vendored
+*.js linguist-vendored
+*.bat linguist-vendored
