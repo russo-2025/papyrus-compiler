@@ -98,10 +98,6 @@ EndFunction
 
 Function Foz(int n1, int n2)
 EndFunction
-
-Bool Function PexInstructionTest(int n1, int n2) global
-	return 1 + 3.5 + 1.5 == 5.0
-EndFunction
 \n"
 
 fn compile_top(src string) &pex.PexFile {
@@ -1716,10 +1712,23 @@ fn test_foo() { // ???
 }
 
 fn test_asda() {
-	pex_file := compile_top('')
+	pex_file := compile_top('
+Float Function Sum(int n1, float n2, int n3 = 0, float n4 = 0.0) global
+return (n1 + n2 as int + n3 + n4 as int) as float 
+EndFunction
+
+Int Function PexInstructionTest(int n1, int n2) global
+	float var = Sum(1, 2 as float, Sum(1, 1 as float, Sum(1, 0 as float, 0) as int) as int) ; = 6
+	return (1 + 3.5 + 1.5 + var) as Int ; = 12
+EndFunction')
+
 	func := pex_file.get_function_from_empty_state("ABCD", "PexInstructionTest") or { panic("func not found") }
 	
 	mut ctx := eval.create_context()
 	ctx.load_pex_file(pex_file)
-	ctx.call_static("ABCD", "PexInstructionTest", []eval.Value{}) or { assert false }
+	res := ctx.call_static("ABCD", "PexInstructionTest", []eval.Value{}) or {
+		assert false
+		panic("err")
+	}
+	println("res ${res}")
 }

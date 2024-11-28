@@ -1,13 +1,25 @@
 module eval
 
-enum ValueType {
+pub struct Value {
+pub mut:
+	typ			ValueType = .none
+	data		ValueData = ValueData{ bool: false }
+	is_temp		bool
+	is_used		bool
+}
+
+pub struct Object {
+	name string
+}
+
+pub enum ValueType {
 	none
 	bool
 	integer
 	float
 	string
-	object
-	array
+	object // TODO
+	array // TODO
 }
 
 union ValueData {
@@ -16,28 +28,51 @@ mut:
 	integer	i32
 	float	f32
 	bool	bool
-	object	voidptr
-	array	voidptr
+	object	voidptr // TODO
+	array	voidptr // TODO
 }
 
-pub struct Value {
-pub mut:
-	typ			ValueType = .string
-	data		ValueData
-	is_temp		bool
-	is_used		bool
+const none_value = Value{
+	typ: .none,
+	data: ValueData{ bool: false }
 }
 
 @[inline]
-pub fn create_none_value() Value {
-	return Value{
-		typ: .none,
-		data: ValueData{ bool: false }
+pub fn create_value_typ(typ ValueType) Value {
+	match typ {
+		.none { return none_value }
+		.bool {
+			return Value{
+				typ: .bool,
+				data: ValueData{ bool: false }
+			}
 		}
+		.integer {
+			return Value{
+				typ: .integer,
+				data: ValueData{ integer: i32(0) }
+			}
+		}
+		.float {
+			return Value{
+				typ: .float,
+				data: ValueData{ float: f32(0) }
+			}
+		}
+		.string {
+			return Value{
+				typ: .string,
+				data: ValueData{ string: "" }
+			}
+		}
+		.object { return none_value } // TODO?
+		.array { panic("TODO") }
+	}
 }
 
 @[inline]
-pub fn create_value[T](v T) Value {
+pub fn create_value_data[T](v T) Value {
+	// TODO none
 	$if T is bool {
 		return Value{
 			typ: .bool,
@@ -62,6 +97,8 @@ pub fn create_value[T](v T) Value {
 			data: ValueData{ string: v }
 		}
 	}
+	//TODO object
+	//TODO array
 	$else  {
 		$compile_error("invalid T type in fn create_value")
 	}
@@ -69,6 +106,9 @@ pub fn create_value[T](v T) Value {
 
 fn (mut v Value) clear() {
 	match v.typ {
+		.none {
+			v.data.bool = false
+		}
 		.integer {
 			v.data.integer = 0
 		}
@@ -82,68 +122,59 @@ fn (mut v Value) clear() {
 			v.data.string = ""
 		}
 		.object {
-			v.data.bool = false
+			panic("TODO")
 		}
-		.none {
-			v.data.bool = false
+		.array {
+			panic("TODO")
 		}
-		else { panic("err") }
 	}
 }
 
-fn get_type_from_type_name(name string) ValueType {
-	lname := name.to_lower()
-	return match lname {
-		"string" { .string }
-		"int" { .integer }
-		"float" { .float }
-		"bool" { .bool }
-		else { .object }
+pub fn (mut v Value) set_value(value &Value) {
+	match v.typ {
+		.none { panic("TODO") }
+		.integer {
+			unsafe { v.data.integer = value.data.integer }
+		}
+		.float {
+			unsafe { v.data.float = value.data.float }
+		}
+		.bool {
+			unsafe { v.data.bool = value.data.bool }
+		}
+		.string {
+			unsafe { v.data.string = value.data.string }
+		}
+		.object { panic("TODO") }
+		.array { panic("TODO") }
 	}
 }
 
 pub fn (mut v Value) set[T](value T) {
 	$if T is bool {
 		assert v.typ == .bool
-		unsafe { v.data.bool = value }
+		v.set_data(value)
 	}
 	$else $if T is i32 {
 		assert v.typ == .integer
-		unsafe { v.data.integer = value }
+		v.set_data(value)
 	}
 	$else $if T is f32 {
 		assert v.typ == .float
-		unsafe { v.data.float = value }
+		v.set_data(value)
 	}
 	$else $if T is string {
 		assert v.typ == .string
 		unsafe { v.data.string = value }
 	}
-	//object
-	//array
+	//TODO object
+	//TODO array
 	$else $if T is &Value {
-		//assert v.typ != value.typ
-
-		match v.typ {
-			.none { panic("TODO") }
-			.integer {
-				unsafe { v.data.integer = value.data.integer } // error: expected struct or union but not 'struct papyrus__eval__Value *'
-			}
-			.float {
-				unsafe { v.data.float = value.data.float }
-			}
-			.bool {
-				unsafe { v.data.bool = value.data.bool }
-			}
-			.string {
-				unsafe { v.data.string = value.data.string }
-			}
-			.object { panic("TODO") }
-			.array { panic("TODO") }
-		}
+		assert v.typ == value.typ
+		v.set_data(value)
 	}
 	$else {
-		$compile_error("invalid cast")
+		$compile_error("invalid Value.set")
 	}
 }
 
@@ -164,33 +195,72 @@ fn (v Value) get[T]() T {
 		assert v.typ == .string
 		return unsafe { v.data.string }
 	}
-	//object
-	//array
+	//TODO object
+	//TODO array
 	$else {
-		$compile_error("invalid cast")
+		$compile_error("invalid Value.get")
+	}
+}
+
+fn (mut v Value) set_data[T](value T) {
+	$if T is bool {
+		unsafe { v.data.bool = value }
+	}
+	$else $if T is i32 {
+		unsafe { v.data.integer = value }
+	}
+	$else $if T is f32 {
+		unsafe { v.data.float = value }
+	}
+	$else $if T is string {
+		unsafe { v.data.string = value }
+	}
+	//TODO object
+	//TODO array
+	$else $if T is &Value {
+		match v.typ {
+			.none { panic("TODO") }
+			.integer {
+				unsafe { v.data.integer = value.data.integer } // error: expected struct or union but not 'struct papyrus__eval__Value *'
+			}
+			.float {
+				unsafe { v.data.float = value.data.float }
+			}
+			.bool {
+				unsafe { v.data.bool = value.data.bool }
+			}
+			.string {
+				unsafe { v.data.string = value.data.string }
+			}
+			.object { panic("TODO") }
+			.array { panic("TODO") }
+		}
+	}
+	$else {
+		$compile_error("invalid Value.set_data")
 	}
 }
 
 fn (mut v Value) cast[T]() {
 	$if T is bool {
 		match v.typ {
+			.none { v.set_data[bool](false) }
 			.bool { panic("invalid cast bool -> bool") }
-			.integer { v.set[bool](v.get[i32]() != 0) }
-			.float { v.set[bool](v.get[f32]() != 0.0) }
-			.string { v.set[bool](v.get[string]().len > 0) }
-			//.object {}
-			//.array {}
-			else { panic("TODO ${v.typ} -> bool") }
+			.integer { v.set_data[bool](v.get[i32]() != 0) }
+			.float { v.set_data[bool](v.get[f32]() != 0.0) }
+			.string { v.set_data[bool](v.get[string]().len > 0) }
+			.object { panic("TODO object -> bool") }
+			.array { panic("TODO array -> bool") }
 		}
 
 		v.typ = .bool
 	}
 	$else $if T is i32 {
 		match v.typ {
-			.bool { v.set[i32](if v.get[bool]() { i32(1) } else { i32(0) }) }
+			.bool { v.set_data[i32](if v.get[bool]() { i32(1) } else { i32(0) }) }
 			.integer { panic("invalid cast i32 -> i32") }
-			.float { v.set[i32](i32(v.get[f32]())) } // TODO f32 to i32
-			.string { v.set[i32](v.get[string]().i32()) }
+			.float { v.set_data[i32](i32(v.get[f32]())) } // TODO f32 to i32
+			.string { v.set_data[i32](v.get[string]().i32()) }
 			else { panic("invalid cast ${v.typ} -> i32") }
 		}
 
@@ -198,10 +268,10 @@ fn (mut v Value) cast[T]() {
 	}
 	$else $if T is f32 {
 		match v.typ {
-			.bool { v.set[f32](if v.get[bool]() { f32(1.0) } else { f32(0.0) }) }
-			.integer { v.set[f32](f32(v.get[i32]())) } // TODO f32 to i32
+			.bool { v.set_data[f32](if v.get[bool]() { f32(1.0) } else { f32(0.0) }) }
+			.integer { v.set_data[f32](f32(v.get[i32]())) } // TODO f32 to i32
 			.float { panic("invalid cast f32 -> f32") }
-			.string { v.set[f32](v.get[string]().f32()) }
+			.string { v.set_data[f32](v.get[string]().f32()) }
 			else { panic("invalid cast ${v.typ} -> f32") }
 		}
 
@@ -209,13 +279,13 @@ fn (mut v Value) cast[T]() {
 	}
 	$else $if T is string {
 		match v.typ {
-			.bool { v.set[string](if v.get[bool]() { "True" } else { "False" }) }
-			.integer { v.set[string](v.get[i32]().str()) }
-			.float { v.set[string](v.get[f32]().str()) }
+			.none { panic("TODO array -> bool") }
+			.bool { v.set_data[string](if v.get[bool]() { "True" } else { "False" }) }
+			.integer { v.set_data[string](v.get[i32]().str()) }
+			.float { v.set_data[string](v.get[f32]().str()) }
 			.string { panic("invalid cast string -> string") }
-			//.object {}
-			//.array {}
-			else { panic("TODO ${v.typ} -> bool") }
+			.object { panic("TODO object -> bool") }
+			.array { panic("TODO array -> bool") }
 		}
 
 		v.typ = .string
@@ -223,23 +293,10 @@ fn (mut v Value) cast[T]() {
 	//object
 	//array
 	$else {
-		$compile_error("invalid cast")
+		$compile_error("invalid Value.cast")
 	}
-
-/*
-	val := if operand is Value { operand } else if operand is Ident { e.get_var(operand.var_id) }
-
-	return match operand.typ {
-		.bool { cast_value[bool, T](operand.data.bool) }
-		.integer { cast_value[i32, T](operand.data.integer) }
-		.float { cast_value[f32, T](operand.data.f32) }
-		.string { cast_value[string, T](operand.data.string) }
-		//.object {}
-		//.array {}
-		else { panic("invalid cast") }
-	}*/
 }
-
+/*
 fn cast_value[T, Y](v T) {
 	$if Y is f32 {
 		$if T is i32 {
@@ -312,4 +369,4 @@ fn cast_value[T, Y](v T) {
 	$else $if Y is array {
 		$compile_error("invalid cast")
 	}*/
-}
+}*/

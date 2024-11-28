@@ -42,8 +42,7 @@ pub fn formatted_error(kind string, omsg string, filepath string, pos token.Posi
 	final_kind := bold(color(kind, kind))
 	final_msg := emsg
 	final_context := if scontext.len > 0 { '\n$scontext' } else { '' }
-	//
-	return '$final_position $final_kind $final_msg$final_context'.trim_space()
+	return '${final_position} ${final_kind} ${final_msg}${final_context}'.trim_space()
 }
 
 pub fn filepath_pos_to_source_and_column(filepath string, pos token.Position) (string, int) {

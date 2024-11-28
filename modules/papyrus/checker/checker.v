@@ -455,6 +455,6 @@ pub fn (mut c Checker) error(message string, pos token.Position) {
 		backtrace: ""
 		reporter:  errors.Reporter.checker
 	}
-
+	
 	util.show_compiler_message("Checker error:", pos: pos, file_path: c.file.path, message: message)	
 }
