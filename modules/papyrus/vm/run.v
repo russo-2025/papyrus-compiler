@@ -1,4 +1,4 @@
-module eval
+module vm
 
 @[params]
 struct RunCommandsParams {

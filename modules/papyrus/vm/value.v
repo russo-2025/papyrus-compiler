@@ -1,4 +1,4 @@
-module eval
+module vm
 
 pub struct Value {
 pub mut:

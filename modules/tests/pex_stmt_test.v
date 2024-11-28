@@ -4,7 +4,7 @@ import papyrus.checker
 import pex
 import gen.gen_pex
 import pref
-import papyrus.eval
+import papyrus.vm
 
 const prefs = pref.Preferences {
 		paths: []string{}
@@ -1724,9 +1724,9 @@ EndFunction')
 
 	func := pex_file.get_function_from_empty_state("ABCD", "PexInstructionTest") or { panic("func not found") }
 	
-	mut ctx := eval.create_context()
+	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
-	res := ctx.call_static("ABCD", "PexInstructionTest", []eval.Value{}) or {
+	res := ctx.call_static("ABCD", "PexInstructionTest", []vm.Value{}) or {
 		assert false
 		panic("err")
 	}
