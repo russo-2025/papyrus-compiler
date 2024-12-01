@@ -5,6 +5,7 @@ import pex
 import gen.gen_pex
 import pref
 import papyrus.vm
+import os
 
 const prefs = pref.Preferences {
 		paths: []string{}
@@ -1721,14 +1722,13 @@ Int Function PexInstructionTest(int n1, int n2) global
 	float var = Sum(1, 2 as float, Sum(1, 1 as float, Sum(1, 0.0) as int) as int) ; = 6
 	return (1 + 3.5 + 1.5 + var) as Int ; = 12
 EndFunction')*/
-	src_file := '
-Scriptname ABCD 
-Float Function Sum(int n1, float n2) global
-return (n1 + n2 as int) as float 
+	src_file := 'Scriptname ABCD 
+Float Function Sum(int n1, float n2, float n3) global
+return (n1 + n2 as int + n3 as int) as float 
 EndFunction
 
 Int Function PexInstructionTest(int n1, int n2) global
-	return Sum(11, 12 as Float) as int
+	return Sum(11, 12 as Float, Sum(1, 2 as Float)) as int
 EndFunction'
 
 	mut table := ast.new_table()
@@ -1738,12 +1738,14 @@ EndFunction'
 	c.check(mut ast_file)
 	assert c.errors.len == 0
 	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
+	
+	os.write_file("M:\\_projects_skyrim\\papyrus-compiler\\modules\\tests\\disasm.txt", pex_file.str()) or { panic(err) }
 
 	func := pex_file.get_function_from_empty_state("ABCD", "PexInstructionTest") or { panic("func not found") }
 	
 	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
-	res := ctx.call_static("ABCD", "PexInstructionTest", []vm.Value{}) or {
+	res := ctx.call_static("ABCD", "PexInstructionTest", [ vm.create_value_data[i32](22), vm.create_value_data[i32](23)]) or {
 		assert false
 		panic("err")
 	}

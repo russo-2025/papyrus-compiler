@@ -7,9 +7,14 @@ struct Function {
 	name			string @[required]
 	is_global		bool
 mut:
+	params			[]Param @[required]
 	commands		[]Command @[required]
-	params			[]Value
-	stack_data	[]Value
+	stack_data		[]Value @[required]
+}
+
+struct Param {
+	name	string
+	typ		ValueType
 }
 
 type Command = /*InitFnStack | */CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign

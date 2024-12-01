@@ -2,14 +2,15 @@ module vm
 
 @[params]
 struct RunCommandsParams {
-	commands		[]Command
-	args			[]Operand
-	stack_data		[]Value
+	func			&Function
+	//commands		[]Command
+	args			[]Value
+	//stack_data	[]Value
 	is_global		bool
 }
 
 fn (mut e ExecutionContext) print_stack() {
-	for i := e.stack.len() - 1; i >= 0; i-- {
+	for i := 0; i < e.stack.len(); i++ {
 		val := e.stack.peek_offset(i)
 		mut val_str := match val.typ {
 			.none { "type: none" }
@@ -20,8 +21,7 @@ fn (mut e ExecutionContext) print_stack() {
 			.object { panic("TODO") }
 			.array { panic("TODO") }
 		}
-		offset := (e.stack.len() - 1) - i
-		println("offset: ${offset}; ${val_str}")
+		println("offset: ${i}; ${val_str}")
 	}
 }
 
@@ -30,30 +30,23 @@ fn (mut e ExecutionContext) get_value(operand Operand) &Value {
 }
 
 fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
-	//alen1 := e.stack.len()
-
-	e.stack.push_many(p.stack_data.reverse())
+	//println("[run] ${p.func.name}")
+	//println("push stask data ${p.func.stack_data.len}")
+	e.stack.push_many(p.func.stack_data.reverse())
 	
-	//println(p.args)
+	//println("push args ${p.args.len}")
 	for i := p.args.len - 1; i >= 0; i-- {
-		val := e.stack.peek_offset(p.args[i].stack_offset + p.stack_data.len)
-		e.stack.push(*val)
+		e.stack.push(p.args[i])
 	}
 
-	e.print_stack()
+	//println("push state name")
+	e.stack.push(create_value_data[string]("default state name")) // state_name_operand
+	//println("push self")
+	e.stack.push(none_value) // self_operand
 
-	/*
-	for i := p.stack_data.len - 1; i >= 0; i-- {
-		e.get_value(e.stack.peek_offset(p.stack_data.len + i))
-	}*/
+	//e.print_stack()
 
-	for i in 0..p.stack_data.len {
-		e.stack.peek_offset(p.stack_data.len - i)
-	}
-
-	//println("[run] init stack len: ${alen1}(${p.stack_data.len}) -> ${e.stack.len()}")
-
-	for command in p.commands {
+	for command in p.func.commands {
 		//println(command)
 		match command {
 			/*InitFnStack {
@@ -61,10 +54,14 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 				e.stack.push_many(command.data.reverse())
 			}*/
 			CallStatic {
+				//println("[run CallStatic] ${command.name}")
 				func := e.find_global_func(command.object, command.name) or { panic("fn not found") }
 				mut res := e.get_value(command.result)
-				res.set_value(e.run_commands(commands: func.commands, args: command.args, stack_data: func.stack_data))
-				//println("[run_commands CallStatic] name: ${command.name}, res: ${res}")
+				mut vargs := []Value{}
+				for arg in command.args {
+					vargs << e.get_value(arg)
+				}
+				res.set_value(e.run_commands(func: func, args: vargs))
 			}
 			CallMethod { panic("TODO CallMethod") }
 			InfixExpr {
@@ -74,14 +71,14 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 						mut v2 := e.get_value(command.value2).get[i32]()
 						mut res := e.get_value(command.result)
 						res.set[i32](v1 + v2)
-						println("iadd ${v1} ${v2} = ${res.get[i32]()}")
+						//println("iadd ${v1} ${v2} = ${res.get[i32]()}")
 					}
 					.fadd {
 						mut v1 := e.get_value(command.value1).get[f32]()
 						mut v2 := e.get_value(command.value2).get[f32]()
 						mut res := e.get_value(command.result)
 						res.set[f32](v1 + v2)
-						println("fadd ${v1} ${v2} = ${res.get[f32]()}")
+						//println("fadd ${v1} ${v2} = ${res.get[f32]()}")
 					}
 					.isub,
 					.fsub,
@@ -116,13 +113,9 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 			}
 			CastExpr {
 				mut res := e.get_value(command.result)
-				//println(e)
-				//println(command.value)
 				mut value := e.get_value(command.value)
 				to_type := res.typ
-				//println("[run_commands CastExpr] ===================res: ${res}, value: ${value}; ")
-
-				println("cast ${command.value.stack_offset} -> ${command.result.stack_offset}")
+				//println("[run CastExpr] ${command.value.stack_offset} -> ${command.result.stack_offset}")
 				match to_type {
 					.none { panic("TODO") }
 					.bool {
@@ -146,9 +139,10 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 			Return {
 				res := e.get_value(command.value)
 				//println("[run_commands Return] res: ${res}")
-				//len1 := e.stack.len()
-				e.stack.pop_len(p.stack_data.len)
-				//eprintln("[run] free stack len: ${len1}(${p.stack_data.len}) -> ${e.stack.len()}")
+				e.stack.pop_len(p.func.stack_data.len)
+				e.stack.pop_len(p.args.len)
+				e.stack.pop()
+				e.stack.pop()
 				return res
 			}
 			Assign {
@@ -158,15 +152,15 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 		}
 	}
 
-	//len1 := e.stack.len()
-	e.stack.pop_len(p.stack_data.len)
-	//eprintln("[run] free stack len: ${len1}(${p.stack_data.len}) -> ${e.stack.len()}")
+	e.stack.pop_len(p.func.stack_data.len)
+	e.stack.pop_len(p.args.len)
+	e.stack.pop()
+	e.stack.pop()
 
 	return e.get_value(e.none_operand)
 }
 
 pub fn (mut e ExecutionContext) call_static(object_name string, func_name string, args []Value) ?&Value {
 	mut func := e.find_global_func(object_name, func_name) or { return none }
-	//TODO []Value -> []Operand
-	return e.run_commands(commands: func.commands, args: []Operand{}, stack_data: func.stack_data)
+	return e.run_commands(func: func, args: args)
 }

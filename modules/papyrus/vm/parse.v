@@ -5,10 +5,24 @@ import pex
 fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex_func &pex.Function) {
 	mut commands := []Command{}
 	
-	e.fn_stack_count = 0
+	e.fn_stack_count = e.stack.len() - 1
 	e.fn_stack_data = []Value{}	
 	e.local_id_by_name = map[pex.StringId]int{}
 	e.local_typ_by_name = map[pex.StringId]ValueType{}
+
+	//println("parse fn ${e.get_string(pex_func.name)} locals: ${pex_func.info.locals.len} params: ${pex_func.info.params.len} e.fn_stack_count ${e.fn_stack_count}")
+	
+	e.self_operand = Operand {
+		stack_offset: e.fn_stack_count
+	}
+	e.fn_stack_count++
+
+	e.state_name_operand = Operand {
+		stack_offset: e.fn_stack_count
+	}
+	e.fn_stack_count++
+
+	mut fn_params := []Param{}
 
 	for pex_param in pex_func.info.params {
 		typ1 := get_type_from_type_name(e.get_string(pex_param.typ))
@@ -17,7 +31,10 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		e.local_id_by_name[pex_param.name] = e.fn_stack_count
 
 		e.fn_stack_count++
-		//e.fn_stack_data << create_value_typ(typ1)
+		fn_params << Param{
+			name: e.get_string(pex_param.name)
+			typ: typ1
+		}
 	}
 
 	for pex_local in pex_func.info.locals {
@@ -29,12 +46,11 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		e.fn_stack_count++
 		e.fn_stack_data << create_value_typ(typ2)
 	}
-
-	e.self_operand = e.create_operand(none_value) // self
-	e.state_name_operand = e.create_operand(create_value_data[string]("default state name"))
+	
+	//println("parse fn ${e.get_string(pex_func.name)} locals: ${pex_func.info.locals.len} params: ${pex_func.info.params.len} e.fn_stack_count ${e.fn_stack_count}")
 	
 	for inst in pex_func.info.instructions {
-		//println(inst)
+		//println("[parse] ${inst.op} e.fn_stack_count ${e.fn_stack_count}")
 		match inst.op {
 			.nop {}
 			.iadd,
@@ -71,10 +87,10 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 				res := e.parse_value(inst.args[0])
 				value := e.parse_value(inst.args[1])
 				
-				to_typ_name := if inst.args[0].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[0].to_string_id()].str() } else { inst.args[0].typ.str() }
-				from_typ_name := if inst.args[1].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[1].to_string_id()].str() } else { inst.args[1].typ.str() }
-				println("cast ${from_typ_name} -> ${to_typ_name}")
-				//println("aaa ${res.stack_offset}  ${value.stack_offset} ${pex_func.info.params.len}")
+				//to_typ_name := if inst.args[0].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[0].to_string_id()].str() } else { inst.args[0].typ.str() }
+				//from_typ_name := if inst.args[1].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[1].to_string_id()].str() } else { inst.args[1].typ.str() }
+				//println("[parse] cast ${from_typ_name} -> ${to_typ_name}")
+
 				commands << CastExpr{
 					result: res
 					value: value
@@ -111,6 +127,8 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 					}
 				}
 				
+				//println("[parse] callstatic ${e.get_string(inst.args[0].to_string_id())}.${e.get_string(inst.args[1].to_string_id())}")
+				
 				commands << CallStatic{
 					object: e.get_string(inst.args[0].to_string_id())
 					name: e.get_string(inst.args[1].to_string_id())
@@ -136,12 +154,13 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		}
 	}
 
-	//println("[load func] stack data: ${e.fn_stack_data}")
+	//println("[parse fn] e.fn_stack_count: ${e.fn_stack_count}")
 	e.register_func(object_name, state_name, &Function {
 		name: e.get_string(pex_func.name)
 		commands: commands
 		is_global: pex_func.info.is_global()
 		stack_data: e.fn_stack_data
+		params: fn_params
 	})
 }
 
@@ -160,14 +179,15 @@ fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
 			return e.none_operand
 		}
 		.boolean {
+			//println("[parse_value] bool ${pex_value.to_boolean()}")
 			return e.create_operand(create_value_data[bool](pex_value.to_boolean() > 0))
 		}
 		.float {
-			println("parse float ${pex_value.to_float()}")
+			//println("[parse_value] float ${pex_value.to_float()} e.fn_stack_count: ${e.fn_stack_count}")
 			return e.create_operand(create_value_data[f32](pex_value.to_float()))
 		}
 		.integer {
-			println("parse integer ${pex_value.to_integer()}")
+			//println("[parse_value] integer ${pex_value.to_integer()} e.fn_stack_count: ${e.fn_stack_count}")
 			return e.create_operand(create_value_data[i32](i32(pex_value.to_integer()))) //TODO int -> i32
 		}
 		.str {
@@ -175,6 +195,7 @@ fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
 		}
 		.identifier {
 			if pex_value.to_string_id() in e.local_id_by_name {
+				//println("[parse_value] identifier typ: ${e.local_typ_by_name[pex_value.to_string_id()]} offset: ${e.local_id_by_name[pex_value.to_string_id()]}")
 				return Operand {
 					stack_offset: e.local_id_by_name[pex_value.to_string_id()] or { panic("local not found")}
 				}
