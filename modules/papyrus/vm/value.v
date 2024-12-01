@@ -178,7 +178,7 @@ pub fn (mut v Value) set[T](value T) {
 	}
 }
 
-fn (v Value) get[T]() T {
+pub fn (v Value) get[T]() T {
 	$if T is bool {
 		assert v.typ == .bool
 		return unsafe { v.data.bool }
@@ -241,7 +241,7 @@ fn (mut v Value) set_data[T](value T) {
 	}
 }
 
-fn (mut v Value) cast[T]() {
+pub fn (mut v Value) cast[T]() {
 	$if T is bool {
 		match v.typ {
 			.none { v.set_data[bool](false) }

@@ -9,18 +9,19 @@ struct Function {
 mut:
 	commands		[]Command @[required]
 	params			[]Value
+	stack_data	[]Value
 }
 
-type Command = InitFnStack | CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
+type Command = /*InitFnStack | */CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
 
 struct Operand {
 	stack_offset	int
 }
-
+/*
 struct InitFnStack {
 mut:
 	data	[]Value
-}
+}*/
 
 struct InfixExpr {
 mut:

@@ -4,15 +4,9 @@ import pex
 
 fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex_func &pex.Function) {
 	mut commands := []Command{}
-
-	mut fn_stack_data := []Value{}	
-	mut init_fn_stack := InitFnStack {
-		data: fn_stack_data
-	}
-	commands << init_fn_stack
-	e.fn_stack_data = fn_stack_data // fix commands[0].data.len: 0 e.fn_stack_data.len: 6
-
-	//e.fn_stack_data = []Value{}
+	
+	e.fn_stack_count = 0
+	e.fn_stack_data = []Value{}	
 	e.local_id_by_name = map[pex.StringId]int{}
 	e.local_typ_by_name = map[pex.StringId]ValueType{}
 
@@ -20,17 +14,19 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		typ1 := get_type_from_type_name(e.get_string(pex_param.typ))
 
 		e.local_typ_by_name[pex_param.name] = typ1
-		e.local_id_by_name[pex_param.name] = e.fn_stack_data.len
+		e.local_id_by_name[pex_param.name] = e.fn_stack_count
 
-		e.fn_stack_data << create_value_typ(typ1)
+		e.fn_stack_count++
+		//e.fn_stack_data << create_value_typ(typ1)
 	}
 
 	for pex_local in pex_func.info.locals {
 		typ2 := get_type_from_type_name(e.get_string(pex_local.typ))
 
 		e.local_typ_by_name[pex_local.name] = typ2
-		e.local_id_by_name[pex_local.name] = e.fn_stack_data.len
+		e.local_id_by_name[pex_local.name] = e.fn_stack_count
 
+		e.fn_stack_count++
 		e.fn_stack_data << create_value_typ(typ2)
 	}
 
@@ -72,9 +68,16 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 				}
 			}
 			.cast {
+				res := e.parse_value(inst.args[0])
+				value := e.parse_value(inst.args[1])
+				
+				to_typ_name := if inst.args[0].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[0].to_string_id()].str() } else { inst.args[0].typ.str() }
+				from_typ_name := if inst.args[1].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[1].to_string_id()].str() } else { inst.args[1].typ.str() }
+				println("cast ${from_typ_name} -> ${to_typ_name}")
+				//println("aaa ${res.stack_offset}  ${value.stack_offset} ${pex_func.info.params.len}")
 				commands << CastExpr{
-					result: e.parse_value(inst.args[0])
-					value: e.parse_value(inst.args[1])
+					result: res
+					value: value
 				}
 			}
 			.jmp { panic("TODO ${inst.op}") }
@@ -133,28 +136,19 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		}
 	}
 
-	//(commands[0] as InitFnStack).data = e.fn_stack_data
-	/*
-	if command := commands[0] is InitFnStack {
-		command.data = e.fn_stack_data
-	}
-	*/
-	//println(typeof(commands[0]).name)
-	//mut init_stack := commands[0]
-	//(commands[0] as InitFnStack).data = e.fn_stack_data
-	///((commands[0]) as InitFnStack).data = e.fn_stack_data
-	println("commands[0].data.len: ${(commands[0] as InitFnStack).data.len} e.fn_stack_data.len: ${e.fn_stack_data.len}")
-
+	//println("[load func] stack data: ${e.fn_stack_data}")
 	e.register_func(object_name, state_name, &Function {
 		name: e.get_string(pex_func.name)
 		commands: commands
 		is_global: pex_func.info.is_global()
+		stack_data: e.fn_stack_data
 	})
 }
 
 fn (mut e ExecutionContext) create_operand(value Value) Operand {
-	stack_offset := e.fn_stack_data.len
+	stack_offset := e.fn_stack_count
 	e.fn_stack_data << value
+	e.fn_stack_count++
 	return Operand {
 		stack_offset: stack_offset
 	}
@@ -166,16 +160,18 @@ fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
 			return e.none_operand
 		}
 		.boolean {
-			return e.create_operand(create_value_typ(.bool))
+			return e.create_operand(create_value_data[bool](pex_value.to_boolean() > 0))
 		}
 		.float {
-			return e.create_operand(create_value_typ(.float))
+			println("parse float ${pex_value.to_float()}")
+			return e.create_operand(create_value_data[f32](pex_value.to_float()))
 		}
 		.integer {
-			return e.create_operand(create_value_typ(.integer))
+			println("parse integer ${pex_value.to_integer()}")
+			return e.create_operand(create_value_data[i32](i32(pex_value.to_integer()))) //TODO int -> i32
 		}
 		.str {
-			return e.create_operand(create_value_typ(.string))
+			return e.create_operand(create_value_data[string](pex_value.to_string(e.pex_file)))
 		}
 		.identifier {
 			if pex_value.to_string_id() in e.local_id_by_name {
