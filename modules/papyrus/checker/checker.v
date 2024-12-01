@@ -440,7 +440,9 @@ pub fn (mut c Checker) warn(message string, pos token.Position) {
 		reporter:  errors.Reporter.checker
 	}
 
-	util.show_compiler_message("Checker warning:", pos: pos, file_path: c.file.path, message: message)	
+	if c.pref.output_mode == .stdout {
+		util.show_compiler_message("Checker warning:", pos: pos, file_path: c.file.path, message: message)
+	}
 }
 
 pub fn (mut c Checker) error(message string, pos token.Position) {
@@ -456,5 +458,7 @@ pub fn (mut c Checker) error(message string, pos token.Position) {
 		reporter:  errors.Reporter.checker
 	}
 	
-	util.show_compiler_message("Checker error:", pos: pos, file_path: c.file.path, message: message)	
+	if c.pref.output_mode == .stdout {
+		util.show_compiler_message("Checker error:", pos: pos, file_path: c.file.path, message: message)
+	}
 }

@@ -479,8 +479,11 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 				i++
 				continue
 			}
+			
+			if !param.is_optional {
+				break
+			}
 
-			assert param.is_optional
 			assert param.default_value.is_literal()
 			assert param.default_value !is ast.EmptyExpr
 
@@ -505,13 +508,13 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 
 		for _, value in node.redefined_args {
 			if !value.is_used {
-				c.error('optional argument named `$value.name` not found', value.pos)
+				c.error('optional argument named `${value.name}` not found', value.pos)
 			}
 		}
 	}
 
 	if node.args.len != func.params.len {
-		c.error("function takes $func.params.len parameters not $node.args.len", node.pos)
+		c.error("function takes ${func.params.len} parameters not ${node.args.len}", node.pos)
 		return ast.none_type
 	}
 
