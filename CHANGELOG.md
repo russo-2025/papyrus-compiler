@@ -4,6 +4,10 @@
 
 - **Error Messaging Improvements**
   - Enhanced and added error messages for missing or incorrect arguments when using the console.
+  - Fixed the error message when attempting to call a function with fewer arguments than required.
+
+- **Compatibility Enhancements**
+  - Improved and fixed compatibility with the latest V compiler version [V compiler e433d7c (weekly.2024.46)](https://github.com/vlang/v/releases/tag/weekly.2024.46).
 
 ## V 0.0.1
 
