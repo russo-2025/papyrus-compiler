@@ -25,25 +25,46 @@ fn (mut e ExecutionContext) print_stack() {
 	}
 }
 
+fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
+	mut val1 := e.stack.peek_offset(operand.stack_offset)
+
+	match val1.typ {
+		.none { panic("TODO") }
+		.integer {
+			unsafe { val1.data.integer = val2.data.integer }
+		}
+		.float {
+			unsafe { val1.data.float = val2.data.float }
+		}
+		.bool {
+			unsafe { val1.data.bool = val2.data.bool }
+		}
+		.string {
+			unsafe { val1.data.string = val2.data.string }
+		}
+		.object { panic("TODO") }
+		.array { panic("TODO") }
+	}
+}
+
 fn (mut e ExecutionContext) get_value(operand Operand) &Value {
 	return e.stack.peek_offset(operand.stack_offset)
 }
 
 fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
-	//println("[run] ${p.func.name}")
-	//println("push stask data ${p.func.stack_data.len}")
+	pushlen := p.func.stack_data.len + p.args.len + 1 + 1
+	println("[run] ${p.func.name} stacklen${e.stack.len()} pushlen${pushlen}")
 	e.stack.push_many(p.func.stack_data.reverse())
 	
-	//println("push args ${p.args.len}")
 	for i := p.args.len - 1; i >= 0; i-- {
 		e.stack.push(p.args[i])
 	}
 
-	//println("push state name")
+	//TODO только для методов
 	e.stack.push(create_value_data[string]("default state name")) // state_name_operand
-	//println("push self")
 	e.stack.push(none_value) // self_operand
 
+	//println("============")
 	//e.print_stack()
 
 	for command in p.func.commands {
@@ -54,14 +75,16 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 				e.stack.push_many(command.data.reverse())
 			}*/
 			CallStatic {
-				//println("[run CallStatic] ${command.name}")
 				func := e.find_global_func(command.object, command.name) or { panic("fn not found") }
 				mut res := e.get_value(command.result)
 				mut vargs := []Value{}
 				for arg in command.args {
 					vargs << e.get_value(arg)
 				}
-				res.set_value(e.run_commands(func: func, args: vargs))
+
+				tres := e.run_commands(func: func, args: vargs)
+				
+				e.set_value(command.result, tres)
 			}
 			CallMethod { panic("TODO CallMethod") }
 			InfixExpr {
@@ -70,15 +93,13 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 						mut v1 := e.get_value(command.value1).get[i32]()
 						mut v2 := e.get_value(command.value2).get[i32]()
 						mut res := e.get_value(command.result)
-						res.set[i32](v1 + v2)
-						//println("iadd ${v1} ${v2} = ${res.get[i32]()}")
+						res.set[i32](v1 + v2)//TODO e.set_value_data(command.result, 1)
 					}
 					.fadd {
 						mut v1 := e.get_value(command.value1).get[f32]()
 						mut v2 := e.get_value(command.value2).get[f32]()
 						mut res := e.get_value(command.result)
-						res.set[f32](v1 + v2)
-						//println("fadd ${v1} ${v2} = ${res.get[f32]()}")
+						res.set[f32](v1 + v2) //TODO e.set_value_data(command.result, 1)
 					}
 					.isub,
 					.fsub,
@@ -93,13 +114,13 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 								mut v1 := e.get_value(command.value1).get[i32]()
 								mut v2 := e.get_value(command.value2).get[i32]()
 								mut res := e.get_value(command.result)
-								res.set[bool](v1 == v2)
+								res.set[bool](v1 == v2)//TODO e.set_value_data(command.result, 1)
 							}
 							.float {
 								mut v1 := e.get_value(command.value1).get[f32]()
 								mut v2 := e.get_value(command.value2).get[f32]()
 								mut res := e.get_value(command.result)
-								res.set[bool](v1 == v2)
+								res.set[bool](v1 == v2)//TODO e.set_value_data(command.result, 1)
 							}
 							else { panic("TODO") }
 						}
@@ -115,7 +136,7 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 				mut res := e.get_value(command.result)
 				mut value := e.get_value(command.value)
 				to_type := res.typ
-				//println("[run CastExpr] ${command.value.stack_offset} -> ${command.result.stack_offset}")
+				
 				match to_type {
 					.none { panic("TODO") }
 					.bool {
@@ -134,20 +155,27 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					.array { panic("TODO") }
 				}
 
-				res.set_value(value) // TODO v bug .set[&Value]()
+				e.set_value(command.result, e.get_value(command.value))
 			}
 			Return {
 				res := e.get_value(command.value)
-				//println("[run_commands Return] res: ${res}")
+
 				e.stack.pop_len(p.func.stack_data.len)
 				e.stack.pop_len(p.args.len)
 				e.stack.pop()
 				e.stack.pop()
+
+				if res.typ == .float {
+					println("[run Return] ${p.func.name} res ${res.get[f32]()} stacklen${e.stack.len()}")
+				}
+				else if res.typ == .integer {
+					println("[run Return] ${p.func.name} res ${res.get[i32]()} stacklen${e.stack.len()}")
+				}
+
 				return res
 			}
 			Assign {
-				mut res := e.get_value(command.result)
-				res.set_value(e.get_value(command.value))
+				e.set_value(command.result, e.get_value(command.value))
 			}
 		}
 	}
@@ -156,6 +184,8 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 	e.stack.pop_len(p.args.len)
 	e.stack.pop()
 	e.stack.pop()
+
+	println("[run Return] ${p.func.name} stacklen${e.stack.len()}")
 
 	return e.get_value(e.none_operand)
 }

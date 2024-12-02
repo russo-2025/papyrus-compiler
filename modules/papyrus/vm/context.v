@@ -38,7 +38,7 @@ pub fn (mut e ExecutionContext) load_pex_file(pex_file &pex.PexFile) {
 	obj := e.pex_file.objects[0]
 
 	object_name := e.get_string(obj.name)
-	auto_state_name := e.get_string(obj.auto_state_name)
+	//auto_state_name := e.get_string(obj.auto_state_name)
 
 	for pex_state in obj.states {
 		state_name := e.get_string(pex_state.name)

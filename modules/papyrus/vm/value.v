@@ -130,26 +130,6 @@ fn (mut v Value) clear() {
 	}
 }
 
-pub fn (mut v Value) set_value(value &Value) {
-	match v.typ {
-		.none { panic("TODO") }
-		.integer {
-			unsafe { v.data.integer = value.data.integer }
-		}
-		.float {
-			unsafe { v.data.float = value.data.float }
-		}
-		.bool {
-			unsafe { v.data.bool = value.data.bool }
-		}
-		.string {
-			unsafe { v.data.string = value.data.string }
-		}
-		.object { panic("TODO") }
-		.array { panic("TODO") }
-	}
-}
-
 pub fn (mut v Value) set[T](value T) {
 	$if T is bool {
 		assert v.typ == .bool
@@ -169,10 +149,6 @@ pub fn (mut v Value) set[T](value T) {
 	}
 	//TODO object
 	//TODO array
-	$else $if T is &Value {
-		assert v.typ == value.typ
-		v.set_data(value)
-	}
 	$else {
 		$compile_error("invalid Value.set")
 	}
@@ -217,25 +193,6 @@ fn (mut v Value) set_data[T](value T) {
 	}
 	//TODO object
 	//TODO array
-	$else $if T is &Value {
-		match v.typ {
-			.none { panic("TODO") }
-			.integer {
-				unsafe { v.data.integer = value.data.integer } // error: expected struct or union but not 'struct papyrus__eval__Value *'
-			}
-			.float {
-				unsafe { v.data.float = value.data.float }
-			}
-			.bool {
-				unsafe { v.data.bool = value.data.bool }
-			}
-			.string {
-				unsafe { v.data.string = value.data.string }
-			}
-			.object { panic("TODO") }
-			.array { panic("TODO") }
-		}
-	}
 	$else {
 		$compile_error("invalid Value.set_data")
 	}
@@ -296,77 +253,3 @@ pub fn (mut v Value) cast[T]() {
 		$compile_error("invalid Value.cast")
 	}
 }
-/*
-fn cast_value[T, Y](v T) {
-	$if Y is f32 {
-		$if T is i32 {
-			return Y(v)
-		}
-		$else $if T is bool {
-			return if v { 1.0 } else { 0.0 } 
-		}
-		$else $if T is string {
-			// TODO
-			return v.f32()
-		}
-		$else {
-			$compile_error("invalid cast")
-		}
-	}
-	$else $if Y is i32 {
-		$if T is f32 {
-			return Y(v)
-		}
-		$else $if T is bool {
-			return if v { 1 } else { 0 }
-		}
-		$else $if T is string {
-			// TODO
-			return v.i32()
-		}
-		$else {
-			$compile_error("invalid cast")
-		}
-	}
-	$else $if Y is bool {
-		$if T is i32 {
-			return v != 0
-		}
-		$else $if T is f32 {
-			return v != 0
-		}
-		$else $if T is string {
-			return v.len > 0
-		}
-		//$else $if T is object {} // True if the object isn't None
-		//$else $if T is array {} // True if the array is 1 element or longer in size
-		$else {
-			$compile_error("invalid cast")
-		}
-	}
-	$else $if Y is string {
-		$if T is i32 {
-			return v.str()
-		}
-		$else $if T is f32 {
-			return v.str()
-		}
-		$else $if T is bool {
-			return if v { "True" } else { "False" }
-		}
-		//$else $if T is object {} // A string representing the object in the format: "[ScriptName <EditorID (FormID)>]"
-		//$else $if T is array {} // A list of elements in the array separated by commas, formatted as above, and possibly truncated with a "..." if too long for the internal string buffer.
-		$else {
-			$compile_error("invalid cast")
-		}
-	}
-	/*$else $if Y is object { // TODO
-		$if T is object {}
-		$else {
-			$compile_error("invalid cast") 
-		}
-	}
-	$else $if Y is array {
-		$compile_error("invalid cast")
-	}*/
-}*/

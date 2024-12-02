@@ -22,7 +22,7 @@ fn (mut s Stack[T]) pop() T {
 
 fn (mut s Stack[T]) pop_len(len int) {
 	assert s.els.len >= len
-	for i in 0..len {
+	for _ in 0..len {
 		s.els.pop()
 	}
 }
