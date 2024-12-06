@@ -3,8 +3,7 @@ module vm
 import pex
 
 fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex_func &pex.Function) {
-	mut commands := []Command{}
-	
+	e.commands = []Command{}
 	e.fn_stack_count = e.stack.len() - 1
 	e.fn_stack_data = []Value{}	
 	e.local_id_by_name = map[pex.StringId]int{}
@@ -67,38 +66,55 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 			.cmp_le,
 			.cmp_gt,
 			.cmp_ge {
-				commands << InfixExpr{
+				e.commands << InfixExpr{
 					op: inst.op
 					result: e.parse_value(inst.args[0])
 					value1: e.parse_value(inst.args[1])
 					value2: e.parse_value(inst.args[2])
 				}
 			}
-			.not { panic("TODO ${inst.op}") }
-			.ineg { panic("TODO ${inst.op}") }
-			.fneg { panic("TODO ${inst.op}") }
+			.not,
+			.ineg,
+			.fneg {
+				e.commands << PrefixExpr{
+					op: inst.op
+					result: e.parse_value(inst.args[0])
+					value: e.parse_value(inst.args[1])
+				}
+			}
 			.assign {
-				commands << Assign{
+				e.commands << Assign{
 					result: e.parse_value(inst.args[0])
 					value: e.parse_value(inst.args[1])
 				}
 			}
 			.cast {
-				res := e.parse_value(inst.args[0])
-				value := e.parse_value(inst.args[1])
-				
 				//to_typ_name := if inst.args[0].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[0].to_string_id()].str() } else { inst.args[0].typ.str() }
 				//from_typ_name := if inst.args[1].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[1].to_string_id()].str() } else { inst.args[1].typ.str() }
 				//println("[parse] cast ${from_typ_name} -> ${to_typ_name}")
 
-				commands << CastExpr{
-					result: res
-					value: value
+				e.commands << CastExpr{
+					result: e.parse_value(inst.args[0])
+					value: e.parse_value(inst.args[1])
 				}
 			}
-			.jmp { panic("TODO ${inst.op}") }
-			.jmpt { panic("TODO ${inst.op}") }
-			.jmpf { panic("TODO ${inst.op}") }
+			.jmp {
+				e.commands << Jump{
+					offset: i32(inst.args[0].to_integer()) // TODO int -> i32
+				}
+			}
+			.jmpt {
+				e.commands << JumpTrue{
+					value: e.parse_value(inst.args[0])
+					offset: i32(inst.args[0].to_integer()) // TODO int -> i32
+				}
+			}
+			.jmpf {
+				e.commands << JumpFalse{
+					value: e.parse_value(inst.args[0])
+					offset: i32(inst.args[0].to_integer()) // TODO int -> i32
+				}
+			}
 			.callmethod {
 				args_count := inst.args[3].to_integer()
 
@@ -109,7 +125,7 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 					}
 				}
 				
-				commands << CallMethod{
+				e.commands << CallMethod{
 					name: e.get_string(inst.args[0].to_string_id())
 					self: e.parse_value(inst.args[1])
 					result: e.parse_value(inst.args[2])
@@ -129,7 +145,7 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 				
 				//println("[parse] callstatic ${e.get_string(inst.args[0].to_string_id())}.${e.get_string(inst.args[1].to_string_id())}")
 				
-				commands << CallStatic{
+				e.commands << CallStatic{
 					object: e.get_string(inst.args[0].to_string_id())
 					name: e.get_string(inst.args[1].to_string_id())
 					result: e.parse_value(inst.args[2])
@@ -137,7 +153,7 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 				}
 			}
 			.ret {
-				commands << Return{
+				e.commands << Return{
 					value: e.parse_value(inst.args[0])
 				}
 			}
@@ -157,20 +173,99 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 	//println("[parse fn] e.fn_stack_count: ${e.fn_stack_count}")
 	e.register_func(object_name, state_name, &Function {
 		name: e.get_string(pex_func.name)
-		commands: commands
+		commands: e.commands
 		is_global: pex_func.info.is_global()
 		stack_data: e.fn_stack_data
 		params: fn_params
 	})
 }
 
-fn (mut e ExecutionContext) create_operand(value Value) Operand {
-	stack_offset := e.fn_stack_count
-	e.fn_stack_data << value
-	e.fn_stack_count++
-	return Operand {
-		stack_offset: stack_offset
+//const iregs := [.reg_i1, .reg_i2, .reg_i3, .reg_i4 ]
+//const fregs := [.reg_f1, .reg_f2, .reg_f3, .reg_f4 ]
+/*
+@[inline]
+fn (mut e ExecutionContext) find_free_reg(typ ValueType) OperandType {
+	if typ == .integer {
+
 	}
+	else if typ == .float {
+
+	}
+	else {
+
+	}
+	
+	for reg in iregs {
+
+	}
+
+	match typ {
+		reg_i1 { return .reg_i1 }
+		reg_i2 { return .reg_i2 }
+		reg_i2 { return .reg_i2 }
+		reg_i3 { return .reg_i3 }
+		reg_f1 { return .reg_f1 }
+		reg_f2 { return .reg_f2 }
+		reg_f2 { return .reg_f2 }
+		reg_f3 { return .reg_f3 }
+		stack { panic("wtf") }
+	}
+}*/
+/*
+fn (mut e ExecutionContext) find_free_reg(value Value) ?Operand {
+	if value.typ == .integer {
+		if !e.reg_i1.is_used {
+			e.reg_i1.is_used = true
+			return Operand { typ: .reg_i1 }
+		}
+		else if !e.reg_i2.is_used {
+			e.reg_i2.is_used = true
+			return Operand { typ: .reg_i2 }
+		}
+		else if !e.reg_i3.is_used {
+			e.reg_i3.is_used = true
+			return Operand { typ: .reg_i3 }
+		}
+		else if !e.reg_i4.is_used {
+			e.reg_i4.is_used = true
+			return Operand { typ: .reg_i4 }
+		}
+	}
+	else if value.typ == .float {
+		if !e.reg_f1.is_used {
+			e.reg_f1.is_used = true
+			return Operand { typ: .reg_f1 }
+		}
+		else if !e.reg_f2.is_used {
+			e.reg_f2.is_used = true
+			return Operand { typ: .reg_f2 }
+		}
+		else if !e.reg_f3.is_used {
+			e.reg_f3.is_used = true
+			return Operand { typ: .reg_f3 }
+		}
+		else if !e.reg_f4.is_used {
+			e.reg_f4.is_used = true
+			return Operand { typ: .reg_f4 }
+		}
+	}
+	
+	return none
+}*/
+
+fn (mut e ExecutionContext) create_operand(value Value) Operand {
+	/*if operand := e.find_free_reg(value) {
+		return operand
+	}
+	else {*/
+		stack_offset := e.fn_stack_count
+		e.fn_stack_data << value
+		e.fn_stack_count++
+		return Operand {
+			//typ: .stack
+			stack_offset: stack_offset
+		}
+	//}
 }
 
 fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {

@@ -17,16 +17,47 @@ struct Param {
 	typ		ValueType
 }
 
-type Command = /*InitFnStack | */CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
-
 struct Operand {
+	//typ				OperandType = .stack
 	stack_offset	int
 }
 /*
-struct InitFnStack {
-mut:
-	data	[]Value
+enum OperandType as u8 {
+	reg_i1
+	reg_i2
+	reg_i3
+	reg_i4
+
+	reg_f1
+	reg_f2
+	reg_f3
+	reg_f4
+	
+	int_value
+	float_value
+
+	stack
 }*/
+
+type Command = Jump | JumpTrue | JumpFalse | PrefixExpr | CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
+
+struct Jump {
+	offset	i32
+}
+struct JumpTrue {
+	value	Operand
+	offset	i32
+}
+struct JumpFalse {
+	value	Operand
+	offset	i32
+}
+
+struct PrefixExpr {
+	op		pex.OpCode
+	result	Operand
+	value	Operand
+}
 
 struct InfixExpr {
 mut:
