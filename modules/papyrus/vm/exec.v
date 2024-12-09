@@ -342,7 +342,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 	
 	//println("[run Return] ${func.name} stacklen${e.stack.len()}")
 
-	return e.get_value(e.none_operand)
+	return e.get_value(e.loader.none_operand)
 }
 
 pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) ?Value {
