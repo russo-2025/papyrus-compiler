@@ -3,33 +3,30 @@ module vm
 import pex
 
 fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex_func &pex.Function) {
-	e.commands = []Command{}
+	e.commands = []Command{ cap: 15 }
 	e.fn_stack_count = e.stack.len() - 1
-	e.fn_stack_data = []Value{}	
-	e.local_id_by_name = map[pex.StringId]int{}
-	e.local_typ_by_name = map[pex.StringId]ValueType{}
+	e.fn_stack_data = []Value{ cap: 5 }
+	e.operand_by_name = map[pex.StringId]Operand
 
-	//println("parse fn ${e.get_string(pex_func.name)} locals: ${pex_func.info.locals.len} params: ${pex_func.info.params.len} e.fn_stack_count ${e.fn_stack_count}")
-	
-	e.self_operand = Operand {
-		stack_offset: e.fn_stack_count
+	for i in 0..e.used_registers.len {
+		e.used_registers[i] = false
 	}
-	e.fn_stack_count++
-
-	e.state_name_operand = Operand {
-		stack_offset: e.fn_stack_count
-	}
-	e.fn_stack_count++
+	e.self_operand = Operand { typ: .reg_self }
+	e.state_name_operand = Operand { typ: .reg_state }
 
 	mut fn_params := []Param{}
 
-	for pex_param in pex_func.info.params {
+	for i := pex_func.info.params.len - 1; i >= 0; i-- {
+		pex_param := pex_func.info.params[i]
 		typ1 := get_type_from_type_name(e.get_string(pex_param.typ))
-
-		e.local_typ_by_name[pex_param.name] = typ1
-		e.local_id_by_name[pex_param.name] = e.fn_stack_count
-
+		
+		e.operand_type_by_name[pex_param.name] = typ1
+		e.operand_by_name[pex_param.name] = Operand {
+			typ: .stack
+			stack_offset: e.fn_stack_count
+		}
 		e.fn_stack_count++
+
 		fn_params << Param{
 			name: e.get_string(pex_param.name)
 			typ: typ1
@@ -38,16 +35,10 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 
 	for pex_local in pex_func.info.locals {
 		typ2 := get_type_from_type_name(e.get_string(pex_local.typ))
-
-		e.local_typ_by_name[pex_local.name] = typ2
-		e.local_id_by_name[pex_local.name] = e.fn_stack_count
-
-		e.fn_stack_count++
-		e.fn_stack_data << create_value_typ(typ2)
+		e.operand_by_name[pex_local.name] = e.create_operand(create_value_typ(typ2))
+		e.operand_type_by_name[pex_local.name] = typ2
 	}
-	
-	//println("parse fn ${e.get_string(pex_func.name)} locals: ${pex_func.info.locals.len} params: ${pex_func.info.params.len} e.fn_stack_count ${e.fn_stack_count}")
-	
+
 	for inst in pex_func.info.instructions {
 		//println("[parse] ${inst.op} e.fn_stack_count ${e.fn_stack_count}")
 		match inst.op {
@@ -89,10 +80,6 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 				}
 			}
 			.cast {
-				//to_typ_name := if inst.args[0].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[0].to_string_id()].str() } else { inst.args[0].typ.str() }
-				//from_typ_name := if inst.args[1].typ == .identifier { "(ident)" + e.local_typ_by_name[inst.args[1].to_string_id()].str() } else { inst.args[1].typ.str() }
-				//println("[parse] cast ${from_typ_name} -> ${to_typ_name}")
-
 				e.commands << CastExpr{
 					result: e.parse_value(inst.args[0])
 					value: e.parse_value(inst.args[1])
@@ -143,8 +130,6 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 					}
 				}
 				
-				//println("[parse] callstatic ${e.get_string(inst.args[0].to_string_id())}.${e.get_string(inst.args[1].to_string_id())}")
-				
 				e.commands << CallStatic{
 					object: e.get_string(inst.args[0].to_string_id())
 					name: e.get_string(inst.args[1].to_string_id())
@@ -175,97 +160,73 @@ fn (mut e ExecutionContext) load_func(object_name string, state_name string, pex
 		name: e.get_string(pex_func.name)
 		commands: e.commands
 		is_global: pex_func.info.is_global()
-		stack_data: e.fn_stack_data
+		stack_data: e.fn_stack_data.reverse()
 		params: fn_params
 	})
 }
 
-//const iregs := [.reg_i1, .reg_i2, .reg_i3, .reg_i4 ]
-//const fregs := [.reg_f1, .reg_f2, .reg_f3, .reg_f4 ]
-/*
-@[inline]
-fn (mut e ExecutionContext) find_free_reg(typ ValueType) OperandType {
-	if typ == .integer {
-
-	}
-	else if typ == .float {
-
-	}
-	else {
-
-	}
-	
-	for reg in iregs {
-
-	}
-
-	match typ {
-		reg_i1 { return .reg_i1 }
-		reg_i2 { return .reg_i2 }
-		reg_i2 { return .reg_i2 }
-		reg_i3 { return .reg_i3 }
-		reg_f1 { return .reg_f1 }
-		reg_f2 { return .reg_f2 }
-		reg_f2 { return .reg_f2 }
-		reg_f3 { return .reg_f3 }
-		stack { panic("wtf") }
-	}
-}*/
-/*
-fn (mut e ExecutionContext) find_free_reg(value Value) ?Operand {
-	if value.typ == .integer {
-		if !e.reg_i1.is_used {
-			e.reg_i1.is_used = true
-			return Operand { typ: .reg_i1 }
+fn (mut ctx ExecutionContext) find_free_reg(value Value) ?Operand {
+	if value.typ == .bool {
+		if !ctx.used_registers[int(OperandType.regb1)] {
+			ctx.used_registers[int(OperandType.regb1)] = true
+			return Operand { typ: .regb1 }
 		}
-		else if !e.reg_i2.is_used {
-			e.reg_i2.is_used = true
-			return Operand { typ: .reg_i2 }
-		}
-		else if !e.reg_i3.is_used {
-			e.reg_i3.is_used = true
-			return Operand { typ: .reg_i3 }
-		}
-		else if !e.reg_i4.is_used {
-			e.reg_i4.is_used = true
-			return Operand { typ: .reg_i4 }
+		else if !ctx.used_registers[int(OperandType.regb2)] {
+			ctx.used_registers[int(OperandType.regb2)] = true
+			return Operand { typ: .regb2 }
 		}
 	}
-	else if value.typ == .float {
-		if !e.reg_f1.is_used {
-			e.reg_f1.is_used = true
-			return Operand { typ: .reg_f1 }
+	else if value.typ == .i32 {
+		if !ctx.used_registers[int(OperandType.regi1)] {
+			ctx.used_registers[int(OperandType.regi1)] = true
+			return Operand { typ: .regi1 }
 		}
-		else if !e.reg_f2.is_used {
-			e.reg_f2.is_used = true
-			return Operand { typ: .reg_f2 }
+		else if !ctx.used_registers[int(OperandType.regi2)] {
+			ctx.used_registers[int(OperandType.regi2)] = true
+			return Operand { typ: .regi2 }
 		}
-		else if !e.reg_f3.is_used {
-			e.reg_f3.is_used = true
-			return Operand { typ: .reg_f3 }
+		else if !ctx.used_registers[int(OperandType.regi3)] {
+			ctx.used_registers[int(OperandType.regi3)] = true
+			return Operand { typ: .regi3 }
 		}
-		else if !e.reg_f4.is_used {
-			e.reg_f4.is_used = true
-			return Operand { typ: .reg_f4 }
+	}
+	else if value.typ == .f32 {
+		if !ctx.used_registers[int(OperandType.regf1)] {
+			ctx.used_registers[int(OperandType.regf1)] = true
+			return Operand { typ: .regf1 }
+		}
+		else if !ctx.used_registers[int(OperandType.regf2)] {
+			ctx.used_registers[int(OperandType.regf2)] = true
+			return Operand { typ: .regf2 }
+		}
+		else if !ctx.used_registers[int(OperandType.regf3)] {
+			ctx.used_registers[int(OperandType.regf3)] = true
+			return Operand { typ: .regf3 }
 		}
 	}
 	
 	return none
-}*/
+}
 
+@[inline]
+fn (mut e ExecutionContext) create_stack_operand(value Value) Operand {
+	stack_offset := e.fn_stack_count
+	e.fn_stack_data << value
+	e.fn_stack_count++
+	return Operand {
+		typ: .stack
+		stack_offset: stack_offset
+	}
+}
+
+@[inline]
 fn (mut e ExecutionContext) create_operand(value Value) Operand {
-	/*if operand := e.find_free_reg(value) {
+	if operand := e.find_free_reg(value) {
 		return operand
 	}
-	else {*/
-		stack_offset := e.fn_stack_count
-		e.fn_stack_data << value
-		e.fn_stack_count++
-		return Operand {
-			//typ: .stack
-			stack_offset: stack_offset
-		}
-	//}
+	else {
+		return e.create_stack_operand(value)
+	}
 }
 
 fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
@@ -289,11 +250,9 @@ fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
 			return e.create_operand(create_value_data[string](pex_value.to_string(e.pex_file)))
 		}
 		.identifier {
-			if pex_value.to_string_id() in e.local_id_by_name {
+			if pex_value.to_string_id() in e.operand_by_name {
 				//println("[parse_value] identifier typ: ${e.local_typ_by_name[pex_value.to_string_id()]} offset: ${e.local_id_by_name[pex_value.to_string_id()]}")
-				return Operand {
-					stack_offset: e.local_id_by_name[pex_value.to_string_id()] or { panic("local not found")}
-				}
+				return e.operand_by_name[pex_value.to_string_id()]
 			}
 			else if e.get_string(pex_value.to_string_id()).to_lower() == "::state" {
 				return e.state_name_operand
@@ -308,12 +267,13 @@ fn (mut e ExecutionContext) parse_value(pex_value pex.VariableValue) Operand {
 	}
 }
 
+@[inline]
 fn get_type_from_type_name(name string) ValueType {
 	lname := name.to_lower()
 	return match lname {
 		"string" { .string }
-		"int" { .integer }
-		"float" { .float }
+		"int" { .i32 }
+		"float" { .f32 }
 		"bool" { .bool }
 		// TODO object
 		// TODO array

@@ -6,14 +6,14 @@ mut:
 }
 
 @[direct_array_access; inline]
-fn (mut s Stack[T]) push(el T) {
+fn (mut s Stack[T]) push(el &T) {
 	s.els << el
 }
 
 @[direct_array_access; inline]
-fn (mut s Stack[T]) push_many(els []T) {
-	for el in els {
-		s.els << el
+fn (mut s Stack[T]) push_many(data voidptr, len int) {
+	unsafe { 
+		s.els.push_many(data, len)
 	}
 }
 

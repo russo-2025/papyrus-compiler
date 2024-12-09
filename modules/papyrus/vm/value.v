@@ -15,19 +15,23 @@ pub struct Object {
 pub enum ValueType {
 	none
 	bool
-	integer
-	float
+	i32
+	//u32
+	f32
 	string
+	//ptr  
 	object // TODO
 	array // TODO
 }
 
 union ValueData {
 mut:
-	string	string
-	integer	i32
-	float	f32
 	bool	bool
+	i32		i32
+	//u32		u32
+	f32		f32
+	string	string
+	//ptr		voidptr
 	object	voidptr // TODO
 	array	voidptr // TODO
 }
@@ -47,16 +51,16 @@ pub fn create_value_typ(typ ValueType) Value {
 				data: ValueData{ bool: false }
 			}
 		}
-		.integer {
+		.i32 {
 			return Value{
-				typ: .integer,
-				data: ValueData{ integer: i32(0) }
+				typ: .i32,
+				data: ValueData{ i32: i32(0) }
 			}
 		}
-		.float {
+		.f32 {
 			return Value{
-				typ: .float,
-				data: ValueData{ float: f32(0) }
+				typ: .f32,
+				data: ValueData{ f32: f32(0) }
 			}
 		}
 		.string {
@@ -81,14 +85,14 @@ pub fn create_value_data[T](v T) Value {
 	}
 	$else $if T is i32 {
 		return Value{
-			typ: .integer,
-			data: ValueData{ integer: v }
+			typ: .i32,
+			data: ValueData{ i32: v }
 		}
 	}
 	$else $if T is f32 {
 		return Value{
-			typ: .float,
-			data: ValueData{ float: v }
+			typ: .f32,
+			data: ValueData{ f32: v }
 		}
 	}
 	$else $if T is string {
@@ -109,11 +113,11 @@ fn (mut v Value) clear() {
 		.none {
 			v.data.bool = false
 		}
-		.integer {
-			v.data.integer = 0
+		.i32 {
+			v.data.i32 = 0
 		}
-		.float {
-			v.data.float = 0.0
+		.f32 {
+			v.data.f32 = 0.0
 		}
 		.bool {
 			v.data.bool = false
@@ -136,11 +140,11 @@ pub fn (mut v Value) set[T](value T) {
 		v.set_data(value)
 	}
 	$else $if T is i32 {
-		assert v.typ == .integer
+		assert v.typ == .i32
 		v.set_data(value)
 	}
 	$else $if T is f32 {
-		assert v.typ == .float
+		assert v.typ == .f32
 		v.set_data(value)
 	}
 	$else $if T is string {
@@ -160,12 +164,12 @@ pub fn (v Value) get[T]() T {
 		return unsafe { v.data.bool }
 	}
 	$else $if T is i32 {
-		assert v.typ == .integer
-		return unsafe { v.data.integer }
+		assert v.typ == .i32
+		return unsafe { v.data.i32 }
 	}
 	$else $if T is f32 {
-		assert v.typ == .float
-		return unsafe { v.data.float }
+		assert v.typ == .f32
+		return unsafe { v.data.f32 }
 	}
 	$else $if T is string {
 		assert v.typ == .string
@@ -183,10 +187,10 @@ fn (mut v Value) set_data[T](value T) {
 		unsafe { v.data.bool = value }
 	}
 	$else $if T is i32 {
-		unsafe { v.data.integer = value }
+		unsafe { v.data.i32 = value }
 	}
 	$else $if T is f32 {
-		unsafe { v.data.float = value }
+		unsafe { v.data.f32 = value }
 	}
 	$else $if T is string {
 		unsafe { v.data.string = value }
@@ -195,61 +199,5 @@ fn (mut v Value) set_data[T](value T) {
 	//TODO array
 	$else {
 		$compile_error("invalid Value.set_data")
-	}
-}
-
-pub fn (mut v Value) cast[T]() {
-	$if T is bool {
-		match v.typ {
-			.none { v.set_data[bool](false) }
-			.bool { panic("invalid cast bool -> bool") }
-			.integer { v.set_data[bool](v.get[i32]() != 0) }
-			.float { v.set_data[bool](v.get[f32]() != 0.0) }
-			.string { v.set_data[bool](v.get[string]().len > 0) }
-			.object { panic("TODO object -> bool") }
-			.array { panic("TODO array -> bool") }
-		}
-
-		v.typ = .bool
-	}
-	$else $if T is i32 {
-		match v.typ {
-			.bool { v.set_data[i32](if v.get[bool]() { i32(1) } else { i32(0) }) }
-			.integer { panic("invalid cast i32 -> i32") }
-			.float { v.set_data[i32](i32(v.get[f32]())) } // TODO f32 to i32
-			.string { v.set_data[i32](v.get[string]().i32()) }
-			else { panic("invalid cast ${v.typ} -> i32") }
-		}
-
-		v.typ = .integer
-	}
-	$else $if T is f32 {
-		match v.typ {
-			.bool { v.set_data[f32](if v.get[bool]() { f32(1.0) } else { f32(0.0) }) }
-			.integer { v.set_data[f32](f32(v.get[i32]())) } // TODO f32 to i32
-			.float { panic("invalid cast f32 -> f32") }
-			.string { v.set_data[f32](v.get[string]().f32()) }
-			else { panic("invalid cast ${v.typ} -> f32") }
-		}
-
-		v.typ = .float
-	}
-	$else $if T is string {
-		match v.typ {
-			.none { panic("TODO array -> bool") }
-			.bool { v.set_data[string](if v.get[bool]() { "True" } else { "False" }) }
-			.integer { v.set_data[string](v.get[i32]().str()) }
-			.float { v.set_data[string](v.get[f32]().str()) }
-			.string { panic("invalid cast string -> string") }
-			.object { panic("TODO object -> bool") }
-			.array { panic("TODO array -> bool") }
-		}
-
-		v.typ = .string
-	}
-	//object
-	//array
-	$else {
-		$compile_error("invalid Value.cast")
 	}
 }

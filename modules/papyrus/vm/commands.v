@@ -18,28 +18,35 @@ struct Param {
 }
 
 struct Operand {
-	//typ				OperandType = .stack
+	typ				OperandType = .stack
 	stack_offset	int
 }
-/*
-enum OperandType as u8 {
-	reg_i1
-	reg_i2
-	reg_i3
-	reg_i4
 
-	reg_f1
-	reg_f2
-	reg_f3
-	reg_f4
-	
-	int_value
-	float_value
+enum OperandType {
+	reg_self
+	reg_state
+
+	regb1
+	regb2
+
+	regi1
+	regi2
+	regi3
+	//regi4
+	//regi5
+	//regi6
+
+	regf1
+	regf2
+	regf3
+	//regf4
+	//regf5
+	//regf6
 
 	stack
-}*/
+}
 
-type Command = Jump | JumpTrue | JumpFalse | PrefixExpr | CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
+type Command = AddExprReg | Jump | JumpTrue | JumpFalse | PrefixExpr | CallMethod | CallStatic | InfixExpr | CastExpr | Return | Assign
 
 struct Jump {
 	offset	i32
@@ -57,6 +64,12 @@ struct PrefixExpr {
 	op		pex.OpCode
 	result	Operand
 	value	Operand
+}
+
+struct AddExprReg {
+	result	OperandType
+	value1	OperandType
+	value2	OperandType
 }
 
 struct InfixExpr {
@@ -86,10 +99,11 @@ mut:
 
 struct CallStatic {
 mut:
-	name	string
-	object	string
-	result	Operand
-	args	[]Operand
+	name		string
+	object		string
+	result		Operand
+	args		[]Operand
+	cache_func	?&Function
 }
 
 struct CallMethod {

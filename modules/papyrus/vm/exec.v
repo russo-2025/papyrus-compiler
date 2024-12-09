@@ -1,19 +1,12 @@
 module vm
 
-@[params]
-struct RunCommandsParams {
-	func		&Function
-	//args		[]Value
-	is_global	bool
-}
-
 fn (mut e ExecutionContext) print_stack() {
 	for i := 0; i < e.stack.len(); i++ {
 		val := e.stack.peek_offset(i)
 		mut val_str := match val.typ {
 			.none { "type: none" }
-			.integer { "type: integer; data: ${val.get[i32]()}" }
-			.float { "type: float; data: ${val.get[f32]()}" }
+			.i32 { "type: integer; data: ${val.get[i32]()}" }
+			.f32 { "type: float; data: ${val.get[f32]()}" }
 			.bool { "type: bool; data: ${val.get[bool]()}" }
 			.string { "type: string; data: ${val.get[string]()}" }
 			.object { panic("TODO") }
@@ -23,29 +16,70 @@ fn (mut e ExecutionContext) print_stack() {
 	}
 }
 
-fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
-	/*mut val1 := match operand.typ {
-		.reg_i1 { &e.reg_i1 }
-		.reg_i2 { &e.reg_i2 }
-		.reg_i3 { &e.reg_i3 }
-		.reg_i4 { &e.reg_i4 }
-		.reg_f1 { &e.reg_f1 }
-		.reg_f2 { &e.reg_f2 }
-		.reg_f3 { &e.reg_f3 }
-		.reg_f4 { &e.reg_f4 }
-		.int_value { &none_value }
-		.float_value { &none_value }
+@[direct_array_access; inline]
+fn (mut e ExecutionContext) get_value(operand Operand) &Value {
+	return match operand.typ {
+		.reg_self,
+		.reg_state,
+		
+		.regb1,
+		.regb2,
+
+		.regi1,
+		.regi2,
+		.regi3,/*
+		.regi4,
+		.regi5,
+		.regi6,*/
+
+		.regf1,
+		.regf2,
+		.regf3/*,
+		.regf4,
+		.regf5,
+		.regf6*/ {
+			&e.registers[int(operand.typ)]
+		}
 		.stack { e.stack.peek_offset(operand.stack_offset) }
-	} */
-	mut val1 := e.stack.peek_offset(operand.stack_offset)
+	}
+}
+
+@[direct_array_access; inline]
+fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
+	mut val1 := match operand.typ {
+		.reg_self,
+		.reg_state,
+
+		.regb1,
+		.regb2,
+
+		.regi1,
+		.regi2,
+		.regi3,/*
+		.regi4,
+		.regi5,
+		.regi6,*/
+
+		.regf1,
+		.regf2,
+		.regf3/*,
+		.regf4,
+		.regf5,
+		.regf6*/ {
+			&e.registers[int(operand.typ)]
+		}
+		.stack {
+			e.stack.peek_offset(operand.stack_offset)
+		}
+	}
 
 	match val1.typ {
 		.none { panic("TODO") }
-		.integer {
-			unsafe { val1.data.integer = val2.data.integer }
+		.i32 {
+			unsafe { val1.data.i32 = val2.data.i32 }
 		}
-		.float {
-			unsafe { val1.data.float = val2.data.float }
+		.f32 {
+			unsafe { val1.data.f32 = val2.data.f32 }
 		}
 		.bool {
 			unsafe { val1.data.bool = val2.data.bool }
@@ -58,64 +92,89 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 	}
 }
 
-fn (mut e ExecutionContext) get_value(operand Operand) &Value {
-	/*match operand.typ {
-		.reg_i1 { return &e.reg_i1 }
-		.reg_i2 { return &e.reg_i2 }
-		.reg_i3 { return &e.reg_i3 }
-		.reg_i4 { return &e.reg_i4 }
-		.reg_f1 { return &e.reg_f1 }
-		.reg_f2 { return &e.reg_f2 }
-		.reg_f3 { return &e.reg_f3 }
-		.reg_f4 { return &e.reg_f4 }
-		.int_value { panic("wtf") }
-		.float_value { panic("wtf") }
-		.stack { return e.stack.peek_offset(operand.stack_offset) }
-	}*/
+fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand) {
+	from := e.get_value(from_operand)
+	mut to := e.get_value(to_operand)
 
-	return e.stack.peek_offset(operand.stack_offset)
+	match to.typ {
+		.none { panic("TODO object -> bool") }
+		.bool {
+			match from.typ {
+				.none { to.set_data[bool](false) }
+				.bool { panic("invalid cast bool -> bool") }
+				.i32 { to.set_data[bool](from.get[i32]() != 0) }
+				.f32 { to.set_data[bool](from.get[f32]() != 0.0) }
+				.string { to.set_data[bool](from.get[string]().len > 0) }
+				.object { panic("TODO object -> bool") }
+				.array { panic("TODO array -> bool") }
+			}
+		}
+		.i32 {
+			match from.typ {
+				.bool { to.set_data[i32](if from.get[bool]() { i32(1) } else { i32(0) }) }
+				.i32 { panic("invalid cast i32 -> i32") }
+				.f32 { to.set_data[i32](i32(from.get[f32]())) } // TODO f32 to i32
+				.string { to.set_data[i32](from.get[string]().i32()) }
+				else { panic("invalid cast ${from.typ} -> i32") }
+			}
+		}
+		.f32 {
+			match from.typ {
+				.bool { to.set_data[f32](if from.get[bool]() { f32(1.0) } else { f32(0.0) }) }
+				.i32 { to.set_data[f32](f32(from.get[i32]())) } // TODO f32 to i32
+				.f32 { panic("invalid cast f32 -> f32") }
+				.string { to.set_data[f32](from.get[string]().f32()) }
+				else { panic("invalid cast ${from.typ} -> f32") }
+			}
+		}
+		.string {
+			match from.typ {
+				.none { to.set_data[string]("None") }
+				.bool { to.set_data[string](if from.get[bool]() { "True" } else { "False" }) }
+				.i32 { to.set_data[string](from.get[i32]().str()) }
+				.f32 { to.set_data[string](from.get[f32]().str()) }
+				.string { panic("invalid cast string -> string") }
+				.object { panic("TODO object -> bool") }
+				.array { panic("TODO array -> bool") }
+			}
+		}
+		.object { panic("TODO cast object") }
+		.array { panic("TODO cast array") }
+	}
 }
 
-fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
-	/*e.stack.push_many(p.func.stack_data.reverse())
-	
-	for i := p.args.len - 1; i >= 0; i-- {
-		e.stack.push(p.args[i])
-	}
-
-	//TODO только для методов
-	e.stack.push(create_value_data[string]("default state name")) // state_name_operand
-	e.stack.push(none_value) // self_operand
-
-*/
-	//println(p.func.name)
+fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
+	//println(func.name)
 	//e.print_stack()
-	for command in p.func.commands {
+	for mut command in func.commands {
+		e.instruction_count++
 		//println(command)
-		match command {
+		match mut command {
 			CallStatic {
-				func := e.find_global_func(command.object, command.name) or { panic("fn not found") }
+				mut call_func := &Function(unsafe {nil})
+				
+				if command.cache_func != none {
+					call_func = command.cache_func
+				}
+				else {
+					call_func = e.find_global_func(command.object, command.name) or { panic("fn not found") }
+					command.cache_func = call_func
+				}
 				
 				mut vargs := []Value{ cap:command.args.len }
 				for arg in command.args {
 					vargs << e.get_value(arg)
 				}
 
-				e.stack.push_many(func.stack_data.reverse())
+				e.stack.push_many(call_func.stack_data.data, call_func.stack_data.len)
+				e.stack.push_many(vargs.data, vargs.len)
 
-				for i := vargs.len - 1; i >= 0; i-- {
-					e.stack.push(vargs[i])
-				}
+				e.save_registers()
+				tres := e.run_commands(mut call_func)
+				e.restore_registers()
 
-				e.stack.push(create_value_data[string]("default state name")) // state_name_operand
-				e.stack.push(none_value) // self_operand
-
-				tres := e.run_commands(func: func, /*args: vargs*/)
-
-				e.stack.pop_len(func.stack_data.len)
-				e.stack.pop_len(command.args.len)
-				e.stack.pop()
-				e.stack.pop()
+				e.stack.pop_len(vargs.len)
+				e.stack.pop_len(call_func.stack_data.len)
 				
 				e.set_value(command.result, tres)
 			}
@@ -138,11 +197,16 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 				}
 				
 			}
+			AddExprReg {
+				unsafe{
+					e.registers[int(command.result)].data.i32 = e.registers[int(command.value1)].data.i32 + e.registers[int(command.value2)].data.i32
+				}
+			}
 			InfixExpr {
 				match command.op {
 					.iadd {
 						mut res := e.get_value(command.result)
-						res.set[i32](e.get_value(command.value1).get[i32]() + e.get_value(command.value2).get[i32]()) 
+						res.set[i32](e.get_value(command.value1).get[i32]() + e.get_value(command.value2).get[i32]())
 					}
 					.fadd {
 						mut res := e.get_value(command.result)
@@ -178,11 +242,11 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					}
 					.cmp_eq {
 						match e.get_value(command.value1).typ {
-							.integer {
+							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() == e.get_value(command.value2).get[i32]())
 							}
-							.float {
+							.f32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() == e.get_value(command.value2).get[f32]())
 							}
@@ -191,11 +255,11 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					}
 					.cmp_lt {
 						match e.get_value(command.value1).typ {
-							.integer {
+							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() < e.get_value(command.value2).get[i32]())
 							}
-							.float {
+							.f32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() < e.get_value(command.value2).get[f32]())
 							}
@@ -204,11 +268,11 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					}
 					.cmp_le {
 						match e.get_value(command.value1).typ {
-							.integer {
+							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() <= e.get_value(command.value2).get[i32]())
 							}
-							.float {
+							.f32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() <= e.get_value(command.value2).get[f32]())
 							}
@@ -217,11 +281,11 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					}
 					.cmp_gt {
 						match e.get_value(command.value1).typ {
-							.integer {
+							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() > e.get_value(command.value2).get[i32]())
 							}
-							.float {
+							.f32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() > e.get_value(command.value2).get[f32]())
 							}
@@ -230,11 +294,11 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 					}
 					.cmp_ge {
 						match e.get_value(command.value1).typ {
-							.integer {
+							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() >= e.get_value(command.value2).get[i32]())
 							}
-							.float {
+							.f32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() >= e.get_value(command.value2).get[f32]())
 							}
@@ -245,44 +309,19 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 				}
 			}
 			CastExpr {
-				mut res := e.get_value(command.result)
-				mut value := e.get_value(command.value)
-				to_type := res.typ
-				
-				match to_type {
-					.none { panic("TODO") }
-					.bool {
-						value.cast[bool]()
-					}
-					.integer {
-						value.cast[i32]()
-					}
-					.float {
-						value.cast[f32]()
-					}
-					.string {
-						value.cast[string]()
-					}
-					.object { panic("TODO") }
-					.array { panic("TODO") }
-				}
-
-				e.set_value(command.result, e.get_value(command.value))
+				e.cast_value(command.value, command.result)
 			}
 			Return {
 				res := e.get_value(command.value)
-/*
-				e.stack.pop_len(p.func.stack_data.len)
-				e.stack.pop_len(p.args.len)
-				e.stack.pop()
-				e.stack.pop()
-*/
-				/*if res.typ == .float {
-					println("[run Return] ${p.func.name} res ${res.get[f32]()} stacklen${e.stack.len()}")
+				
+				/*
+				if res.typ == .f32 {
+					println("[run Return] ${func.name} res ${res.get[f32]()} stacklen${e.stack.len()}")
 				}
-				else if res.typ == .integer {
-					println("[run Return] ${p.func.name} res ${res.get[i32]()} stacklen${e.stack.len()}")
-				}*/
+				else if res.typ == .i32 {
+					println("[run Return] ${func.name} res ${res.get[i32]()} stacklen${e.stack.len()}")
+				}
+				*/
 
 				return res
 			}
@@ -300,35 +339,24 @@ fn (mut e ExecutionContext) run_commands(p RunCommandsParams) &Value {
 			}
 		}
 	}
-/*
-	e.stack.pop_len(p.func.stack_data.len)
-	e.stack.pop_len(p.args.len)
-	e.stack.pop()
-	e.stack.pop()
-*/
-	//println("[run Return] ${p.func.name} stacklen${e.stack.len()}")
+	
+	//println("[run Return] ${func.name} stacklen${e.stack.len()}")
 
 	return e.get_value(e.none_operand)
 }
 
-pub fn (mut e ExecutionContext) call_static(object_name string, func_name string, args []Value) ?&Value {
-	mut func := e.find_global_func(object_name, func_name) or { return none }
-	e.stack.push_many(func.stack_data.reverse())
-	/*for arg in args {
-		e.stack.push(arg)
-	}*/
-	for i := args.len - 1; i >= 0; i-- {
-		e.stack.push(args[i])
-	}
+pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) ?Value {
+	mut func := ctx.find_global_func(object_name, func_name) or { return none }
+	ctx.stack.push_many(func.stack_data.data, func.stack_data.len)
+	ctx.stack.push_many(args.data, args.len)
+	
+	ctx.save_registers()
+	res := ctx.run_commands(mut func)
+	ctx.restore_registers()
 
-	e.stack.push(create_value_data[string]("default state name")) // state_name_operand
-	e.stack.push(none_value) // self_operand
-	res := e.run_commands(func: func/*, args: args*/)
+	ctx.stack.pop_len(args.len)
+	ctx.stack.pop_len(func.stack_data.len)
 
-	e.stack.pop_len(func.stack_data.len)
-	e.stack.pop_len(args.len)
-	e.stack.pop()
-	e.stack.pop()
-
-	return res
+	//println("instruction_count: ${ctx.instruction_count} -")
+	return *res
 }
