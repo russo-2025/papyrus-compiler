@@ -5,12 +5,14 @@ import pex
 @[heap]
 struct ExecutionContext {
 mut:
-	loader					Loader
-	stack					Stack[Value]
-	instruction_count		i64
+	loader				Loader
+	stack				Stack[Value]
+	instruction_count	i64
 	registers			[]Value
 	saved_registers		[][]Value
 	cache_registers		[][]Value
+	
+	//objects				[]Object
 }
 
 pub fn create_context() &ExecutionContext {
@@ -43,16 +45,10 @@ fn (mut ctx ExecutionContext) create_registers() {
 		ctx.registers = ctx.cache_registers.pop()
 		
 		// reset values
+		ctx.registers[int(OperandType.reg_self)] = none_value
+
 		for i in int(OperandType.regb1)..ctx.registers.len {
-			match ctx.registers[i].typ {
-				.none { panic("WTF") }
-				.bool { ctx.registers[i].set[bool](false) }
-				.i32 { ctx.registers[i].set[i32](0) }
-				.f32 { ctx.registers[i].set[f32](0.0) }
-				.string { ctx.registers[i].set[string]("") }
-				.object { panic("TODO") }
-				.array { panic("TODO") }
-			}
+			ctx.registers[i].clear()
 		}
 	}
 	// create new registers
@@ -74,6 +70,11 @@ fn (mut ctx ExecutionContext) create_registers() {
 		]
 	}
 	assert ctx.registers.len == int(OperandType.stack)
+}
+
+@[inline]
+fn (mut ctx ExecutionContext) set_self_register(value Value) {
+	ctx.registers[int(OperandType.reg_self)] = value
 }
 
 @[direct_array_access; inline]
@@ -101,8 +102,20 @@ pub fn (mut e ExecutionContext) load_pex_file(pex_file &pex.PexFile) {
 	e.loader.load_pex_file(pex_file)
 }
 
+
 @[inline]
-fn (mut e ExecutionContext) find_global_func(object_name string, func_name string) ?&Function {
+pub fn (mut e ExecutionContext) find_script(object_name string) ?&Script {
+	script := e.loader.find_script(object_name) or { return none }
+	return script
+}
+
+@[inline]
+pub fn (mut e ExecutionContext) find_method(object_name string, state_name string, func_name string) ?&Function {
+	return e.loader.find_method(object_name, state_name, func_name)
+}
+
+@[inline]
+pub fn (mut e ExecutionContext) find_global_func(object_name string, func_name string) ?&Function {
 	return e.loader.find_global_func(object_name, func_name)
 }
 

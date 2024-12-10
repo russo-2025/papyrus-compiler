@@ -19,13 +19,17 @@ const prefs = pref.Preferences {
 	}
 	
 fn vm_run() {
-		src_file := 'Scriptname ABCD 
+		src_file := 'Scriptname ABCD
+
+Int Function MyMethod(int n1, int n2)
+	return 10 + n1 + n2
+EndFunction
+
 Float Function Sum(int n1, float n2, float n3) global
 return (n1 + n2 as int + n3 as int) as float 
 EndFunction
 
 Int Function PexInstructionTest(int n1, int n2) global
-	Sum(11, 12 as Float, Sum(10, 20 as Float, 30.0))
 	Sum(11, 12 as Float, Sum(10, 20 as Float, 30.0))
 	Sum(11, 12 as Float, Sum(10, 20 as Float, 30.0))
 	Sum(11, 12 as Float, Sum(10, 20 as Float, 30.0))
@@ -1043,15 +1047,14 @@ EndFunction'
 
 	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
-
+/*
 	mut swa := []f32{}
 	mut res := f32(0)
 	for _ in 0..135 {
 		mut sw := time.new_stopwatch()
 		sw.start()
 		vres := ctx.call_static("ABCD", "PexInstructionTest", [ vm.create_value_data[i32](22), vm.create_value_data[i32](23)]) or {
-			assert false
-			panic("err")
+			panic("method not found")
 		}
 		res = vres.get[i32]()
 		ms := f32(sw.elapsed().microseconds()) / 1000
@@ -1059,17 +1062,25 @@ EndFunction'
 	}
 
 	swa.sort(a < b)
-	println(swa)
+	//println(swa)
 
 	swa = swa[3..swa.len-6].clone()
-	println(swa)
+	//println(swa)
 	ms := arrays.sum(swa) or { f32(-1) } / f32(swa.len)
 	assert res == 83
 
 	instr_in_ms := i64(f64(ctx.get_executed_instructions_count())/f64(ms))
 	println('end run ${ms} ms; result: ${res}; ${instr_in_ms} instructions/ms')
+*/
 
-	//println("res ${res.get[i32]()}")
+	// call method
+	script := ctx.find_script("ABCD") or { panic("script not found") }
+	self := ctx.create_object(script)
+	vi32_res := ctx.call_method(self, "MyMethod", [ vm.create_value_data[i32](12), vm.create_value_data[i32](32)]) or {
+		panic("method not found")
+	}
+	assert vi32_res.get[i32]() == 54
+	println("call method res ${vi32_res.get[i32]()}")
 }
 
 fn main() {

@@ -92,6 +92,7 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 	}
 }
 
+@[inline]
 fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand) {
 	from := e.get_value(from_operand)
 	mut to := e.get_value(to_operand)
@@ -143,42 +144,62 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 	}
 }
 
+@[inline]
+pub fn (mut ctx ExecutionContext) create_object(script &Script) Value {
+	assert script.name != ""
+	assert script.auto_state != voidptr(0)
+
+	obj := &Object{
+		info: script
+		state: script.auto_state
+	}
+
+	mut obj_value := create_value_typ(.object)
+	obj_value.set_object(obj)
+
+	return obj_value
+}
+
+@[direct_array_access]
 fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
-	//println(func.name)
 	//e.print_stack()
-	for mut command in func.commands {
+	for i := 0; i < func.commands.len; i++ {
+		mut command := &func.commands[i]
 		e.instruction_count++
-		//println(command)
+
 		match mut command {
-			CallStatic {
+			Call {
 				mut call_func := &Function(unsafe {nil})
 				
 				if command.cache_func != none {
 					call_func = command.cache_func
 				}
-				else {
-					call_func = e.find_global_func(command.object, command.name) or { panic("fn not found") }
+				else if command.is_global {
+					call_func = e.find_global_func(command.object, command.name) or { panic("global function not found") }
 					command.cache_func = call_func
 				}
-				
+				else {
+					obj := e.get_value(command.self).get_object()
+					call_func = e.find_method(command.object, obj.state.name, command.name) or { panic("method not found") }
+					command.cache_func = call_func
+				}
+
+				assert command.is_global == func.is_global
+
+				if command.is_parent_call {
+					panic("TODO support parent call")
+				}
+
 				mut vargs := []Value{ cap:command.args.len }
 				for arg in command.args {
 					vargs << e.get_value(arg)
 				}
-
-				e.stack.push_many(call_func.stack_data.data, call_func.stack_data.len)
-				e.stack.push_many(vargs.data, vargs.len)
-
-				e.save_registers()
-				tres := e.run_commands(mut call_func)
-				e.restore_registers()
-
-				e.stack.pop_len(vargs.len)
-				e.stack.pop_len(call_func.stack_data.len)
 				
+				self := if command.is_global { &none_value } else { e.get_value(command.self) }
+				tres := e.call(mut call_func, self, vargs) or { panic("err") }
 				e.set_value(command.result, tres)
+				
 			}
-			CallMethod { panic("TODO CallMethod") }
 			PrefixExpr {
 				match command.op {
 					.not {
@@ -196,11 +217,6 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 					else  { panic("invalid op in eval.PrefixExpr") }
 				}
 				
-			}
-			AddExprReg {
-				unsafe{
-					e.registers[int(command.result)].data.i32 = e.registers[int(command.value1)].data.i32 + e.registers[int(command.value2)].data.i32
-				}
 			}
 			InfixExpr {
 				match command.op {
@@ -305,6 +321,10 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 							else { panic("TODO") }
 						}
 					}
+					.strcat {
+						mut res := e.get_value(command.result)
+						res.set[string](e.get_value(command.value1).get[string]() + e.get_value(command.value2).get[string]())
+					}
 					else { panic("invalid op in eval.InfixExpr") }
 				}
 			}
@@ -329,13 +349,22 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 				e.set_value(command.result, e.get_value(command.value))
 			}
 			Jump {
-				panic("TODO")
-			}
-			JumpTrue {
-				panic("TODO")
-			}
-			JumpFalse {
-				panic("TODO")
+				if command.with_condition {
+					if command.true_condition {
+						if e.get_value(command.value).get[bool]() {
+							i += command.offset
+							continue
+						}
+					}
+					else {
+						if !e.get_value(command.value).get[bool]() {
+							i += command.offset
+							continue
+						}
+					}
+				}
+
+				i += command.offset
 			}
 		}
 	}
@@ -345,18 +374,32 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 	return e.get_value(e.loader.none_operand)
 }
 
-pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) ?Value {
-	mut func := ctx.find_global_func(object_name, func_name) or { return none }
+@[inline]
+fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value) ?&Value {
+	ctx.save_registers()
+
+	if !func.is_global {
+		ctx.set_self_register(self)
+	}
 	ctx.stack.push_many(func.stack_data.data, func.stack_data.len)
 	ctx.stack.push_many(args.data, args.len)
-	
-	ctx.save_registers()
+
 	res := ctx.run_commands(mut func)
-	ctx.restore_registers()
 
 	ctx.stack.pop_len(args.len)
 	ctx.stack.pop_len(func.stack_data.len)
+	
+	ctx.restore_registers()
+	
+	return res
+}
 
-	//println("instruction_count: ${ctx.instruction_count} -")
-	return *res
+pub fn (mut ctx ExecutionContext) call_method(self &Value, func_name string, args []Value) ?&Value {
+	mut func := ctx.find_method(self.get_object().info.name, self.get_object().state.name, func_name) or { return none }
+	return ctx.call(mut func, self, args)
+}
+
+pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) ?&Value {
+	mut func := ctx.find_global_func(object_name, func_name) or { return none }
+	return ctx.call(mut func, none_value, args)
 }

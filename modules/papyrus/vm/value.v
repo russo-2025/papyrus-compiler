@@ -8,10 +8,6 @@ pub mut:
 	is_used		bool
 }
 
-pub struct Object {
-	name string
-}
-
 pub enum ValueType {
 	none
 	bool
@@ -19,8 +15,7 @@ pub enum ValueType {
 	//u32
 	f32
 	string
-	//ptr  
-	object // TODO
+	object
 	array // TODO
 }
 
@@ -32,7 +27,7 @@ mut:
 	f32		f32
 	string	string
 	//ptr		voidptr
-	object	voidptr // TODO
+	object	&Object = voidptr(0)
 	array	voidptr // TODO
 }
 
@@ -69,14 +64,18 @@ pub fn create_value_typ(typ ValueType) Value {
 				data: ValueData{ string: "" }
 			}
 		}
-		.object { return none_value } // TODO?
+		.object {
+			return Value{
+				typ: .object,
+				data: ValueData{ object: voidptr(0) }
+			}
+		}
 		.array { panic("TODO") }
 	}
 }
 
 @[inline]
 pub fn create_value_data[T](v T) Value {
-	// TODO none
 	$if T is bool {
 		return Value{
 			typ: .bool,
@@ -101,8 +100,6 @@ pub fn create_value_data[T](v T) Value {
 			data: ValueData{ string: v }
 		}
 	}
-	//TODO object
-	//TODO array
 	$else  {
 		$compile_error("invalid T type in fn create_value")
 	}
@@ -126,7 +123,7 @@ fn (mut v Value) clear() {
 			v.data.string = ""
 		}
 		.object {
-			panic("TODO")
+			v.data.object = voidptr(0)
 		}
 		.array {
 			panic("TODO")
@@ -156,6 +153,17 @@ pub fn (mut v Value) set[T](value T) {
 	$else {
 		$compile_error("invalid Value.set")
 	}
+}
+
+pub fn (mut v Value) set_object(obj &Object) {
+	assert v.typ == .object
+	v.data.object = obj
+}
+
+pub fn (v Value) get_object() &Object {
+	assert v.typ == .object
+	assert unsafe { v.data.object } != voidptr(0)
+	return unsafe { v.data.object }
 }
 
 pub fn (v Value) get[T]() T {
