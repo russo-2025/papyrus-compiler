@@ -5,8 +5,8 @@ import pex
 @[heap]
 pub struct Object {
 pub:
-	info	&Script
-	state	&State
+	info	&Script = unsafe { voidptr(0) }
+	state	&State = unsafe { voidptr(0) }
 }
 
 @[heap]
@@ -74,6 +74,7 @@ pub enum OperandType {
 }
 
 pub type Command = Jump | PrefixExpr | Call | InfixExpr | CastExpr | Return | Assign
+	| ArrayCreate | GetArrayLength | GetArrayElement | SetArrayElement | FindArrayElement
 
 pub struct Jump {
 pub:
@@ -126,4 +127,39 @@ pub:
 	is_parent_call	bool
 pub mut:
 	cache_func		?&Function
+}
+
+pub struct ArrayCreate {
+pub:
+	result	Operand
+	size	Operand
+}
+
+pub struct GetArrayLength {
+pub:
+	result	Operand
+	array	Operand
+}
+
+pub struct GetArrayElement {
+pub:
+	result	Operand
+	array	Operand
+	index	Operand
+}
+
+pub struct SetArrayElement {
+pub:
+	array	Operand
+	index	Operand
+	value	Operand
+}
+
+pub struct FindArrayElement {
+pub:
+	result		Operand
+	array		Operand
+	value		Operand
+	start_index	Operand
+	is_reverse	bool
 }

@@ -21,7 +21,7 @@ const prefs = pref.Preferences {
 fn vm_run() {
 		src_file := 'Scriptname ABCD
 
-Int Function MyMethod(int n1, int n2)
+Int Function Sum10(int n1, int n2)
 	return 10 + n1 + n2
 EndFunction
 
@@ -1047,13 +1047,13 @@ EndFunction'
 
 	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
-/*
+
 	mut swa := []f32{}
 	mut res := f32(0)
 	for _ in 0..135 {
 		mut sw := time.new_stopwatch()
 		sw.start()
-		vres := ctx.call_static("ABCD", "PexInstructionTest", [ vm.create_value_data[i32](22), vm.create_value_data[i32](23)]) or {
+		vres := ctx.call_static("ABCD", "PexInstructionTest", [ ctx.create_int(22), ctx.create_int(23)]) or {
 			panic("method not found")
 		}
 		res = vres.get[i32]()
@@ -1071,16 +1071,16 @@ EndFunction'
 
 	instr_in_ms := i64(f64(ctx.get_executed_instructions_count())/f64(ms))
 	println('end run ${ms} ms; result: ${res}; ${instr_in_ms} instructions/ms')
-*/
+
 
 	// call method
 	script := ctx.find_script("ABCD") or { panic("script not found") }
-	self := ctx.create_object(script)
-	vi32_res := ctx.call_method(self, "MyMethod", [ vm.create_value_data[i32](12), vm.create_value_data[i32](32)]) or {
+	self := ctx.create_object_value(script)
+	result_value := ctx.call_method(self, "Sum10", [ ctx.create_int(12), ctx.create_int(32)]) or {
 		panic("method not found")
 	}
-	assert vi32_res.get[i32]() == 54
-	println("call method res ${vi32_res.get[i32]()}")
+	assert result_value.get[i32]() == (10 + 12 + 32)
+	println("call method res ${result_value.get[i32]()}")
 }
 
 fn main() {

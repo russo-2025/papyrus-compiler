@@ -11,8 +11,8 @@ mut:
 	registers			[]Value
 	saved_registers		[][]Value
 	cache_registers		[][]Value
-	
-	//objects				[]Object
+	objects				[]Object
+	allocator			Allocator
 }
 
 pub fn create_context() &ExecutionContext {
@@ -25,7 +25,11 @@ pub fn create_context() &ExecutionContext {
 		}
 		saved_registers: [][]Value{ cap: 10 }
 		cache_registers: [][]Value{ cap: 10 }
+		objects: []Object{ cap: 20 }
+		allocator: create_allocator()
 	}
+
+	ctx.loader.set_context(mut ctx)
 
 	none_value_offset := ctx.stack.len()
 	ctx.loader.none_operand = Operand {
@@ -54,19 +58,19 @@ fn (mut ctx ExecutionContext) create_registers() {
 	// create new registers
 	else {
 		ctx.registers = [
-			Value{ typ: .object, data: ValueData{ bool: false } } //self // 0
-			create_value_data[string]("default state name")//state
+			none_value // placeholder self // 0
+			ctx.create_string("default state name") //state
 
-			create_value_typ(.bool) // 2
-			create_value_typ(.bool)
+			ctx.create_bool(false) // 2
+			ctx.create_bool(false)
 
-			create_value_typ(.i32) // 4
-			create_value_typ(.i32)
-			create_value_typ(.i32)
+			ctx.create_int(0) // 4
+			ctx.create_int(0)
+			ctx.create_int(0)
 
-			create_value_typ(.f32) // 7
-			create_value_typ(.f32)
-			create_value_typ(.f32)
+			ctx.create_float(0.0) // 7
+			ctx.create_float(0.0)
+			ctx.create_float(0.0)
 		]
 	}
 	assert ctx.registers.len == int(OperandType.stack)
@@ -74,6 +78,7 @@ fn (mut ctx ExecutionContext) create_registers() {
 
 @[inline]
 fn (mut ctx ExecutionContext) set_self_register(value Value) {
+	assert value.typ.typ == .object
 	ctx.registers[int(OperandType.reg_self)] = value
 }
 
@@ -98,27 +103,42 @@ fn (mut ctx ExecutionContext) restore_registers() {
 }
 
 @[inline]
-pub fn (mut e ExecutionContext) load_pex_file(pex_file &pex.PexFile) {
-	e.loader.load_pex_file(pex_file)
+pub fn (mut ctx ExecutionContext) load_pex_file(pex_file &pex.PexFile) {
+	ctx.loader.load_pex_file(pex_file)
 }
 
-
 @[inline]
-pub fn (mut e ExecutionContext) find_script(object_name string) ?&Script {
-	script := e.loader.find_script(object_name) or { return none }
+pub fn (mut ctx ExecutionContext) find_script(object_name string) ?&Script {
+	script := ctx.loader.find_script(object_name) or { return none }
 	return script
 }
 
 @[inline]
-pub fn (mut e ExecutionContext) find_method(object_name string, state_name string, func_name string) ?&Function {
-	return e.loader.find_method(object_name, state_name, func_name)
+pub fn (mut ctx ExecutionContext) find_method(object_name string, state_name string, func_name string) ?&Function {
+	return ctx.loader.find_method(object_name, state_name, func_name)
 }
 
 @[inline]
-pub fn (mut e ExecutionContext) find_global_func(object_name string, func_name string) ?&Function {
-	return e.loader.find_global_func(object_name, func_name)
+pub fn (mut ctx ExecutionContext) find_global_func(object_name string, func_name string) ?&Function {
+	return ctx.loader.find_global_func(object_name, func_name)
 }
 
-pub fn (mut e ExecutionContext) get_executed_instructions_count() i64 {
-	return e.instruction_count
+pub fn (mut ctx ExecutionContext) get_executed_instructions_count() i64 {
+	return ctx .instruction_count
+}
+
+fn (mut ctx ExecutionContext) create_object(info &Script) &Object {
+	ctx.objects << Object{
+		info: info
+		state: info.auto_state
+	}
+
+	return &ctx.objects[ctx.objects.len - 1]
+}
+
+pub fn (mut ctx ExecutionContext) create_object_value(info &Script) Value {
+	obj_ptr := ctx.create_object(info)
+	mut obj_value := ctx.create_value_none_object_from_info(info)
+	obj_value.bind_object(obj_ptr)
+	return obj_value
 }

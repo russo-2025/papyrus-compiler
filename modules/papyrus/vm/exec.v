@@ -3,13 +3,13 @@ module vm
 fn (mut e ExecutionContext) print_stack() {
 	for i := 0; i < e.stack.len(); i++ {
 		val := e.stack.peek_offset(i)
-		mut val_str := match val.typ {
+		mut val_str := match val.typ.typ {
 			.none { "type: none" }
 			.i32 { "type: integer; data: ${val.get[i32]()}" }
 			.f32 { "type: float; data: ${val.get[f32]()}" }
 			.bool { "type: bool; data: ${val.get[bool]()}" }
 			.string { "type: string; data: ${val.get[string]()}" }
-			.object { panic("TODO") }
+			.object { "type: object; data: ${ptr_str(val.data.object)}" }
 			.array { panic("TODO") }
 		}
 		println("offset: ${i}; ${val_str}")
@@ -73,7 +73,10 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 		}
 	}
 
-	match val1.typ {
+	assert val1.typ.typ == val2.typ.typ
+	assert val1.typ.raw == val2.typ.raw
+
+	match val1.typ.typ {
 		.none { panic("TODO") }
 		.i32 {
 			unsafe { val1.data.i32 = val2.data.i32 }
@@ -87,8 +90,12 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 		.string {
 			unsafe { val1.data.string = val2.data.string }
 		}
-		.object { panic("TODO") }
-		.array { panic("TODO") }
+		.object {
+			unsafe { val1.data.object = val2.data.object }
+		}
+		.array {
+			unsafe { val1.data.array = val2.data.array }
+		}
 	}
 }
 
@@ -97,10 +104,10 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 	from := e.get_value(from_operand)
 	mut to := e.get_value(to_operand)
 
-	match to.typ {
+	match to.typ.typ {
 		.none { panic("TODO object -> bool") }
 		.bool {
-			match from.typ {
+			match from.typ.typ {
 				.none { to.set_data[bool](false) }
 				.bool { panic("invalid cast bool -> bool") }
 				.i32 { to.set_data[bool](from.get[i32]() != 0) }
@@ -111,7 +118,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 			}
 		}
 		.i32 {
-			match from.typ {
+			match from.typ.typ {
 				.bool { to.set_data[i32](if from.get[bool]() { i32(1) } else { i32(0) }) }
 				.i32 { panic("invalid cast i32 -> i32") }
 				.f32 { to.set_data[i32](i32(from.get[f32]())) } // TODO f32 to i32
@@ -120,7 +127,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 			}
 		}
 		.f32 {
-			match from.typ {
+			match from.typ.typ {
 				.bool { to.set_data[f32](if from.get[bool]() { f32(1.0) } else { f32(0.0) }) }
 				.i32 { to.set_data[f32](f32(from.get[i32]())) } // TODO f32 to i32
 				.f32 { panic("invalid cast f32 -> f32") }
@@ -129,7 +136,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 			}
 		}
 		.string {
-			match from.typ {
+			match from.typ.typ {
 				.none { to.set_data[string]("None") }
 				.bool { to.set_data[string](if from.get[bool]() { "True" } else { "False" }) }
 				.i32 { to.set_data[string](from.get[i32]().str()) }
@@ -139,34 +146,21 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 				.array { panic("TODO array -> bool") }
 			}
 		}
-		.object { panic("TODO cast object") }
+		.object { panic("TODO cast object ${from.typ.raw} -> ${to.typ.raw} ${ptr_str(from.data.object)} -> ${ptr_str(to.data.object)}") }
 		.array { panic("TODO cast array") }
 	}
 }
 
-@[inline]
-pub fn (mut ctx ExecutionContext) create_object(script &Script) Value {
-	assert script.name != ""
-	assert script.auto_state != voidptr(0)
-
-	obj := &Object{
-		info: script
-		state: script.auto_state
-	}
-
-	mut obj_value := create_value_typ(.object)
-	obj_value.set_object(obj)
-
-	return obj_value
-}
-
 @[direct_array_access]
-fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
-	//e.print_stack()
+fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
+	e.print_stack()
+
+	//eprintln("[ExecutionContext.run_commands] run ${func.name} ${e.stack.peek().get[i32]()}")
 	for i := 0; i < func.commands.len; i++ {
 		mut command := &func.commands[i]
 		e.instruction_count++
 
+		//eprintln("[ExecutionContext.run_commands] ${command.type_name()}")
 		match mut command {
 			Call {
 				mut call_func := &Function(unsafe {nil})
@@ -179,8 +173,8 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 					command.cache_func = call_func
 				}
 				else {
-					obj := e.get_value(command.self).get_object()
-					call_func = e.find_method(command.object, obj.state.name, command.name) or { panic("method not found") }
+					self := e.get_value(command.self).get_object()
+					call_func = e.find_method(self.info.name, self.state.name, command.name) or { panic("method not found") }
 					command.cache_func = call_func
 				}
 
@@ -257,7 +251,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 						res.set[i32](e.get_value(command.value1).get[i32]() % e.get_value(command.value2).get[i32]()) 
 					}
 					.cmp_eq {
-						match e.get_value(command.value1).typ {
+						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() == e.get_value(command.value2).get[i32]())
@@ -270,7 +264,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 						}
 					}
 					.cmp_lt {
-						match e.get_value(command.value1).typ {
+						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() < e.get_value(command.value2).get[i32]())
@@ -283,7 +277,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 						}
 					}
 					.cmp_le {
-						match e.get_value(command.value1).typ {
+						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() <= e.get_value(command.value2).get[i32]())
@@ -296,7 +290,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 						}
 					}
 					.cmp_gt {
-						match e.get_value(command.value1).typ {
+						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() > e.get_value(command.value2).get[i32]())
@@ -309,7 +303,7 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 						}
 					}
 					.cmp_ge {
-						match e.get_value(command.value1).typ {
+						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[i32]() >= e.get_value(command.value2).get[i32]())
@@ -329,6 +323,12 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 				}
 			}
 			CastExpr {
+				
+				println(command.value)
+				//println(e.get_value(command.value))
+				println(command.result)
+				//println(e.get_value(command.result))
+
 				e.cast_value(command.value, command.result)
 			}
 			Return {
@@ -342,7 +342,10 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 					println("[run Return] ${func.name} res ${res.get[i32]()} stacklen${e.stack.len()}")
 				}
 				*/
-
+				/*if res.typ == .i32 {
+					eprintln("[ExecutionContext.run_commands] end return ${func.name} - ${res.get[i32]()}")
+				}*/
+				
 				return res
 			}
 			Assign {
@@ -352,24 +355,81 @@ fn (mut e ExecutionContext) run_commands(mut func &Function) &Value {
 				if command.with_condition {
 					if command.true_condition {
 						if e.get_value(command.value).get[bool]() {
+							i-- // next for i++
 							i += command.offset
 							continue
 						}
 					}
 					else {
 						if !e.get_value(command.value).get[bool]() {
+							i-- // next for i++
 							i += command.offset
 							continue
 						}
 					}
 				}
+				else {
+					i-- // next for i++
+					i += command.offset
+				}
+			}
+			ArrayCreate {
+				mut res := e.get_value(command.result)
+				mut size := e.get_value(command.size)
+				e.array_resize(mut res, size)
+			}
+			GetArrayLength {
+				mut res := e.get_value(command.result)
+				mut array := e.get_value(command.array)
 
-				i += command.offset
+				res.set[i32](array.get_array_length())
+			}
+			GetArrayElement {
+				mut array := e.get_value(command.array)
+				mut index := e.get_value(command.index)
+
+				e.set_value(command.result, array.get_array_element(index))
+			}
+			SetArrayElement {
+				mut array := e.get_value(command.array)
+				mut index := e.get_value(command.index)
+				mut value := e.get_value(command.value)
+				
+				array.set_array_element(index, value)
+			}
+			FindArrayElement {
+				mut array := e.get_value(command.array)
+				mut value := e.get_value(command.value)
+				mut start_index := e.get_value(command.start_index).get[VmArrayIndex]()
+
+				len := array.get_array_length()
+				mut found := VmArrayIndex(-1)
+
+				if !command.is_reverse {
+					for k := start_index ; k < len; k++ {
+						if value == array.get_array_element(e.create_index(k)) {
+							found = VmArrayIndex(k)
+							break
+						}
+					}
+				}
+				else {
+					start_index = if start_index == -1 { len - 1 } else { start_index }
+					
+					for k := start_index ; k >= 0; k-- {
+						if value == array.get_array_element(e.create_index(k)) {
+							found = VmArrayIndex(k)
+							break
+						}
+					}
+				}
+					
+				e.set_value(command.result, e.create_index(found))
 			}
 		}
 	}
 	
-	//println("[run Return] ${func.name} stacklen${e.stack.len()}")
+	//println("[ExecutionContext.run_commands] end ${func.name}")
 
 	return e.get_value(e.loader.none_operand)
 }
@@ -381,6 +441,7 @@ fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value)
 	if !func.is_global {
 		ctx.set_self_register(self)
 	}
+
 	ctx.stack.push_many(func.stack_data.data, func.stack_data.len)
 	ctx.stack.push_many(args.data, args.len)
 

@@ -1,14 +1,21 @@
 module vm
 
-pub struct Value {
+struct Value {
 pub mut:
-	typ			ValueType = .none
-	data		ValueData = ValueData{ bool: false }
+	typ			ValueType = none_value.typ
+	data		ValueData = none_value.data
 	is_temp		bool
 	is_used		bool
 }
 
-pub enum ValueType {
+struct ValueType {
+pub:
+	raw			string
+	typ			BasicValueType
+	elem_typ	BasicValueType = .none
+}
+
+enum BasicValueType {
 	none
 	bool
 	i32
@@ -16,137 +23,249 @@ pub enum ValueType {
 	f32
 	string
 	object
-	array // TODO
+	array
 }
 
 union ValueData {
 mut:
 	bool	bool
 	i32		i32
-	//u32		u32
+	//u32	u32
 	f32		f32
 	string	string
-	//ptr		voidptr
-	object	&Object = voidptr(0)
-	array	voidptr // TODO
+	//ptr	voidptr
+	object	&Object = unsafe { voidptr(0) }
+	array	[]Value = []Value{}
 }
 
-const none_value = Value{
-	typ: .none,
+type VmArrayIndex = i32
+
+fn (i VmArrayIndex) u32() u32 {
+	return u32(i)
+}
+
+fn (i VmArrayIndex) int() int {
+	return int(i)
+}
+
+pub const none_value = Value{
+	typ: ValueType{ raw: "none", typ: .none },
 	data: ValueData{ bool: false }
 }
 
 @[inline]
-pub fn create_value_typ(typ ValueType) Value {
-	match typ {
-		.none { return none_value }
-		.bool {
-			return Value{
-				typ: .bool,
-				data: ValueData{ bool: false }
-			}
-		}
-		.i32 {
-			return Value{
-				typ: .i32,
-				data: ValueData{ i32: i32(0) }
-			}
-		}
-		.f32 {
-			return Value{
-				typ: .f32,
-				data: ValueData{ f32: f32(0) }
-			}
-		}
-		.string {
-			return Value{
-				typ: .string,
-				data: ValueData{ string: "" }
-			}
-		}
-		.object {
-			return Value{
-				typ: .object,
-				data: ValueData{ object: voidptr(0) }
-			}
-		}
-		.array { panic("TODO") }
+pub fn (mut ctx ExecutionContext) create_bool(data bool) Value {
+	return Value{
+		typ: ValueType{ raw: "bool", typ: .bool },
+		data: ValueData{ bool: data }
 	}
 }
 
 @[inline]
-pub fn create_value_data[T](v T) Value {
-	$if T is bool {
-		return Value{
-			typ: .bool,
-			data: ValueData{ bool: v }
-		}
-	}
-	$else $if T is i32 {
-		return Value{
-			typ: .i32,
-			data: ValueData{ i32: v }
-		}
-	}
-	$else $if T is f32 {
-		return Value{
-			typ: .f32,
-			data: ValueData{ f32: v }
-		}
-	}
-	$else $if T is string {
-		return Value{
-			typ: .string,
-			data: ValueData{ string: v }
-		}
-	}
-	$else  {
-		$compile_error("invalid T type in fn create_value")
+pub fn (mut ctx ExecutionContext) create_int(data i32) Value {
+	return Value{
+		typ: ValueType{ raw: "int", typ: .i32 },
+		data: ValueData{ i32: data }
 	}
 }
 
-fn (mut v Value) clear() {
-	match v.typ {
+@[inline]
+pub fn (mut ctx ExecutionContext) create_index(data VmArrayIndex) Value {
+	return Value{
+		typ: ValueType{ raw: "int", typ: .i32 },
+		data: ValueData{ i32: data }
+	}
+}
+
+@[inline]
+pub fn (mut ctx ExecutionContext) create_float(data f32) Value {
+	return Value{
+		typ: ValueType{ raw: "float", typ: .f32 },
+		data: ValueData{ f32: data }
+	}
+}
+
+@[inline]
+pub fn (mut ctx ExecutionContext) create_string(data string) Value {
+	return Value{
+		typ: ValueType{ raw: "string", typ: .string },
+		data: ValueData{ string: data }
+	}
+}
+
+@[inline]
+// TODO rename .......
+pub fn (mut ctx ExecutionContext) create_value_none_object_from_info(info &Script) Value {
+	assert info.name != ""
+	assert info.auto_state != voidptr(0)
+
+	mut obj_value := Value{
+		typ: ValueType{ raw: info.name.to_lower(), typ: .object },
+		data: ValueData{ object: voidptr(0) }
+	}
+	
+	return obj_value
+}
+
+@[inline]
+// TODO rename .......
+pub fn (mut ctx ExecutionContext) create_value_none_object_from_script_name(script_name string) Value {
+	info := ctx.find_script(script_name) or { panic("script with name `${script_name}` not found") }
+	return ctx.create_value_none_object_from_info(info)
+}
+
+@[inline]
+pub fn (mut ctx ExecutionContext) create_array(typ ValueType) Value {
+	assert typ.typ == .array
+	assert typ.raw.ends_with("[]")
+	assert !typ.raw.all_before_last("[]").ends_with("[]") // array in array unsupported 
+
+	return Value{
+		typ: typ,
+		data: ValueData{ array: []Value{} }
+	}
+}
+
+@[inline]
+fn (mut self Value) bind_object(object &Object) {
+	assert self.typ.typ == .object
+	assert self.typ.raw == object.info.name
+	assert object != voidptr(0)
+
+	self.data.object = object
+}
+
+fn (mut self Value) clear() {
+	match self.typ.typ {
 		.none {
-			v.data.bool = false
+			self.data.bool = false
 		}
 		.i32 {
-			v.data.i32 = 0
+			self.data.i32 = 0
 		}
 		.f32 {
-			v.data.f32 = 0.0
+			self.data.f32 = 0.0
 		}
 		.bool {
-			v.data.bool = false
+			self.data.bool = false
 		}
 		.string {
-			v.data.string = ""
+			self.data.string = ""
 		}
 		.object {
-			v.data.object = voidptr(0)
+			self.data.object = voidptr(0)
 		}
 		.array {
-			panic("TODO")
+			self.data.array = []Value{}
 		}
+	}
+}
+
+fn (mut ctx ExecutionContext) array_resize(mut value Value, new_size_value Value) {
+	assert value.typ.typ == .array
+
+	new_size := new_size_value.get[VmArrayIndex]()
+
+	init_value := match value.typ.elem_typ {
+		.none {
+			panic("WTF")
+			none_value // WTF TODO issue
+		}
+		.bool { ctx.create_bool(false) }
+		.i32 { ctx.create_int(0) }
+		.f32 { ctx.create_float(0.0) }
+		.string { ctx.create_string("") }
+		.object { ctx.create_value_none_object_from_script_name(value.typ.raw.all_before("[]")) }
+		.array {
+			panic("Array in Array unsupported")
+			none_value // WTF TODO issue
+		}
+	}
+	
+	value.data.array = []Value{ cap: new_size.int(), len: new_size.int(), init: init_value }
+}
+
+pub fn (self Value) get_array() []Value {
+	assert self.typ.typ == .array
+	assert unsafe { self.data.array } != voidptr(0)
+	return unsafe { self.data.array }
+}
+
+pub fn (mut self Value) set_array(arr []Value) {
+	assert self.typ.typ == .array
+	unsafe { self.data.array = arr }
+}
+
+pub fn (self Value) get_array_element(value_index Value) Value {
+	assert self.typ.typ == .array
+	index := value_index.get[VmArrayIndex]()
+	assert index.u32() < unsafe { self.data.array.len }
+	return  unsafe { self.data.array[index] }
+}
+
+pub fn (mut self Value) set_array_element(value_index Value, value Value) {
+	assert self.typ.typ == .array
+	index := value_index.get[VmArrayIndex]()
+	assert index.u32() < unsafe { self.data.array.len }
+	unsafe { self.data.array[index] = value }
+}
+
+pub fn (self Value) get_array_length() VmArrayIndex {
+	assert self.typ.typ == .array
+	return unsafe { self.data.array.len }
+}
+
+pub fn (self Value) object_is_none() bool {
+	assert self.typ.typ == .object
+	return unsafe { self.data.object } == voidptr(0)
+}
+
+pub fn (self Value) get_object() &Object {
+	assert self.typ.typ == .object
+	assert unsafe { self.data.object } != voidptr(0)
+	return unsafe { self.data.object }
+}
+
+pub fn (mut self Value) set_object(obj &Object) {
+	assert self.typ.typ == .object
+	unsafe { self.data.object = obj }
+}
+
+fn (a Value) == (b Value) bool {
+	assert a.typ.typ == b.typ.typ
+	assert a.typ.raw == b.typ.raw
+
+	match a.typ.typ {
+		.none { panic("TODO") }
+		.bool { return a.get[bool]() == b.get[bool]() }
+		.i32 { return a.get[i32]() == b.get[i32]() }
+		.f32 { return a.get[f32]() == b.get[f32]() }
+		.string { return a.get[string]() == b.get[string]() } // TODO ???
+		.object { panic("TODO") }
+		.array { panic("WTF") }
 	}
 }
 
 pub fn (mut v Value) set[T](value T) {
 	$if T is bool {
-		assert v.typ == .bool
+		assert v.typ.typ == .bool
 		v.set_data(value)
 	}
 	$else $if T is i32 {
-		assert v.typ == .i32
+		assert v.typ.typ == .i32
 		v.set_data(value)
 	}
 	$else $if T is f32 {
-		assert v.typ == .f32
+		assert v.typ.typ == .f32
 		v.set_data(value)
 	}
 	$else $if T is string {
-		assert v.typ == .string
+		assert v.typ.typ == .string
 		unsafe { v.data.string = value }
+	}
+	$else $if T is VmArrayIndex {
+		assert v.typ.typ == .i32
+		v.set_data(value)
 	}
 	//TODO object
 	//TODO array
@@ -155,33 +274,26 @@ pub fn (mut v Value) set[T](value T) {
 	}
 }
 
-pub fn (mut v Value) set_object(obj &Object) {
-	assert v.typ == .object
-	v.data.object = obj
-}
-
-pub fn (v Value) get_object() &Object {
-	assert v.typ == .object
-	assert unsafe { v.data.object } != voidptr(0)
-	return unsafe { v.data.object }
-}
-
-pub fn (v Value) get[T]() T {
+pub fn (self Value) get[T]() T {
 	$if T is bool {
-		assert v.typ == .bool
-		return unsafe { v.data.bool }
+		assert self.typ.typ == .bool
+		return unsafe { self.data.bool }
 	}
 	$else $if T is i32 {
-		assert v.typ == .i32
-		return unsafe { v.data.i32 }
+		assert self.typ.typ == .i32
+		return unsafe { self.data.i32 }
 	}
 	$else $if T is f32 {
-		assert v.typ == .f32
-		return unsafe { v.data.f32 }
+		assert self.typ.typ == .f32
+		return unsafe { self.data.f32 }
 	}
 	$else $if T is string {
-		assert v.typ == .string
-		return unsafe { v.data.string }
+		assert self.typ.typ == .string
+		return unsafe { self.data.string }
+	}
+	$else $if T is VmArrayIndex {
+		assert self.typ.typ == .i32
+		return unsafe { self.data.i32 }
 	}
 	//TODO object
 	//TODO array
@@ -190,18 +302,26 @@ pub fn (v Value) get[T]() T {
 	}
 }
 
-fn (mut v Value) set_data[T](value T) {
+fn (mut self Value) set_data[T](value T) {
 	$if T is bool {
-		unsafe { v.data.bool = value }
+		assert self.typ.typ == .bool
+		unsafe { self.data.bool = value }
 	}
 	$else $if T is i32 {
-		unsafe { v.data.i32 = value }
+		assert self.typ.typ == .i32
+		unsafe { self.data.i32 = value }
 	}
 	$else $if T is f32 {
-		unsafe { v.data.f32 = value }
+		assert self.typ.typ == .f32
+		unsafe { self.data.f32 = value }
 	}
 	$else $if T is string {
-		unsafe { v.data.string = value }
+		assert self.typ.typ == .string
+		unsafe { self.data.string = value }
+	}
+	$else $if T is VmArrayIndex {
+		assert self.typ.typ == .i32
+		unsafe { self.data.i32 = value }
 	}
 	//TODO object
 	//TODO array
