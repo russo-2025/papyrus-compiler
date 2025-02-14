@@ -74,10 +74,6 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 		}
 	}
 
-	if !(val1.typ.typ == val2.typ.typ) {
-		print_backtrace()
-	}
-
 	assert val1.typ.typ == val2.typ.typ
 	assert val1.typ.raw == val2.typ.raw
 
@@ -117,7 +113,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 				.bool { panic("invalid cast bool -> bool") }
 				.i32 { to.set_data[bool](from.get[i32]() != 0) }
 				.f32 { to.set_data[bool](from.get[f32]() != 0.0) }
-				.string { to.set_data[bool](from.get[string]().len > 0) }
+				.string { to.set_data[bool](from.to_string_len() > 0) }
 				.object {
 					if from.object_is_none() {
 						to.set_data[bool](false)
@@ -155,7 +151,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 			}
 		}
 		.string {
-			to.set_data[string](from.to_string())
+			to.set_data[string](from.cast_to_string())
 		}
 		.object {
 			match from.typ.typ {

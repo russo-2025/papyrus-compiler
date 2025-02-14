@@ -241,7 +241,14 @@ fn (self Value) to_array_index() VmArrayIndex {
 }
 
 @[inline]
-fn (self Value) to_string() string {
+fn (self Value) to_string_len() int {
+	assert self.typ.typ == .string
+
+	return unsafe { self.data.string.len }
+}
+
+@[inline]
+fn (self Value) cast_to_string() string {
 	match self.typ.typ {
 		.none { return "None" }
 		.bool { return unsafe { if self.data.bool { "True" } else { "False" } } }
@@ -257,7 +264,7 @@ fn (self Value) to_string() string {
 
 			for k := 0 ; k < len; k++ {
 				element_value := self.get_array_element(k)
-				res.write_string(element_value.to_string())
+				res.write_string(element_value.cast_to_string())
 
 				if k == len - 1 {
 					res.write_string(" ")

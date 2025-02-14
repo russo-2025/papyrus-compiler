@@ -55,6 +55,18 @@ fn test_call_global() {
 fn test_call_method() {
 	src_file := 'Scriptname ABCD
 
+	State MyState1
+		Int Function Sum(int n1, int n2)
+			return n1 + n2 + 5
+		EndFunction
+	EndState
+
+	State MyState2
+		Int Function Sum(int n1, int n2)
+			return n1 + n2 - 5
+		EndFunction
+	EndState
+
 	Int Function Sum(int n1, int n2)
 		return n1 + n2
 	EndFunction
@@ -75,6 +87,7 @@ fn test_call_method() {
 	// TODO parent call
 	// keyword parent call
 	// keyword self call
+	// state call
 }
 
 fn test_prefix() {
@@ -552,21 +565,43 @@ fn test_cast() {
 	Bool Function CastTest(ABCD obj, ABCD noneObj) Global
 		;to bool
 		Assert(!(None as bool))
-		;Assert(12 as bool)
-		;Assert(!0 as bool)
-		;Assert(13.0 as bool)
-		;Assert(!0.0 as bool)
-		;Assert(!"" as bool)
-		;Assert("123" as bool)
-		;Assert(obj as bool)
-		;Assert(!noneObj as bool)
 
-		;Assert(new int[3] as bool)
-		;Assert(!new int[3] as bool)
+		Assert(12 as bool)
+		Assert(!(0 as bool))
+		Assert(13.0 as bool)
+		Assert(!(0.0 as bool))
+		Assert("123" as bool)
+		Assert(!("" as bool))
+		Assert(obj as bool)
+		Assert(!(noneObj as bool))
+		Assert(new int[3] as bool)
 
 		; to int
-		;Assert(True as int == 1)
-		;Assert(False as int == 0)
+		Assert(True as int == 1)
+		Assert(False as int == 0)
+		Assert(-1357.0 as int == -1357)
+		Assert("145.0" as int == 145)
+		Assert("0" as int == 0)
+		Assert("-12" as int == -12)
+
+		; to float
+		Assert(True as float == 1.0)
+		Assert(False as float == 0.0)
+		Assert("145" as float == 145.0)
+		Assert("0" as float == 0.0)
+		Assert("-11.1347" as float == -11.1347)
+		Assert("1253.23" as float == 1253.23)
+
+		; to string
+		Assert(None as string == "None")
+		Assert(True as string == "True")
+		Assert(False as string == "False")
+		Assert(111 as string == "111")
+		Assert(-125 as string == "-125")
+		Assert(0.447 as string == "0.447")
+
+		; to object
+		; TODO
 
 		return true
 	EndFunction'
@@ -581,7 +616,7 @@ fn test_cast() {
 			assert args.len == 1
 
 			if !args[0].get[bool]() {
-				return error("error")
+				return error("assert")
 			}
 
 			return ctx.create_bool(true)
@@ -594,33 +629,24 @@ fn test_cast() {
 	abcd_value := ctx.create_object_value(script)
 	abcd_none_value := ctx.create_value_none_object_from_info(script)
 
-	mut result_value := ctx.call_static("ABCD", "CastTest", [ abcd_value, abcd_none_value ]) or {
-		panic("fn not found")
-	}
-	assert result_value.get[bool]() == true
+	false_value := ctx.create_bool(false)
+	mut result_value := ctx.call_static("ABCD", "CastTest", [ abcd_value, abcd_none_value ]) or { &false_value }
+	assert result_value.get[bool]()
 
-/*
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
-
-	script := ctx.find_script("ABCD") or { panic("script not found") }
-	abcd_value := ctx.create_object_value(script)
-	abcd_none_value := ctx.create_value_none_object_from_info(script)
-
-	// if obj none
-	mut result_value := ctx.call_static("ABCD", "ScriptTest1", [ abcd_value ]) or {
-		panic("fn not found")
-	}
-	assert result_value.get[bool]() == true
-*/
-}
-
-fn test_state() {
-	// https://ck.uesp.net/wiki/State_Reference
-	// TODO
+	// TODO parent to child
+	// TODO child to parent
 }
 
 fn test_native_call() {
+	// TODO
+}
+
+// TODO parent call
+// keyword parent call
+// keyword self call
+// state call
+fn test_state() {
+	// https://ck.uesp.net/wiki/State_Reference
 	// TODO
 }
 

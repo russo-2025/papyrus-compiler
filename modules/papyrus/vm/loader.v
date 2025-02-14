@@ -418,7 +418,7 @@ fn (mut loader Loader) parse_value(pex_value pex.VariableValue) Operand {
 			return loader.create_stack_operand(loader.ctx.create_int(i32(pex_value.to_integer()))) //TODO int -> i32
 		}
 		.str {
-			return loader.create_stack_operand(loader.ctx.create_string(pex_value.to_string(loader.pex_file)))
+			return loader.create_stack_operand(loader.ctx.create_string(loader.pex_file.get_string(pex_value.to_string_id())))
 		}
 		.identifier {
 			name :=  loader.get_string(pex_value.to_string_id()).to_lower()
