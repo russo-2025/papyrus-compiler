@@ -70,7 +70,7 @@ pub fn (mut loader Loader) load_pex_file(pex_file &pex.PexFile) {
 
 	//loader.scripts << loader.cur_script
 
-	loader.print_loaded_scripts()
+	//loader.print_loaded_scripts()
 }
 
 fn (mut loader Loader) print_loaded_scripts() {
@@ -165,15 +165,10 @@ fn (mut loader Loader) load_func(object_name string, state_name string, pex_func
 				}
 			}
 			.cast {
-				//eprintln("==================")
-				//eprintln(inst.args[0])
-				//eprintln(inst.args[1])
-				//eprintln(loader.parse_value(inst.args[0]))
 				loader.commands << CastExpr{
 					result: loader.parse_value(inst.args[0])
 					value: loader.parse_value(inst.args[1])
 				}
-				//eprintln("==================")
 			}
 			.jmp {
 				loader.commands << Jump{
@@ -298,6 +293,7 @@ fn (mut loader Loader) load_func(object_name string, state_name string, pex_func
 		name: loader.get_string(pex_func.name)
 		commands: loader.commands
 		is_global: pex_func.info.is_global()
+		is_native: pex_func.info.is_native()
 		stack_data: loader.fn_stack_data.reverse()
 		params: fn_params
 	}
@@ -374,9 +370,15 @@ fn (mut loader Loader) create_operand(typ ValueType) Operand {
 	if operand := loader.find_free_reg(typ) {
 		return operand
 	}
+	else if typ.typ == .none {
+		return loader.none_operand
+	}
 	else {
 		value := match typ.typ {
-			.none { none_value }
+			.none {
+				panic("WTF") // TODO bug issue
+				loader.ctx.none_value
+			}
 			.bool {
 				loader.ctx.create_bool(false)
 			}

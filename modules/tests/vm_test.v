@@ -13,10 +13,23 @@ const prefs = pref.Preferences {
 	no_cache: true
 }
 
-fn test_call_global() {
+fn vm_init(src_file string) &vm.ExecutionContext {
 	mut table := ast.new_table()
 	mut global_scope := &ast.Scope{}
 
+	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
+	mut c := checker.new_checker(table, prefs)
+	c.check(mut ast_file)
+	assert c.errors.len == 0
+	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
+
+	//eprintln(pex_file.str())
+	mut ctx := vm.create_context()
+	ctx.load_pex_file(pex_file)
+	return ctx
+}
+
+fn test_call_global() {
 	src_file := 'Scriptname ABCD
 
 	Float Function Sum(int n1, float n2, float n3) global
@@ -30,14 +43,7 @@ fn test_call_global() {
 		return Sum(11, 12 as Float, Sum(10, 20 as Float, 30.0)) as int
 	EndFunction'
 
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	vres := ctx.call_static("ABCD", "PexInstructionTest", [ ctx.create_int(22), ctx.create_int(23)]) or {
 		panic("fn not found")
@@ -47,9 +53,6 @@ fn test_call_global() {
 }
 
 fn test_call_method() {
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	Int Function Sum(int n1, int n2)
@@ -60,14 +63,7 @@ fn test_call_method() {
 		return 10 + Sum(n1, n2)
 	EndFunction'
 	
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
@@ -82,9 +78,6 @@ fn test_call_method() {
 }
 
 fn test_prefix() {
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	float Function NegTestFloat(float n1)
@@ -103,14 +96,7 @@ fn test_prefix() {
 		return -2
 	EndFunction'
 
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
@@ -139,9 +125,6 @@ fn test_prefix() {
 }
 
 fn test_math() {
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	Int Function MathTest1(int n1, int n2, int n3, int n4)
@@ -159,14 +142,7 @@ fn test_math() {
 		return -1
 	EndFunction'
 
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
@@ -183,9 +159,6 @@ fn test_math() {
 }
 
 fn test_if_return() {
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	Int Function IfGt(int n)
@@ -227,15 +200,8 @@ fn test_if_return() {
 
 		return 12
 	EndFunction'
-	
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
 
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
@@ -305,9 +271,6 @@ fn test_if_return() {
 }
 
 fn test_fibonacci() {
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	Int Function FibStatic(int n) Global
@@ -325,15 +288,8 @@ fn test_fibonacci() {
 
 		return FibMethod(n - 1) + FibMethod(n - 2);
 	EndFunction'
-	
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
 
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	// method
 	script := ctx.find_script("ABCD") or { panic("script not found") }
@@ -395,34 +351,7 @@ fn test_fibonacci() {
 	assert result_value.get[i32]() == 34
 }
 
-fn test_cast() {
-	// https://ck.uesp.net/wiki/Cast_Reference
-	// TODO
-}
-
-fn test_state() {
-	// https://ck.uesp.net/wiki/State_Reference
-	// TODO
-}
-
-fn test_properties() {
-	// https://ck.uesp.net/wiki/Property_Reference
-	// TODO
-}
-
-fn test_object_var() {
-	// TODO
-}
-
 fn test_none_object() {
-	// TODO
-	// Actor ac = None
-	// FnWithActorArg(None)
-	// if ac == None
-
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
-
 	src_file := 'Scriptname ABCD
 
 	bool Function ScriptTest1(ABCD obj) Global
@@ -450,14 +379,7 @@ fn test_none_object() {
 		return ScriptTest1(None)
 	EndFunction'
 
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	abcd_value := ctx.create_object_value(script)
@@ -467,7 +389,7 @@ fn test_none_object() {
 	mut result_value := ctx.call_static("ABCD", "ScriptTest1", [ abcd_value ]) or {
 		panic("fn not found")
 	}
-	assert result_value.get[bool]()
+	assert result_value.get[bool]() == true
 
 	result_value = ctx.call_static("ABCD", "ScriptTest1", [ abcd_none_value ]) or {
 		panic("fn not found")
@@ -505,9 +427,6 @@ fn test_none_object() {
 fn test_array() {
 	// https://ck.uesp.net/wiki/Array_Reference
 	// https://ck.uesp.net/wiki/Arrays_(Papyrus)
-
-	mut table := ast.new_table()
-	mut global_scope := &ast.Scope{}
 
 	src_file := 'Scriptname ABCD
 
@@ -569,14 +488,7 @@ fn test_array() {
 		return index
 	EndFunction'
 
-	mut ast_file := parser.parse_text("::gen_test.v/src::", src_file, mut table, prefs, mut global_scope)
-	mut c := checker.new_checker(table, prefs)
-	c.check(mut ast_file)
-	assert c.errors.len == 0
-	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
-
-	mut ctx := vm.create_context()
-	ctx.load_pex_file(pex_file)
+	mut ctx := vm_init(src_file)
 
 	// return array
 	mut result_value := ctx.call_static("ABCD", "GetIntArray", []) or {
@@ -586,16 +498,16 @@ fn test_array() {
 	assert result_value.typ.raw == "float[]"
 	assert result_value.get_array_length() == 20
 	
-	x0 := result_value.get_array_element(ctx.create_index(0))
+	x0 := result_value.get_array_element(0)
 	assert x0.get[f32]() == 5
 	
-	x5 := result_value.get_array_element(ctx.create_index(5))
+	x5 := result_value.get_array_element(5)
 	assert x5.get[f32]() == 10
 	
-	x18 := result_value.get_array_element(ctx.create_index(18))
+	x18 := result_value.get_array_element(18)
 	assert x18.get[f32]() == 99
 
-	x19 := result_value.get_array_element(ctx.create_index(19))
+	x19 := result_value.get_array_element(19)
 	assert x19.get[f32]() == 100
 
 	// get set element
@@ -631,4 +543,92 @@ fn test_array() {
 		panic("fn not found")
 	}
 	assert result_value.get[i32]() == -1
+}
+
+fn test_cast() {
+	src_file := 'Scriptname ABCD
+	Bool Function Assert(bool cond) Global Native
+
+	Bool Function CastTest(ABCD obj, ABCD noneObj) Global
+		;to bool
+		Assert(!(None as bool))
+		;Assert(12 as bool)
+		;Assert(!0 as bool)
+		;Assert(13.0 as bool)
+		;Assert(!0.0 as bool)
+		;Assert(!"" as bool)
+		;Assert("123" as bool)
+		;Assert(obj as bool)
+		;Assert(!noneObj as bool)
+
+		;Assert(new int[3] as bool)
+		;Assert(!new int[3] as bool)
+
+		; to int
+		;Assert(True as int == 1)
+		;Assert(False as int == 0)
+
+		return true
+	EndFunction'
+
+	mut ctx := vm_init(src_file)
+
+	native_func := vm.NativeFunction{
+		object_name: "ABCD"
+		name: "Assert"
+		is_global: true
+		cb: fn(ctx vm.ExecutionContext, self vm.Value, args []vm.Value) !vm.Value {
+			assert args.len == 1
+
+			if !args[0].get[bool]() {
+				return error("error")
+			}
+
+			return ctx.create_bool(true)
+		}
+	}
+
+	ctx.register_native_function(native_func) or { panic(err) }
+
+	script := ctx.find_script("ABCD") or { panic("script not found") }
+	abcd_value := ctx.create_object_value(script)
+	abcd_none_value := ctx.create_value_none_object_from_info(script)
+
+	mut result_value := ctx.call_static("ABCD", "CastTest", [ abcd_value, abcd_none_value ]) or {
+		panic("fn not found")
+	}
+	assert result_value.get[bool]() == true
+
+/*
+	mut ctx := vm.create_context()
+	ctx.load_pex_file(pex_file)
+
+	script := ctx.find_script("ABCD") or { panic("script not found") }
+	abcd_value := ctx.create_object_value(script)
+	abcd_none_value := ctx.create_value_none_object_from_info(script)
+
+	// if obj none
+	mut result_value := ctx.call_static("ABCD", "ScriptTest1", [ abcd_value ]) or {
+		panic("fn not found")
+	}
+	assert result_value.get[bool]() == true
+*/
+}
+
+fn test_state() {
+	// https://ck.uesp.net/wiki/State_Reference
+	// TODO
+}
+
+fn test_native_call() {
+	// TODO
+}
+
+fn test_properties() {
+	// https://ck.uesp.net/wiki/Property_Reference
+	// TODO
+}
+
+fn test_object_var() {
+	// TODO
 }

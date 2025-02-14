@@ -1,9 +1,12 @@
 module vm
 
-struct Value {
+import math
+import strings
+
+pub struct Value {
 pub mut:
-	typ			ValueType = none_value.typ
-	data		ValueData = none_value.data
+	typ			ValueType = ValueType{ raw: "none", typ: .none }
+	data		ValueData = ValueData{ bool: false }
 	is_temp		bool
 	is_used		bool
 }
@@ -48,13 +51,8 @@ fn (i VmArrayIndex) int() int {
 	return int(i)
 }
 
-pub const none_value = Value{
-	typ: ValueType{ raw: "none", typ: .none },
-	data: ValueData{ bool: false }
-}
-
 @[inline]
-pub fn (mut ctx ExecutionContext) create_bool(data bool) Value {
+pub fn (ctx ExecutionContext) create_bool(data bool) Value {
 	return Value{
 		typ: ValueType{ raw: "bool", typ: .bool },
 		data: ValueData{ bool: data }
@@ -62,7 +60,7 @@ pub fn (mut ctx ExecutionContext) create_bool(data bool) Value {
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) create_int(data i32) Value {
+pub fn (ctx ExecutionContext) create_int(data i32) Value {
 	return Value{
 		typ: ValueType{ raw: "int", typ: .i32 },
 		data: ValueData{ i32: data }
@@ -70,7 +68,7 @@ pub fn (mut ctx ExecutionContext) create_int(data i32) Value {
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) create_index(data VmArrayIndex) Value {
+pub fn (ctx ExecutionContext) create_index(data VmArrayIndex) Value {
 	return Value{
 		typ: ValueType{ raw: "int", typ: .i32 },
 		data: ValueData{ i32: data }
@@ -78,7 +76,7 @@ pub fn (mut ctx ExecutionContext) create_index(data VmArrayIndex) Value {
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) create_float(data f32) Value {
+pub fn (ctx ExecutionContext) create_float(data f32) Value {
 	return Value{
 		typ: ValueType{ raw: "float", typ: .f32 },
 		data: ValueData{ f32: data }
@@ -86,7 +84,7 @@ pub fn (mut ctx ExecutionContext) create_float(data f32) Value {
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) create_string(data string) Value {
+pub fn (ctx ExecutionContext) create_string(data string) Value {
 	return Value{
 		typ: ValueType{ raw: "string", typ: .string },
 		data: ValueData{ string: data }
@@ -95,7 +93,7 @@ pub fn (mut ctx ExecutionContext) create_string(data string) Value {
 
 @[inline]
 // TODO rename .......
-pub fn (mut ctx ExecutionContext) create_value_none_object_from_info(info &Script) Value {
+pub fn (ctx ExecutionContext) create_value_none_object_from_info(info &Script) Value {
 	assert info.name != ""
 	assert info.auto_state != voidptr(0)
 
@@ -115,7 +113,7 @@ pub fn (mut ctx ExecutionContext) create_value_none_object_from_script_name(scri
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) create_array(typ ValueType) Value {
+pub fn (ctx ExecutionContext) create_array(typ ValueType) Value {
 	assert typ.typ == .array
 	assert typ.raw.ends_with("[]")
 	assert !typ.raw.all_before_last("[]").ends_with("[]") // array in array unsupported 
@@ -124,15 +122,6 @@ pub fn (mut ctx ExecutionContext) create_array(typ ValueType) Value {
 		typ: typ,
 		data: ValueData{ array: []Value{} }
 	}
-}
-
-@[inline]
-fn (mut self Value) bind_object(object &Object) {
-	assert self.typ.typ == .object
-	assert self.typ.raw == object.info.name
-	assert object != voidptr(0)
-
-	self.data.object = object
 }
 
 fn (mut self Value) clear() {
@@ -169,7 +158,7 @@ fn (mut ctx ExecutionContext) array_resize(mut value Value, new_size_value Value
 	init_value := match value.typ.elem_typ {
 		.none {
 			panic("WTF")
-			none_value // WTF TODO issue
+			ctx.none_value // WTF TODO issue
 		}
 		.bool { ctx.create_bool(false) }
 		.i32 { ctx.create_int(0) }
@@ -178,7 +167,7 @@ fn (mut ctx ExecutionContext) array_resize(mut value Value, new_size_value Value
 		.object { ctx.create_value_none_object_from_script_name(value.typ.raw.all_before("[]")) }
 		.array {
 			panic("Array in Array unsupported")
-			none_value // WTF TODO issue
+			ctx.none_value // WTF TODO issue
 		}
 	}
 	
@@ -196,9 +185,8 @@ pub fn (mut self Value) set_array(arr []Value) {
 	unsafe { self.data.array = arr }
 }
 
-pub fn (self Value) get_array_element(value_index Value) Value {
+pub fn (self Value) get_array_element(index VmArrayIndex) Value {
 	assert self.typ.typ == .array
-	index := value_index.get[VmArrayIndex]()
 	assert index.u32() < unsafe { self.data.array.len }
 	return  unsafe { self.data.array[index] }
 }
@@ -231,6 +219,65 @@ pub fn (mut self Value) set_object(obj &Object) {
 	unsafe { self.data.object = obj }
 }
 
+@[inline]
+fn (mut self Value) set_object_none() {
+	assert self.typ.typ == .object
+	unsafe { self.data.object = voidptr(0) }
+}
+
+@[inline]
+fn (mut self Value) bind_object(object &Object) {
+	assert self.typ.typ == .object
+	assert self.typ.raw == object.info.name
+	assert object != voidptr(0)
+
+	self.data.object = object
+}
+
+@[inline]
+fn (self Value) to_array_index() VmArrayIndex {
+	assert self.typ.typ == .i32
+	return self.get[VmArrayIndex]()
+}
+
+@[inline]
+fn (self Value) to_string() string {
+	match self.typ.typ {
+		.none { return "None" }
+		.bool { return unsafe { if self.data.bool { "True" } else { "False" } } }
+		.i32 { return unsafe { self.data.i32.str() } }
+		.f32 { return unsafe { self.data.f32.str() } }
+		.string { return unsafe { "\"${self.data.string}\"" } }
+		.object { return "[ScriptName <EditorID (FormID)>]" } // TODO
+		.array {
+			mut res := strings.new_builder(30)
+			res.write_string("[ ")
+
+			len := math.min(15, self.get_array_length())
+
+			for k := 0 ; k < len; k++ {
+				element_value := self.get_array_element(k)
+				res.write_string(element_value.to_string())
+
+				if k == len - 1 {
+					res.write_string(" ")
+				}
+				else {
+					res.write_string(", ")
+				}
+			}
+
+			if self.get_array_length() > 15 {
+				res.write_string("...")
+			}
+
+			res.write_string(" ]")
+
+			return res.str()
+		}
+	}
+}
+
 fn (a Value) == (b Value) bool {
 	assert a.typ.typ == b.typ.typ
 	assert a.typ.raw == b.typ.raw
@@ -241,7 +288,7 @@ fn (a Value) == (b Value) bool {
 		.i32 { return a.get[i32]() == b.get[i32]() }
 		.f32 { return a.get[f32]() == b.get[f32]() }
 		.string { return a.get[string]() == b.get[string]() } // TODO ???
-		.object { panic("TODO") }
+		.object { return unsafe { voidptr(a.data.object) == voidptr(b.data.object) } }
 		.array { panic("WTF") }
 	}
 }

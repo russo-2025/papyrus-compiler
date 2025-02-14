@@ -264,7 +264,7 @@ pub fn (prop Property) flags_str() string {
 
 pub struct State {
 pub mut:
-	name			StringId	//empty string for default state
+	name			StringId	// empty string for default state
 	functions		[]&Function
 }
 
@@ -279,7 +279,7 @@ pub mut:
 	return_type			StringId
 	docstring			StringId
 	user_flags			u32	
-	flags				u8 //1 bit - global, 2 bit - native
+	flags				u8 // 1 bit - global, 2 bit - native
 	params				[]VariableType
 	locals				[]VariableType
 	instructions		[]Instruction

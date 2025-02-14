@@ -3,7 +3,7 @@ module vm
 import pex
 
 @[heap]
-struct ExecutionContext {
+pub struct ExecutionContext {
 mut:
 	loader				Loader
 	stack				Stack[Value]
@@ -13,12 +13,15 @@ mut:
 	cache_registers		[][]Value
 	objects				[]Object
 	allocator			Allocator
+	none_value			Value
+	native_functions	map[string]&NativeFunction // object_name.fn_name
 }
 
 pub fn create_context() &ExecutionContext {
 	mut ctx := &ExecutionContext{
 		loader: Loader{
 			used_registers: []bool{ len: int(OperandType.stack) + 1 }
+			none_operand: Operand { typ: .none_value }
 		}
 		stack: Stack{
 			els: []Value{ cap: 100 }
@@ -27,16 +30,13 @@ pub fn create_context() &ExecutionContext {
 		cache_registers: [][]Value{ cap: 10 }
 		objects: []Object{ cap: 20 }
 		allocator: create_allocator()
+		none_value: Value{
+			typ: ValueType{ raw: "none", typ: .none },
+			data: ValueData{ bool: false }
+		}
 	}
 
 	ctx.loader.set_context(mut ctx)
-
-	none_value_offset := ctx.stack.len()
-	ctx.loader.none_operand = Operand {
-		stack_offset: none_value_offset
-	}
-	ctx.stack.push(none_value)
-
 	ctx.create_registers()
 
 	return ctx
@@ -49,7 +49,7 @@ fn (mut ctx ExecutionContext) create_registers() {
 		ctx.registers = ctx.cache_registers.pop()
 		
 		// reset values
-		ctx.registers[int(OperandType.reg_self)] = none_value
+		ctx.registers[int(OperandType.reg_self)] = ctx.none_value
 
 		for i in int(OperandType.regb1)..ctx.registers.len {
 			ctx.registers[i].clear()
@@ -58,7 +58,7 @@ fn (mut ctx ExecutionContext) create_registers() {
 	// create new registers
 	else {
 		ctx.registers = [
-			none_value // placeholder self // 0
+			ctx.none_value // self placeholder // 0
 			ctx.create_string("default state name") //state
 
 			ctx.create_bool(false) // 2
@@ -73,7 +73,7 @@ fn (mut ctx ExecutionContext) create_registers() {
 			ctx.create_float(0.0)
 		]
 	}
-	assert ctx.registers.len == int(OperandType.stack)
+	assert ctx.registers.len == int(OperandType.registers_count)
 }
 
 @[inline]
@@ -86,20 +86,20 @@ fn (mut ctx ExecutionContext) set_self_register(value Value) {
 fn (mut ctx ExecutionContext) save_registers() {
 	ctx.saved_registers << ctx.registers
 	ctx.create_registers()
-	assert ctx.saved_registers.last().len == int(OperandType.stack)
+	assert ctx.saved_registers.last().len == int(OperandType.registers_count)
 }
 
 @[direct_array_access; inline]
 fn (mut ctx ExecutionContext) restore_registers() {
 	if ctx.cache_registers.len < 10 {
 		ctx.cache_registers << ctx.registers
-		assert ctx.cache_registers.last().len == int(OperandType.stack)
+		assert ctx.cache_registers.last().len == int(OperandType.registers_count)
 	}
 
 	assert ctx.saved_registers.len >= 1
-	assert ctx.saved_registers.last().len == int(OperandType.stack)
+	assert ctx.saved_registers.last().len == int(OperandType.registers_count)
 	ctx.registers = ctx.saved_registers.pop()
-	assert ctx.registers.len == int(OperandType.stack)
+	assert ctx.registers.len == int(OperandType.registers_count)
 }
 
 @[inline]
@@ -141,4 +141,20 @@ pub fn (mut ctx ExecutionContext) create_object_value(info &Script) Value {
 	mut obj_value := ctx.create_value_none_object_from_info(info)
 	obj_value.bind_object(obj_ptr)
 	return obj_value
+}
+
+pub fn (mut ctx ExecutionContext) register_native_function(native_func NativeFunction) ! {
+	key := native_func.object_name.to_lower() + "." + native_func.name.to_lower()
+
+	if key in ctx.native_functions {
+		return error("a native function with this name ${key} already exists")
+	}
+
+	ctx.native_functions[key] = &native_func
+}
+
+pub fn (mut ctx ExecutionContext) find_native_function(object_name string, func_name string) ?&NativeFunction {
+	key := object_name.to_lower() + "." + func_name.to_lower()
+	if key !in ctx.native_functions { return none }
+	return ctx.native_functions[key] or { return none }
 }

@@ -9,7 +9,7 @@ fn (mut e ExecutionContext) print_stack() {
 			.f32 { "type: float; data: ${val.get[f32]()}" }
 			.bool { "type: bool; data: ${val.get[bool]()}" }
 			.string { "type: string; data: ${val.get[string]()}" }
-			.object { "type: object; data: ${ptr_str(val.data.object)}" }
+			.object { "type: object; data: ${ptr_str( unsafe { val.data.object})}" }
 			.array { panic("TODO") }
 		}
 		println("offset: ${i}; ${val_str}")
@@ -19,6 +19,8 @@ fn (mut e ExecutionContext) print_stack() {
 @[direct_array_access; inline]
 fn (mut e ExecutionContext) get_value(operand Operand) &Value {
 	return match operand.typ {
+		.none_value { &e.none_value }
+		.stack { e.stack.peek_offset(operand.stack_offset) }
 		.reg_self,
 		.reg_state,
 		
@@ -27,20 +29,17 @@ fn (mut e ExecutionContext) get_value(operand Operand) &Value {
 
 		.regi1,
 		.regi2,
-		.regi3,/*
-		.regi4,
-		.regi5,
-		.regi6,*/
+		.regi3,
 
 		.regf1,
 		.regf2,
-		.regf3/*,
-		.regf4,
-		.regf5,
-		.regf6*/ {
+		.regf3 {
 			&e.registers[int(operand.typ)]
 		}
-		.stack { e.stack.peek_offset(operand.stack_offset) }
+		.registers_count {
+			panic("WTF") //  TODO bug issue
+			&e.none_value
+		}
 	}
 }
 
@@ -55,22 +54,28 @@ fn (mut e ExecutionContext) set_value(operand Operand, val2 &Value) {
 
 		.regi1,
 		.regi2,
-		.regi3,/*
-		.regi4,
-		.regi5,
-		.regi6,*/
+		.regi3,
 
 		.regf1,
 		.regf2,
-		.regf3/*,
-		.regf4,
-		.regf5,
-		.regf6*/ {
+		.regf3 {
 			&e.registers[int(operand.typ)]
+		}
+		.none_value {
+			panic("cannot change a Value with type None") //  TODO bug issue
+			&e.none_value
 		}
 		.stack {
 			e.stack.peek_offset(operand.stack_offset)
 		}
+		.registers_count {
+			panic("WTF") //  TODO bug issue
+			&e.none_value
+		}
+	}
+
+	if !(val1.typ.typ == val2.typ.typ) {
+		print_backtrace()
 	}
 
 	assert val1.typ.typ == val2.typ.typ
@@ -113,8 +118,22 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 				.i32 { to.set_data[bool](from.get[i32]() != 0) }
 				.f32 { to.set_data[bool](from.get[f32]() != 0.0) }
 				.string { to.set_data[bool](from.get[string]().len > 0) }
-				.object { panic("TODO object -> bool") }
-				.array { panic("TODO array -> bool") }
+				.object {
+					if from.object_is_none() {
+						to.set_data[bool](false)
+					}
+					else {
+						to.set_data[bool](true)
+					}
+				}
+				.array {
+					if from.get_array_length() >= 1 {
+						to.set_data[bool](true)
+					}
+					else {
+						to.set_data[bool](false)
+					}
+				}
 			}
 		}
 		.i32 {
@@ -136,24 +155,74 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 			}
 		}
 		.string {
+			to.set_data[string](from.to_string())
+		}
+		.object {
 			match from.typ.typ {
-				.none { to.set_data[string]("None") }
-				.bool { to.set_data[string](if from.get[bool]() { "True" } else { "False" }) }
-				.i32 { to.set_data[string](from.get[i32]().str()) }
-				.f32 { to.set_data[string](from.get[f32]().str()) }
-				.string { panic("invalid cast string -> string") }
-				.object { panic("TODO object -> bool") }
-				.array { panic("TODO array -> bool") }
+				.none {
+					to.set_object_none()
+				}
+				.object {
+					panic("TODO object <---> object; ${from.typ.raw} -> ${to.typ.raw}")
+				}
+				else {
+					panic("invalid cast ${from.typ.raw} -> ${to.typ.raw}")
+				}
 			}
 		}
-		.object { panic("TODO cast object ${from.typ.raw} -> ${to.typ.raw} ${ptr_str(from.data.object)} -> ${ptr_str(to.data.object)}") }
-		.array { panic("TODO cast array") }
+		.array {
+			panic("invalid cast ${from.typ.raw} -> ${to.typ.raw}")
+		}
 	}
 }
 
+@[inline; direct_array_access]
+fn (mut e ExecutionContext) native_call_command(mut call Call) ! {
+	assert call.is_native
+	assert call.cache_func != none
+	assert call.native_cache_func != none
+
+	native_func := call.native_cache_func or { panic("invalid cache func") }
+
+	if call.is_parent_call {
+		return error("TODO support parent call")
+	}
+
+	mut vargs := []Value{ cap:call.args.len }
+	for arg in call.args {
+		vargs << e.get_value(arg)
+	}
+
+	self := if call.is_global { &e.none_value } else { e.get_value(call.self) }
+	tres := native_func.cb(e, self, vargs) !
+
+	e.set_value(call.result, tres)
+}
+
+@[inline; direct_array_access]
+fn (mut e ExecutionContext) call_command(mut call Call) ! {
+	assert !call.is_native
+	assert call.cache_func != none
+
+	mut call_func := call.cache_func or { panic("invalid cache func") }
+
+	if call.is_parent_call {
+		return error("TODO support parent call")
+	}
+
+	mut vargs := []Value{ cap:call.args.len }
+	for arg in call.args {
+		vargs << e.get_value(arg)
+	}
+	
+	self := if call.is_global { &e.none_value } else { e.get_value(call.self) }
+	tres := e.call(mut call_func, self, vargs) or { return error("err") }
+	e.set_value(call.result, tres)
+}
+
 @[direct_array_access]
-fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
-	e.print_stack()
+fn (mut e ExecutionContext) run_commands(mut func Function) !&Value {
+	//e.print_stack()
 
 	//eprintln("[ExecutionContext.run_commands] run ${func.name} ${e.stack.peek().get[i32]()}")
 	for i := 0; i < func.commands.len; i++ {
@@ -163,35 +232,33 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 		//eprintln("[ExecutionContext.run_commands] ${command.type_name()}")
 		match mut command {
 			Call {
-				mut call_func := &Function(unsafe {nil})
-				
-				if command.cache_func != none {
-					call_func = command.cache_func
-				}
-				else if command.is_global {
-					call_func = e.find_global_func(command.object, command.name) or { panic("global function not found") }
-					command.cache_func = call_func
-				}
-				else {
-					self := e.get_value(command.self).get_object()
-					call_func = e.find_method(self.info.name, self.state.name, command.name) or { panic("method not found") }
-					command.cache_func = call_func
+				if command.cache_func == none && command.native_cache_func == none {
+					mut call_func := &Function(unsafe {nil})
+
+					if command.is_global {
+						call_func = e.find_global_func(command.object, command.name) or { return error("global function not found") }
+						command.cache_func = call_func
+					}
+					else {
+						self := e.get_value(command.self).get_object()
+						call_func = e.find_method(self.info.name, self.state.name, command.name) or { return error("method not found") }
+						command.cache_func = call_func
+					}
+
+					cache_func := command.cache_func or { panic("invalid cahce func")}
+
+					if cache_func.is_native {
+						command.is_native = true
+						command.native_cache_func = e.find_native_function(command.object, command.name) or { return error("native function not found") }
+					}
 				}
 
-				assert command.is_global == func.is_global
-
-				if command.is_parent_call {
-					panic("TODO support parent call")
+				if command.is_native {
+					e.native_call_command(mut command) !
+					continue
 				}
 
-				mut vargs := []Value{ cap:command.args.len }
-				for arg in command.args {
-					vargs << e.get_value(arg)
-				}
-				
-				self := if command.is_global { &none_value } else { e.get_value(command.self) }
-				tres := e.call(mut call_func, self, vargs) or { panic("err") }
-				e.set_value(command.result, tres)
+				e.call_command(mut command) !
 				
 			}
 			PrefixExpr {
@@ -208,7 +275,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 						mut res := e.get_value(command.result)
 						res.set[f32](-e.get_value(command.value).get[f32]())
 					}
-					else  { panic("invalid op in eval.PrefixExpr") }
+					else  { return error("invalid op in eval.PrefixExpr") }
 				}
 				
 			}
@@ -251,19 +318,27 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 						res.set[i32](e.get_value(command.value1).get[i32]() % e.get_value(command.value2).get[i32]()) 
 					}
 					.cmp_eq {
+						assert e.get_value(command.value1).typ.typ == e.get_value(command.value2).typ.typ
+
 						match e.get_value(command.value1).typ.typ {
-							.i32 {
+							.none { return error("TODO") }
+							.bool,
+							.i32,
+							.f32,
+							.string {
 								mut res := e.get_value(command.result)
-								res.set[bool](e.get_value(command.value1).get[i32]() == e.get_value(command.value2).get[i32]())
+								res.set[bool](e.get_value(command.value1) == e.get_value(command.value2))
 							}
-							.f32 {
+							.object {
 								mut res := e.get_value(command.result)
-								res.set[bool](e.get_value(command.value1).get[f32]() == e.get_value(command.value2).get[f32]())
+								res.set[bool](e.get_value(command.value1) == e.get_value(command.value2))
 							}
-							else { panic("TODO") }
+							.array { return error("WTF ${e.get_value(command.value1).typ.raw} == ${e.get_value(command.value2).typ.raw}") }
 						}
 					}
 					.cmp_lt {
+						assert e.get_value(command.value1).typ.typ == e.get_value(command.value2).typ.typ
+
 						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
@@ -273,10 +348,12 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() < e.get_value(command.value2).get[f32]())
 							}
-							else { panic("TODO") }
+							else { return error("TODO") }
 						}
 					}
 					.cmp_le {
+						assert e.get_value(command.value1).typ.typ == e.get_value(command.value2).typ.typ
+						
 						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
@@ -286,10 +363,12 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() <= e.get_value(command.value2).get[f32]())
 							}
-							else { panic("TODO") }
+							else { return error("TODO") }
 						}
 					}
 					.cmp_gt {
+						assert e.get_value(command.value1).typ.typ == e.get_value(command.value2).typ.typ
+						
 						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
@@ -299,10 +378,12 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() > e.get_value(command.value2).get[f32]())
 							}
-							else { panic("TODO") }
+							else { return error("TODO") }
 						}
 					}
 					.cmp_ge {
+						assert e.get_value(command.value1).typ.typ == e.get_value(command.value2).typ.typ
+						
 						match e.get_value(command.value1).typ.typ {
 							.i32 {
 								mut res := e.get_value(command.result)
@@ -312,38 +393,32 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 								mut res := e.get_value(command.result)
 								res.set[bool](e.get_value(command.value1).get[f32]() >= e.get_value(command.value2).get[f32]())
 							}
-							else { panic("TODO") }
+							else { return error("TODO") }
 						}
 					}
 					.strcat {
+						assert e.get_value(command.result).typ.typ == .string
+						assert e.get_value(command.value1).typ.typ == .string
+						assert e.get_value(command.value1).typ.typ == .string
+
 						mut res := e.get_value(command.result)
 						res.set[string](e.get_value(command.value1).get[string]() + e.get_value(command.value2).get[string]())
 					}
-					else { panic("invalid op in eval.InfixExpr") }
+					else { return error("invalid op in eval.InfixExpr") }
 				}
 			}
 			CastExpr {
-				
-				println(command.value)
-				//println(e.get_value(command.value))
-				println(command.result)
-				//println(e.get_value(command.result))
-
 				e.cast_value(command.value, command.result)
 			}
 			Return {
 				res := e.get_value(command.value)
 				
 				/*
-				if res.typ == .f32 {
-					println("[run Return] ${func.name} res ${res.get[f32]()} stacklen${e.stack.len()}")
-				}
-				else if res.typ == .i32 {
-					println("[run Return] ${func.name} res ${res.get[i32]()} stacklen${e.stack.len()}")
-				}
-				*/
-				/*if res.typ == .i32 {
+				if res.typ.typ == .i32 {
 					eprintln("[ExecutionContext.run_commands] end return ${func.name} - ${res.get[i32]()}")
+				}
+				else if res.typ.typ == .bool {
+					eprintln("[ExecutionContext.run_commands] end return ${func.name} - ${res.get[bool]()}")
 				}*/
 				
 				return res
@@ -388,7 +463,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 				mut array := e.get_value(command.array)
 				mut index := e.get_value(command.index)
 
-				e.set_value(command.result, array.get_array_element(index))
+				e.set_value(command.result, array.get_array_element(index.to_array_index()))
 			}
 			SetArrayElement {
 				mut array := e.get_value(command.array)
@@ -407,7 +482,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 
 				if !command.is_reverse {
 					for k := start_index ; k < len; k++ {
-						if value == array.get_array_element(e.create_index(k)) {
+						if value == array.get_array_element(k) {
 							found = VmArrayIndex(k)
 							break
 						}
@@ -417,7 +492,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 					start_index = if start_index == -1 { len - 1 } else { start_index }
 					
 					for k := start_index ; k >= 0; k-- {
-						if value == array.get_array_element(e.create_index(k)) {
+						if value == array.get_array_element(k) {
 							found = VmArrayIndex(k)
 							break
 						}
@@ -435,7 +510,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) &Value {
 }
 
 @[inline]
-fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value) ?&Value {
+fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value) !&Value {
 	ctx.save_registers()
 
 	if !func.is_global {
@@ -445,7 +520,7 @@ fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value)
 	ctx.stack.push_many(func.stack_data.data, func.stack_data.len)
 	ctx.stack.push_many(args.data, args.len)
 
-	res := ctx.run_commands(mut func)
+	res := ctx.run_commands(mut func) !
 
 	ctx.stack.pop_len(args.len)
 	ctx.stack.pop_len(func.stack_data.len)
@@ -455,12 +530,14 @@ fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value)
 	return res
 }
 
-pub fn (mut ctx ExecutionContext) call_method(self &Value, func_name string, args []Value) ?&Value {
-	mut func := ctx.find_method(self.get_object().info.name, self.get_object().state.name, func_name) or { return none }
-	return ctx.call(mut func, self, args)
+pub fn (mut ctx ExecutionContext) call_method(self &Value, func_name string, args []Value) !&Value {
+	// TODO support native funcs call
+	mut func := ctx.find_method(self.get_object().info.name, self.get_object().state.name, func_name) or { return error("method with name `${self.get_object().info.name}.${self.get_object().state.name}.${func_name}` not found") }
+	return ctx.call(mut func, self, args) !
 }
 
-pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) ?&Value {
-	mut func := ctx.find_global_func(object_name, func_name) or { return none }
-	return ctx.call(mut func, none_value, args)
+pub fn (mut ctx ExecutionContext) call_static(object_name string, func_name string, args []Value) !&Value {
+	// TODO support native funcs call
+	mut func := ctx.find_global_func(object_name, func_name) or { return error("function with name `${object_name}.${func_name}` not found") }
+	return ctx.call(mut func, ctx.none_value, args) !
 }

@@ -32,11 +32,20 @@ pub mut:
 	funcs		[]Function
 }
 
+pub struct NativeFunction {
+pub:
+	object_name	string @[required]
+	name		string @[required]
+	is_global	bool
+	cb			fn(ctx ExecutionContext, self Value, args []Value)!Value @[required]
+}
+
 @[heap]
 pub struct Function {
 pub:
 	name			string @[required]
 	is_global		bool
+	is_native		bool
 pub mut:
 	params			[]Param @[required]
 	commands		[]Command @[required]
@@ -69,7 +78,10 @@ pub enum OperandType {
 	regf1
 	regf2
 	regf3
+	registers_count
 
+	none_value
+	
 	stack
 }
 
@@ -118,15 +130,17 @@ pub:
 
 pub struct Call {
 pub:
-	name			string
-	object			string // for global
-	self			Operand // for method
-	result			Operand
-	args			[]Operand
-	is_global		bool
-	is_parent_call	bool
+	name				string
+	object				string // for global
+	self				Operand // for method
+	result				Operand
+	args				[]Operand
+	is_global			bool
+	is_parent_call		bool
 pub mut:
-	cache_func		?&Function
+	is_native			bool 
+	cache_func			?&Function
+	native_cache_func	?&NativeFunction
 }
 
 pub struct ArrayCreate {
