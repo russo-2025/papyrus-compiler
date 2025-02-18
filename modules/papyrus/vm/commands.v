@@ -5,8 +5,8 @@ import pex
 @[heap]
 pub struct Object {
 pub:
-	info	&Script = unsafe { voidptr(0) }
-	state	&State = unsafe { voidptr(0) }
+	info		&Script = unsafe { voidptr(0) }
+	cur_state	&State = unsafe { voidptr(0) }
 }
 
 @[heap]
@@ -27,9 +27,10 @@ pub struct Property {}
 
 pub struct State {
 pub:
-	name		string
+	name	string
+	is_auto	bool
 pub mut:
-	funcs		[]Function
+	funcs	[]Function
 }
 
 pub struct NativeFunction {

@@ -52,25 +52,27 @@ pub fn (mut loader Loader) load_pex_file(pex_file &pex.PexFile) {
 	for pex_state in pex_obj.states {
 		state_name := loader.get_string(pex_state.name).to_lower()
 
-		loader.cur_state = &State {
+		loader.add_new_state(&State {
 			name: state_name
+			is_auto: state_name == auto_state_name
 			funcs: []Function{ cap: pex_state.functions.len }
-		}
+		})
 
-		if state_name == auto_state_name {
-			loader.cur_script.auto_state = loader.cur_state
-		}
-		
 		for pex_func in pex_state.functions {
 			loader.load_func(pex_object_name, state_name, pex_func)
 		}
-		
-		loader.cur_script.states << loader.cur_state
 	}
 
-	//loader.scripts << loader.cur_script
-
 	//loader.print_loaded_scripts()
+}
+
+fn (mut loader Loader) add_new_state(state &State) {
+	loader.cur_script.states << state
+	loader.cur_state = &loader.cur_script.states[loader.cur_script.states.len - 1]
+	
+	if state.is_auto {
+		loader.cur_script.auto_state = &loader.cur_script.states[loader.cur_script.states.len - 1]
+	}
 }
 
 fn (mut loader Loader) print_loaded_scripts() {

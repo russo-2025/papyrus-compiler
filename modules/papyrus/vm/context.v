@@ -130,6 +130,7 @@ pub fn (mut ctx ExecutionContext) get_executed_instructions_count() i64 {
 fn (mut ctx ExecutionContext) create_object(info &Script) &Object {
 	ctx.objects << Object{
 		info: info
+		cur_state: info.auto_state
 		state: info.auto_state
 	}
 
@@ -157,4 +158,8 @@ pub fn (mut ctx ExecutionContext) find_native_function(object_name string, func_
 	key := object_name.to_lower() + "." + func_name.to_lower()
 	if key !in ctx.native_functions { return none }
 	return ctx.native_functions[key] or { return none }
+}
+
+pub fn (mut ctx ExecutionContext) goto_state(self &Value, name string) {
+	self.get_object().state
 }

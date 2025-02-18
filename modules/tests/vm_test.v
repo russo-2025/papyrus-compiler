@@ -23,7 +23,7 @@ fn vm_init(src_file string) &vm.ExecutionContext {
 	assert c.errors.len == 0
 	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
 
-	//eprintln(pex_file.str())
+	eprintln(pex_file.str())
 	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
 	return ctx
