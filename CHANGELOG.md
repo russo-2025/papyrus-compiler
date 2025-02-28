@@ -1,4 +1,7 @@
 ## Next release
+- ...
+
+## V 0.0.2
 
 ### Improvements
 
@@ -12,8 +15,7 @@
 ### Fixes
 
 - **Dependency Resolution During Casting**
-  - Fixed an issue with dependency resolution during casting operations, such as `DialogueGenericVampire as VampireQuestScript`. #8
-
+  - Fixed an issue with dependency resolution during casting operations, such as `DialogueGenericVampire as VampireQuestScript`. (#8)
 
 ## V 0.0.1
 
