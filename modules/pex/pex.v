@@ -62,7 +62,7 @@ pub enum GameType as u16 {
 	skyrim = 1
 }
 
-type StringId = u16
+pub type StringId = u16
 
 @[heap]
 pub struct PexFile {

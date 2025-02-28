@@ -7,7 +7,13 @@
   - Fixed the error message when attempting to call a function with fewer arguments than required.
 
 - **Compatibility Enhancements**
-  - Improved and fixed compatibility with the latest V compiler version [V compiler e433d7c (weekly.2024.46)](https://github.com/vlang/v/releases/tag/weekly.2024.46).
+  - Improved and fixed compatibility with the latest V compiler version [V compiler f3d2eb1 (weekly.2025.09)](https://github.com/vlang/v/releases/tag/weekly.2025.09).
+
+### Fixes
+
+- **Dependency Resolution During Casting**
+  - Fixed an issue with dependency resolution during casting operations, such as `DialogueGenericVampire as VampireQuestScript`. #8
+
 
 ## V 0.0.1
 

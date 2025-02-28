@@ -130,6 +130,8 @@ fn (mut p Parser) cast_expr(expr ast.Expr) ast.CastExpr {
 	type_name := p.tok.lit
 
 	p.next()
+	
+	p.add_to_deps(type_name)
 
 	return ast.CastExpr{
 		pos: pos
