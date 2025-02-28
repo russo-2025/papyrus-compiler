@@ -23,7 +23,7 @@ fn vm_init(src_file string) &vm.ExecutionContext {
 	assert c.errors.len == 0
 	mut pex_file := gen_pex.gen_pex_file(mut ast_file, mut table, prefs)
 
-	eprintln(pex_file.str())
+	//eprintln(pex_file.str())
 	mut ctx := vm.create_context()
 	ctx.load_pex_file(pex_file)
 	return ctx
@@ -56,34 +56,47 @@ fn test_call_method() {
 	src_file := 'Scriptname ABCD
 
 	State MyState1
-		Int Function Sum(int n1, int n2)
-			return n1 + n2 + 5
+		Int Function SumState(int n1, int n2)
+			return Sum(n1, n2) + 5
 		EndFunction
 	EndState
 
 	State MyState2
-		Int Function Sum(int n1, int n2)
-			return n1 + n2 - 5
+		Int Function SumState(int n1, int n2)
+			return Sum(n1, n2) - 5
 		EndFunction
 	EndState
 
-	Int Function Sum(int n1, int n2)
-		return n1 + n2
+	Int Function SumState(int n1, int n2)
+		return Sum(n1, n2) + 10
 	EndFunction
 
-	Int Function Sum10(int n1, int n2)
-		return 10 + Sum(n1, n2)
+	Int Function Sum(int n1, int n2)
+		return n1 + n2
 	EndFunction'
 	
 	mut ctx := vm_init(src_file)
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
-	result_value := ctx.call_method(self, "Sum10", [ ctx.create_int(12), ctx.create_int(32)]) or {
-		panic("method not found")
-	}
-	assert result_value.get[i32]() == (10 + 12 + 32)
+	mut result_value := ctx.call_method(self, "SumState", [ ctx.create_int(12), ctx.create_int(32)]) or { panic(err) }
+	assert result_value.get[i32]() == (12 + 32 + 10)
+/*
+	ctx.goto_state(self, "MyState2") or { panic(err) }
+	
+	result_value = ctx.call_method(self, "SumState", [ ctx.create_int(12), ctx.create_int(32)]) or { panic(err) }
+	assert result_value.get[i32]() == (12 + 32 - 5)
 
+	ctx.goto_state(self, "MyState1") or { panic(err) }
+	
+	result_value = ctx.call_method(self, "SumState", [ ctx.create_int(12), ctx.create_int(32)]) or { panic(err) }
+	assert result_value.get[i32]() == (12 + 32 + 5)
+
+	ctx.goto_state(self, "") or { panic(err) }
+	
+	result_value = ctx.call_method(self, "SumState", [ ctx.create_int(12), ctx.create_int(32)]) or { panic(err) }
+	assert result_value.get[i32]() == (12 + 32 + 10)
+*/
 	// TODO parent call
 	// keyword parent call
 	// keyword self call
@@ -114,26 +127,18 @@ fn test_prefix() {
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
 	
-	mut result_value := ctx.call_method(self, "NotTest", [ ctx.create_int(3), ctx.create_int(4)]) or {
-		panic("method not found")
-	}
+	mut result_value := ctx.call_method(self, "NotTest", [ ctx.create_int(3), ctx.create_int(4)]) or { panic(err) }
 	assert result_value.get[i32]() == 15
 
-	result_value = ctx.call_method(self, "NotTest", [ ctx.create_int(4), ctx.create_int(3)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "NotTest", [ ctx.create_int(4), ctx.create_int(3)]) or { panic(err) }
 	assert result_value.get[i32]() == -2
 
 	// neg
 	
-	result_value = ctx.call_method(self, "NegTestInt", [ ctx.create_int(3)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "NegTestInt", [ ctx.create_int(3)]) or { panic(err) }
 	assert result_value.get[i32]() == -3
 	
-	result_value = ctx.call_method(self, "NegTestFloat", [ ctx.create_float(15.0)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "NegTestFloat", [ ctx.create_float(15.0)]) or { panic(err) }
 	assert result_value.get[f32]() == -15.0
 }
 
@@ -160,14 +165,10 @@ fn test_math() {
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
 	
-	mut result_value := ctx.call_method(self, "MathTest1", [ ctx.create_int(3), ctx.create_int(4), ctx.create_int(1), ctx.create_int(3) ]) or {
-		panic("method not found")
-	}
+	mut result_value := ctx.call_method(self, "MathTest1", [ ctx.create_int(3), ctx.create_int(4), ctx.create_int(1), ctx.create_int(3) ]) or { panic(err) }
 	assert result_value.get[i32]() == 2
 
-	result_value = ctx.call_method(self, "MathTest2", []) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "MathTest2", []) or { panic(err) }
 	assert result_value.get[i32]() == 7
 }
 
@@ -219,67 +220,43 @@ fn test_if_return() {
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
 	// >
-	mut result_value := ctx.call_method(self, "IfGt", [ ctx.create_int(2)]) or {
-		panic("method not found")
-	}
+	mut result_value := ctx.call_method(self, "IfGt", [ ctx.create_int(2)]) or { panic(err) }
 	assert result_value.get[i32]() == 0
 
-	result_value = ctx.call_method(self, "IfGt", [ ctx.create_int(4)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfGt", [ ctx.create_int(4)]) or { panic(err) }
 	assert result_value.get[i32]() == 10
 
 	// >=
-	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(1)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(1)]) or { panic(err) }
 	assert result_value.get[i32]() == 0
 
-	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(2)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(2)]) or { panic(err) }
 	assert result_value.get[i32]() == 11
 
-	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(3)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfGe", [ ctx.create_int(3)]) or { panic(err) }
 	assert result_value.get[i32]() == 11
 
 	// <
-	result_value = ctx.call_method(self, "IfLt", [ ctx.create_int(3)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfLt", [ ctx.create_int(3)]) or { panic(err) }
 	assert result_value.get[i32]() == 0
 
-	result_value = ctx.call_method(self, "IfLt", [ ctx.create_int(2)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfLt", [ ctx.create_int(2)]) or { panic(err) }
 	assert result_value.get[i32]() == 12
 
 	// <=
-	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(4)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(4)]) or { panic(err) }
 	assert result_value.get[i32]() == 0
-	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(3)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(3)]) or { panic(err) }
 	assert result_value.get[i32]() == 13
 
-	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(2)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfLe", [ ctx.create_int(2)]) or { panic(err) }
 	assert result_value.get[i32]() == 13
 
 	// ==
-	result_value = ctx.call_method(self, "IfEq", [ ctx.create_int(2)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfEq", [ ctx.create_int(2)]) or { panic(err) }
 	assert result_value.get[i32]() == 12
 
-	result_value = ctx.call_method(self, "IfEq", [ ctx.create_int(5)]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "IfEq", [ ctx.create_int(5)]) or { panic(err) }
 	assert result_value.get[i32]() == 9
 }
 
@@ -307,54 +284,34 @@ fn test_fibonacci() {
 	// method
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	self := ctx.create_object_value(script)
-	mut result_value := ctx.call_method(self, "FibMethod", [ ctx.create_int(0) ]) or {
-		panic("method not found")
-	}
+	mut result_value := ctx.call_method(self, "FibMethod", [ ctx.create_int(0) ]) or { panic(err) }
 	assert result_value.get[i32]() == 0
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(1) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(1) ]) or { panic(err) }
 	assert result_value.get[i32]() == 1
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(2) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(2) ]) or { panic(err) }
 	assert result_value.get[i32]() == 1
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(3) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(3) ]) or { panic(err) }
 	assert result_value.get[i32]() == 2
 	
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(4) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(4) ]) or { panic(err) }
 	assert result_value.get[i32]() == 3
 	
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(5) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(5) ]) or { panic(err) }
 	assert result_value.get[i32]() == 5
 	
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(6) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(6) ]) or { panic(err) }
 	assert result_value.get[i32]() == 8
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(7) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(7) ]) or { panic(err) }
 	assert result_value.get[i32]() == 13
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(8) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(8) ]) or { panic(err) }
 	assert result_value.get[i32]() == 21
 
-	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(9) ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(self, "FibMethod", [ ctx.create_int(9) ]) or { panic(err) }
 	assert result_value.get[i32]() == 34
 
 	// static 
@@ -431,9 +388,7 @@ fn test_none_object() {
 	assert result_value.object_is_none()
 
 	//self
-	result_value = ctx.call_method(abcd_value, "ScriptTest4", [ ]) or {
-		panic("method not found")
-	}
+	result_value = ctx.call_method(abcd_value, "ScriptTest4", [ ]) or { panic(err) }
 	assert !result_value.object_is_none()
 }
 
@@ -608,7 +563,7 @@ fn test_cast() {
 
 	mut ctx := vm_init(src_file)
 
-	native_func := vm.NativeFunction{
+	ctx.register_native_function(vm.NativeFunction {
 		object_name: "ABCD"
 		name: "Assert"
 		is_global: true
@@ -621,9 +576,7 @@ fn test_cast() {
 
 			return ctx.create_bool(true)
 		}
-	}
-
-	ctx.register_native_function(native_func) or { panic(err) }
+	}) or { panic(err) }
 
 	script := ctx.find_script("ABCD") or { panic("script not found") }
 	abcd_value := ctx.create_object_value(script)

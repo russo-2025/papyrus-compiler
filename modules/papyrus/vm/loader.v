@@ -6,7 +6,7 @@ struct Loader {
 mut:
 	ctx						&ExecutionContext = unsafe { voidptr(0) }
 	funcs					map[string]&Function
-	scripts					[]Script
+	//scripts					[]Script
 
 	//temps
 	pex_file				&pex.PexFile = unsafe { voidptr(0) }
@@ -44,8 +44,18 @@ pub fn (mut loader Loader) load_pex_file(pex_file &pex.PexFile) {
 		states: []State{ cap: pex_obj.states.len }
 	}
 
+	/*
+	loader.cur_script = &Script{
+		name: pex_object_name
+		parent: none
+		variables: []Variable{ cap: pex_obj.variables.len }
+		properties: []Property{ cap: pex_obj.properties.len }
+		states: []State{ cap: pex_obj.states.len }
+	}
+
 	loader.scripts << loader.cur_script
 	loader.cur_script = &loader.scripts[loader.scripts.len - 1]
+	*/
 
 	// TODO set loader.cur_script.parent
 
@@ -63,7 +73,7 @@ pub fn (mut loader Loader) load_pex_file(pex_file &pex.PexFile) {
 		}
 	}
 
-	//loader.print_loaded_scripts()
+	loader.ctx.register_script(loader.cur_script)
 }
 
 fn (mut loader Loader) add_new_state(state &State) {
@@ -72,18 +82,6 @@ fn (mut loader Loader) add_new_state(state &State) {
 	
 	if state.is_auto {
 		loader.cur_script.auto_state = &loader.cur_script.states[loader.cur_script.states.len - 1]
-	}
-}
-
-fn (mut loader Loader) print_loaded_scripts() {
-	for script in loader.scripts {
-		println("class `${script.name}`, autostate `${script.auto_state.name}`")
-		for state in script.states {
-			println("\tstate `${state.name}`")
-			for method in state.funcs {
-				println("\t\tmethod `${method.name}`")
-			}
-		}
 	}
 }
 
@@ -292,7 +290,7 @@ fn (mut loader Loader) load_func(object_name string, state_name string, pex_func
 	}
 
 	func := Function {
-		name: loader.get_string(pex_func.name)
+		name: loader.get_string(pex_func.name).to_lower()
 		commands: loader.commands
 		is_global: pex_func.info.is_global()
 		is_native: pex_func.info.is_native()
@@ -301,13 +299,15 @@ fn (mut loader Loader) load_func(object_name string, state_name string, pex_func
 	}
 
 	if func.is_global {
-		key := object_name.to_lower() + "." + func.name.to_lower()
 		loader.cur_state.funcs << func
+
+		key := object_name.to_lower() + "." + func.name
 		loader.funcs[key] = &loader.cur_state.funcs[loader.cur_state.funcs.len - 1]
 	}
 	else {
-		key := object_name.to_lower() + "." + state_name.to_lower() + "." + func.name.to_lower()
 		loader.cur_state.funcs << func
+
+		key := object_name.to_lower() + "." + state_name.to_lower() + "." + func.name
 		loader.funcs[key] = &loader.cur_state.funcs[loader.cur_state.funcs.len - 1]
 	}
 }
@@ -442,23 +442,18 @@ fn (mut loader Loader) parse_value(pex_value pex.VariableValue) Operand {
 
 @[inline]
 fn (mut loader Loader) find_script(object_name string) ?&Script {
-	for i in 0..loader.scripts.len {
-		if object_name.to_lower() == loader.scripts[i].name {
-			return &loader.scripts[i]
-		}
-	}
-	
-	return none
+	script := loader.ctx.find_script(object_name) or { return none }
+	return script
 }
 
 @[inline]
 fn (mut loader Loader) find_global_func(object_name string, func_name string) ?&Function {
-	return loader.funcs[object_name.to_lower() + "." + func_name.to_lower()] or { return none }
+	return loader.ctx.find_global_func(object_name, func_name)
 }
 
 @[inline]
-fn (mut loader Loader) find_method(object_name string, state_name string, func_name string) ?&Function {
-	return loader.funcs[object_name.to_lower() + "." + state_name.to_lower() + "." + func_name.to_lower()] or { return none }
+fn (mut loader Loader) find_method(object_name string, func_name string) ?&Function {
+	return loader.ctx.find_method(object_name, func_name)
 }
 
 @[inline]

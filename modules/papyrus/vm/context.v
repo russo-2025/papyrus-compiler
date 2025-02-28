@@ -14,7 +14,11 @@ mut:
 	objects				[]Object
 	allocator			Allocator
 	none_value			Value
-	native_functions	map[string]&NativeFunction // object_name.fn_name
+
+	scripts				[]Script
+	funcs				map[string]&Function // object_name.func_name
+
+	//native_functions	map[string]&NativeFunction // object_name.fn_name
 }
 
 pub fn create_context() &ExecutionContext {
@@ -105,22 +109,39 @@ fn (mut ctx ExecutionContext) restore_registers() {
 @[inline]
 pub fn (mut ctx ExecutionContext) load_pex_file(pex_file &pex.PexFile) {
 	ctx.loader.load_pex_file(pex_file)
+	//ctx.print_loaded_scripts()
 }
 
 @[inline]
 pub fn (mut ctx ExecutionContext) find_script(object_name string) ?&Script {
-	script := ctx.loader.find_script(object_name) or { return none }
-	return script
+	for i in 0..ctx.scripts.len {
+		if object_name.to_lower() == ctx.scripts[i].name {
+			return &ctx.scripts[i]
+		}
+	}
+	
+	return none
 }
 
 @[inline]
-pub fn (mut ctx ExecutionContext) find_method(object_name string, state_name string, func_name string) ?&Function {
-	return ctx.loader.find_method(object_name, state_name, func_name)
+pub fn (mut ctx ExecutionContext) find_method(object_name string, func_name string) ?&Function {
+	func := ctx.funcs[object_name.to_lower() + "." + func_name.to_lower()] or { return none }
+	assert !func.is_global
+	return func
+}
+
+@[inline]
+pub fn (mut ctx ExecutionContext) find_method_with_state(object_name string, state_name string, func_name string) ?&Function {
+	func := ctx.funcs[object_name.to_lower() + "." + func_name.to_lower()] or { return none }
+	assert !func.is_global
+	return func
 }
 
 @[inline]
 pub fn (mut ctx ExecutionContext) find_global_func(object_name string, func_name string) ?&Function {
-	return ctx.loader.find_global_func(object_name, func_name)
+	func := ctx.funcs[object_name.to_lower() + "." + func_name.to_lower()] or { return none }
+	assert func.is_global
+	return func
 }
 
 pub fn (mut ctx ExecutionContext) get_executed_instructions_count() i64 {
@@ -131,7 +152,6 @@ fn (mut ctx ExecutionContext) create_object(info &Script) &Object {
 	ctx.objects << Object{
 		info: info
 		cur_state: info.auto_state
-		state: info.auto_state
 	}
 
 	return &ctx.objects[ctx.objects.len - 1]
@@ -144,22 +164,54 @@ pub fn (mut ctx ExecutionContext) create_object_value(info &Script) Value {
 	return obj_value
 }
 
+fn (mut ctx ExecutionContext) register_script(script Script) &Script {
+	ctx.scripts << script
+	return &ctx.scripts[ctx.scripts.len - 1]
+}
+
+//fn (mut ctx ExecutionContext) register_state(script &Script, state &State) {}
+//fn (mut ctx ExecutionContext) register_method(script &Script, state &State, func &Function) {}
+
 pub fn (mut ctx ExecutionContext) register_native_function(native_func NativeFunction) ! {
 	key := native_func.object_name.to_lower() + "." + native_func.name.to_lower()
+	
+	if key !in ctx.funcs {
+		return error("function not found")
+	}
+	
+	assert ctx.funcs[key].name != ""
+	assert ctx.funcs[key].is_native
+	assert ctx.funcs[key].is_global == native_func.is_global
 
+	ctx.funcs[key].cb = native_func.cb
+	/*
 	if key in ctx.native_functions {
 		return error("a native function with this name ${key} already exists")
 	}
 
 	ctx.native_functions[key] = &native_func
+	*/
 }
-
+/*
 pub fn (mut ctx ExecutionContext) find_native_function(object_name string, func_name string) ?&NativeFunction {
 	key := object_name.to_lower() + "." + func_name.to_lower()
 	if key !in ctx.native_functions { return none }
 	return ctx.native_functions[key] or { return none }
+}*/
+
+pub fn (mut ctx ExecutionContext) goto_state(self &Value, name string) ! {
+	mut obj := self.get_object()
+	obj.cur_state = obj.info.find_state_by_name(name) or { return error("state with name `${name.to_lower()}` not found in object `${obj.info.name.to_lower()}`")}
 }
 
-pub fn (mut ctx ExecutionContext) goto_state(self &Value, name string) {
-	self.get_object().state
+fn (ctx ExecutionContext) print_loaded_scripts() {
+	for script in ctx.scripts {
+		println("class `${script.name}`, autostate `${script.auto_state.name}`")
+		for state in script.states {
+			println("\tstate `${state.name}`")
+			for method in state.funcs {
+				println("\t\tmethod `${method.name}`")
+			}
+		}
+	}
 }

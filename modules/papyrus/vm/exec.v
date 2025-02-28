@@ -171,7 +171,7 @@ fn (mut e ExecutionContext) cast_value(from_operand Operand, to_operand Operand)
 		}
 	}
 }
-
+/*
 @[inline; direct_array_access]
 fn (mut e ExecutionContext) native_call_command(mut call Call) ! {
 	assert call.is_native
@@ -215,19 +215,75 @@ fn (mut e ExecutionContext) call_command(mut call Call) ! {
 	tres := e.call(mut call_func, self, vargs) or { return error("err") }
 	e.set_value(call.result, tres)
 }
-
+*/
 @[direct_array_access]
-fn (mut e ExecutionContext) run_commands(mut func Function) !&Value {
+fn (mut e ExecutionContext) run_commands(mut commands []Command) !&Value {
 	//e.print_stack()
 
-	//eprintln("[ExecutionContext.run_commands] run ${func.name} ${e.stack.peek().get[i32]()}")
-	for i := 0; i < func.commands.len; i++ {
-		mut command := &func.commands[i]
+	for i := 0; i < commands.len; i++ {
+		mut command := commands[i]
 		e.instruction_count++
-
-		//eprintln("[ExecutionContext.run_commands] ${command.type_name()}")
+		
+		//eprintln("[ExecutionContext.run_commands] ${command.type_name()} ${ptr_str(command)} -  ${ptr_str(func.commands[i])}")
 		match mut command {
 			Call {
+				
+				//eprintln("[ExecutionContext.run_commands] ${ptr_str(command)}")
+
+				if command.is_global && command.cache_func == none {
+					command.cache_func = e.find_global_func(command.object, command.name) or { return error("global function not found" ) }
+				}
+				else if command.cache_func == none {
+					self := e.get_value(command.self).get_object()
+					command.cache_func = e.find_method(self.info.name, command.name) or {
+						name := self.info.name + "." + self.cur_state.name + "." + command.name.to_lower()
+						return error("method not found `${name}`")
+					}
+				}
+
+				mut cache_func := command.cache_func or { return error("invalid cahce func") }
+				
+				if cache_func.is_native {
+					command.is_native = true
+					//command.native_cache_func = e.find_native_function(command.object, command.name) or { return error("native function not found") }
+				}
+
+				if command.is_parent_call {
+					return error("TODO support parent call")
+				}
+
+				if command.is_native {
+					mut vargs := []Value{ cap: command.args.len }
+					for arg in command.args {
+						vargs << e.get_value(arg)
+					}
+
+					self := if command.is_global { &e.none_value } else { e.get_value(command.self) }
+					tres := cache_func.cb(e, self, vargs) !
+
+					e.set_value(command.result, tres)
+				}
+				else {
+					mut vargs := []Value{ cap: command.args.len }
+					for arg in command.args {
+						vargs << e.get_value(arg)
+					}
+					
+					self := if command.is_global { &e.none_value } else { e.get_value(command.self) }
+					tres := e.call(mut cache_func, self, vargs) or { return error("err") }
+					e.set_value(command.result, tres)
+				}
+/*	
+				if command.is_native {
+					e.native_call_command(mut command) !
+					continue
+				}
+
+				e.call_command(mut command) !
+*/
+
+
+				/*
 				if command.cache_func == none && command.native_cache_func == none {
 					mut call_func := &Function(unsafe {nil})
 
@@ -237,7 +293,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) !&Value {
 					}
 					else {
 						self := e.get_value(command.self).get_object()
-						call_func = e.find_method(self.info.name, self.state.name, command.name) or { return error("method not found") }
+						call_func = e.find_method(self.info.name, self.cur_state.name, command.name) or { return error("method not found") }
 						command.cache_func = call_func
 					}
 
@@ -255,6 +311,7 @@ fn (mut e ExecutionContext) run_commands(mut func Function) !&Value {
 				}
 
 				e.call_command(mut command) !
+				*/
 				
 			}
 			PrefixExpr {
@@ -509,17 +566,27 @@ fn (mut e ExecutionContext) run_commands(mut func Function) !&Value {
 fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value) !&Value {
 	ctx.save_registers()
 
-	if !func.is_global {
+	mut commands := []Command{}
+	mut stack_data := []Value{}
+	
+	if func.is_global {
+		commands = unsafe { func.states[0].commands }
+		stack_data = unsafe { func.states[0].stack_data }
+	}
+	else {
 		ctx.set_self_register(self)
+		id := self.get_object().cur_state.id
+		commands = func.states[id].commands
+		stack_data = func.states[id].stack_data
 	}
 
-	ctx.stack.push_many(func.stack_data.data, func.stack_data.len)
+	ctx.stack.push_many(stack_data.data, stack_data.len)
 	ctx.stack.push_many(args.data, args.len)
 
-	res := ctx.run_commands(mut func) !
+	res := ctx.run_commands(mut commands) !
 
 	ctx.stack.pop_len(args.len)
-	ctx.stack.pop_len(func.stack_data.len)
+	ctx.stack.pop_len(stack_data.len)
 	
 	ctx.restore_registers()
 	
@@ -528,7 +595,9 @@ fn (mut ctx ExecutionContext) call(mut func Function, self &Value, args []Value)
 
 pub fn (mut ctx ExecutionContext) call_method(self &Value, func_name string, args []Value) !&Value {
 	// TODO support native funcs call
-	mut func := ctx.find_method(self.get_object().info.name, self.get_object().state.name, func_name) or { return error("method with name `${self.get_object().info.name}.${self.get_object().state.name}.${func_name}` not found") }
+	obj_name := self.get_object().info.name
+	state_name := self.get_object().cur_state.name
+	mut func := ctx.find_method(obj_name, state_name, func_name) or { return error("method with name `${obj_name}.${state_name}.${func_name}` not found") }
 	return ctx.call(mut func, self, args) !
 }
 
