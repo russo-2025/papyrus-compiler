@@ -35,7 +35,7 @@ jobs:
           - os: windows-latest
             artifact: papyrus-compiler-windows.zip
           - os: ubuntu-latest
-            artifact: papyrus-compiler-linux.tar.gz
+            artifact: papyrus-compiler-ubuntu.tar.gz
           - os: macos-latest
             artifact: papyrus-compiler-macos.tar.gz
 
