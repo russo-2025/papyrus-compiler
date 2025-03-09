@@ -7,6 +7,7 @@ pub mut:
 	bytes	[]u8
 	pos		int
 	pex		&PexFile
+	is_little_endian bool
 }
 
 pub fn read_from_file(path string) &PexFile {
@@ -43,7 +44,13 @@ pub fn read(bytes []u8) &PexFile {
 fn (mut r Reader) read_pex() ! {
 	r.pex.magic_number = r.read[u32]()
 
-	if r.pex.magic_number != pex.le_magic_number {
+	if r.pex.magic_number == pex.le_magic_number {
+		r.is_little_endian = true
+	}
+	else if r.pex.magic_number == pex.be_magic_number {
+		r.is_little_endian = false
+	}
+	else {
 		return error("invalid magic number(${r.pex.magic_number})")
 	}
 
