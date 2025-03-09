@@ -143,10 +143,7 @@ fn (mut b Builder) parse_deps()  {
 				b.header_from_name[low_name] = path
 			})
 		}
-		
-		//println(b.header_from_name.keys())
 	}
-
 
 	for mut sym in b.table.types {
 		if sym.name == "reserved_0" {
@@ -158,8 +155,6 @@ fn (mut b Builder) parse_deps()  {
 		}
 	}
 
-	//println(b.table.deps.array().sorted())
-
 	for !b.table.deps.is_empty() {
 		name := b.table.deps.pop() or { continue }
 		typ := b.table.find_type_idx(name)
@@ -167,20 +162,9 @@ fn (mut b Builder) parse_deps()  {
 			continue
 		}
 		path := b.find_header(name) or {
-			//println("header not found `${name}`")
 			continue
 		}
 		
 		_ := parser.parse_file(path, mut b.table, b.pref, mut b.global_scope)
-		//println("header `${name}` - `${path}` parsed")
 	}
-	
-	/*
-	mut udeps := map[string]u8{}
-	mut udeps_ptr := &udeps
-	deps.map(fn[mut udeps_ptr](it string) string { udeps_ptr[it.to_lower()] = 1 return it})
-
-	println("deps len ${udeps.keys().sorted().len}")
-	println(udeps.keys().sorted())
-	*/
 }
