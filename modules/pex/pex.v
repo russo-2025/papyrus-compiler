@@ -103,6 +103,16 @@ pub fn (file PexFile) user_flags_str() string {
 	return flags.str()
 }
 
+@[inline]
+pub fn (file PexFile) is_little_endian() bool {
+	return file.magic_number == le_magic_number
+}
+
+@[inline]
+pub fn (file PexFile) be_magic_number() bool {
+	return file.magic_number == le_magic_number
+}
+
 pub struct DebugFunction {
 pub mut:
 	object_name					StringId
