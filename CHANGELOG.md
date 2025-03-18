@@ -1,5 +1,12 @@
 ## Next release
-- ...
+...
+
+## V 0.0.3
+
+### Fixes
+
+- **Logical Operators Fix**
+  - Fixed `&&` and `||` operators to evaluate expressions correctly.
 
 ## V 0.0.2
 
