@@ -87,7 +87,7 @@ fn test_builder() {
 	assert pex3.string_table.len == 158
 	assert pex3.objects.len == 1
 	assert pex3.get_string(pex3.objects[0].name) == "OpcodesTest"
-	assert pex3.objects[0].size == 8503
+	assert pex3.objects[0].size == 8587
 	assert pex3.objects[0].variables.len == 21
 	assert pex3.objects[0].properties.len == 2
 	assert pex3.objects[0].states.len == 3

@@ -83,15 +83,32 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 		//opcode: 'assign', args: [ident(a), integer(2)]
 		//opcode: 'jmp', args: [integer(1)]
 		
-		mut result_value := g.get_operand_from_expr(mut &expr.left)
+		// true && true
+		// false && true
+
+		mut left_value := g.get_operand_from_expr(mut &expr.left)
+		g.free_temp(left_value)
+
+		mut result_value := g.get_free_temp(ast.bool_type)
+
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: pex.OpCode.assign
+			args: [ result_value, left_value ]
+		}
+
 		left_jmp_index := g.cur_fn.info.instructions.len
 		g.cur_fn.info.instructions << pex.Instruction{
 			op: pex.OpCode.jmpf
 			args: [ result_value ]
 		}
 
-		g.free_temp(result_value)
-		result_value = g.get_operand_from_expr(mut &expr.right)
+		right_value := g.get_operand_from_expr(mut &expr.right)
+		g.free_temp(right_value)
+		
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: pex.OpCode.assign
+			args: [ result_value, right_value ]
+		}
 
 		g.cur_fn.info.instructions[left_jmp_index].args << pex.value_integer(g.cur_fn.info.instructions.len - left_jmp_index)
 		
@@ -108,15 +125,32 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 		//opcode: 'assign', args: [ident(a), integer(2)]
 		//opcode: 'jmp', args: [integer(1)]
 
-		mut result_value := g.get_operand_from_expr(mut &expr.left)
+		// true || true
+		// false || true
+
+		mut left_value := g.get_operand_from_expr(mut &expr.left)
+		g.free_temp(left_value)
+
+		mut result_value := g.get_free_temp(ast.bool_type)
+
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: pex.OpCode.assign
+			args: [ result_value, left_value ]
+		}
+
 		left_jmp_index := g.cur_fn.info.instructions.len
 		g.cur_fn.info.instructions << pex.Instruction{
 			op: pex.OpCode.jmpt
 			args: [ result_value ]
 		}
 
-		g.free_temp(result_value)
-		result_value = g.get_operand_from_expr(mut &expr.right)
+		right_value := g.get_operand_from_expr(mut &expr.right)
+		g.free_temp(right_value)
+		
+		g.cur_fn.info.instructions << pex.Instruction{
+			op: pex.OpCode.assign
+			args: [ result_value, right_value ]
+		}
 
 		g.cur_fn.info.instructions[left_jmp_index].args << pex.value_integer(g.cur_fn.info.instructions.len - left_jmp_index)
 		
@@ -310,7 +344,6 @@ fn (mut g Gen) gen_array_get_element(mut expr ast.IndexExpr) pex.VariableValue {
 
 @[inline]
 fn (mut g Gen) gen_selector(mut expr ast.SelectorExpr) pex.VariableValue {
-
 	if expr.field_name.to_lower() == "length" {
 		//opcode: 'array_length', args: [ident(::temp1), ident(myArray)]
 
@@ -350,6 +383,7 @@ fn (mut g Gen) gen_selector(mut expr ast.SelectorExpr) pex.VariableValue {
 	return result_value
 }
 
+// TODO rename gen_expr
 fn (mut g Gen) get_operand_from_expr(mut expr ast.Expr) pex.VariableValue {
 	mut result_value := pex.value_none()
 
@@ -392,7 +426,6 @@ fn (mut g Gen) get_operand_from_expr(mut expr ast.Expr) pex.VariableValue {
 		}
 		ast.IntegerLiteral {
 			return pex.value_integer(expr.val.int())
-			
 		}
 		ast.FloatLiteral {
 			return pex.value_float(expr.val.f32())
