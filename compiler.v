@@ -6,6 +6,7 @@ import json
 import builder
 import pref
 import pex
+import pex2headers
 
 //#flag -lucrtd
 
@@ -33,6 +34,11 @@ fn main() {
 			dump_objects := pex.create_dump_from_pex_dir(prefs.paths[0])
 			json_data := json.encode_pretty(dump_objects)
 			os.write_file(os.real_path("dump.json"), json_data) or { panic(err) }
+		}
+		.pex2headers {
+			println("pex2headers file: `${prefs.paths[0]}` ")
+			pex_file := pex.read_from_file(prefs.paths[0])
+			pex2headers.gen(pex_file, prefs.output_dir)
 		}
 		.help {
 			pref.print_help_info()

@@ -19,6 +19,7 @@ pub enum RunMode {
 	read
 	disassembly
 	create_dump
+	pex2headers
 	help
 }
 
@@ -168,8 +169,6 @@ pub fn parse_args() Preferences {
 			if args.len < 2 {
 				error(errors.msg_wrong_number_of_arguments)
 			}
-
-			p.mode = .read
 			
 			path := os.real_path(args[1])
 
@@ -177,14 +176,15 @@ pub fn parse_args() Preferences {
 				error(errors.msg_invalid_path_read) //
 			}
 
+			p.mode = .read
 			p.paths << path
 		}
+		"asm",
+		"disasm",
 		"disassembly" {
 			if args.len < 2 {
 				error(errors.msg_wrong_number_of_arguments)
 			}
-
-			p.mode = .disassembly
 			
 			path := os.real_path(args[1])
 
@@ -192,14 +192,34 @@ pub fn parse_args() Preferences {
 				error(errors.msg_invalid_path_disassembly) //
 			}
 
+			p.mode = .disassembly
 			p.paths << path
+		}
+		"pex2headers" {
+			if args.len < 3 {
+				error(errors.msg_wrong_number_of_arguments)
+			}
+			
+			path := os.real_path(args[1])
+
+			if !os.is_file(path) || os.file_ext(path).to_lower() != ".pex" {
+				error("invalid input file")
+			}
+			
+			output_dir := os.real_path(args[2])
+
+			if !os.is_dir(output_dir) {
+				error("invalid output dir")
+			}
+
+			p.mode = .pex2headers
+			p.paths << path
+			p.output_dir = output_dir
 		}
 		"create-dump" {
 			if args.len < 2 {
 				error(errors.msg_wrong_number_of_arguments)
 			}
-
-			p.mode = .create_dump
 			
 			path := os.real_path(args[1])
 
@@ -207,6 +227,7 @@ pub fn parse_args() Preferences {
 				error(errors.msg_invalid_path_create_dump) //
 			}
 
+			p.mode = .create_dump
 			p.paths << path
 		}
 		else {

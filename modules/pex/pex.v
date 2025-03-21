@@ -132,6 +132,12 @@ pub mut:
 }
 
 @[inline]
+pub fn (file PexFile) has_parent() bool {
+	assert file.objects.len == 1
+	return file.get_string(file.objects[0].parent_class_name) != ""
+}
+
+@[inline]
 pub fn (obj Object) is_hidden() bool {
 	return (obj.user_flags & 0b0001) != 0
 }
