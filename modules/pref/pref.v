@@ -20,6 +20,7 @@ pub enum RunMode {
 	disassembly
 	create_dump
 	help
+	gen_js_binding
 }
 
 @[heap]
@@ -208,6 +209,29 @@ pub fn parse_args() Preferences {
 			}
 
 			p.paths << path
+		}
+		"gen_js_binding" {
+			if args.len < 2 {
+				error(errors.msg_wrong_number_of_arguments)
+			}
+
+			p.mode = .gen_js_binding
+
+			path := os.real_path(args[1])
+
+			if !os.is_dir(path) {
+				error(errors.msg_invalid_path_create_dump) //
+			}
+
+			p.paths << path
+
+			output_dir := os.real_path(args[2])
+
+			if !os.is_dir(output_dir) {
+				error(errors.msg_invalid_path_create_dump) //
+			}
+
+			p.output_dir = output_dir
 		}
 		else {
 			if args[0].starts_with("-") {

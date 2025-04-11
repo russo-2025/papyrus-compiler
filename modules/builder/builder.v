@@ -7,6 +7,8 @@ import pref
 import papyrus.ast
 import papyrus.checker
 import gen.gen_pex
+import papyrus.parser
+import gen.gen_js_binding
 
 const cache_path = os.real_path('./.papyrus')
 const compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
@@ -26,6 +28,35 @@ pub mut:
 	files_names			[]string
 	parsed_files		[]&ast.File
 	table				&ast.Table
+}
+
+pub fn create_js_binding(prefs &pref.Preferences) {
+	path := prefs.paths[0]
+	output_dir := prefs.output_dir
+
+	if !os.is_dir(path) {
+		panic("invalid input dir")
+	}
+	if !os.is_dir(output_dir) {
+		panic("invalid output dir")
+	}
+
+	files, _ := find_all_src_files([ path ])
+
+	mut table := ast.new_table()
+	mut global_scope := ast.Scope{}
+
+	mut parsed_files := parser.parse_files(files, mut table, prefs, mut global_scope)
+
+	mut c := checker.new_checker(table, prefs)
+	c.check_files(mut parsed_files)
+
+	if c.errors.len != 0 {
+		println("failed to compile files, ${c.errors.len} errors")
+		exit(1)
+	}
+
+	gen_js_binding.gen(mut parsed_files, mut table, prefs)
 }
 
 @[inline]

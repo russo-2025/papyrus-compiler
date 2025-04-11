@@ -37,6 +37,9 @@ fn main() {
 		.help {
 			pref.print_help_info()
 		}
+		.gen_js_binding {
+			builder.create_js_binding(prefs)
+		}
 	}
 
 	ms := f32(sw.elapsed().microseconds()) / 1000
