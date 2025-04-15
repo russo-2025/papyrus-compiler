@@ -5,6 +5,7 @@ import pref
 import strings
 import os
 
+@[heap]
 struct Gen {
 mut:
 	table					ast.Table
@@ -57,7 +58,6 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 	g.class_bind_h.writeln("#include \"NapiHelper.h\"")
 	g.class_bind_h.writeln("#include \"papyrus-vm/Utils.h\"")
 	g.class_bind_h.writeln("#include \"papyrus-vm/VarValue.h\"")
-	g.class_bind_h.writeln("#include \"script_classes/PapyrusForm.h\"")
 	g.class_bind_h.writeln("")
 	g.class_bind_h.writeln("namespace JSBinding")
 	g.class_bind_h.writeln("{")
@@ -66,6 +66,9 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 	// ============== generate cpp js bind =======================
 
 	g.class_bind_cpp.writeln("#include \"__jsbind.h\"")
+	g.class_bind_cpp.writeln("#include \"PartOne.h\"")
+	g.class_bind_cpp.writeln("")
+	g.class_bind_cpp.writeln("extern std::shared_ptr<PartOne> g_partOne;")
 	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("namespace JSBinding {")
 
@@ -84,13 +87,17 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 				ast.ScriptDecl {}
 				ast.FnDecl {
 					func := top_stmt
-					is_static_str := if func.is_global { "true" } else { "false" }
 					g.class_bind_cpp.writeln("static NativeFunction ${g.gen_vm_fn_impl_name(file.obj_name, func.name)} = nullptr;")
 				}
 				else { panic("invalid top stmt ${top_stmt}") }
 			}	
 		}
 	}
+	/*
+	g.each_all_this_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
+		g.class_bind_cpp.writeln("static NativeFunction ${g.gen_vm_fn_impl_name(sum.obj_name, func.name)} = nullptr;")
+	})
+	*/
 
 	g.class_bind_cpp.writeln("")
 	
@@ -149,8 +156,8 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 }
 
 fn (mut g Gen) gen_end_impl() {
-	for i, func in g.fns {
-		js_class_name := g.gen_bind_class_name(g.obj_name)
+	g.each_all_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
+		js_class_name := g.gen_bind_class_name(g.sym.obj_name)
 		js_fn_name := g.gen_js_fn_name(func.name)
 		fn_name := func.name
 
@@ -160,23 +167,27 @@ fn (mut g Gen) gen_end_impl() {
 		else {
 			g.init_methods_bind_cpp.write_string("\t\tInstanceMethod(\"${fn_name}\", &${js_class_name}::${js_fn_name})")
 		}
-
-		if i != g.fns.len - 1 {
-			g.init_methods_bind_cpp.writeln(",")
-		}
+		
+		g.init_methods_bind_cpp.write_string(",\n")
+	})
+	
+	if g.init_methods_bind_cpp.len > 0 {
+		g.init_methods_bind_cpp.go_back(",\n".len) // remove last `,` + `\n`
 	}
 
 	g.class_bind_cpp.writeln("Napi::Object ${g.gen_bind_class_name(g.obj_name)}::Init(Napi::Env env, Napi::Object exports)")
 	g.class_bind_cpp.writeln("{")
-	for i, func in g.fns {
+	
+	g.each_all_this_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
 		is_static_str := if func.is_global { "true" } else { "false" }
-		g.class_bind_cpp.writeln("\t${g.gen_vm_fn_impl_name(g.obj_name, func.name)} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"${g.obj_name}\", \"${func.name}\", ${is_static_str});")
-		g.class_bind_cpp.writeln("\tif(!${g.gen_vm_fn_impl_name(g.obj_name, func.name)}){")
-		g.class_bind_cpp.writeln("\t\tspdlog::error(\"failed to find function in Papyrus VM: `${g.obj_name}.${func.name}`\");")
-		g.class_bind_cpp.writeln("\t\tstd::runtime_error(\"failed to find function in Papyrus VM: `${g.obj_name}.${func.name}`\");")
+		g.class_bind_cpp.writeln("\t${g.gen_vm_fn_impl_name(sum.obj_name, func.name)} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"${sum.obj_name}\", \"${func.name}\", ${is_static_str});")
+		g.class_bind_cpp.writeln("\tif(!${g.gen_vm_fn_impl_name(sum.obj_name, func.name)}){")
+		g.class_bind_cpp.writeln("\t\tspdlog::error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
+		g.class_bind_cpp.writeln("\t\tstd::runtime_error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
 		g.class_bind_cpp.writeln("\t}")
 		g.class_bind_cpp.writeln("")
-	}
+	})
+
 	g.class_bind_cpp.writeln("\tNapi::HandleScope scope(env);")
 	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("\tNapi::Function func = DefineClass(env, \"${g.obj_name}\", {")

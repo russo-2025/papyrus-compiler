@@ -3,7 +3,7 @@ module gen_js_binding
 import papyrus.ast
 
 fn (mut g Gen) gen(file &ast.File) {
-	impl_class_name := g.gen_impl_class_name(g.obj_name)
+	//impl_class_name := g.gen_impl_class_name(g.obj_name)
 	bind_class_name := g.gen_bind_class_name(g.obj_name)
 
 	// ============== generate h js bind =======================
@@ -42,41 +42,17 @@ fn (mut g Gen) gen(file &ast.File) {
 
 	g.class_bind_h.writeln("\t// ${g.obj_name} methods")
 
-	for func in g.fns {
+	g.each_all_this_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
 		g.gen_header_fn(g.sym, func)
 		g.gen_impl_fn(g.sym, func)
 		g.gen_ts_h_fn(g.sym, func)
-	}
-/*
-	g.each_all_parents(g.sym, fn[mut g](sum &ast.TypeSymbol, func &ast.FnDecl){
+	})
+	
+	g.class_bind_h.writeln("\t// parent methods")
+	g.each_all_parent_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
 		g.gen_header_fn(sum, func)
 		g.gen_impl_fn(sum, func)
-	})*/
-
-	mut cur_idx := g.sym.parent_idx
-	for {
-		if cur_idx == 0 {
-			break
-		}
-
-		t_sym := g.table.get_type_symbol(cur_idx)
-		t_name := t_sym.name
-		g.class_bind_h.writeln("\t// ${t_name} methods")
-		t_file := g.file_by_name[t_name.to_lower()] or { panic("file not found `${t_name}`") }
-
-		for temp_stmt in t_file.stmts {
-			match temp_stmt {
-				ast.FnDecl {
-					g.gen_header_fn(t_sym, &temp_stmt)
-					g.gen_impl_fn(t_sym, &temp_stmt)
-					//g.gen_ts_h_fn(&temp_stmt)
-				}
-				else {}
-			}
-		}
-		
-		cur_idx = t_sym.parent_idx
-	}
+	})
 
 	// ============== generate cpp js bind =======================
 	// Init
@@ -106,7 +82,7 @@ fn (mut g Gen) gen(file &ast.File) {
 }
 
 fn (mut g Gen) gen_header_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
-	js_class_name := g.gen_bind_class_name(g.obj_name)
+	//js_class_name := g.gen_bind_class_name(g.obj_name)
 	js_fn_name := g.gen_js_fn_name(func.name)
 
 	if func.is_global {

@@ -2,7 +2,29 @@ module gen_js_binding
 
 import papyrus.ast
 
-fn (mut g Gen) each_all_parents(sym &ast.TypeSymbol, cb fn(sum &ast.TypeSymbol, func &ast.FnDecl)) {
+// this and parents
+fn (mut g Gen) each_all_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl)) {
+	g.each_all_this_fns(sym, cb)
+	g.each_all_parent_fns(sym, cb)
+}
+
+fn (mut g Gen) each_all_this_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl)) {
+	obj_name := sym.obj_name
+	file := g.file_by_name[obj_name.to_lower()] or { panic("file not found `${obj_name}`") }
+	
+	for stmt in file.stmts {
+		match stmt {
+			ast.Comment {}
+			ast.ScriptDecl {}
+			ast.FnDecl {
+				cb(mut g, sym, stmt)
+			}
+			else { panic("invalid top stmt ${stmt}") }
+		}
+	}
+}
+
+fn (mut g Gen) each_all_parent_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl)) {
 	mut cur_idx := sym.parent_idx
 	for {
 		if cur_idx == 0 {
@@ -11,15 +33,16 @@ fn (mut g Gen) each_all_parents(sym &ast.TypeSymbol, cb fn(sum &ast.TypeSymbol, 
 
 		t_sym := g.table.get_type_symbol(cur_idx)
 		t_name := t_sym.name
-		g.class_bind_h.writeln("\t// ${t_name} methods")
 		t_file := g.file_by_name[t_name.to_lower()] or { panic("file not found `${t_name}`") }
 
-		for temp_stmt in t_file.stmts {
-			match temp_stmt {
+		for stmt in t_file.stmts {
+			match stmt {
+				ast.Comment {}
+				ast.ScriptDecl {}
 				ast.FnDecl {
-					cb(t_sym, temp_stmt)
+					cb(mut g, t_sym, stmt)
 				}
-				else {}
+				else { panic("invalid top stmt ${stmt}") }
 			}
 		}
 		
@@ -93,33 +116,6 @@ fn (mut g Gen) get_ts_type_name(typ ast.Type) string {
 }
 
 fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
-	/*
-	match type_name.to_lower() {
-		"none" {
-			return "info.Env().Null();"
-		}
-		"bool" {
-			return "Napi::Boolean::New(info.Env(), (bool)${var_value})"
-		}
-		"int" {
-			return "Napi::Number::New(info.Env(), (int)${var_value})"
-		}
-		"float" {
-			return "Napi::Number::New(info.Env(), (double)${var_value})"
-		}
-		"string" {
-			return "Napi::String::New(info.Env(), std::string((const char*)${var_value}))"
-		}
-		else {
-			if type_name.ends_with("[]") {
-				panic("invlid type")
-			}
-			else {
-				return "${g.gen_bind_class_name(type_name)}::ToNapiValue(info.Env(), ${var_value})"
-			}
-		}
-	}*/
-	
 	type_name := g.table.get_type_symbol(typ).name
 
 	match typ {
@@ -160,7 +156,7 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 			}
 			else {
 				eprintln("TODO gen_convert_to_napivalue support type ${sym.name}")
-				return "/*${sym.name}*/"
+				return "info.Env().Undefined()/*${sym.name}*/"
 			}
 		}
 	}
@@ -168,33 +164,6 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 }
 
 fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
-/*
-	match type_name.to_lower() {
-		"none" {
-			panic("invlid type")
-		}
-		"bool" {
-			return "VarValue(NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\"))"
-		}
-		"int" {
-			return "VarValue(NapiHelper::ExtractInt32(${js_value}, \"${js_value}\"))"
-		}
-		"float" {
-			return "VarValue(NapiHelper::ExtractFloat(${js_value}, \"${js_value}\"))"
-		}
-		"string" {
-			return "VarValue(NapiHelper::ExtractString(${js_value}, \"${js_value}\"))"
-		}
-		else {
-			if type_name.ends_with("[]") {
-				panic("invlid type")
-			}
-			else {
-				return "${g.gen_bind_class_name(type_name)}::ToVMValue(${js_value})"
-			}
-		}
-	}
-*/
 	type_name := g.table.get_type_symbol(typ).name
 
 	match typ {
