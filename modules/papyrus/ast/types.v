@@ -42,24 +42,28 @@ pub const string_type_idx = 4
 pub const bool_type_idx = 5
 pub const array_type_idx = 6
 
-pub const none_type		= new_type(none_type_idx)	//1
+pub const none_type	= new_type(none_type_idx)	//1
 pub const int_type		= new_type(int_type_idx)	//2
 pub const float_type	= new_type(float_type_idx)	//3
 pub const string_type	= new_type(string_type_idx)	//4
-pub const bool_type		= new_type(bool_type_idx)	//5
+pub const bool_type	= new_type(bool_type_idx)	//5
 pub const array_type	= new_type(array_type_idx)	//6
+pub const string_array_type	= new_type(array_type_idx + 1)	//7
+pub const int_array_type	= new_type(array_type_idx + 2)	//8
+pub const float_array_type	= new_type(array_type_idx + 3)	//9
+pub const bool_array_type	= new_type(array_type_idx + 4)	//10
 
 
 pub fn (mut t Table) register_builtin_type_symbols() {
 	// reserve index 0 so nothing can go there
 	// save index check, 0 will mean not found
-	t.register_type_symbol(kind: .placeholder, name: 'reserved_0')		//0
-	t.register_type_symbol(kind: .none_, name: 'None', obj_name: 'builtin')	//1
+	t.register_type_symbol(kind: .placeholder, name: 'reserved_0')				//0
+	t.register_type_symbol(kind: .none_, name: 'None', obj_name: 'builtin')		//1
 	t.register_type_symbol(kind: .int, name: 'Int', obj_name: 'builtin')		//2
 	t.register_type_symbol(kind: .float, name: 'Float', obj_name: 'builtin')	//3
 	t.register_type_symbol(kind: .string, name: 'String', obj_name: 'builtin')	//4
 	t.register_type_symbol(kind: .bool, name: 'Bool', obj_name: 'builtin')		//5
-	t.register_type_symbol(kind: .array, name: 'Array', obj_name: 'builtin')		//6
+	t.register_type_symbol(kind: .array, name: 'Array', obj_name: 'builtin')	//6
 
 	t.register_type_symbol( //7
 		parent_idx: array_type

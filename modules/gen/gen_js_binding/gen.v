@@ -9,26 +9,46 @@ struct Gen {
 mut:
 	table					ast.Table
 
+// func reg all object wrappers
+	main_register_func		strings.Builder
+// ts header file
+	ts_headers				strings.Builder
 // h file
 	class_bind_cpp			strings.Builder
 // cpp file
 	class_bind_h			strings.Builder
 // Init Fn - methods list
 	init_methods_bind_cpp	strings.Builder
+
 // temp
+	obj_type				ast.Type
+	sym						&ast.TypeSymbol = unsafe { voidptr(0) }
+	psym					&ast.TypeSymbol = unsafe { voidptr(0) }
 	obj_name				string
 	parent_obj_name			string
+	file_by_name			map[string]&ast.File
 	fns						[]ast.FnDecl
+	pfns					[]ast.FnDecl
+	temp_args				strings.Builder
 }
 
 pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) {
 	mut g := Gen{
+		temp_args: strings.new_builder(200)
+		main_register_func: strings.new_builder(300)
+		ts_headers: strings.new_builder(1000)
 		class_bind_cpp: strings.new_builder(1000)
 		class_bind_h: strings.new_builder(1000)
-		init_methods_bind_cpp: strings.new_builder(1000)
+		init_methods_bind_cpp: strings.new_builder(300)
 		table: table
+		file_by_name: map[string]&ast.File{}
 	}
 
+	for file in files {
+		g.file_by_name[file.obj_name.to_lower()] = file
+	}
+
+	// ============== generate h js bind =======================
 
 	g.class_bind_h.writeln("#pragma once")
 	g.class_bind_h.writeln("")
@@ -43,97 +63,92 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 	g.class_bind_h.writeln("{")
 	g.class_bind_h.writeln("")
 
+	// ============== generate cpp js bind =======================
+
 	g.class_bind_cpp.writeln("#include \"__jsbind.h\"")
 	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("namespace JSBinding {")
 
-	for file in files {
-		g.gen(file)
-	}
-	g.class_bind_cpp.writeln("}; // end namespace JSBinding")
+	// ============== generate ts headers =====================
 
-	g.class_bind_h.writeln("}; // end namespace JSBinding")
+	g.ts_headers.writeln("declare global {")
+	g.ts_headers.writeln("")
 
-	os.write_file(os.join_path(prefs.output_dir, "__jsbind.h"), g.class_bind_h.str()) or { panic("write_file err") }
-	os.write_file(os.join_path(prefs.output_dir, "__jsbind.cpp"), g.class_bind_cpp.str()) or { panic("write_file err") }
-}
-
-fn (mut g Gen) gen(file &ast.File) {
-	g.fns = []ast.FnDecl{}
-	g.obj_name = file.obj_name
-	g.parent_obj_name = (file.stmts[0] as ast.ScriptDecl).parent_name
-	g.init_methods_bind_cpp.str() // clear
-
-	for top_stmt in file.stmts {
-		match top_stmt {
-			ast.FnDecl {
-				g.fns << top_stmt
-			}
-			else {}
-		}		
-	}
-
-	impl_class_name := g.gen_impl_class_name(g.obj_name)
-	bind_class_name := g.gen_bind_class_name(g.obj_name)
-
-	// ============== generate h js bind =======================
-	g.class_bind_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
-	g.class_bind_h.writeln("public:")
-	g.class_bind_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
-	g.class_bind_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
-	g.class_bind_h.writeln("\t~${bind_class_name}() {};")
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("\t// wrappers")
-
-	// ============== generate cpp js bind =======================
-
-	g.class_bind_cpp.writeln("")
-	g.class_bind_cpp.writeln("// ==================================================================================")
-	g.class_bind_cpp.writeln("// ==================================${bind_class_name}==============================")
-	g.class_bind_cpp.writeln("")
-	
 	// ===========================================================
-
-	for top_stmt in file.stmts {
-		match top_stmt {
-			ast.ScriptDecl {
-				//g.obj_name = top_stmt.name
-				g.parent_obj_name = top_stmt.parent_name
-			}
-			ast.FnDecl { g.gen_func(&top_stmt) }
-			ast.Comment {}
-			ast.PropertyDecl {}
-			ast.VarDecl {}
-			ast.StateDecl {}
+	for file in files {
+		g.class_bind_cpp.writeln("static inline Napi::FunctionReference ${g.gen_ctor_name(file.obj_name)};")
+		
+		for top_stmt in file.stmts {
+			match top_stmt {
+				ast.Comment {}
+				ast.ScriptDecl {}
+				ast.FnDecl {
+					func := top_stmt
+					is_static_str := if func.is_global { "true" } else { "false" }
+					g.class_bind_cpp.writeln("static NativeFunction ${g.gen_vm_fn_impl_name(file.obj_name, func.name)} = nullptr;")
+				}
+				else { panic("invalid top stmt ${top_stmt}") }
+			}	
 		}
 	}
 
-	// ============== generate cpp js bind =======================
-	// Init
-	// constructor
-	// destructor
-	// From
-	// IsInstance
-	// ToVMValue
-	// ToNapiValue
-	g.gen_end_bind_cpp()
+	g.class_bind_cpp.writeln("")
+	
+
+	for file in files {
+		g.pfns = []ast.FnDecl{}
+		g.fns = []ast.FnDecl{}
+		g.obj_name = file.obj_name
+		g.obj_type = g.table.find_type_idx(file.obj_name)
+		g.sym = g.table.get_type_symbol(g.obj_type)
+		if g.sym.parent_idx != 0 {
+			g.psym = g.table.get_type_symbol(g.sym.parent_idx)
+			g.parent_obj_name = (file.stmts[0] as ast.ScriptDecl).parent_name
+		}
+		g.init_methods_bind_cpp.str() // clear
+
+		for top_stmt in file.stmts {
+			match top_stmt {
+				ast.Comment {}
+				ast.ScriptDecl {}
+				ast.FnDecl {
+					g.fns << top_stmt
+				}
+				else { panic("invalid top stmt ${top_stmt}") }
+			}	
+		}
+
+		g.gen(file)
+	}
+
 	// ============== generate h js bind =======================
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("\t// tools")
-	g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
-	g.class_bind_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-	g.class_bind_h.writeln("\tstatic VarValue ToVMValue(const Napi::Value& value);")
-	g.class_bind_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, const VarValue& value);")
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("private:")
-	g.class_bind_h.writeln("\tVarValue self;")
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("\tstatic inline Napi::FunctionReference constructor;")
-	g.class_bind_h.writeln("}; // end class ${bind_class_name}")
-	g.class_bind_h.writeln("")
+	
+	g.class_bind_h.writeln("void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);")
+	g.class_bind_h.writeln("}; // end namespace JSBinding")
+
+	// ============== generate cpp js bind =======================
+	
+	g.class_bind_cpp.writeln("void RegisterAllVMObjects(Napi::Env env, Napi::Object exports)")
+	g.class_bind_cpp.writeln("{")
+	g.class_bind_cpp.writeln(g.main_register_func.str())
+	g.class_bind_cpp.writeln("}")
+
+	g.class_bind_cpp.writeln("}; // end namespace JSBinding")
+
+	// ============== generate ts headers =====================
+	
+	g.ts_headers.writeln("}")
+	g.ts_headers.writeln("")
+	g.ts_headers.writeln("export {};")
+
+	// ===========================================================
+
+	os.write_file(os.join_path(prefs.output_dir, "__jsbind.h"), g.class_bind_h.str()) or { panic("write_file err") }
+	os.write_file(os.join_path(prefs.output_dir, "__jsbind.cpp"), g.class_bind_cpp.str()) or { panic("write_file err") }
+	os.write_file(os.join_path(prefs.output_dir, "jsbind.d.ts"), g.ts_headers.str()) or { panic("write_file err") }
 }
 
-fn (mut g Gen) gen_end_bind_cpp() {
+fn (mut g Gen) gen_end_impl() {
 	for i, func in g.fns {
 		js_class_name := g.gen_bind_class_name(g.obj_name)
 		js_fn_name := g.gen_js_fn_name(func.name)
@@ -153,19 +168,33 @@ fn (mut g Gen) gen_end_bind_cpp() {
 
 	g.class_bind_cpp.writeln("Napi::Object ${g.gen_bind_class_name(g.obj_name)}::Init(Napi::Env env, Napi::Object exports)")
 	g.class_bind_cpp.writeln("{")
+	for i, func in g.fns {
+		is_static_str := if func.is_global { "true" } else { "false" }
+		g.class_bind_cpp.writeln("\t${g.gen_vm_fn_impl_name(g.obj_name, func.name)} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"${g.obj_name}\", \"${func.name}\", ${is_static_str});")
+		g.class_bind_cpp.writeln("\tif(!${g.gen_vm_fn_impl_name(g.obj_name, func.name)}){")
+		g.class_bind_cpp.writeln("\t\tspdlog::error(\"failed to find function in Papyrus VM: `${g.obj_name}.${func.name}`\");")
+		g.class_bind_cpp.writeln("\t\tstd::runtime_error(\"failed to find function in Papyrus VM: `${g.obj_name}.${func.name}`\");")
+		g.class_bind_cpp.writeln("\t}")
+		g.class_bind_cpp.writeln("")
+	}
 	g.class_bind_cpp.writeln("\tNapi::HandleScope scope(env);")
-	g.class_bind_cpp.writeln("\tNapi::Function func = DefineClass( env, \"Form\", {")
+	g.class_bind_cpp.writeln("")
+	g.class_bind_cpp.writeln("\tNapi::Function func = DefineClass(env, \"${g.obj_name}\", {")
+	g.class_bind_cpp.writeln("\t\tStaticMethod(\"From\", &${g.gen_bind_class_name(g.obj_name)}::From),")
 	g.class_bind_cpp.writeln("${g.init_methods_bind_cpp.str()}")
 	g.class_bind_cpp.writeln("\t});")
-	g.class_bind_cpp.writeln("\tconstructor = Napi::Persistent(func);")
-	g.class_bind_cpp.writeln("\tconstructor.SuppressDestruct();")
-	g.class_bind_cpp.writeln("\texports.Set(\"Form\", func);")
+	g.class_bind_cpp.writeln("")
+	g.class_bind_cpp.writeln("\t${g.gen_ctor_name(g.obj_name)} = Napi::Persistent(func);")
+	g.class_bind_cpp.writeln("\t${g.gen_ctor_name(g.obj_name)}.SuppressDestruct();")
+	g.class_bind_cpp.writeln("\texports.Set(\"${g.obj_name}\", func);")
+	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("\treturn exports;")
 	g.class_bind_cpp.writeln("};")
 
 	g.class_bind_cpp.writeln("")
 	
-	g.class_bind_cpp.writeln("${g.gen_bind_class_name(g.obj_name)}::${g.gen_bind_class_name(g.obj_name)}(const Napi::CallbackInfo& info) : ObjectWrap(info)")
+	g.class_bind_cpp.write_string("${g.gen_bind_class_name(g.obj_name)}::${g.gen_bind_class_name(g.obj_name)}(const Napi::CallbackInfo& info) : ObjectWrap(info)")
+
 	g.class_bind_cpp.writeln("{")
 	g.class_bind_cpp.writeln("\tself = VarValue::None();")
 	g.class_bind_cpp.writeln("};")
@@ -174,14 +203,22 @@ fn (mut g Gen) gen_end_bind_cpp() {
 
 	g.class_bind_cpp.writeln("Napi::Value ${g.gen_bind_class_name(g.obj_name)}::From(const Napi::CallbackInfo& info)")
 	g.class_bind_cpp.writeln("{")
-	g.class_bind_cpp.writeln("\tauto formId = NapiHelper::ExtractUInt32(info[0], \"formId\");")
-	g.class_bind_cpp.writeln("\t//todo add try catch")
-	g.class_bind_cpp.writeln("\tauto& form = g_partOne->worldState.GetFormAt<MpForm>(formId);")
-	g.class_bind_cpp.writeln("\t// todo check form")
-	g.class_bind_cpp.writeln("\t// todo add check VarValue")
-	//g.class_bind_cpp.writeln("\tauto res = ToNapiValue(info.Env(), VarValue(form.ToGameObject()));")
+	g.class_bind_cpp.writeln("\ttry")
+	g.class_bind_cpp.writeln("\t{")
+	g.class_bind_cpp.writeln("\t\tauto formId = NapiHelper::ExtractUInt32(info[0], \"formId\");")
+	g.class_bind_cpp.writeln("\t\tauto& form = g_partOne->worldState.GetFormAt<MpForm>(formId);")
+	g.class_bind_cpp.writeln("\t\t// if(!form) {")
+	g.class_bind_cpp.writeln("\t\t//\t throw std::runtime_error(\"form not found `${g.gen_bind_class_name(g.obj_name)}::From`\");")
+	g.class_bind_cpp.writeln("\t\t// }")
+	g.class_bind_cpp.writeln("")
 	
-	g.class_bind_cpp.writeln("\treturn ${g.gen_convert_to_napivalue(g.obj_name, "VarValue(form.ToGameObject())")};")
+	g.class_bind_cpp.writeln("\t\treturn ${g.gen_convert_to_napivalue(g.obj_type, "VarValue(form.ToGameObject())")};")
+	g.class_bind_cpp.writeln("\t}")
+	g.class_bind_cpp.writeln("\tcatch(std::exception& e) {")
+	g.class_bind_cpp.writeln("\t\tspdlog::error((std::string)e.what());")
+	g.class_bind_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+	g.class_bind_cpp.writeln("\t}")
+	g.class_bind_cpp.writeln("\treturn info.Env().Undefined();")
 	g.class_bind_cpp.writeln("};")
 
 	g.class_bind_cpp.writeln("")
@@ -193,7 +230,7 @@ fn (mut g Gen) gen_end_bind_cpp() {
 	g.class_bind_cpp.writeln("\t\treturn false;")
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\tNapi::Object obj = value.As<Napi::Object>();")
-	g.class_bind_cpp.writeln("\treturn obj.InstanceOf(constructor.Value());")
+	g.class_bind_cpp.writeln("\treturn obj.InstanceOf(${g.gen_ctor_name(g.obj_name)}.Value());")
 	g.class_bind_cpp.writeln("};")
 
 	g.class_bind_cpp.writeln("")
@@ -220,7 +257,7 @@ fn (mut g Gen) gen_end_bind_cpp() {
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\t// Создаем новый экземпляр ${g.gen_bind_class_name(g.obj_name)}")
 	g.class_bind_cpp.writeln("\tNapi::EscapableHandleScope scope(env);")
-	g.class_bind_cpp.writeln("\tNapi::Function ctor = constructor.Value();")
+	g.class_bind_cpp.writeln("\tNapi::Function ctor = ${g.gen_ctor_name(g.obj_name)}.Value();")
 	g.class_bind_cpp.writeln("\tNapi::Object instance = ctor.New({});")
 	g.class_bind_cpp.writeln("\t${g.gen_bind_class_name(g.obj_name)}* wrapper = Napi::ObjectWrap<${g.gen_bind_class_name(g.obj_name)}>::Unwrap(instance);")
 	g.class_bind_cpp.writeln("\tif (wrapper)")
@@ -229,151 +266,4 @@ fn (mut g Gen) gen_end_bind_cpp() {
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\treturn scope.Escape(instance);")
 	g.class_bind_cpp.writeln("}")
-}
-
-fn (mut g Gen) gen_func(func &ast.FnDecl) {
-	js_class_name := g.gen_bind_class_name(g.obj_name)
-	js_fn_name := g.gen_js_fn_name(func.name)
-
-	// ============== generate h js bind =======================
-	if func.is_global {
-		g.class_bind_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-	}
-	else {
-		g.class_bind_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-	}
-
-	// ============== generate cpp js bind =======================
-	g.class_bind_cpp.writeln("Napi::Value ${js_class_name}::${js_fn_name}(const Napi::CallbackInfo& info)")
-	g.class_bind_cpp.writeln("{")
-	
-	mut all_args := ""
-	return_type_name := g.table.get_type_symbol(func.return_type).name
-
-	g.class_bind_cpp.writeln("\tstd::vector<VarValue> args = {")
-	for i in 0..func.params.len {
-		param := func.params[i]
-		all_args += param.name
-
-		param_type_name := g.table.get_type_symbol(param.typ).name
-		arg := "info[${i}]"
-		g.class_bind_cpp.write_string("\t\t${g.gen_convert_to_varvalue(param_type_name, arg)}")
-		// g.class_bind_cpp.writeln("\tauto ${param.name} = NapiHelper::${get_extract_fn_name(g.table.get_type_symbol(param.typ).name)}(info[${i}], \"${param.name}\");")
-
-		if i != func.params.len - 1 {
-			g.class_bind_cpp.writeln(",")
-		}
-	}
-	g.class_bind_cpp.writeln("\t};")
-
-	if !func.is_global {
-		g.class_bind_cpp.writeln("\tif (self.GetType() != VarValue::Type::kType_Object || !self)")
-		g.class_bind_cpp.writeln("\t{")
-		g.class_bind_cpp.writeln("\t\t//todo error invalid self")
-		g.class_bind_cpp.writeln("\t\treturn info.Env().Null();")
-		g.class_bind_cpp.writeln("\t}")
-	}
-
-	g.class_bind_cpp.writeln("\tstatic NativeFunction vm_${func.name} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"Form\", \"GetFormID\", false);")
-	g.class_bind_cpp.writeln("\t//todo error vm_${func.name} not found")
-	g.class_bind_cpp.writeln("\t//todo add try catch")
-	g.class_bind_cpp.writeln("\tNapi::Env env = info.Env();")
-	
-	if func.is_global {
-		g.class_bind_cpp.writeln("\tVarValue res = vm_${func.name}(VarValue::None(), args);")
-	}
-	else {
-		g.class_bind_cpp.writeln("\tVarValue res = vm_${func.name}(self, args);")
-	}
-	
-	g.class_bind_cpp.writeln("\treturn ${g.gen_convert_to_napivalue(return_type_name, "res")};")
-	g.class_bind_cpp.writeln("}")
-	g.class_bind_cpp.writeln("")
-}
-
-//--------------------------------------utils--------------------------------------
-
-fn (mut g Gen) gen_js_fn_name(name string) string {
-	return name
-}
-
-fn (mut g Gen) gen_impl_class_name(name string) string {
-	return "Papyrus${name}"
-}
-
-fn (mut g Gen) gen_bind_class_name(name string) string {
-	return "JSPapyrus${name}"
-}
-
-fn (mut g Gen) gen_type_name(type_name string) string {
-	match type_name.to_lower() {
-		"bool" { return "Bool" }
-		"int" { return "Int" }
-		"float" { return "Float" }
-		"string" { return "String" }
-		else {
-			if type_name.ends_with("[]") {
-				panic("invlid type")
-			}
-			else {
-				return type_name // TODO form -> Form
-			}
-		}
-	}
-}
-
-fn (mut g Gen) gen_convert_to_napivalue(type_name string, var_value string) string {
-	match type_name.to_lower() {
-		"none" {
-			return "info.Env().Null();"
-		}
-		"bool" {
-			return "Napi::Boolean::New(info.Env(), (bool)${var_value})"
-		}
-		"int" {
-			return "Napi::Number::New(info.Env(), (int)${var_value})"
-		}
-		"float" {
-			return "Napi::Number::New(info.Env(), (double)${var_value})"
-		}
-		"string" {
-			return "Napi::String::New(info.Env(), std::string((const char*)${var_value}))"
-		}
-		else {
-			if type_name.ends_with("[]") {
-				panic("invlid type")
-			}
-			else {
-				return "${g.gen_bind_class_name(type_name)}::ToNapiValue(info.Env(), ${var_value})"
-			}
-		}
-	}
-}
-
-fn (mut g Gen) gen_convert_to_varvalue(type_name string, js_value string) string {
-	match type_name.to_lower() {
-		"none" {
-			panic("invlid type")
-		}
-		"bool" {
-			return "VarValue(NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\"))"
-		}
-		"int" {
-			return "VarValue(NapiHelper::ExtractInt32(${js_value}, \"${js_value}\"))"
-		}
-		"float" {
-			return "VarValue(NapiHelper::ExtractFloat(${js_value}, \"${js_value}\"))"
-		}
-		"string" {
-			return "VarValue(NapiHelper::ExtractString(${js_value}, \"${js_value}\"))"
-		}
-		else {
-			if type_name.ends_with("[]") {
-				panic("invlid type")
-			}
-			else {
-				return "${g.gen_bind_class_name(type_name)}::ToVMValue(${js_value})"
-			}
-		}
-	}
 }
