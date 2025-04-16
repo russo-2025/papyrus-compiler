@@ -1,4 +1,4 @@
-module gen_js_binding
+module ts_binding_server
 
 import papyrus.ast
 import pref
@@ -183,7 +183,7 @@ fn (mut g Gen) gen_end_impl() {
 		g.class_bind_cpp.writeln("\t${g.gen_vm_fn_impl_name(sum.obj_name, func.name)} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"${sum.obj_name}\", \"${func.name}\", ${is_static_str});")
 		g.class_bind_cpp.writeln("\tif(!${g.gen_vm_fn_impl_name(sum.obj_name, func.name)}){")
 		g.class_bind_cpp.writeln("\t\tspdlog::error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
-		g.class_bind_cpp.writeln("\t\tstd::runtime_error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
+		g.class_bind_cpp.writeln("\t\tthrow std::runtime_error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
 		g.class_bind_cpp.writeln("\t}")
 		g.class_bind_cpp.writeln("")
 	})

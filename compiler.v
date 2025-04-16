@@ -37,7 +37,8 @@ fn main() {
 		.help {
 			pref.print_help_info()
 		}
-		.gen_js_binding {
+		.ts_binding_client,
+		.ts_binding_server {
 			builder.create_js_binding(prefs)
 		}
 	}

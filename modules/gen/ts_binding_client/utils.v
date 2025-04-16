@@ -1,4 +1,4 @@
-module gen_js_binding
+module ts_binding_client
 
 import papyrus.ast
 
@@ -58,8 +58,8 @@ fn (mut g Gen) gen_js_fn_name(name string) string {
 	return name
 }
 
-fn (mut g Gen) gen_vm_fn_impl_name(object_name string, func_name string) string {
-	return "vm_${object_name}_${func_name}"
+fn (mut g Gen) get_fn_impl_name(object_name string, func_name string) string {
+	return "${object_name}_${func_name}"
 }
 
 fn (mut g Gen) gen_impl_class_name(name string) string {
@@ -68,6 +68,40 @@ fn (mut g Gen) gen_impl_class_name(name string) string {
 
 fn (mut g Gen) gen_bind_class_name(name string) string {
 	return "JSPapyrus${name}"
+}
+
+fn (mut g Gen) get_impl_type_name(typ ast.Type) string {
+	sym := g.table.get_type_symbol(typ)
+	name := sym.name
+
+	match name.to_lower() {
+		"bool" {
+			return "bool"
+		}
+		"int" {
+			return "int"
+		}
+		"float" {
+			return "double"
+		}
+		"string" {
+			return "std::string"
+		}
+		"form" {
+			return "RE::TESForm*"
+		}
+		"keyword" {
+			return "RE::BGSKeyword*"
+		}
+		else {
+			if sym.kind == .script {
+				return "RE::TESForm*"
+			}
+			else {
+				panic("invalid type ${name}")
+			}
+		}
+	}
 }
 
 fn (mut g Gen) get_ts_type_name(typ ast.Type) string {
@@ -163,6 +197,7 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 
 }
 
+// rename gen_convert_to_impl_value
 fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 	type_name := g.table.get_type_symbol(typ).name
 
@@ -171,16 +206,16 @@ fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 			panic("invlid type")
 		}
 		ast.int_type {
-			return "VarValue(NapiHelper::ExtractInt32(${js_value}, \"${js_value}\"))"
+			return "NapiHelper::ExtractInt32(${js_value}, \"${js_value}\")"
 		}
 		ast.float_type {
-			return "VarValue(NapiHelper::ExtractFloat(${js_value}, \"${js_value}\"))"
+			return "NapiHelper::ExtractFloat(${js_value}, \"${js_value}\")"
 		}
 		ast.string_type {
-			return "VarValue(NapiHelper::ExtractString(${js_value}, \"${js_value}\"))"
+			return "NapiHelper::ExtractString(${js_value}, \"${js_value}\")"
 		}
 		ast.bool_type {
-			return "VarValue(NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\"))"
+			return "NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\")"
 		}
 		ast.array_type {
 			panic("invlid type")
@@ -200,7 +235,7 @@ fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 		else {
 			sym := g.table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "${g.gen_bind_class_name(type_name)}::ToVMValue(${js_value})"
+				return "${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value})"
 			}
 			else {
 				panic("unknown type ${sym}")

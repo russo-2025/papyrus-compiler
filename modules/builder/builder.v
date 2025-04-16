@@ -8,7 +8,8 @@ import papyrus.ast
 import papyrus.checker
 import gen.gen_pex
 import papyrus.parser
-import gen.gen_js_binding
+import gen.ts_binding_client
+import gen.ts_binding_server
 
 const cache_path = os.real_path('./.papyrus')
 const compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
@@ -56,7 +57,15 @@ pub fn create_js_binding(prefs &pref.Preferences) {
 		exit(1)
 	}
 
-	gen_js_binding.gen(mut parsed_files, mut table, prefs)
+	if prefs.mode == .ts_binding_client {
+		ts_binding_client.gen(mut parsed_files, mut table, prefs)
+	}
+	else if prefs.mode == .ts_binding_server {
+		ts_binding_server.gen(mut parsed_files, mut table, prefs)
+	}
+	else {
+		panic("invalid pref mode")
+	}
 }
 
 @[inline]

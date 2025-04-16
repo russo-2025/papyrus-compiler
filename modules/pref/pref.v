@@ -20,7 +20,8 @@ pub enum RunMode {
 	disassembly
 	create_dump
 	help
-	gen_js_binding
+	ts_binding_client
+	ts_binding_server
 }
 
 @[heap]
@@ -210,17 +211,23 @@ pub fn parse_args() Preferences {
 
 			p.paths << path
 		}
-		"gen_js_binding" {
+		"ts-binding-client",
+		"ts-binding-server" {
 			if args.len < 2 {
 				error(errors.msg_wrong_number_of_arguments)
 			}
 
-			p.mode = .gen_js_binding
+			if args[0] == "ts-binding-client" {
+				p.mode = .ts_binding_client
+			}
+			else {
+				p.mode = .ts_binding_server
+			}
 
 			path := os.real_path(args[1])
 
 			if !os.is_dir(path) {
-				error(errors.msg_invalid_path_create_dump) //
+				error("invalid input dir")
 			}
 
 			p.paths << path
@@ -228,7 +235,7 @@ pub fn parse_args() Preferences {
 			output_dir := os.real_path(args[2])
 
 			if !os.is_dir(output_dir) {
-				error(errors.msg_invalid_path_create_dump) //
+				error("invalid output dir")
 			}
 
 			p.output_dir = output_dir
