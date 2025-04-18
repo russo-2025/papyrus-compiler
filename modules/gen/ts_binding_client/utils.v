@@ -8,6 +8,23 @@ fn (mut g Gen) each_all_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeS
 	g.each_all_parent_fns(sym, cb)
 }
 
+fn (mut g Gen) each_files_fns(cb fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl)) {
+	for key, file in g.file_by_name {
+		sym := g.table.find_type(key) or { panic("TypeSymbol not found `${key}`") }
+		
+		for stmt in file.stmts {
+			match stmt {
+				ast.Comment {}
+				ast.ScriptDecl {}
+				ast.FnDecl {
+					cb(mut g, sym, file, stmt)
+				}
+				else { panic("invalid top stmt ${stmt}") }
+			}
+		}
+	}
+}
+
 fn (mut g Gen) each_all_this_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl)) {
 	obj_name := sym.obj_name
 	file := g.file_by_name[obj_name.to_lower()] or { panic("file not found `${obj_name}`") }
@@ -70,6 +87,24 @@ fn (mut g Gen) gen_bind_class_name(name string) string {
 	return "JSPapyrus${name}"
 }
 
+fn (mut g Gen) get_real_impl_fn_name(obj_name string, func_name string) string {
+	return "${obj_name}_${func_name}"
+}
+
+// rename impl_class_name
+fn (mut g Gen) get_impl_obj_type_name(typ ast.Type) string {
+	sym := g.table.get_type_symbol(typ)
+	name := sym.name
+	assert sym.kind == .script
+
+	res := g.impl_classes[name.to_lower()] or {
+		eprintln("failed to find a type name for `${name}` -> `RE::TESForm`")
+		return "RE::TESForm"
+	}
+
+	return res
+}
+
 fn (mut g Gen) get_impl_type_name(typ ast.Type) string {
 	sym := g.table.get_type_symbol(typ)
 	name := sym.name
@@ -82,20 +117,14 @@ fn (mut g Gen) get_impl_type_name(typ ast.Type) string {
 			return "int"
 		}
 		"float" {
-			return "double"
+			return "float"
 		}
 		"string" {
 			return "std::string"
 		}
-		"form" {
-			return "RE::TESForm*"
-		}
-		"keyword" {
-			return "RE::BGSKeyword*"
-		}
 		else {
 			if sym.kind == .script {
-				return "RE::TESForm*"
+				return "${g.get_impl_obj_type_name(typ)}*"
 			}
 			else {
 				panic("invalid type ${name}")
@@ -157,13 +186,13 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 			return "info.Env().Null();"
 		}
 		ast.int_type {
-			return "Napi::Number::New(info.Env(), (int)${var_value})"
+			return "Napi::Number::New(info.Env(), ${var_value})"
 		}
 		ast.float_type {
-			return "Napi::Number::New(info.Env(), (double)${var_value})"
+			return "Napi::Number::New(info.Env(), ${var_value})"
 		}
 		ast.string_type {
-			return "Napi::String::New(info.Env(), std::string((const char*)${var_value}))"
+			return "Napi::String::New(info.Env(), ${var_value})"
 		}
 		ast.bool_type {
 			return "Napi::Boolean::New(info.Env(), (bool)${var_value})"
@@ -195,6 +224,29 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 		}
 	}
 
+}
+
+fn (mut g Gen) is_form(sym &ast.TypeSymbol) bool {
+	if sym.parent_idx == 0 {
+		if g.table.find_type_idx(sym.name) == g.form_idx {
+			return true
+		}
+	}
+
+	mut cur_sym := unsafe { sym }
+	for {
+		if cur_sym.parent_idx == 0 {
+			break
+		}
+
+		if cur_sym.parent_idx == g.form_idx {
+			return true
+		}
+		
+		cur_sym = g.table.get_type_symbol(cur_sym.parent_idx)
+	}
+	
+	return false
 }
 
 // rename gen_convert_to_impl_value

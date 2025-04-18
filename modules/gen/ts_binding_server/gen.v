@@ -1,7 +1,6 @@
 module ts_binding_server
 
 import papyrus.ast
-import pref
 import strings
 import os
 
@@ -33,7 +32,9 @@ mut:
 	temp_args				strings.Builder
 }
 
-pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) {
+pub fn gen(mut files []&ast.File, mut table ast.Table, output_dir string) {
+	println("generate server bindings")
+
 	mut g := Gen{
 		temp_args: strings.new_builder(200)
 		main_register_func: strings.new_builder(300)
@@ -51,8 +52,8 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 
 	// ============== generate h js bind =======================
 
+	g.class_bind_h.writeln("// !!! Generated automatically. Do not edit. !!!")
 	g.class_bind_h.writeln("#pragma once")
-	g.class_bind_h.writeln("")
 
 	g.class_bind_h.writeln("#include <napi.h>")
 	g.class_bind_h.writeln("#include \"NapiHelper.h\"")
@@ -65,8 +66,13 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 
 	// ============== generate cpp js bind =======================
 
-	g.class_bind_cpp.writeln("#include \"__jsbind.h\"")
+	g.class_bind_cpp.writeln("// !!! Generated automatically. Do not edit. !!!")
+	g.class_bind_cpp.writeln("#include \"__js_bindings.h\"")
 	g.class_bind_cpp.writeln("#include \"PartOne.h\"")
+	g.class_bind_cpp.writeln("")
+	g.class_bind_cpp.writeln("#ifdef GetForm")
+	g.class_bind_cpp.writeln("#undef GetForm")
+	g.class_bind_cpp.writeln("#endif")
 	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("extern std::shared_ptr<PartOne> g_partOne;")
 	g.class_bind_cpp.writeln("")
@@ -74,6 +80,8 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 
 	// ============== generate ts headers =====================
 
+	g.ts_headers.writeln("// !!! Generated automatically. Do not edit. !!!")
+	g.ts_headers.writeln("")
 	g.ts_headers.writeln("declare global {")
 	g.ts_headers.writeln("")
 
@@ -150,9 +158,9 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, prefs &pref.Preferences) 
 
 	// ===========================================================
 
-	os.write_file(os.join_path(prefs.output_dir, "__jsbind.h"), g.class_bind_h.str()) or { panic("write_file err") }
-	os.write_file(os.join_path(prefs.output_dir, "__jsbind.cpp"), g.class_bind_cpp.str()) or { panic("write_file err") }
-	os.write_file(os.join_path(prefs.output_dir, "jsbind.d.ts"), g.ts_headers.str()) or { panic("write_file err") }
+	os.write_file(os.join_path(output_dir, "__js_bindings.h"), g.class_bind_h.str()) or { panic("write_file err") }
+	os.write_file(os.join_path(output_dir, "__js_bindings.cpp"), g.class_bind_cpp.str()) or { panic("write_file err") }
+	os.write_file(os.join_path(output_dir, "papyrusObjects.d.ts"), g.ts_headers.str()) or { panic("write_file err") }
 }
 
 fn (mut g Gen) gen_end_impl() {

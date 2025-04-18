@@ -7,6 +7,7 @@ fn (mut g Gen) gen(file &ast.File) {
 	bind_class_name := g.gen_bind_class_name(g.obj_name)
 
 	// ============== generate h js bind =======================
+
 	g.class_bind_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
 	g.class_bind_h.writeln("public:")
 	g.class_bind_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
@@ -31,8 +32,10 @@ fn (mut g Gen) gen(file &ast.File) {
 		g.ts_headers.writeln("\tclass ${g.obj_name} extends ${g.parent_obj_name} {")
 	}
 	
-	g.ts_headers.writeln("\t\tstatic From(formId: number): ${g.obj_name} | null")
-	g.ts_headers.writeln("")
+	if g.is_form(g.sym) {
+		g.ts_headers.writeln("\t\tstatic From(formId: number): ${g.obj_name} | null")
+		g.ts_headers.writeln("")
+	}
 	
 	// ============== main register func =====================
 	
@@ -67,7 +70,9 @@ fn (mut g Gen) gen(file &ast.File) {
 	impl_type_name := g.get_impl_type_name(g.obj_type)
 	g.class_bind_h.writeln("")
 	g.class_bind_h.writeln("\t// tools")
-	g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+	if g.is_form(g.sym) {
+		g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+	}
 	g.class_bind_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
 	g.class_bind_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
 	g.class_bind_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
@@ -127,10 +132,13 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	}
 
 	if !func.is_global {
-		g.class_bind_cpp.writeln("")
+		if func.params.len != 0 {
+			g.class_bind_cpp.writeln("")
+		}
+
 		g.class_bind_cpp.writeln("\t\tif (!self)")
 		g.class_bind_cpp.writeln("\t\t{")
-		g.class_bind_cpp.writeln("\t\t\tthrow std::runtime_error(\"invalid self in ${js_class_name}::${js_fn_name}\");")
+		g.class_bind_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
 		g.class_bind_cpp.writeln("\t\t}")
 		g.class_bind_cpp.writeln("")
 	}
@@ -147,7 +155,7 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	}
 
 	if func.is_global {
-		g.class_bind_cpp.writeln("${g.get_fn_impl_name(sym.obj_name, func.name)}(VarValue::None(), args);")
+		g.class_bind_cpp.writeln("${g.get_fn_impl_name(sym.obj_name, func.name)}(${call_args_list});")
 	}
 	else {
 		g.class_bind_cpp.writeln("${g.get_fn_impl_name(sym.obj_name, func.name)}(${call_args_list});")
@@ -157,7 +165,7 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	g.class_bind_cpp.writeln("\t\treturn ${g.gen_convert_to_napivalue(func.return_type, "res")};")
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\tcatch(std::exception& e) {")
-	g.class_bind_cpp.writeln("\t\tspdlog::error((std::string)e.what());")
+	g.class_bind_cpp.writeln("\t\tERR((std::string)e.what());")
 	g.class_bind_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\treturn info.Env().Undefined();")

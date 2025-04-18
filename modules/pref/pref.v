@@ -220,8 +220,11 @@ pub fn parse_args() Preferences {
 			if args[0] == "ts-binding-client" {
 				p.mode = .ts_binding_client
 			}
-			else {
+			else if args[0] == "ts-binding-server" {
 				p.mode = .ts_binding_server
+			}
+			else {
+				panic("WTF")
 			}
 
 			path := os.real_path(args[1])

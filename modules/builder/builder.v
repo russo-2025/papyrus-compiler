@@ -58,10 +58,10 @@ pub fn create_js_binding(prefs &pref.Preferences) {
 	}
 
 	if prefs.mode == .ts_binding_client {
-		ts_binding_client.gen(mut parsed_files, mut table, prefs)
+		ts_binding_client.gen(mut parsed_files, mut table, prefs.output_dir)
 	}
 	else if prefs.mode == .ts_binding_server {
-		ts_binding_server.gen(mut parsed_files, mut table, prefs)
+		ts_binding_server.gen(mut parsed_files, mut table, prefs.output_dir)
 	}
 	else {
 		panic("invalid pref mode")
