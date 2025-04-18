@@ -179,6 +179,38 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 		g.temp_args.write_string(param.name)
 		g.temp_args.write_string(": ")
 		g.temp_args.write_string(g.get_ts_type_name(param.typ))
+
+		if param.is_optional {
+			// если есть комментарий с пояснением например `/*int*/`
+			// то удаляем */ и продолжаем комментарий
+			if g.temp_args.last_n(2) == "*/" {
+				g.temp_args.go_back("*/".len) // remove last `*/`
+			}
+			else {
+				g.temp_args.write_string("/*")
+			}
+
+			match param.default_value {
+				ast.NoneLiteral {
+					g.temp_args.write_string(" = null*/")
+				}
+				ast.IntegerLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.FloatLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.BoolLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.StringLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				else {
+					panic("invalid expr in param")
+				}
+			}
+		}
 		
 		if i != func.params.len - 1 {
 			g.temp_args.write_string(", ")

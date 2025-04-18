@@ -163,7 +163,7 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 
 }
 
-fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
+fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string, desc string) string {
 	type_name := g.table.get_type_symbol(typ).name
 
 	match typ {
@@ -171,16 +171,16 @@ fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 			panic("invlid type")
 		}
 		ast.int_type {
-			return "VarValue(NapiHelper::ExtractInt32(${js_value}, \"${js_value}\"))"
+			return "VarValue(NapiHelper::ExtractInt32(${js_value}, \"${desc}\"))"
 		}
 		ast.float_type {
-			return "VarValue(NapiHelper::ExtractFloat(${js_value}, \"${js_value}\"))"
+			return "VarValue(NapiHelper::ExtractFloat(${js_value}, \"${desc}\"))"
 		}
 		ast.string_type {
-			return "VarValue(NapiHelper::ExtractString(${js_value}, \"${js_value}\"))"
+			return "VarValue(NapiHelper::ExtractString(${js_value}, \"${desc}\"))"
 		}
 		ast.bool_type {
-			return "VarValue(NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\"))"
+			return "VarValue(NapiHelper::ExtractBoolean(${js_value}, \"${desc}\"))"
 		}
 		ast.array_type {
 			panic("invlid type")

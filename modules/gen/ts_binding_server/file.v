@@ -105,8 +105,29 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 
 	for i in 0..func.params.len {
 		param := func.params[i]
-		arg := "info[${i}]"
-		g.class_bind_cpp.write_string("\t\t\t${g.gen_convert_to_varvalue(param.typ, arg)}")
+		mut arg := "info[${i}]"
+
+		if param.is_optional {
+			default_value := match param.default_value {
+				ast.NoneLiteral {
+					"info.Env().Null()"
+				}
+				ast.IntegerLiteral,
+				ast.FloatLiteral,
+				ast.BoolLiteral,
+				ast.StringLiteral {
+					g.gen_convert_to_napivalue(param.typ, param.default_value.val)
+				}
+				else {
+					panic("invalid expr in param")
+				}
+			}
+
+			arg = "NapiUnwrapOptional(${arg}, ${default_value})"
+		}
+		
+		g.class_bind_cpp.write_string("\t\t\t${g.gen_convert_to_varvalue(param.typ, arg, param.name)}")
+
 		
 		if i != func.params.len - 1 {
 			g.class_bind_cpp.writeln(",")
@@ -149,9 +170,46 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	for i in 0..func.params.len {
 		param := func.params[i]
 		g.temp_args.write_string(param.name)
-		g.temp_args.write_string(": ")
+		if param.is_optional {
+			g.temp_args.write_string("?: ")
+		}
+		else {
+			g.temp_args.write_string(": ")
+		}
 		g.temp_args.write_string(g.get_ts_type_name(param.typ))
-		
+
+		if param.is_optional {
+			// если есть комментарий с пояснением например `/*int*/`
+			// то удаляем */ и продолжаем комментарий
+			if g.temp_args.last_n(2) == "*/" {
+				g.temp_args.go_back("*/".len) // remove last `*/`
+			}
+			else {
+				g.temp_args.write_string("/*")
+			}
+
+			match param.default_value {
+				ast.NoneLiteral {
+					g.temp_args.write_string(" = null*/")
+				}
+				ast.IntegerLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.FloatLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.BoolLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				ast.StringLiteral {
+					g.temp_args.write_string(" = ${param.default_value.val}*/")
+				}
+				else {
+					panic("invalid expr in param ${param}")
+				}
+			}
+		}
+
 		if i != func.params.len - 1 {
 			g.temp_args.write_string(", ")
 		}
