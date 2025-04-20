@@ -230,7 +230,7 @@ pub fn parse_args() Preferences {
 			path := os.real_path(args[1])
 
 			if !os.is_dir(path) {
-				error("invalid input dir")
+				error("invalid input dir `${path}`")
 			}
 
 			p.paths << path
@@ -238,7 +238,11 @@ pub fn parse_args() Preferences {
 			output_dir := os.real_path(args[2])
 
 			if !os.is_dir(output_dir) {
-				error("invalid output dir")
+				os.mkdir_all(output_dir, os.MkdirParams{}) or {
+					panic("Failed to create output directory")
+				}
+				
+				println("output dir created `${output_dir}`")
 			}
 
 			p.output_dir = output_dir
