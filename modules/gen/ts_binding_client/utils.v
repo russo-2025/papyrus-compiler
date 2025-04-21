@@ -295,3 +295,49 @@ fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 		}
 	}
 }
+// rename gen_convert_to_impl_value
+fn (mut g Gen) gen_convert_to_varvalue_optional(typ ast.Type, js_value string, default_value string, desc string) string {
+	type_name := g.table.get_type_symbol(typ).name
+
+	match typ {
+		ast.none_type {
+			panic("invlid type")
+		}
+		ast.int_type {
+			return "NapiHelper::ExtractOptionalInt32(${js_value}, ${default_value}, \"${desc}\")"
+		}
+		ast.float_type {
+			return "NapiHelper::ExtractOptionalFloat(${js_value}, ${default_value}, \"${desc}\")"
+		}
+		ast.string_type {
+			return "NapiHelper::ExtractOptionalString(${js_value}, ${default_value}, \"${desc}\")"
+		}
+		ast.bool_type {
+			return "NapiHelper::ExtractOptionalBoolean(${js_value}, ${default_value}, \"${desc}\")"
+		}
+		ast.array_type {
+			panic("invlid type")
+		}
+		ast.string_array_type {
+			panic("TODO type")
+		}
+		ast.int_array_type {
+			panic("TODO type")
+		}
+		ast.float_array_type {
+			panic("TODO type")
+		}
+		ast.bool_array_type {
+			panic("TODO type")
+		}
+		else {
+			sym := g.table.get_type_symbol(typ)
+			if sym.kind == .script {
+				return "!${js_value}.IsUndefined() ? ${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
+			}
+			else {
+				panic("unknown type ${sym}")
+			}
+		}
+	}
+}

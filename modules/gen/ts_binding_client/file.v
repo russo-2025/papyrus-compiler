@@ -122,7 +122,34 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 		param := func.params[i]
 		arg := "info[${i}]"
 		param_impl_type_name := g.get_impl_type_name(param.typ)
-		g.class_bind_cpp.writeln("\t\t${param_impl_type_name} ${param.name} = ${g.gen_convert_to_varvalue(param.typ, arg)};")
+
+		g.class_bind_cpp.write_string("\t\t${param_impl_type_name} ${param.name} = ")
+
+		if param.is_optional {
+			default_value := match param.default_value {
+				ast.NoneLiteral {
+					"nullptr"
+				}
+				ast.IntegerLiteral,
+				ast.FloatLiteral {
+					param.default_value.val
+				}
+				ast.BoolLiteral {
+					param.default_value.val.to_lower()
+				}
+				ast.StringLiteral {
+					"\"${param.default_value.val}\""
+				}
+				else {
+					panic("invalid expr in param")
+				}
+			}
+
+			g.class_bind_cpp.writeln("${g.gen_convert_to_varvalue_optional(param.typ, arg, default_value, arg)};")
+		}
+		else {
+			g.class_bind_cpp.writeln("${g.gen_convert_to_varvalue(param.typ, arg)};")
+		}
 
 		call_args_list += param.name
 
@@ -177,7 +204,12 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	for i in 0..func.params.len {
 		param := func.params[i]
 		g.temp_args.write_string(param.name)
-		g.temp_args.write_string(": ")
+		if param.is_optional {
+			g.temp_args.write_string("?: ")
+		}
+		else {
+			g.temp_args.write_string(": ")
+		}
 		g.temp_args.write_string(g.get_ts_type_name(param.typ))
 
 		if param.is_optional {

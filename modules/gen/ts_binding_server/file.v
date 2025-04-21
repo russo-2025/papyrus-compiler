@@ -105,35 +105,44 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 
 	for i in 0..func.params.len {
 		param := func.params[i]
-		mut arg := "info[${i}]"
 
 		if param.is_optional {
+			mut arg := "info[${i}]"
+			
 			default_value := match param.default_value {
 				ast.NoneLiteral {
-					"info.Env().Null()"
+					"" //unused
 				}
 				ast.IntegerLiteral,
-				ast.FloatLiteral,
-				ast.BoolLiteral,
+				ast.FloatLiteral {
+					param.default_value.val
+				}
+				ast.BoolLiteral {
+					param.default_value.val.to_lower()
+				}
 				ast.StringLiteral {
-					g.gen_convert_to_napivalue(param.typ, param.default_value.val)
+					"\"${param.default_value.val}\""
 				}
 				else {
 					panic("invalid expr in param")
 				}
 			}
 
-			arg = "NapiUnwrapOptional(${arg}, ${default_value})"
+			g.class_bind_cpp.write_string("\t\t\t${g.gen_convert_to_varvalue_optional(param.typ, arg, default_value, param.name)}")
+		}
+		else {
+			arg := "info[${i}]"
+			g.class_bind_cpp.write_string("\t\t\t${g.gen_convert_to_varvalue(param.typ, arg, param.name)}")
 		}
 		
-		g.class_bind_cpp.write_string("\t\t\t${g.gen_convert_to_varvalue(param.typ, arg, param.name)}")
-
-		
-		if i != func.params.len - 1 {
-			g.class_bind_cpp.writeln(",")
-		}
+		g.class_bind_cpp.writeln(",")
 	}
 
+	if func.params.len > 0 {
+		g.class_bind_cpp.go_back("\n,".len)
+		g.class_bind_cpp.writeln("")
+	}
+	
 	g.class_bind_cpp.writeln("\t\t};")
 
 	if !func.is_global {

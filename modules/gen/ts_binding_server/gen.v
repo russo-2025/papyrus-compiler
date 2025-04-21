@@ -80,16 +80,6 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, output_dir string) {
 	
 	g.class_bind_cpp.writeln("")
 
-	g.class_bind_cpp.writeln("Napi::Value NapiUnwrapOptional(Napi::Value value, Napi::Value default_value) {")
-	g.class_bind_cpp.writeln("\tif(value.IsUndefined())")
-	g.class_bind_cpp.writeln("\t{")
-	g.class_bind_cpp.writeln("\t\treturn default_value")
-	g.class_bind_cpp.writeln("\t}")
-	g.class_bind_cpp.writeln("\treturn value")
-	g.class_bind_cpp.writeln("}")
-	
-	g.class_bind_cpp.writeln("")
-
 	// ============== generate ts headers =====================
 
 	g.ts_headers.writeln("// !!! Generated automatically. Do not edit. !!!")
