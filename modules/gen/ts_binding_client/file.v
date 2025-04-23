@@ -15,6 +15,10 @@ fn (mut g Gen) gen(file &ast.File) {
 	g.class_bind_h.writeln("\t~${bind_class_name}() {};")
 	g.class_bind_h.writeln("")
 	g.class_bind_h.writeln("\t// wrappers")
+	if !g.is_no_instance_class(g.obj_type) {
+		g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+		g.class_bind_h.writeln("\tNapi::Value As(const Napi::CallbackInfo& info);")
+	}
 
 	// ============== generate cpp js bind =======================
 
@@ -32,8 +36,9 @@ fn (mut g Gen) gen(file &ast.File) {
 		g.ts_headers.writeln("\tclass ${g.obj_name} extends ${g.parent_obj_name} {")
 	}
 	
-	if g.is_form(g.sym) {
+	if !g.is_no_instance_class(g.obj_type){
 		g.ts_headers.writeln("\t\tstatic From(formId: number): ${g.obj_name} | null")
+		g.ts_headers.writeln("\t\tAs<T>(object: any): T | null")
 		g.ts_headers.writeln("")
 	}
 	
@@ -69,16 +74,16 @@ fn (mut g Gen) gen(file &ast.File) {
 	// ============== generate h js bind =======================
 	impl_type_name := g.get_impl_type_name(g.obj_type)
 	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("\t// tools")
-	if g.is_form(g.sym) {
-		g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+	if !g.is_no_instance_class(g.obj_type) {
+		g.class_bind_h.writeln("\t// tools")
+		g.class_bind_h.writeln("\tstatic ${impl_type_name} Cast(const Napi::Value& value);")
+		g.class_bind_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
+		g.class_bind_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
+		g.class_bind_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
+		g.class_bind_h.writeln("")
+		g.class_bind_h.writeln("\t${impl_type_name} self = nullptr;")
+		//g.class_bind_h.writeln("\tuint32_t typeIdx = ${g.obj_type};")
 	}
-	g.class_bind_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-	g.class_bind_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
-	g.class_bind_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("private:")
-	g.class_bind_h.writeln("\t${impl_type_name} self = nullptr;")
 	g.class_bind_h.writeln("}; // end class ${bind_class_name}")
 	g.class_bind_h.writeln("")
 	
@@ -191,8 +196,21 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	g.class_bind_cpp.writeln("")
 	g.class_bind_cpp.writeln("\t\treturn ${g.gen_convert_to_napivalue(func.return_type, "res")};")
 	g.class_bind_cpp.writeln("\t}")
+
+	/*
+		g.class_bind_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${g.get_impl_obj_type_name(g.obj_type)}`\"")
+		g.class_bind_cpp.writeln("\t\t\tERR(errMsg);")
+		g.class_bind_cpp.writeln("\t\t\tNapi::Error err = Napi::Error::New(info.Env(), errMsg);")
+		g.class_bind_cpp.writeln("\t\t\terr.ThrowAsJavaScriptException();")
+	*/
+	g.class_bind_cpp.writeln("\tcatch(Napi::Error& err) {")
+	g.class_bind_cpp.writeln("\t\tERR(err.what());")
+	g.class_bind_cpp.writeln("\t\tERR(\"trace: {}\", err.Get(\"stack\").ToString().Utf8Value());")
+	
+	g.class_bind_cpp.writeln("\t\terr.ThrowAsJavaScriptException();")
+	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\tcatch(std::exception& e) {")
-	g.class_bind_cpp.writeln("\t\tERR((std::string)e.what());")
+	g.class_bind_cpp.writeln("\t\tERR(e.what());")
 	g.class_bind_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
 	g.class_bind_cpp.writeln("\t}")
 	g.class_bind_cpp.writeln("\treturn info.Env().Undefined();")

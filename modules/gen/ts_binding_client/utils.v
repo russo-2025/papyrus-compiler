@@ -41,7 +41,52 @@ fn (mut g Gen) each_all_this_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.
 	}
 }
 
-fn (mut g Gen) each_all_parent_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl)) {
+fn (mut g Gen) each_all_types(cb fn(mut g Gen, idx ast.Type, sym &ast.TypeSymbol)) {
+	for idx, sym in g.table.types {
+		cb(mut g, idx, sym)
+	}
+/*
+	mut cur_idx := sym.parent_idx
+	for {
+		if cur_idx == 0 {
+			break
+		}
+
+		t_sym := g.table.get_type_symbol(cur_idx)
+		t_name := t_sym.name
+		t_file := g.file_by_name[t_name.to_lower()] or { panic("file not found `${t_name}`") }
+
+		cb(mut g, t_file, t_sym)
+		
+		cur_idx = t_sym.parent_idx
+	}
+*/
+}
+
+fn (mut g Gen) each_all_child(idx ast.Type, cb fn(mut g Gen, idx ast.Type, sym &ast.TypeSymbol)) {
+	for parent_idx in g.parents_of_objects[idx].keys() {
+		cb(mut g, parent_idx, g.table.get_type_symbol(parent_idx))
+	}
+}
+
+fn (mut g Gen) each_all_parent(sym &ast.TypeSymbol, cb fn(mut g Gen, file &ast.File, idx ast.Type, sym &ast.TypeSymbol)) {
+	mut cur_idx := sym.parent_idx
+	for {
+		if cur_idx == 0 {
+			break
+		}
+
+		t_sym := g.table.get_type_symbol(cur_idx)
+		t_name := t_sym.name
+		t_file := g.file_by_name[t_name.to_lower()] or { panic("file not found `${t_name}`") }
+
+		cb(mut g, t_file, cur_idx, t_sym)
+		
+		cur_idx = t_sym.parent_idx
+	}
+}
+
+fn (mut g Gen) each_all_parent_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl)) {
 	mut cur_idx := sym.parent_idx
 	for {
 		if cur_idx == 0 {
@@ -226,6 +271,10 @@ fn (mut g Gen) gen_convert_to_napivalue(typ ast.Type, var_value string) string {
 
 }
 
+fn (mut g Gen) is_no_instance_class(idx ast.Type) bool {
+	return idx in g.no_instance_class
+}
+/*
 fn (mut g Gen) is_form(sym &ast.TypeSymbol) bool {
 	if sym.parent_idx == 0 {
 		if g.table.find_type_idx(sym.name) == g.form_idx {
@@ -248,7 +297,7 @@ fn (mut g Gen) is_form(sym &ast.TypeSymbol) bool {
 	
 	return false
 }
-
+*/
 // rename gen_convert_to_impl_value
 fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 	type_name := g.table.get_type_symbol(typ).name
@@ -287,7 +336,7 @@ fn (mut g Gen) gen_convert_to_varvalue(typ ast.Type, js_value string) string {
 		else {
 			sym := g.table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value})"
+				return "!${js_value}.IsNull() ? ${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
 			}
 			else {
 				panic("unknown type ${sym}")
@@ -333,7 +382,7 @@ fn (mut g Gen) gen_convert_to_varvalue_optional(typ ast.Type, js_value string, d
 		else {
 			sym := g.table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "!${js_value}.IsUndefined() ? ${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
+				return "${js_value}.IsObject() && !${js_value}.IsNull() ? ${g.gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
 			}
 			else {
 				panic("unknown type ${sym}")
