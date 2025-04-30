@@ -120,6 +120,10 @@ fn (mut g Gen) gen_js_fn_name(name string) string {
 	return name
 }
 
+fn (mut g Gen) get_fn_rpc_impl_name(object_name string, func_name string) string {
+	return "RPC_${object_name}_${func_name}"
+}
+
 fn (mut g Gen) get_fn_impl_name(object_name string, func_name string) string {
 	return "${object_name}_${func_name}"
 }

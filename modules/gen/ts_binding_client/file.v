@@ -8,38 +8,38 @@ fn (mut g Gen) gen(file &ast.File) {
 
 	// ============== generate h js bind =======================
 
-	g.class_bind_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
-	g.class_bind_h.writeln("public:")
-	g.class_bind_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
-	g.class_bind_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
-	g.class_bind_h.writeln("\t~${bind_class_name}() {};")
-	g.class_bind_h.writeln("")
-	g.class_bind_h.writeln("\t// wrappers")
+	g.b_main_client_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
+	g.b_main_client_h.writeln("public:")
+	g.b_main_client_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
+	g.b_main_client_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
+	g.b_main_client_h.writeln("\t~${bind_class_name}() {};")
+	g.b_main_client_h.writeln("")
+	g.b_main_client_h.writeln("\t// wrappers")
 	if !g.is_no_instance_class(g.obj_type) {
-		g.class_bind_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
-		g.class_bind_h.writeln("\tNapi::Value As(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tNapi::Value As(const Napi::CallbackInfo& info);")
 	}
 
 	// ============== generate cpp js bind =======================
 
-	g.class_bind_cpp.writeln("")
-	g.class_bind_cpp.writeln("// ==================================================================================")
-	g.class_bind_cpp.writeln("// ==================================${bind_class_name}==============================")
-	g.class_bind_cpp.writeln("")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("// ==================================================================================")
+	g.b_main_client_cpp.writeln("// ==================================${bind_class_name}==============================")
+	g.b_main_client_cpp.writeln("")
 
 	// ============== generate ts headers =====================
 	
 	if g.sym.parent_idx == 0 {
-		g.ts_headers.writeln("\tclass ${g.obj_name} {")
+		g.b_main_client_ts.writeln("\tclass ${g.obj_name} {")
 	}
 	else {
-		g.ts_headers.writeln("\tclass ${g.obj_name} extends ${g.parent_obj_name} {")
+		g.b_main_client_ts.writeln("\tclass ${g.obj_name} extends ${g.parent_obj_name} {")
 	}
 	
 	if !g.is_no_instance_class(g.obj_type){
-		g.ts_headers.writeln("\t\tstatic From(formId: number): ${g.obj_name} | null")
-		g.ts_headers.writeln("\t\tAs<T>(object: any): T | null")
-		g.ts_headers.writeln("")
+		g.b_main_client_ts.writeln("\t\tstatic From(formId: number): ${g.obj_name} | null")
+		g.b_main_client_ts.writeln("\t\tAs<T>(object: any): T | null")
+		g.b_main_client_ts.writeln("")
 	}
 	
 	// ============== main register func =====================
@@ -48,15 +48,17 @@ fn (mut g Gen) gen(file &ast.File) {
 	
 	// ===========================================================
 
-	g.class_bind_h.writeln("\t// ${g.obj_name} methods")
+	g.b_main_client_h.writeln("\t// ${g.obj_name} methods")
 
 	g.each_all_this_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
 		g.gen_header_fn(g.sym, func)
 		g.gen_impl_fn(g.sym, func)
 		g.gen_ts_h_fn(g.sym, func)
+		g.gen_rpc_clint_impl_fn(g.sym, func)
+		g.gen_rpc_server_impl_fn(g.sym, func)
 	})
 	
-	g.class_bind_h.writeln("\t// parent methods")
+	g.b_main_client_h.writeln("\t// parent methods")
 	g.each_all_parent_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
 		g.gen_header_fn(sum, func)
 		g.gen_impl_fn(sum, func)
@@ -73,23 +75,23 @@ fn (mut g Gen) gen(file &ast.File) {
 	g.gen_end_impl()
 	// ============== generate h js bind =======================
 	impl_type_name := g.get_impl_type_name(g.obj_type)
-	g.class_bind_h.writeln("")
+	g.b_main_client_h.writeln("")
 	if !g.is_no_instance_class(g.obj_type) {
-		g.class_bind_h.writeln("\t// tools")
-		g.class_bind_h.writeln("\tstatic ${impl_type_name} Cast(const Napi::Value& value);")
-		g.class_bind_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-		g.class_bind_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
-		g.class_bind_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
-		g.class_bind_h.writeln("")
-		g.class_bind_h.writeln("\t${impl_type_name} self = nullptr;")
-		//g.class_bind_h.writeln("\tuint32_t typeIdx = ${g.obj_type};")
+		g.b_main_client_h.writeln("\t// tools")
+		g.b_main_client_h.writeln("\tstatic ${impl_type_name} Cast(const Napi::Value& value);")
+		g.b_main_client_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
+		g.b_main_client_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
+		g.b_main_client_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
+		g.b_main_client_h.writeln("")
+		g.b_main_client_h.writeln("\t${impl_type_name} self = nullptr;")
+		//g.b_main_client_h.writeln("\tuint32_t typeIdx = ${g.obj_type};")
 	}
-	g.class_bind_h.writeln("}; // end class ${bind_class_name}")
-	g.class_bind_h.writeln("")
+	g.b_main_client_h.writeln("}; // end class ${bind_class_name}")
+	g.b_main_client_h.writeln("")
 	
 	// ============== generate ts headers =====================
-	g.ts_headers.writeln("\t}")
-	g.ts_headers.writeln("")
+	g.b_main_client_ts.writeln("\t}")
+	g.b_main_client_ts.writeln("")
 }
 
 fn (mut g Gen) gen_header_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
@@ -97,10 +99,10 @@ fn (mut g Gen) gen_header_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	js_fn_name := g.gen_js_fn_name(func.name)
 
 	if func.is_global {
-		g.class_bind_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
 	}
 	else {
-		g.class_bind_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
 	}
 }
 
@@ -108,10 +110,10 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	js_class_name := g.gen_bind_class_name(g.obj_name)
 	js_fn_name := g.gen_js_fn_name(func.name)
 
-	g.class_bind_cpp.writeln("Napi::Value ${js_class_name}::${js_fn_name}(const Napi::CallbackInfo& info)")
-	g.class_bind_cpp.writeln("{")
-	g.class_bind_cpp.writeln("\ttry")
-	g.class_bind_cpp.writeln("\t{")
+	g.b_main_client_cpp.writeln("Napi::Value ${js_class_name}::${js_fn_name}(const Napi::CallbackInfo& info)")
+	g.b_main_client_cpp.writeln("{")
+	g.b_main_client_cpp.writeln("\ttry")
+	g.b_main_client_cpp.writeln("\t{")
 
 	mut call_args_list := ""
 
@@ -128,7 +130,7 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 		arg := "info[${i}]"
 		param_impl_type_name := g.get_impl_type_name(param.typ)
 
-		g.class_bind_cpp.write_string("\t\t${param_impl_type_name} ${param.name} = ")
+		g.b_main_client_cpp.write_string("\t\t${param_impl_type_name} ${param.name} = ")
 
 		if param.is_optional {
 			default_value := match param.default_value {
@@ -150,10 +152,10 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 				}
 			}
 
-			g.class_bind_cpp.writeln("${g.gen_convert_to_varvalue_optional(param.typ, arg, default_value, arg)};")
+			g.b_main_client_cpp.writeln("${g.gen_convert_to_varvalue_optional(param.typ, arg, default_value, arg)};")
 		}
 		else {
-			g.class_bind_cpp.writeln("${g.gen_convert_to_varvalue(param.typ, arg)};")
+			g.b_main_client_cpp.writeln("${g.gen_convert_to_varvalue(param.typ, arg)};")
 		}
 
 		call_args_list += param.name
@@ -165,57 +167,61 @@ fn (mut g Gen) gen_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 
 	if !func.is_global {
 		if func.params.len != 0 {
-			g.class_bind_cpp.writeln("")
+			g.b_main_client_cpp.writeln("")
 		}
 
-		g.class_bind_cpp.writeln("\t\tif (!self)")
-		g.class_bind_cpp.writeln("\t\t{")
-		g.class_bind_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
-		g.class_bind_cpp.writeln("\t\t}")
-		g.class_bind_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\t\tif (!self)")
+		g.b_main_client_cpp.writeln("\t\t{")
+		g.b_main_client_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
+		g.b_main_client_cpp.writeln("\t\t}")
+		g.b_main_client_cpp.writeln("")
 	}
 
-	g.class_bind_cpp.writeln("\t\tNapi::Env env = info.Env();")
+	g.b_main_client_cpp.writeln("\t\tNapi::Env env = info.Env();")
 	
 
 	if func.return_type != ast.none_type {
 		return_impl_type_name := g.get_impl_type_name(func.return_type)
-		g.class_bind_cpp.write_string("\t\t${return_impl_type_name} res = ")
+		g.b_main_client_cpp.write_string("\t\t${return_impl_type_name} res = ")
 	}
 	else {
-		g.class_bind_cpp.write_string("\t\t")
+		g.b_main_client_cpp.write_string("\t\t")
+	}
+
+	if !func.is_global || func.params.len > 0 {
+		call_args_list = ", " + call_args_list
 	}
 
 	if func.is_global {
-		g.class_bind_cpp.writeln("${g.get_fn_impl_name(sym.obj_name, func.name)}(${call_args_list});")
+		g.b_main_client_cpp.writeln("ThreadCommunicator::GetSingleton()->ExecuteGameFunctionInUpdate(${g.get_fn_impl_name(sym.obj_name, func.name)}${call_args_list});")
 	}
 	else {
-		g.class_bind_cpp.writeln("${g.get_fn_impl_name(sym.obj_name, func.name)}(${call_args_list});")
+		g.b_main_client_cpp.writeln("ThreadCommunicator::GetSingleton()->ExecuteGameFunctionInUpdate(${g.get_fn_impl_name(sym.obj_name, func.name)}${call_args_list});")
 	}
 	
-	g.class_bind_cpp.writeln("")
-	g.class_bind_cpp.writeln("\t\treturn ${g.gen_convert_to_napivalue(func.return_type, "res")};")
-	g.class_bind_cpp.writeln("\t}")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\t\treturn ${g.gen_convert_to_napivalue(func.return_type, "res")};")
+	g.b_main_client_cpp.writeln("\t}")
 
 	/*
-		g.class_bind_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${g.get_impl_obj_type_name(g.obj_type)}`\"")
-		g.class_bind_cpp.writeln("\t\t\tERR(errMsg);")
-		g.class_bind_cpp.writeln("\t\t\tNapi::Error err = Napi::Error::New(info.Env(), errMsg);")
-		g.class_bind_cpp.writeln("\t\t\terr.ThrowAsJavaScriptException();")
+		g.b_main_client_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${g.get_impl_obj_type_name(g.obj_type)}`\"")
+		g.b_main_client_cpp.writeln("\t\t\tERR(errMsg);")
+		g.b_main_client_cpp.writeln("\t\t\tNapi::Error err = Napi::Error::New(info.Env(), errMsg);")
+		g.b_main_client_cpp.writeln("\t\t\terr.ThrowAsJavaScriptException();")
 	*/
-	g.class_bind_cpp.writeln("\tcatch(Napi::Error& err) {")
-	g.class_bind_cpp.writeln("\t\tERR(err.what());")
-	g.class_bind_cpp.writeln("\t\tERR(\"trace: {}\", err.Get(\"stack\").ToString().Utf8Value());")
+	g.b_main_client_cpp.writeln("\tcatch(Napi::Error& err) {")
+	g.b_main_client_cpp.writeln("\t\tERR(err.what());")
+	g.b_main_client_cpp.writeln("\t\tERR(\"trace: {}\", err.Get(\"stack\").ToString().Utf8Value());")
 	
-	g.class_bind_cpp.writeln("\t\terr.ThrowAsJavaScriptException();")
-	g.class_bind_cpp.writeln("\t}")
-	g.class_bind_cpp.writeln("\tcatch(std::exception& e) {")
-	g.class_bind_cpp.writeln("\t\tERR(e.what());")
-	g.class_bind_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
-	g.class_bind_cpp.writeln("\t}")
-	g.class_bind_cpp.writeln("\treturn info.Env().Undefined();")
-	g.class_bind_cpp.writeln("}")
-	g.class_bind_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\t\terr.ThrowAsJavaScriptException();")
+	g.b_main_client_cpp.writeln("\t}")
+	g.b_main_client_cpp.writeln("\tcatch(std::exception& e) {")
+	g.b_main_client_cpp.writeln("\t\tERR(e.what());")
+	g.b_main_client_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+	g.b_main_client_cpp.writeln("\t}")
+	g.b_main_client_cpp.writeln("\treturn info.Env().Undefined();")
+	g.b_main_client_cpp.writeln("}")
+	g.b_main_client_cpp.writeln("")
 }
 
 fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
@@ -268,9 +274,9 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	}
 
 	if func.is_global {
-		g.ts_headers.writeln("\t\tstatic ${func.name}(${g.temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
+		g.b_main_client_ts.writeln("\t\tstatic ${func.name}(${g.temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
 	}
 	else {
-		g.ts_headers.writeln("\t\t${func.name}(${g.temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
+		g.b_main_client_ts.writeln("\t\t${func.name}(${g.temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
 	}
 }
