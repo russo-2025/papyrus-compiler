@@ -169,14 +169,7 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, output_dir string) {
 		g.b_main_client_h.writeln(");")
 	})
 
-	g.b_main_client_h.writeln("")
-
 	// write h - rpc headers
-	g.b_main_client_h.writeln(g.create_rpc_headers())
-	//g.gen_h_rpc_server_header()
-	
-	
-
 	g.b_main_client_h.writeln("")
 
 	// for each all stmts in files
@@ -207,6 +200,7 @@ pub fn gen(mut files []&ast.File, mut table ast.Table, output_dir string) {
 	}
 
 	// write end of file
+	g.b_main_client_h.writeln(g.create_rpc_headers())
 	g.b_main_client_h.writeln(h_end_file)
 
 	g.b_main_client_cpp.writeln("")
@@ -467,6 +461,7 @@ namespace JSBinding
 
 const h_end_file = 
 "void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
+void HandleSpSnippet(RpcPacket packet);
 }; // end namespace JSBinding"
 
 const cpp_start_file =  "// !!! Generated automatically. Do not edit. !!!

@@ -60,8 +60,8 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 				g.b_rpc_client_cpp.writeln("\td.value4b(${param.name});")
 			}
 			.string {
-				g.b_rpc_client_cpp.writeln("\t${param.name}.reserve(maxSize);")
-				g.b_rpc_client_cpp.writeln("\td.text1b(${param.name}, maxSize);")
+				//g.b_rpc_client_cpp.writeln("\t${param.name}.reserve(maxSize);")
+				g.b_rpc_client_cpp.writeln("\td.text1b(${param.name}, ${max_string_size_serialization});")
 			}
 			.array {
 				panic("TODO array support")
@@ -118,14 +118,18 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 }
 
 fn (mut g Gen) gen_rpc_clint_start_file() {
-	g.b_rpc_client_cpp.writeln(rpc_client_start_file)
+	g.b_rpc_client_cpp.writeln(rpc_client_cpp_start_file)
+}
+
+fn (mut g Gen) get_rpc_enum_func(obj_name string, func_name string) string {
+	return "PapyrusFunction::${g.get_fn_impl_name(obj_name, func_name)}"
 }
 
 fn (mut g Gen) gen_rpc_clint_end_file() {
 	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_start)
 	
 	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
-		g.b_rpc_client_cpp.writeln("\tcase PapyrusFunction::${g.get_fn_impl_name(sym.name, func.name)}:")
+		g.b_rpc_client_cpp.writeln("\tcase ${g.get_rpc_enum_func(sym.name, func.name)}:")
 		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
 		g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
 		g.b_rpc_client_cpp.writeln("\t\tbreak;")
@@ -153,7 +157,7 @@ fn (mut g Gen) create_rpc_headers() string {
 	return b.str()
 }
 
-const rpc_client_start_file = 
+const rpc_client_cpp_start_file = 
 "// !!! Generated automatically. Do not edit. !!!
 
 #include \"__js_bindings.h\"
@@ -168,7 +172,6 @@ namespace JSBinding {
 using Buffer = std::vector<uint8_t>;
 using Writer = bitsery::OutputBufferAdapter<Buffer>;
 using Reader = bitsery::InputBufferAdapter<Buffer>;
-
 "
 
 const h_rpc_client_text = 
@@ -181,7 +184,7 @@ struct RpcPacket
 };"
 
 const rpc_client_run_snippet_start = 
-"void RunSpSnippet(RpcPacket packet)
+"void HandleSpSnippet(RpcPacket packet)
 {
 	bitsery::Deserializer<Reader> des{packet.data.begin(), packet.data.size()};
 	size_t maxSize = packet.data.size();
@@ -214,3 +217,5 @@ const rpc_client_run_snippet_end =
     
     //return RpcPacket(packet.request_id, std::move(resultBuffer));
 }"
+
+const max_string_size_serialization = int(400)

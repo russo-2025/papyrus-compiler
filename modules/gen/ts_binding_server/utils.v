@@ -2,6 +2,14 @@ module ts_binding_server
 
 import papyrus.ast
 
+fn (mut g Gen) each_all_files(cb fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File)) {
+	for key, file in g.file_by_name {
+		sym := g.table.find_type(key) or { panic("TypeSymbol not found `${key}`") }
+		
+		cb(mut g, sym, file)
+	}
+}
+
 // this and parents
 fn (mut g Gen) each_all_fns(sym &ast.TypeSymbol, cb fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl)) {
 	g.each_all_this_fns(sym, cb)
