@@ -2,9 +2,36 @@ module ts_binding_client
 
 import papyrus.ast
 import strings
+import gen.ts_binding_client.client_util as c_util
+
+fn (mut g Gen) gen_rpc_client() {
+	//start file
+	g.b_rpc_client_cpp.writeln(rpc_client_cpp_start_file)
+
+	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
+		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl){
+			g.gen_rpc_clint_impl_fn(sym, func)
+			//g.gen_rpc_server_impl_fn(sym, func)
+		})
+	})
+
+	//end file
+	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_start)
+	
+	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
+		g.b_rpc_client_cpp.writeln("\tcase ${g.get_rpc_enum_func(sym.name, func.name)}:")
+		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
+		g.b_rpc_client_cpp.writeln("\t\t${c_util.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
+		g.b_rpc_client_cpp.writeln("\t\tbreak;")
+	})
+
+	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_end)
+	g.b_rpc_client_cpp.writeln("}; // end namespace JSBinding")
+}
 
 fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
-	rpc_fn_name := g.get_fn_rpc_impl_name(sym.name, func.name)
+	rpc_fn_name := c_util.get_fn_rpc_impl_name(sym.name, func.name)
+	obj_type := g.table.find_type_idx(sym.name)
 
 	//g.b_rpc_client_cpp.writeln("void ${rpc_fn_name}(bitsery::Deserializer<Reader>& d, std::vector<uint8_t>& resultBuffer)")
 	g.b_rpc_client_cpp.writeln("void ${rpc_fn_name}(bitsery::Deserializer<Reader>& d, size_t maxSize)")
@@ -12,7 +39,7 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 
 	mut call_args_list := ""
 
-	impl_fn_name := g.get_fn_impl_name(sym.name, func.name)
+	impl_fn_name := c_util.get_fn_impl_name(sym.name, func.name)
 
 	call_args_list += impl_fn_name
 
@@ -23,7 +50,7 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	if !func.is_global {
 		g.b_rpc_client_cpp.writeln("\tuint32_t selfFormId = 0;")
 		g.b_rpc_client_cpp.writeln("\td.value4b(selfFormId);")
-		g.b_rpc_client_cpp.writeln("\t${g.get_impl_type_name(g.obj_type)} self = RE::TESForm::LookupByID<${g.get_impl_obj_type_name(g.obj_type)}>(selfFormId);")
+		g.b_rpc_client_cpp.writeln("\t${c_util.get_impl_type_name(g.table, g.impl_classes, obj_type)} self = RE::TESForm::LookupByID<${c_util.get_impl_obj_type_name(g.table, g.impl_classes, obj_type)}>(selfFormId);")
 		g.b_rpc_client_cpp.writeln("")
 		g.b_rpc_client_cpp.writeln("\tif(!self)")
 		g.b_rpc_client_cpp.writeln("\t{")
@@ -41,7 +68,7 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	for i in 0..func.params.len {
 		param := func.params[i]
 		param_sym := g.table.get_type_symbol(param.typ)
-		param_impl_type_name := g.get_impl_type_name(param.typ)
+		param_impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, param.typ)
 		
 		
 		g.b_rpc_client_cpp.writeln("\t// read arg ${i + 1}")
@@ -67,7 +94,7 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 				panic("TODO array support")
 			}
 			.script {
-				param_impl_obj_type_name := g.get_impl_obj_type_name(param.typ)
+				param_impl_obj_type_name := c_util.get_impl_obj_type_name(g.table, g.impl_classes, param.typ)
 				g.b_rpc_client_cpp.writeln("\tuint32_t ${param.name}_id;")
 				g.b_rpc_client_cpp.writeln("\td.value4b(${param.name}_id);")
 				g.b_rpc_client_cpp.writeln("\t${param.name} = RE::TESForm::LookupByID<${param_impl_obj_type_name}>(${param.name}_id);")
@@ -117,26 +144,8 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	g.b_rpc_client_cpp.writeln("")
 }
 
-fn (mut g Gen) gen_rpc_clint_start_file() {
-	g.b_rpc_client_cpp.writeln(rpc_client_cpp_start_file)
-}
-
 fn (mut g Gen) get_rpc_enum_func(obj_name string, func_name string) string {
-	return "PapyrusFunction::${g.get_fn_impl_name(obj_name, func_name)}"
-}
-
-fn (mut g Gen) gen_rpc_clint_end_file() {
-	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_start)
-	
-	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
-		g.b_rpc_client_cpp.writeln("\tcase ${g.get_rpc_enum_func(sym.name, func.name)}:")
-		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
-		g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
-		g.b_rpc_client_cpp.writeln("\t\tbreak;")
-	})
-
-	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_end)
-	g.b_rpc_client_cpp.writeln("}; // end namespace JSBinding")
+	return "PapyrusFunction::${c_util.get_fn_impl_name(obj_name, func_name)}"
 }
 
 fn (mut g Gen) create_rpc_headers() string {
@@ -147,7 +156,7 @@ fn (mut g Gen) create_rpc_headers() string {
 
 	mut b_ptr := &b
 	g.each_files_fns(fn[mut b_ptr](mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
-		b_ptr.writeln("\t${g.get_fn_impl_name(sym.name, func.name)},")
+		b_ptr.writeln("\t${c_util.get_fn_impl_name(sym.name, func.name)},")
 	})
 
 	b.writeln("};")

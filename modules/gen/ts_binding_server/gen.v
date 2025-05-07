@@ -8,15 +8,14 @@ import os
 struct Gen {
 mut:
 	table					ast.Table
-
-// ts header file
-	server_ts_h				strings.Builder
-// h file
-	server_main_cpp			strings.Builder
-// cpp file
-	server_main_h			strings.Builder
-	
 	file_by_name			map[string]&ast.File
+
+// server ts header file
+	server_ts_h				strings.Builder
+// server main h file
+	server_main_cpp			strings.Builder
+// server main cpp file
+	server_main_h			strings.Builder
 }
 
 pub fn gen(mut files []&ast.File, mut table ast.Table, output_dir string) {

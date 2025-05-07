@@ -2,9 +2,34 @@ module ts_binding_client
 
 import papyrus.ast
 import strings
+import gen.ts_binding_client.client_util as c_util
 
+fn (mut g Gen) gen_rpc_server() {
+	// ---------------------------------------------------
+	// H FILE
+	g.b_rpc_server_h.writeln(rpc_server_h_start)
+	// ---------------------------------------------------
+	// CPP FILE
+	g.b_rpc_server_cpp.writeln(rpc_server_cpp_start)
+	g.b_rpc_server_cpp.writeln(g.create_rpc_headers())
+	// ---------------------------------------------------
+
+	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
+		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			g.gen_rpc_server_impl_fn(sym, func)
+		})
+	})
+	
+	// ---------------------------------------------------
+	// H FILE
+	g.b_rpc_server_h.writeln(rpc_server_h_end)
+	// ---------------------------------------------------
+	// CPP FILE
+	g.b_rpc_server_cpp.writeln(rpc_server_cpp_end)
+	// ---------------------------------------------------
+}
 fn (mut g Gen) gen_rpc_server_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
-	fn_name := g.get_real_impl_fn_name(sym.name, func.name)
+	fn_name := c_util.get_real_impl_fn_name(sym.name, func.name)
 
 
 	mut fn_decl_args_list := strings.new_builder(100)
@@ -32,7 +57,7 @@ fn (mut g Gen) gen_rpc_server_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	}
 
 	for param in func.params {
-		param_impl_type_name := g.get_impl_type_name(param.typ)
+		param_impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, param.typ)
 		param_sym := g.table.get_type_symbol(param.typ)
 
 		if param_sym.kind != .script {
@@ -107,35 +132,6 @@ fn (mut g Gen) gen_rpc_server_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	g.b_rpc_server_cpp.writeln("}")
 	g.b_rpc_server_cpp.writeln("")
 	// ---------------------------------------------------
-}
-
-fn (mut g Gen) gen_rpc_server_start_file() {
-	// ---------------------------------------------------
-	// H FILE
-	g.b_rpc_server_h.writeln(rpc_server_h_start)
-	// ---------------------------------------------------
-	// CPP FILE
-	g.b_rpc_server_cpp.writeln(rpc_server_cpp_start)
-	g.b_rpc_server_cpp.writeln(g.create_rpc_headers())
-	// ---------------------------------------------------
-}
-
-fn (mut g Gen) gen_rpc_server_end_file() {
-	g.b_rpc_server_h.writeln(rpc_server_h_end)
-	g.b_rpc_server_cpp.writeln(rpc_server_cpp_end)
-	/*
-	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_start)
-	
-	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
-		g.b_rpc_client_cpp.writeln("\tcase PapyrusFunction::${g.get_fn_impl_name(sym.name, func.name)}:")
-		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
-		g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
-		g.b_rpc_client_cpp.writeln("\t\tbreak;")
-	})
-
-	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_end)
-	g.b_rpc_client_cpp.writeln("}; // end namespace JSBinding")
-	*/
 }
 
 const rpc_server_h_start = 

@@ -61,7 +61,6 @@ fn (mut g Gen) gen_server_main_h_file() {
 const server_main_h_file_start = 
 "// !!! Generated automatically. Do not edit. !!!
 #pragma once
-
 #include <napi.h>
 #include \"NapiHelper.h\"
 #include \"papyrus-vm/Utils.h\"
@@ -73,5 +72,4 @@ namespace JSBinding
 
 const server_main_h_file_end = 
 "void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
-}; // end namespace JSBinding
-"
+}; // end namespace JSBinding"

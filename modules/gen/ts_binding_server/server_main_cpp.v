@@ -25,14 +25,14 @@ fn (mut g Gen) gen_server_main_cpp_file() {
 		g.server_main_cpp.writeln("")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_main_cpp_fn(sym, sym, func)
+			g.gen_server_main_cpp_fn(sym, sym, func)
 		})
 
 		g.each_all_parent_fns(sym, fn[sym](mut g Gen, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_main_cpp_fn(sym, parent_sym, func)
+			g.gen_server_main_cpp_fn(sym, parent_sym, func)
 		})
 		
-		g.gen_main_cpp_end_class(sym, file)
+		g.gen_server_main_cpp_end_class(sym, file)
 	})
 
 	g.server_main_cpp.writeln("void RegisterAllVMObjects(Napi::Env env, Napi::Object exports)")
@@ -46,7 +46,7 @@ fn (mut g Gen) gen_server_main_cpp_file() {
 	g.server_main_cpp.writeln(server_main_cpp_file_end)
 }
 
-fn (mut g Gen) gen_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+fn (mut g Gen) gen_server_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
 	js_class_name := s_util.gen_bind_class_name(sym.name)
 	js_fn_name := s_util.gen_js_fn_name(func.name)
 
@@ -128,7 +128,7 @@ fn (mut g Gen) gen_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, 
 	g.server_main_cpp.writeln("")
 }
 
-fn (mut g Gen) gen_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File) {
+fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File) {
 	// Init
 	// constructor
 	// destructor
@@ -282,5 +282,4 @@ namespace JSBinding {
 "
 
 const server_main_cpp_file_end = 
-"}; // end namespace JSBinding
-"
+"}; // end namespace JSBinding"

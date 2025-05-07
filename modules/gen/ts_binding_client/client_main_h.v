@@ -1,0 +1,120 @@
+module ts_binding_client
+
+import papyrus.ast
+import gen.ts_binding_client.client_util as c_util
+
+fn (mut g Gen) gen_client_main_h_file() {
+	g.b_main_client_h.writeln(client_main_h_start_file)
+
+	// write h - cpp impl functions list
+	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl){
+		if func.return_type != ast.none_type {
+			g.b_main_client_h.write_string(c_util.get_impl_type_name(g.table, g.impl_classes, func.return_type))
+			g.b_main_client_h.write_string(" ")
+		}
+		else {
+			g.b_main_client_h.write_string("void ")
+		}
+
+		g.b_main_client_h.write_string(c_util.get_real_impl_fn_name(sym.name, func.name))
+
+		mut args_list := ""
+
+		if !func.is_global {
+			args_list += c_util.get_impl_type_name(g.table, g.impl_classes, g.table.find_type_idx(sym.name))
+			args_list += " self"
+
+			if func.params.len != 0 {
+				args_list += ", "
+			}
+		}
+
+		for i in 0..func.params.len {
+			param := func.params[i]
+			args_list += "${c_util.get_impl_type_name(g.table, g.impl_classes, param.typ)} ${param.name}"
+			if i != func.params.len - 1 {
+				args_list += ", "
+			}
+		}
+		g.b_main_client_h.write_string("(")
+		g.b_main_client_h.write_string(args_list)
+		g.b_main_client_h.writeln(");")
+	})
+
+	g.b_main_client_h.writeln("")
+
+	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
+		obj_type := g.table.find_type_idx(sym.name)
+		bind_class_name := c_util.gen_bind_class_name(sym.obj_name)
+
+		g.b_main_client_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
+		g.b_main_client_h.writeln("public:")
+		g.b_main_client_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
+		g.b_main_client_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\t~${bind_class_name}() {};")
+		g.b_main_client_h.writeln("")
+		g.b_main_client_h.writeln("\t// wrappers")
+		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+			g.b_main_client_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+			g.b_main_client_h.writeln("\tNapi::Value As(const Napi::CallbackInfo& info);")
+		}
+
+		g.b_main_client_h.writeln("\t// ${sym.name} methods")
+
+		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			g.gen_header_fn(sym, sym, func)
+		})
+		
+		g.b_main_client_h.writeln("\t// parent methods")
+		g.each_all_parent_fns(sym, fn[sym](mut g Gen, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+			g.gen_header_fn(sym, parent_sym, func)
+		})
+
+		impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, obj_type)
+		g.b_main_client_h.writeln("")
+		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+			g.b_main_client_h.writeln("\t// tools")
+			g.b_main_client_h.writeln("\tstatic ${impl_type_name} Cast(const Napi::Value& value);")
+			g.b_main_client_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
+			g.b_main_client_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
+			g.b_main_client_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
+			g.b_main_client_h.writeln("")
+			g.b_main_client_h.writeln("\t${impl_type_name} self = nullptr;")
+		}
+		g.b_main_client_h.writeln("}; // end class ${bind_class_name}")
+		g.b_main_client_h.writeln("")
+	})
+	
+	g.b_main_client_h.writeln(g.create_rpc_headers())
+
+	g.b_main_client_h.writeln(client_main_h_end_file)
+}
+
+fn (mut g Gen) gen_header_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+	//js_class_name := g.gen_bind_class_name(g.obj_name)
+	js_fn_name := c_util.gen_js_fn_name(func.name)
+
+	if func.is_global {
+		g.b_main_client_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+	}
+	else {
+		g.b_main_client_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+	}
+}
+
+const client_main_h_start_file =
+"// !!! Generated automatically. Do not edit. !!!
+
+#pragma once
+
+#include <napi.h>
+#include \"../NapiHelper.h\"
+
+namespace JSBinding
+{"
+
+const client_main_h_end_file = 
+"void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
+void HandleSpSnippet(RpcPacket packet);
+}; // end namespace JSBinding
+"
