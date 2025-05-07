@@ -62,12 +62,12 @@ fn (mut g Gen) gen_client_main_h_file() {
 		g.b_main_client_h.writeln("\t// ${sym.name} methods")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_header_fn(sym, sym, func)
+			g.gen_client_main_h_fn(sym, sym, func)
 		})
 		
 		g.b_main_client_h.writeln("\t// parent methods")
 		g.each_all_parent_fns(sym, fn[sym](mut g Gen, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_header_fn(sym, parent_sym, func)
+			g.gen_client_main_h_fn(sym, parent_sym, func)
 		})
 
 		impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)
@@ -90,7 +90,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 	g.b_main_client_h.writeln(client_main_h_end_file)
 }
 
-fn (mut g Gen) gen_header_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+fn (mut g Gen) gen_client_main_h_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
 	//js_class_name := g.gen_bind_class_name(g.obj_name)
 	js_fn_name := c_util.gen_js_fn_name(func.name)
 
