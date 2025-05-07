@@ -62,9 +62,6 @@ pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_
 		println("output dir created `${server_output_dir}`")
 	}
 
-	println("using client output dir `${client_output_dir}`")
-	println("using server output dir `${server_output_dir}`")
-
 	println("parse config file")
 	g.parse_config_file()
 	
@@ -79,7 +76,7 @@ pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_
 	g.gen_rpc_client()
 	g.gen_rpc_server()
 
-	println("write client files")
+	println("write client files to `${client_output_dir}`")
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_client_bindings.cpp"), g.b_rpc_client_cpp.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_bindings.cpp"), g.b_rpc_server_cpp.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_bindings.h"), g.b_rpc_server_h.str()) or { panic(err) }
@@ -98,7 +95,7 @@ pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_
 	g.gen_server_main_cpp_file()
 	g.gen_server_main_ts_h_file()
 
-	println("write server files")
+	println("write server files to `${server_output_dir}`")
 	os.write_file(os.join_path(server_output_dir, "__js_bindings.h"), g.server_main_h.str()) or { panic("write_file err") }
 	os.write_file(os.join_path(server_output_dir, "__js_bindings.cpp"), g.server_main_cpp.str()) or { panic("write_file err") }
 	os.write_file(os.join_path(server_output_dir, "papyrusObjects.d.ts"), g.server_ts_h.str()) or { panic("write_file err") }
