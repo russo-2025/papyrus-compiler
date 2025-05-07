@@ -35,10 +35,9 @@ fn (mut g Gen) gen_client_main_cpp_file() {
 	
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
 		bind_class_name := c_util.gen_bind_class_name(sym.obj_name)
-		g.main_register_func.writeln("\t${bind_class_name}::Init(env, exports);")
+		g.b_main_client_cpp.writeln("\t${bind_class_name}::Init(env, exports);")
 	})
 
-	g.b_main_client_cpp.writeln(g.main_register_func.str())
 	g.b_main_client_cpp.writeln("}")
 	g.b_main_client_cpp.writeln("}; // end namespace JSBinding")
 }

@@ -5,6 +5,8 @@ import strings
 import os
 import json
 
+const file_init_size = int(5000)
+
 @[heap]
 struct Gen {
 mut:
@@ -13,24 +15,24 @@ mut:
 	parents_of_objects		map[ast.Type]map[ast.Type]u8
 	no_instance_class		[]ast.Type
 	file_by_name			map[string]&ast.File
-
-// func reg all object wrappers
-	main_register_func		strings.Builder = strings.new_builder(300)
-// main files
-	b_main_client_ts		strings.Builder = strings.new_builder(1000)
-	b_main_client_h			strings.Builder = strings.new_builder(1000)
-	b_main_client_cpp		strings.Builder = strings.new_builder(1000)
-// rpc files
-	b_rpc_client_cpp		strings.Builder = strings.new_builder(1000)
-	b_rpc_server_cpp		strings.Builder = strings.new_builder(1000)
-	b_rpc_server_h			strings.Builder = strings.new_builder(1000)
-
+	
+// client ts header file
+	b_main_client_ts		strings.Builder = strings.new_builder(file_init_size)
+// client main h file
+	b_main_client_h			strings.Builder = strings.new_builder(file_init_size)
+//client main cpp file
+	b_main_client_cpp		strings.Builder = strings.new_builder(file_init_size)
+// client rpc file
+	b_rpc_client_cpp		strings.Builder = strings.new_builder(file_init_size)
+// server rpc files
+	b_rpc_server_cpp		strings.Builder = strings.new_builder(file_init_size)
+	b_rpc_server_h			strings.Builder = strings.new_builder(file_init_size)
 // server ts header file
-	server_ts_h				strings.Builder = strings.new_builder(1000)
+	server_ts_h				strings.Builder = strings.new_builder(file_init_size)
 // server main h file
-	server_main_cpp			strings.Builder = strings.new_builder(1000)
+	server_main_cpp			strings.Builder = strings.new_builder(file_init_size)
 // server main cpp file
-	server_main_h			strings.Builder = strings.new_builder(1000)
+	server_main_h			strings.Builder = strings.new_builder(file_init_size)
 }
 
 pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_files []&ast.File, mut server_table ast.Table, output_dir string) {
