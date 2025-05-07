@@ -1,8 +1,8 @@
-module ts_binding_client
+module ts_binding
 
 import papyrus.ast
 import strings
-import gen.ts_binding_client.client_util as c_util
+import gen.ts_binding.client_util as c_util
 
 fn (mut g Gen) gen_client_main_cpp_file() {
 	g.b_main_client_cpp.writeln(client_main_cpp_start_file)

@@ -1,4 +1,4 @@
-module ts_binding_client
+module ts_binding
 
 import papyrus.ast
 import strings

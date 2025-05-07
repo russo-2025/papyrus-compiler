@@ -1,8 +1,8 @@
-module ts_binding_client
+module ts_binding
 
 import papyrus.ast
 import strings
-import gen.ts_binding_client.client_util as c_util
+import gen.ts_binding.client_util as c_util
 
 fn (mut g Gen) gen_rpc_client() {
 	//start file

@@ -8,7 +8,7 @@ import papyrus.ast
 import papyrus.checker
 import gen.gen_pex
 import papyrus.parser
-import gen.ts_binding_client
+import gen.ts_binding
 
 const cache_path = os.real_path('./.papyrus')
 const compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
@@ -76,7 +76,7 @@ pub fn create_js_binding(prefs &pref.Preferences) {
 	}
 
 	// run
-	ts_binding_client.gen(mut client_parsed_files, mut client_table, mut server_parsed_files, mut server_table, prefs.output_dir)
+	ts_binding.gen(mut client_parsed_files, mut client_table, mut server_parsed_files, mut server_table, prefs.output_dir)
 }
 
 @[inline]
