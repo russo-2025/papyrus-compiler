@@ -1,12 +1,13 @@
 module ts_binding_server
 
 import papyrus.ast
+import gen.ts_binding_server.server_util as s_util
 
 fn (mut g Gen) gen_server_main_h_file() {
 	g.server_main_h.writeln(server_main_h_file_start)
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
-		bind_class_name := g.gen_bind_class_name(sym.name)
+		bind_class_name := s_util.gen_bind_class_name(sym.name)
 
 		g.server_main_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
 		g.server_main_h.writeln("public:")
@@ -19,7 +20,7 @@ fn (mut g Gen) gen_server_main_h_file() {
 		g.server_main_h.writeln("\t// ${sym.name} methods")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
-			js_fn_name := g.gen_js_fn_name(func.name)
+			js_fn_name := s_util.gen_js_fn_name(func.name)
 
 			if func.is_global {
 				g.server_main_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
@@ -31,7 +32,7 @@ fn (mut g Gen) gen_server_main_h_file() {
 
 		g.server_main_h.writeln("\t// parent methods")
 		g.each_all_parent_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl){
-			js_fn_name := g.gen_js_fn_name(func.name)
+			js_fn_name := s_util.gen_js_fn_name(func.name)
 
 			if func.is_global {
 				g.server_main_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")

@@ -2,6 +2,7 @@ module ts_binding_server
 
 import papyrus.ast
 import strings
+import gen.ts_binding_server.server_util as s_util
 
 fn (mut g Gen) gen_server_main_ts_h_file() {
 	g.server_ts_h.writeln(server_main_ts_h_file_start)
@@ -41,7 +42,7 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 		else {
 			temp_args.write_string(": ")
 		}
-		temp_args.write_string(g.get_ts_type_name(param.typ))
+		temp_args.write_string(s_util.get_ts_type_name(g.table, param.typ))
 
 		if param.is_optional {
 			// если есть комментарий с пояснением например `/*int*/`
@@ -81,10 +82,10 @@ fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	}
 
 	if func.is_global {
-		g.server_ts_h.writeln("\t\tstatic ${func.name}(${temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
+		g.server_ts_h.writeln("\t\tstatic ${func.name}(${temp_args.str()}): ${s_util.get_ts_type_name(g.table, func.return_type)}")
 	}
 	else {
-		g.server_ts_h.writeln("\t\t${func.name}(${temp_args.str()}): ${g.get_ts_type_name(func.return_type)}")
+		g.server_ts_h.writeln("\t\t${func.name}(${temp_args.str()}): ${s_util.get_ts_type_name(g.table, func.return_type)}")
 	}
 }
 
@@ -97,5 +98,4 @@ declare global {
 const server_main_ts_h_file_end = 
 "}
 
-export {};
-"
+export {};"

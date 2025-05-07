@@ -250,22 +250,11 @@ fn (mut g Gen) gen_end_impl() {
 
 	g.b_main_client_cpp.writeln("Napi::Object ${bind_class_name}::Init(Napi::Env env, Napi::Object exports)")
 	g.b_main_client_cpp.writeln("{")
-	
-	/*
-	g.each_all_this_fns(g.sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
-		is_static_str := if func.is_global { "true" } else { "false" }
-		g.b_main_client_cpp.writeln("\t${g.get_fn_impl_name(sum.obj_name, func.name)} = VirtualMachine::GetInstance()->GetFunctionImplementation(\"${sum.obj_name}\", \"${func.name}\", ${is_static_str});")
-		g.b_main_client_cpp.writeln("\tif(!${g.get_fn_impl_name(sum.obj_name, func.name)}){")
-		g.b_main_client_cpp.writeln("\t\tERR(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
-		g.b_main_client_cpp.writeln("\t\tthrow std::runtime_error(\"failed to find function in Papyrus VM: `${sum.obj_name}.${func.name}`\");")
-		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("")
-	})
-	*/
 
 	g.b_main_client_cpp.writeln("\tNapi::HandleScope scope(env);")
 	g.b_main_client_cpp.writeln("")
 	g.b_main_client_cpp.writeln("\tNapi::Function func = DefineClass(env, \"${g.obj_name}\", {")
+
 	if !g.is_no_instance_class(g.obj_type) {
 		g.b_main_client_cpp.writeln("\t\tStaticMethod(\"From\", &${bind_class_name}::From),")
 		g.b_main_client_cpp.write_string("\t\tInstanceMethod(\"As\", &${bind_class_name}::As)")
