@@ -16,10 +16,9 @@ fn (mut g Gen) gen_server_main_h_file() {
 		g.server_main_h.writeln("")
 		g.server_main_h.writeln("\t// wrappers")
 
-		g.server_main_h.writeln("\t// ${g.obj_name} methods")
+		g.server_main_h.writeln("\t// ${sym.name} methods")
 
-		g.each_all_this_fns(sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl) {
-			//js_class_name := g.gen_bind_class_name(g.obj_name)
+		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
 			js_fn_name := g.gen_js_fn_name(func.name)
 
 			if func.is_global {
@@ -31,8 +30,7 @@ fn (mut g Gen) gen_server_main_h_file() {
 		})
 
 		g.server_main_h.writeln("\t// parent methods")
-		g.each_all_parent_fns(sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
-			//js_class_name := g.gen_bind_class_name(g.obj_name)
+		g.each_all_parent_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl){
 			js_fn_name := g.gen_js_fn_name(func.name)
 
 			if func.is_global {
@@ -75,11 +73,4 @@ namespace JSBinding
 const server_main_h_file_end = 
 "void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
 }; // end namespace JSBinding
-"
-
-const server_main_ts_h_file_end = 
-"// !!! Generated automatically. Do not edit. !!!
-
-declare global {
-
 "
