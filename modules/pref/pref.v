@@ -20,8 +20,7 @@ pub enum RunMode {
 	disassembly
 	create_dump
 	help
-	ts_binding_client
-	ts_binding_server
+	ts_binding
 }
 
 @[heap]
@@ -211,31 +210,28 @@ pub fn parse_args() Preferences {
 
 			p.paths << path
 		}
-		"ts-binding-client",
-		"ts-binding-server" {
-			if args.len < 2 {
+		"ts-binding" {
+			if args.len < 3 {
 				error(errors.msg_wrong_number_of_arguments)
 			}
 
-			if args[0] == "ts-binding-client" {
-				p.mode = .ts_binding_client
-			}
-			else if args[0] == "ts-binding-server" {
-				p.mode = .ts_binding_server
-			}
-			else {
-				panic("WTF")
-			}
+			p.mode = .ts_binding
 
-			path := os.real_path(args[1])
+			path_client := os.real_path(args[1])
+			path_server := os.real_path(args[2])
 
-			if !os.is_dir(path) {
-				error("invalid input dir `${path}`")
+			if !os.is_dir(path_client) {
+				error("invalid input dir `${path_client}`")
 			}
 
-			p.paths << path
+			if !os.is_dir(path_server) {
+				error("invalid input dir `${path_server}`")
+			}
 
-			output_dir := os.real_path(args[2])
+			p.paths << path_client
+			p.paths << path_server
+
+			output_dir := os.real_path(args[3])
 
 			if !os.is_dir(output_dir) {
 				os.mkdir_all(output_dir, os.MkdirParams{}) or {

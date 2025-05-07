@@ -1,8 +1,8 @@
-module ts_binding_server
+module ts_binding_client
 
 import papyrus.ast
 import strings
-import gen.ts_binding_server.server_util as s_util
+import gen.ts_binding_client.server_util as s_util
 
 fn (mut g Gen) gen_server_main_cpp_file() {
 	g.server_main_cpp.writeln(server_main_cpp_file_start)

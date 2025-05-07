@@ -9,7 +9,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 	// write h - cpp impl functions list
 	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl){
 		if func.return_type != ast.none_type {
-			g.b_main_client_h.write_string(c_util.get_impl_type_name(g.table, g.impl_classes, func.return_type))
+			g.b_main_client_h.write_string(c_util.get_impl_type_name(g.table, g.client_impl_classes, func.return_type))
 			g.b_main_client_h.write_string(" ")
 		}
 		else {
@@ -21,7 +21,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 		mut args_list := ""
 
 		if !func.is_global {
-			args_list += c_util.get_impl_type_name(g.table, g.impl_classes, g.table.find_type_idx(sym.name))
+			args_list += c_util.get_impl_type_name(g.table, g.client_impl_classes, g.table.find_type_idx(sym.name))
 			args_list += " self"
 
 			if func.params.len != 0 {
@@ -31,7 +31,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 
 		for i in 0..func.params.len {
 			param := func.params[i]
-			args_list += "${c_util.get_impl_type_name(g.table, g.impl_classes, param.typ)} ${param.name}"
+			args_list += "${c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)} ${param.name}"
 			if i != func.params.len - 1 {
 				args_list += ", "
 			}
@@ -70,7 +70,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 			g.gen_header_fn(sym, parent_sym, func)
 		})
 
-		impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, obj_type)
+		impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)
 		g.b_main_client_h.writeln("")
 		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
 			g.b_main_client_h.writeln("\t// tools")

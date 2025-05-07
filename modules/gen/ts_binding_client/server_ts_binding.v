@@ -1,8 +1,8 @@
-module ts_binding_server
+module ts_binding_client
 
 import papyrus.ast
 import strings
-import gen.ts_binding_server.server_util as s_util
+import gen.ts_binding_client.server_util as s_util
 
 fn (mut g Gen) gen_server_main_ts_h_file() {
 	g.server_ts_h.writeln(server_main_ts_h_file_start)
@@ -20,7 +20,7 @@ fn (mut g Gen) gen_server_main_ts_h_file() {
 		g.server_ts_h.writeln("")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_ts_h_fn(sym, func)
+			g.gen_server_ts_h_fn(sym, func)
 		})
 
 		g.server_ts_h.writeln("\t}")
@@ -30,7 +30,7 @@ fn (mut g Gen) gen_server_main_ts_h_file() {
 	g.server_ts_h.writeln(server_main_ts_h_file_end)
 }
 
-fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
+fn (mut g Gen) gen_server_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	mut temp_args := strings.new_builder(200)
 
 	for i in 0..func.params.len {

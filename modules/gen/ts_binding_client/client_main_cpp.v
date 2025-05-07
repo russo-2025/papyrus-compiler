@@ -73,7 +73,7 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	for i in 0..func.params.len {
 		param := func.params[i]
 		arg := "info[${i}]"
-		param_impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, param.typ)
+		param_impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)
 
 		g.b_main_client_cpp.write_string("\t\t${param_impl_type_name} ${param.name} = ")
 
@@ -126,7 +126,7 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	
 
 	if func.return_type != ast.none_type {
-		return_impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, func.return_type)
+		return_impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, func.return_type)
 		g.b_main_client_cpp.write_string("\t\t${return_impl_type_name} res = ")
 	}
 	else {
@@ -171,8 +171,8 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 
 fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 	obj_type := g.table.find_type_idx(sym.name)
-	impl_type_name := c_util.get_impl_type_name(g.table, g.impl_classes, obj_type)
-	impl_obj_type_name := c_util.get_impl_obj_type_name(g.table, g.impl_classes, obj_type)
+	impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)
+	impl_obj_type_name := c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, obj_type)
 	bind_class_name := c_util.gen_bind_class_name(sym.name)
 
 	mut init_methods_bind_cpp := strings.new_builder(300)
@@ -269,14 +269,14 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 			cur_bind_class_name := c_util.gen_bind_class_name(sym.name)
 			g.b_main_client_cpp.writeln("\t\tif(class_ctor == ${c_util.gen_ctor_name(sym.name)}.Value())")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.impl_classes, idx)}>());")
+			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
 			g.b_main_client_cpp.writeln("\t\t}")
 		})
 		g.each_all_child(obj_type, fn(mut g Gen, idx ast.Type, sym &ast.TypeSymbol){
 			cur_bind_class_name := c_util.gen_bind_class_name(sym.name)
 			g.b_main_client_cpp.writeln("\t\tif(class_ctor == ${c_util.gen_ctor_name(sym.name)}.Value())")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.impl_classes, idx)}>());")
+			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
 			g.b_main_client_cpp.writeln("\t\t}")
 		})
 		g.b_main_client_cpp.writeln("\t}")

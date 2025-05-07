@@ -9,7 +9,6 @@ import papyrus.checker
 import gen.gen_pex
 import papyrus.parser
 import gen.ts_binding_client
-import gen.ts_binding_server
 
 const cache_path = os.real_path('./.papyrus')
 const compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
@@ -32,40 +31,52 @@ pub mut:
 }
 
 pub fn create_js_binding(prefs &pref.Preferences) {
-	path := prefs.paths[0]
+	client_input_dir := prefs.paths[0]
+	server_input_dir := prefs.paths[1]
 	output_dir := prefs.output_dir
 
-	if !os.is_dir(path) {
-		panic("invalid input dir")
+	if !os.is_dir(client_input_dir) {
+		panic("invalid input dir `${client_input_dir}`")
+	}
+	if !os.is_dir(server_input_dir) {
+		panic("invalid input dir `${server_input_dir}`")
 	}
 	if !os.is_dir(output_dir) {
-		panic("invalid output dir")
+		panic("invalid output dir ${output_dir}")
 	}
 
-	files, _ := find_all_src_files([ path ])
+	// client prepare
+	client_files, _ := find_all_src_files([ client_input_dir ])
 
-	mut table := ast.new_table()
-	mut global_scope := ast.Scope{}
+	mut client_table := ast.new_table()
+	mut client_global_scope := ast.Scope{}
 
-	mut parsed_files := parser.parse_files(files, mut table, prefs, mut global_scope)
-
-	mut c := checker.new_checker(table, prefs)
-	c.check_files(mut parsed_files)
+	mut client_parsed_files := parser.parse_files(client_files, mut client_table, prefs, mut client_global_scope)
+	mut c := checker.new_checker(client_table, prefs)
+	c.check_files(mut client_parsed_files)
 
 	if c.errors.len != 0 {
 		println("failed to compile files, ${c.errors.len} errors")
 		exit(1)
 	}
 
-	if prefs.mode == .ts_binding_client {
-		ts_binding_client.gen(mut parsed_files, mut table, prefs.output_dir)
+	// server prepare
+	server_files, _ := find_all_src_files([ server_input_dir ])
+
+	mut server_table := ast.new_table()
+	mut server_global_scope := ast.Scope{}
+
+	mut server_parsed_files := parser.parse_files(server_files, mut server_table, prefs, mut server_global_scope)
+	c = checker.new_checker(server_table, prefs)
+	c.check_files(mut server_parsed_files)
+
+	if c.errors.len != 0 {
+		println("failed to compile files, ${c.errors.len} errors")
+		exit(1)
 	}
-	else if prefs.mode == .ts_binding_server {
-		ts_binding_server.gen(mut parsed_files, mut table, prefs.output_dir)
-	}
-	else {
-		panic("invalid pref mode")
-	}
+
+	// run
+	ts_binding_client.gen(mut client_parsed_files, mut client_table, mut server_parsed_files, mut server_table, prefs.output_dir)
 }
 
 @[inline]
