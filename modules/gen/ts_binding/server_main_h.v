@@ -2,14 +2,16 @@ module ts_binding
 
 import papyrus.ast
 import gen.ts_binding.server_util as s_util
+import gen.ts_binding.client_util as c_util
 
 fn (mut g Gen) gen_server_main_h_file() {
 	g.server_main_h.writeln(server_main_h_file_start)
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
 		bind_class_name := s_util.gen_bind_class_name(sym.name)
+		obj_type := g.table.find_type_idx(sym.name)
 
-		g.server_main_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
+		g.server_main_h.writeln("class ${bind_class_name} final : public Napi::ObjectWrap<${bind_class_name}> {")
 		g.server_main_h.writeln("public:")
 		g.server_main_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
 		g.server_main_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
@@ -20,6 +22,8 @@ fn (mut g Gen) gen_server_main_h_file() {
 		g.server_main_h.writeln("\t// ${sym.name} methods")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			js_fn_name := s_util.gen_js_fn_name(func.name)
 
 			if func.is_global {
@@ -32,6 +36,8 @@ fn (mut g Gen) gen_server_main_h_file() {
 
 		g.server_main_h.writeln("\t// parent methods")
 		g.each_all_parent_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl){
+			assert func.is_native
+		
 			js_fn_name := s_util.gen_js_fn_name(func.name)
 
 			if func.is_global {
@@ -42,15 +48,17 @@ fn (mut g Gen) gen_server_main_h_file() {
 			}
 		})
 
-		g.server_main_h.writeln("")
-		g.server_main_h.writeln("\t// tools")
-		g.server_main_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
-		g.server_main_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-		g.server_main_h.writeln("\tstatic VarValue ToVMValue(const Napi::Value& value);")
-		g.server_main_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, const VarValue& value);")
-		g.server_main_h.writeln("")
-		g.server_main_h.writeln("private:")
-		g.server_main_h.writeln("\tVarValue self;")
+		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+			g.server_main_h.writeln("")
+			g.server_main_h.writeln("\t// tools")
+			g.server_main_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
+			g.server_main_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
+			g.server_main_h.writeln("\tstatic VarValue ToVMValue(const Napi::Value& value);")
+			g.server_main_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, const VarValue& value);")
+			g.server_main_h.writeln("")
+			g.server_main_h.writeln("private:")
+			g.server_main_h.writeln("\tVarValue self;")
+		}
 		g.server_main_h.writeln("}; // end class ${bind_class_name}")
 		g.server_main_h.writeln("")
 	})

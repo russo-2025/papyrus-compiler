@@ -7,7 +7,9 @@ fn (mut g Gen) gen_client_main_h_file() {
 	g.b_main_client_h.writeln(client_main_h_start_file)
 
 	// write h - cpp impl functions list
-	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl){
+	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
+		assert func.is_native
+		
 		if func.return_type != ast.none_type {
 			g.b_main_client_h.write_string(c_util.get_impl_type_name(g.table, g.client_impl_classes, func.return_type))
 			g.b_main_client_h.write_string(" ")
@@ -31,7 +33,14 @@ fn (mut g Gen) gen_client_main_h_file() {
 
 		for i in 0..func.params.len {
 			param := func.params[i]
-			args_list += "${c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)} ${param.name}"
+			
+			if param.typ == ast.string_type {
+				args_list += "const ${c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)}& ${param.name}"
+			}
+			else {
+				args_list += "${c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)} ${param.name}"
+			}
+			
 			if i != func.params.len - 1 {
 				args_list += ", "
 			}
@@ -47,7 +56,7 @@ fn (mut g Gen) gen_client_main_h_file() {
 		obj_type := g.table.find_type_idx(sym.name)
 		bind_class_name := c_util.gen_bind_class_name(sym.obj_name)
 
-		g.b_main_client_h.writeln("class ${bind_class_name} : public Napi::ObjectWrap<${bind_class_name}> {")
+		g.b_main_client_h.writeln("class ${bind_class_name} final : public Napi::ObjectWrap<${bind_class_name}> {")
 		g.b_main_client_h.writeln("public:")
 		g.b_main_client_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
 		g.b_main_client_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
@@ -62,11 +71,15 @@ fn (mut g Gen) gen_client_main_h_file() {
 		g.b_main_client_h.writeln("\t// ${sym.name} methods")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_client_main_h_fn(sym, sym, func)
 		})
 		
 		g.b_main_client_h.writeln("\t// parent methods")
 		g.each_all_parent_fns(sym, fn[sym](mut g Gen, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_client_main_h_fn(sym, parent_sym, func)
 		})
 

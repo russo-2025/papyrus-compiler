@@ -19,10 +19,14 @@ fn (mut g Gen) gen_client_main_cpp_file() {
 		g.b_main_client_cpp.writeln("")
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_client_main_cpp_fn(sym, sym, func)
 		})
 		
 		g.each_all_parent_fns(sym, fn[sym](mut g Gen, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_client_main_cpp_fn(sym, parent_sym, func)
 		})
 
@@ -177,7 +181,9 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 	mut init_methods_bind_cpp := strings.new_builder(300)
 	mut init_methods_bind_cpp_ptr := &init_methods_bind_cpp
 
-	g.each_all_fns(sym, fn[mut init_methods_bind_cpp_ptr, sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl){
+	g.each_all_fns(sym, fn[mut init_methods_bind_cpp_ptr, sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
+		assert func.is_native
+		
 		js_class_name := c_util.gen_bind_class_name(sym.obj_name)
 		js_fn_name := c_util.gen_js_fn_name(func.name)
 		fn_name := func.name

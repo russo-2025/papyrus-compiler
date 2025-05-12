@@ -3,11 +3,14 @@ module ts_binding
 import papyrus.ast
 import strings
 import gen.ts_binding.server_util as s_util
+import gen.ts_binding.client_util as c_util
 
 fn (mut g Gen) gen_server_main_ts_h_file() {
 	g.server_ts_h.writeln(server_main_ts_h_file_start)
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
+		obj_type := g.table.find_type_idx(sym.name)
+
 		if sym.parent_idx == 0 {
 			g.server_ts_h.writeln("\tclass ${sym.obj_name} {")
 		}
@@ -16,10 +19,14 @@ fn (mut g Gen) gen_server_main_ts_h_file() {
 			g.server_ts_h.writeln("\tclass ${sym.obj_name} extends ${parent_obj_name} {")
 		}
 		
-		g.server_ts_h.writeln("\t\tstatic From(formId: number): ${sym.obj_name} | null")
-		g.server_ts_h.writeln("")
+		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+			g.server_ts_h.writeln("\t\tstatic From(formId: number): ${sym.obj_name} | null")
+			g.server_ts_h.writeln("")
+		}
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_server_ts_h_fn(sym, func)
 		})
 

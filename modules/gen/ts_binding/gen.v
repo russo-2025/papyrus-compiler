@@ -10,7 +10,7 @@ const file_init_size = int(5000)
 @[heap]
 struct Gen {
 mut:
-	table					ast.Table
+	table					&ast.Table = unsafe { voidptr(0) }
 	client_impl_classes		map[string]string
 	parents_of_objects		map[ast.Type]map[ast.Type]u8
 	no_instance_class		[]ast.Type
@@ -89,6 +89,8 @@ pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_
 	println("cleanup and prepare")
 	g.clear()
 	g.table = server_table
+	println("parse config file")
+	g.parse_config_file()
 	g.fill_files_map(mut server_files)
 	g.fill_child_objects_map()
 
@@ -181,4 +183,5 @@ fn (mut g Gen) clear() {
 	g.file_by_name = map[string]&ast.File{}
 	g.parents_of_objects = map[ast.Type]map[ast.Type]u8{}
 	g.no_instance_class = []ast.Type{ cap: 7 }
+	g.table = unsafe { voidptr(0) }
 }

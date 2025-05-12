@@ -25,7 +25,9 @@ fn (mut g Gen) gen_client_ts_h_file() {
 		}
 
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
-			g.gen_ts_h_fn(sym, sym, func)
+			assert func.is_native
+		
+			g.gen_client_ts_h_fn(sym, sym, func)
 		})
 
 		g.b_main_client_ts.writeln("\t}")
@@ -35,7 +37,7 @@ fn (mut g Gen) gen_client_ts_h_file() {
 	g.b_main_client_ts.writeln(client_ts_end_file)
 }
 
-fn (mut g Gen) gen_ts_h_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
+fn (mut g Gen) gen_client_ts_h_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbol, func &ast.FnDecl) {
 	mut temp_args := strings.new_builder(200)
 
 	for i in 0..func.params.len {

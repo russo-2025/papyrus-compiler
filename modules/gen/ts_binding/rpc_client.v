@@ -10,6 +10,8 @@ fn (mut g Gen) gen_rpc_client() {
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl){
+			assert func.is_native
+		
 			g.gen_rpc_clint_impl_fn(sym, func)
 		})
 	})
@@ -18,6 +20,8 @@ fn (mut g Gen) gen_rpc_client() {
 	g.b_rpc_client_cpp.writeln(rpc_client_run_snippet_start)
 	
 	g.each_files_fns(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
+		assert func.is_native
+		
 		g.b_rpc_client_cpp.writeln("\tcase ${g.get_rpc_enum_func(sym.name, func.name)}:")
 		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
 		g.b_rpc_client_cpp.writeln("\t\t${c_util.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
@@ -155,6 +159,8 @@ fn (mut g Gen) create_rpc_headers() string {
 
 	mut b_ptr := &b
 	g.each_files_fns(fn[mut b_ptr](mut g Gen, sym &ast.TypeSymbol, file &ast.File, func &ast.FnDecl) {
+		assert func.is_native
+		
 		b_ptr.writeln("\t${c_util.get_fn_impl_name(sym.name, func.name)},")
 	})
 

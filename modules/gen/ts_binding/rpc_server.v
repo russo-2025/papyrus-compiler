@@ -16,6 +16,8 @@ fn (mut g Gen) gen_rpc_server() {
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
+			assert func.is_native
+		
 			g.gen_rpc_server_impl_fn(sym, func)
 		})
 	})
@@ -24,6 +26,7 @@ fn (mut g Gen) gen_rpc_server() {
 	g.b_rpc_server_h.writeln(rpc_server_h_end)
 	g.b_rpc_server_cpp.writeln(rpc_server_cpp_end)
 }
+
 fn (mut g Gen) gen_rpc_server_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	fn_name := c_util.get_real_impl_fn_name(sym.name, func.name)
 
