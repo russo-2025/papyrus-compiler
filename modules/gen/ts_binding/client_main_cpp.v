@@ -1,14 +1,13 @@
 module ts_binding
 
 import papyrus.ast
-import strings
 import gen.ts_binding.client_util as c_util
 
 fn (mut g Gen) gen_client_main_cpp_file() {
 	g.b_main_client_cpp.writeln(client_main_cpp_start_file)
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
-		g.b_main_client_cpp.writeln("static Napi::FunctionReference ${c_util.gen_ctor_name(file.obj_name)};")
+		g.b_main_client_cpp.writeln("static v8::Persistent<v8::Function> ${c_util.gen_ctor_name(file.obj_name)};")
 	})
 	
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
@@ -52,13 +51,15 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	// destructor
 	// From
 	// IsInstance
-	// ToImplValue
-	// ToNapiValue
+	// Unwrap
+	// Wrap
 
+	obj_type := g.table.find_type_idx(sym.name)
 	js_class_name := c_util.gen_bind_class_name(sym.name)
 	js_fn_name := c_util.gen_js_fn_name(func.name)
+	impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)
 
-	g.b_main_client_cpp.writeln("Napi::Value ${js_class_name}::${js_fn_name}(const Napi::CallbackInfo& info)")
+	g.b_main_client_cpp.writeln("void ${js_class_name}::${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& args)")
 	g.b_main_client_cpp.writeln("{")
 	g.b_main_client_cpp.writeln("\ttry")
 	g.b_main_client_cpp.writeln("\t{")
@@ -73,9 +74,17 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 		}
 	}
 
+	g.b_main_client_cpp.writeln("\t\tv8::Isolate* isolate = args.GetIsolate();")
+	g.b_main_client_cpp.writeln("\t\tv8::HandleScope scope(isolate);")
+	
+	if func.params.len != 0 {
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\t\t// unwrap args")
+	}
+
 	for i in 0..func.params.len {
 		param := func.params[i]
-		arg := "info[${i}]"
+		arg := "args[${i}]"
 		param_impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, param.typ)
 
 		g.b_main_client_cpp.write_string("\t\t${param_impl_type_name} ${param.name} = ")
@@ -113,20 +122,26 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 		}
 	}
 
+	g.b_main_client_cpp.writeln("")
+	
 	if !func.is_global {
-		if func.params.len != 0 {
-			g.b_main_client_cpp.writeln("")
-		}
+		g.b_main_client_cpp.writeln("\t\t// get self")
+		g.b_main_client_cpp.writeln("\t\tif (args.Holder().IsEmpty() || args.Holder()->InternalFieldCount() <= 0) {")
+		g.b_main_client_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
+		g.b_main_client_cpp.writeln("\t\t}")
 
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\t\t${impl_type_name} self = static_cast<${impl_type_name}>(args.Holder()->GetAlignedPointerFromInternalField(0));")
+
+		g.b_main_client_cpp.writeln("")
 		g.b_main_client_cpp.writeln("\t\tif (!self)")
 		g.b_main_client_cpp.writeln("\t\t{")
-		g.b_main_client_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
+		g.b_main_client_cpp.writeln("\t\t\tERR_AND_THROW(\"self is nullptr ${js_class_name}::${js_fn_name}\");")
 		g.b_main_client_cpp.writeln("\t\t}")
 		g.b_main_client_cpp.writeln("")
 	}
-
-	g.b_main_client_cpp.writeln("\t\tNapi::Env env = info.Env();")
 	
+	g.b_main_client_cpp.writeln("\t\t// call game func")
 
 	if func.return_type != ast.none_type {
 		return_impl_type_name := c_util.get_impl_type_name(g.table, g.client_impl_classes, func.return_type)
@@ -146,28 +161,17 @@ fn (mut g Gen) gen_client_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	else {
 		g.b_main_client_cpp.writeln("ThreadCommunicator::GetSingleton()->ExecuteGameFunctionInUpdate(${c_util.get_fn_impl_name(parent_sym.obj_name, func.name)}${call_args_list});")
 	}
-	
 	g.b_main_client_cpp.writeln("")
-	g.b_main_client_cpp.writeln("\t\treturn ${c_util.gen_convert_to_napivalue(g.table, func.return_type, "res")};")
+	g.b_main_client_cpp.writeln("\t\t// return value")
+	g.b_main_client_cpp.writeln("\t\targs.GetReturnValue().Set(${c_util.gen_convert_to_napivalue(g.table, func.return_type, "res")});")
 	g.b_main_client_cpp.writeln("\t}")
 
-	/*
-		g.b_main_client_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${g.get_impl_obj_type_name(obj_type)}`\"")
-		g.b_main_client_cpp.writeln("\t\t\tERR(errMsg);")
-		g.b_main_client_cpp.writeln("\t\t\tNapi::Error err = Napi::Error::New(info.Env(), errMsg);")
-		g.b_main_client_cpp.writeln("\t\t\terr.ThrowAsJavaScriptException();")
-	*/
-	g.b_main_client_cpp.writeln("\tcatch(Napi::Error& err) {")
-	g.b_main_client_cpp.writeln("\t\tERR(err.what());")
-	g.b_main_client_cpp.writeln("\t\tERR(\"trace: {}\", err.Get(\"stack\").ToString().Utf8Value());")
-	
-	g.b_main_client_cpp.writeln("\t\terr.ThrowAsJavaScriptException();")
-	g.b_main_client_cpp.writeln("\t}")
 	g.b_main_client_cpp.writeln("\tcatch(std::exception& e) {")
-	g.b_main_client_cpp.writeln("\t\tERR(e.what());")
-	g.b_main_client_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+	g.b_main_client_cpp.writeln("\t\tstd::string msg = e.what();")
+	g.b_main_client_cpp.writeln("\t\tERR(msg);")
+	g.b_main_client_cpp.writeln("\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+	g.b_main_client_cpp.writeln("\t\treturn;")
 	g.b_main_client_cpp.writeln("\t}")
-	g.b_main_client_cpp.writeln("\treturn info.Env().Undefined();")
 	g.b_main_client_cpp.writeln("}")
 	g.b_main_client_cpp.writeln("")
 }
@@ -178,137 +182,148 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 	impl_obj_type_name := c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, obj_type)
 	bind_class_name := c_util.gen_bind_class_name(sym.name)
 
-	mut init_methods_bind_cpp := strings.new_builder(300)
-	mut init_methods_bind_cpp_ptr := &init_methods_bind_cpp
+	g.b_main_client_cpp.writeln("void ${bind_class_name}::Init(v8::Isolate* isolate, v8::Local<v8::Object>& exports)")
+	g.b_main_client_cpp.writeln("{")
+	g.b_main_client_cpp.writeln("\tv8::HandleScope scope(isolate);")
+	g.b_main_client_cpp.writeln("\tv8::Local<v8::Context> context = isolate->GetCurrentContext();")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\tv8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(isolate);")
+	g.b_main_client_cpp.writeln("\ttpl->SetClassName(v8::String::NewFromUtf8(isolate, \"${sym.name}\").ToLocalChecked());")
+	g.b_main_client_cpp.writeln("\ttpl->InstanceTemplate()->SetInternalFieldCount(1);")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\tv8::Local<v8::ObjectTemplate> prototype = tpl->PrototypeTemplate();")
+	g.b_main_client_cpp.writeln("\t// set methods")
+	
+	g.b_main_client_cpp.writeln("\tprototype->Set(v8::String::NewFromUtf8(isolate, \"As\").ToLocalChecked(), v8::FunctionTemplate::New(isolate, ${bind_class_name}::As));")
 
-	g.each_all_fns(sym, fn[mut init_methods_bind_cpp_ptr, sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
+	g.each_all_fns(sym, fn[sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
 		assert func.is_native
 		
+		if func.is_global {
+			return
+		}
+
 		js_class_name := c_util.gen_bind_class_name(sym.obj_name)
 		js_fn_name := c_util.gen_js_fn_name(func.name)
 		fn_name := func.name
 
-		if func.is_global {
-			init_methods_bind_cpp_ptr.write_string("\t\tStaticMethod(\"${fn_name}\", &${js_class_name}::${js_fn_name})")
-		}
-		else {
-			init_methods_bind_cpp_ptr.write_string("\t\tInstanceMethod(\"${fn_name}\", &${js_class_name}::${js_fn_name})")
-		}
-		
-		init_methods_bind_cpp_ptr.write_string(",\n")
+		g.b_main_client_cpp.writeln("\tprototype->Set(v8::String::NewFromUtf8(isolate, \"${fn_name}\").ToLocalChecked(), v8::FunctionTemplate::New(isolate, ${js_class_name}::${js_fn_name}));")
 	})
+
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\t${c_util.gen_ctor_name(sym.name)}.Reset(isolate, tpl);")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\tv8::Local<v8::Function> constructor = tpl->GetFunction(context).ToLocalChecked();")
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\t// set static methods")
 	
-	if init_methods_bind_cpp.len > 0 {
-		init_methods_bind_cpp.go_back(",\n".len) // remove last `,` + `\n`
-	}
-
-	g.b_main_client_cpp.writeln("Napi::Object ${bind_class_name}::Init(Napi::Env env, Napi::Object exports)")
-	g.b_main_client_cpp.writeln("{")
-
-	g.b_main_client_cpp.writeln("\tNapi::HandleScope scope(env);")
-	g.b_main_client_cpp.writeln("")
-	g.b_main_client_cpp.writeln("\tNapi::Function func = DefineClass(env, \"${sym.name}\", {")
-
-	if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
-		g.b_main_client_cpp.writeln("\t\tStaticMethod(\"From\", &${bind_class_name}::From),")
-		g.b_main_client_cpp.write_string("\t\tInstanceMethod(\"As\", &${bind_class_name}::As)")
-		if init_methods_bind_cpp.len != 0 {
-			g.b_main_client_cpp.writeln(",")
-		}
-		else {
-			g.b_main_client_cpp.writeln("")
-		}
-	}
-	g.b_main_client_cpp.writeln("${init_methods_bind_cpp.str()}")
-	g.b_main_client_cpp.writeln("\t});")
-	g.b_main_client_cpp.writeln("")
-	g.b_main_client_cpp.writeln("\t${c_util.gen_ctor_name(sym.name)} = Napi::Persistent(func);")
-	g.b_main_client_cpp.writeln("\t${c_util.gen_ctor_name(sym.name)}.SuppressDestruct();")
-	g.b_main_client_cpp.writeln("\texports.Set(\"${sym.name}\", func);")
-	g.b_main_client_cpp.writeln("")
-	g.b_main_client_cpp.writeln("\treturn exports;")
-	g.b_main_client_cpp.writeln("}")
-
-	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\tconstructor->Set(context, v8::String::NewFromUtf8(isolate, \"From\").ToLocalChecked(), v8::FunctionTemplate::New(isolate, ${bind_class_name}::From)->GetFunction(context).ToLocalChecked()).Check();")
 	
-	g.b_main_client_cpp.write_string("${bind_class_name}::${bind_class_name}(const Napi::CallbackInfo& info) : ObjectWrap(info)")
+	g.each_all_fns(sym, fn[sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
+		assert func.is_native
+		
+		if !func.is_global {
+			return
+		}
 
-	g.b_main_client_cpp.writeln("{")
+		js_class_name := c_util.gen_bind_class_name(sym.obj_name)
+		fn_name := func.name
+
+		g.b_main_client_cpp.writeln("\tconstructor->Set(context, v8::String::NewFromUtf8(isolate, \"${fn_name}\").ToLocalChecked(), v8::FunctionTemplate::New(isolate, ${js_class_name}::From)->GetFunction(context).ToLocalChecked()).Check();")
+	})
+
+	g.b_main_client_cpp.writeln("")
+	g.b_main_client_cpp.writeln("\t// set constructor")
+	g.b_main_client_cpp.writeln("\texports->Set(context, v8::String::NewFromUtf8(isolate, \"${sym.name}\").ToLocalChecked(), constructor).Check();")
 	g.b_main_client_cpp.writeln("}")
 
 	g.b_main_client_cpp.writeln("")
 	
 	if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
-		g.b_main_client_cpp.writeln("Napi::Value ${bind_class_name}::From(const Napi::CallbackInfo& info)")
+		g.b_main_client_cpp.writeln("void ${bind_class_name}::From(const v8::FunctionCallbackInfo<v8::Value>& args)")
 		g.b_main_client_cpp.writeln("{")
 		g.b_main_client_cpp.writeln("\ttry")
 		g.b_main_client_cpp.writeln("\t{")
-		g.b_main_client_cpp.writeln("\t\tuint32_t formId = NapiHelper::ExtractUInt32(info[0], \"formId\");")
+		g.b_main_client_cpp.writeln("\t\tv8::Isolate* isolate = args.GetIsolate();")
+		g.b_main_client_cpp.writeln("\t\tv8::HandleScope scope(isolate);")
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\t\tuint32_t formId = JsHelper::ExtractUInt32(isolate, args[0], \"formId\");")
 		g.b_main_client_cpp.writeln("\t\t${impl_type_name} obj = RE::TESForm::LookupByID<${impl_obj_type_name}>(formId);")
 		g.b_main_client_cpp.writeln("")
 		g.b_main_client_cpp.writeln("\t\tif(!obj) {")
-		g.b_main_client_cpp.writeln("\t\t\treturn info.Env().Null();")
+		g.b_main_client_cpp.writeln("\t\t\targs.GetReturnValue().Set(v8::Null(isolate));")
+		g.b_main_client_cpp.writeln("\t\t\treturn;")
 		g.b_main_client_cpp.writeln("\t\t}")
 		g.b_main_client_cpp.writeln("")
-		g.b_main_client_cpp.writeln("\t\treturn ${c_util.gen_convert_to_napivalue(g.table, obj_type, "obj")};")
+		g.b_main_client_cpp.writeln("\t\targs.GetReturnValue().Set(${c_util.gen_convert_to_napivalue(g.table, obj_type, "obj")});")
+		g.b_main_client_cpp.writeln("\t\treturn;")
 		g.b_main_client_cpp.writeln("\t}")
 		g.b_main_client_cpp.writeln("\tcatch(std::exception& e) {")
-		g.b_main_client_cpp.writeln("\t\tERR((std::string)e.what());")
-		g.b_main_client_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+		g.b_main_client_cpp.writeln("\t\tstd::string msg = e.what();")
+		g.b_main_client_cpp.writeln("\t\tERR(msg);")
+		g.b_main_client_cpp.writeln("\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+		g.b_main_client_cpp.writeln("\t\treturn;")
 		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("\treturn info.Env().Null();")
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\targs.GetReturnValue().Set(v8::Null(args.GetIsolate()));")
+		g.b_main_client_cpp.writeln("\treturn;")
 		g.b_main_client_cpp.writeln("}")
 
 		g.b_main_client_cpp.writeln("")
 
-		g.b_main_client_cpp.writeln("Napi::Value ${bind_class_name}::As(const Napi::CallbackInfo& info)")
+		g.b_main_client_cpp.writeln("void ${bind_class_name}::As(const v8::FunctionCallbackInfo<v8::Value>& args)")
 		g.b_main_client_cpp.writeln("{")
 		g.b_main_client_cpp.writeln("\ttry")
 		g.b_main_client_cpp.writeln("\t{")
 		g.b_main_client_cpp.writeln("\t\tif(!${bind_class_name}::IsInstance(this->Value()))")
 		g.b_main_client_cpp.writeln("\t\t{")
-		g.b_main_client_cpp.writeln("\t\t\treturn info.Env().Null();")
+		g.b_main_client_cpp.writeln("\t\t\targs.GetReturnValue().Set(v8::Null(isolate));")
+		g.b_main_client_cpp.writeln("\t\t\treturn;")
 		g.b_main_client_cpp.writeln("\t\t}")
 		g.b_main_client_cpp.writeln("\t\tNapi::Value class_ctor = info[0];")
 		g.each_all_parent(sym, fn(mut g Gen, file &ast.File, idx ast.Type, sym &ast.TypeSymbol) {
 			cur_bind_class_name := c_util.gen_bind_class_name(sym.name)
 			g.b_main_client_cpp.writeln("\t\tif(class_ctor == ${c_util.gen_ctor_name(sym.name)}.Value())")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
+			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::Wrap(isolate, this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
 			g.b_main_client_cpp.writeln("\t\t}")
 		})
 		g.each_all_child(obj_type, fn(mut g Gen, idx ast.Type, sym &ast.TypeSymbol){
 			cur_bind_class_name := c_util.gen_bind_class_name(sym.name)
 			g.b_main_client_cpp.writeln("\t\tif(class_ctor == ${c_util.gen_ctor_name(sym.name)}.Value())")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::ToNapiValue(info.Env(), this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
+			g.b_main_client_cpp.writeln("\t\t\treturn ${cur_bind_class_name}::Wrap(isolate, this->self->As<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, idx)}>());")
 			g.b_main_client_cpp.writeln("\t\t}")
 		})
 		g.b_main_client_cpp.writeln("\t}")
 		g.b_main_client_cpp.writeln("\tcatch(std::exception& e)")
 		g.b_main_client_cpp.writeln("\t{")
-		g.b_main_client_cpp.writeln("\t\tERR((std::string)e.what());")
-		g.b_main_client_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+		g.b_main_client_cpp.writeln("\t\tstd::string msg = e.what();")
+		g.b_main_client_cpp.writeln("\t\tERR(msg);")
+		g.b_main_client_cpp.writeln("\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+		g.b_main_client_cpp.writeln("\t\treturn;")
 		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("\treturn info.Env().Null();")
+		g.b_main_client_cpp.writeln("\targs.GetReturnValue().Set(v8::Null(isolate));")
+		g.b_main_client_cpp.writeln("\treturn;")
 		g.b_main_client_cpp.writeln("}")
 
 		g.b_main_client_cpp.writeln("")
 
-		g.b_main_client_cpp.writeln("${impl_type_name} ${bind_class_name}::Cast(const Napi::Value& value)")
+		g.b_main_client_cpp.writeln("${impl_type_name} ${bind_class_name}::Cast(v8::Isolate* isolate, v8::Local<v8::Value> value)")
 		g.b_main_client_cpp.writeln("{")
 		g.each_all_parent(sym, fn[impl_type_name, impl_obj_type_name](mut g Gen, file &ast.File, idx ast.Type, sym &ast.TypeSymbol) {
 			cur_bind_class_name := c_util.gen_bind_class_name(sym.name)
-			g.b_main_client_cpp.writeln("\tif(${cur_bind_class_name}::IsInstance(value))")
+			g.b_main_client_cpp.writeln("\tif(${cur_bind_class_name}::IsInstance(isolate, value))")
 			g.b_main_client_cpp.writeln("\t{")
 			g.b_main_client_cpp.writeln("\t\tNapi::Object obj = value.As<Napi::Object>();")
 			g.b_main_client_cpp.writeln("\t\t${cur_bind_class_name}* wrapper = Napi::ObjectWrap<${cur_bind_class_name}>::Unwrap(obj);")
 			g.b_main_client_cpp.writeln("\t\t${impl_type_name} res = wrapper->self->As<${impl_obj_type_name}>();")
 			g.b_main_client_cpp.writeln("\t\tif (!res)")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${impl_obj_type_name}`\";")
-			g.b_main_client_cpp.writeln("\t\t\tERR(errMsg);")
-			g.b_main_client_cpp.writeln("\t\t\tthrow Napi::Error::New(value.Env(), errMsg);")
+			g.b_main_client_cpp.writeln("\t\t\tstd::string msg = \"Failed to cast to `${impl_obj_type_name}`\";")
+			g.b_main_client_cpp.writeln("\t\t\tERR(msg);")
+			g.b_main_client_cpp.writeln("\t\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+			g.b_main_client_cpp.writeln("\t\t\treturn;")
 			g.b_main_client_cpp.writeln("\t\t}")
 			g.b_main_client_cpp.writeln("\t\treturn res;")
 			g.b_main_client_cpp.writeln("\t}")
@@ -322,9 +337,10 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 			g.b_main_client_cpp.writeln("\t\t${impl_type_name} res = wrapper->self->As<${impl_obj_type_name}>();")
 			g.b_main_client_cpp.writeln("\t\tif (!res)")
 			g.b_main_client_cpp.writeln("\t\t{")
-			g.b_main_client_cpp.writeln("\t\t\tstd::string errMsg = \"Failed to cast to `${impl_obj_type_name}`\";")
-			g.b_main_client_cpp.writeln("\t\t\tERR(errMsg);")
-			g.b_main_client_cpp.writeln("\t\t\tthrow Napi::Error::New(value.Env(), errMsg);")
+			g.b_main_client_cpp.writeln("\t\t\tstd::string msg = \"Failed to cast to `${impl_obj_type_name}`\"")
+			g.b_main_client_cpp.writeln("\t\t\tERR(msg);")
+			g.b_main_client_cpp.writeln("\t\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+			g.b_main_client_cpp.writeln("\t\t\treturn;")
 			g.b_main_client_cpp.writeln("\t\t}")
 			g.b_main_client_cpp.writeln("\t\treturn res;")
 			g.b_main_client_cpp.writeln("\t}")
@@ -336,23 +352,24 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 
 		g.b_main_client_cpp.writeln("")
 
-		g.b_main_client_cpp.writeln("bool ${bind_class_name}::IsInstance(const Napi::Value& value)")
+		g.b_main_client_cpp.writeln("bool ${bind_class_name}::IsInstance(v8::Isolate* isolate, v8::Local<v8::Value> value)")
 		g.b_main_client_cpp.writeln("{")
-		g.b_main_client_cpp.writeln("\tif (!value.IsObject())")
+		g.b_main_client_cpp.writeln("\tv8::HandleScope handleScope(isolate);")
+		g.b_main_client_cpp.writeln("\tif (!value->IsObject())")
 		g.b_main_client_cpp.writeln("\t{")
 		g.b_main_client_cpp.writeln("\t\treturn false;")
 		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("\tNapi::Object obj = value.As<Napi::Object>();")
-		g.b_main_client_cpp.writeln("\treturn obj.InstanceOf(${c_util.gen_ctor_name(sym.name)}.Value());")
+		g.b_main_client_cpp.writeln("\tauto obj = value.As<v8::Object>();")
+		g.b_main_client_cpp.writeln("\treturn obj->InstanceOf(isolate->GetCurrentContext(), ${c_util.gen_ctor_name(sym.name)}.Get(isolate));")
 		g.b_main_client_cpp.writeln("}")
 
 		g.b_main_client_cpp.writeln("")
 
-		g.b_main_client_cpp.writeln("${impl_type_name} ${bind_class_name}::ToImplValue(const Napi::Value& value)")
+		g.b_main_client_cpp.writeln("${impl_type_name} ${bind_class_name}::Unwrap(v8::Isolate* isolate, v8::Local<v8::Value> value)")
 		g.b_main_client_cpp.writeln("{")
-		g.b_main_client_cpp.writeln("\tif (IsInstance(value))")
+		g.b_main_client_cpp.writeln("\tif (IsInstance(isolate, value))")
 		g.b_main_client_cpp.writeln("\t{")
-		g.b_main_client_cpp.writeln("\t\tNapi::Object obj = value.As<Napi::Object>();")
+		g.b_main_client_cpp.writeln("\t\tauto obj = value.As<v8::Object>();")
 		g.b_main_client_cpp.writeln("\t\t${bind_class_name}* wrapper = Napi::ObjectWrap<${bind_class_name}>::Unwrap(obj);")
 		g.b_main_client_cpp.writeln("\t\treturn wrapper->self;")
 		g.b_main_client_cpp.writeln("\t}")
@@ -360,24 +377,47 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 		g.b_main_client_cpp.writeln("\t${impl_type_name} res = Cast(value);")
 		g.b_main_client_cpp.writeln("\tif(!res)")
 		g.b_main_client_cpp.writeln("\t{")
-		g.b_main_client_cpp.writeln("\t\tERR(\"invalid cast in (${bind_class_name}::ToImplValue)\");")
-		g.b_main_client_cpp.writeln("\t\tthrow Napi::Error::New(value.Env(), std::string(\"invalid cast in (${bind_class_name}::ToImplValue)\"));")
+		g.b_main_client_cpp.writeln("\t\tstd::string msg = \"invalid cast in (${bind_class_name}::Unwrap)\"")
+		g.b_main_client_cpp.writeln("\t\tERR(msg);")
+		g.b_main_client_cpp.writeln("\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+		g.b_main_client_cpp.writeln("\t\treturn;")
 		g.b_main_client_cpp.writeln("\t}")
 		g.b_main_client_cpp.writeln("")
 		g.b_main_client_cpp.writeln("\treturn res;")
 		g.b_main_client_cpp.writeln("}")
+
+		g.b_main_client_cpp.writeln("")
+
+		g.b_main_client_cpp.writeln("${impl_type_name} ${bind_class_name}::UnwrapSelf(v8::Isolate* isolate, v8::Local<v8::Value> value)")
+		g.b_main_client_cpp.writeln("{")
+		g.b_main_client_cpp.writeln("\tv8::HandleScope handleScope(isolate);")
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\tif (!value->IsObject())")
+		g.b_main_client_cpp.writeln("\t{")
+		g.b_main_client_cpp.writeln("\t\treturn nullptr;")
+		g.b_main_client_cpp.writeln("\t}")
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\tauto obj = value.As<v8::Object>();")
+		g.b_main_client_cpp.writeln("\tif (obj.IsEmpty() || obj->InternalFieldCount() <= 0)")
+		g.b_main_client_cpp.writeln("\t{")
+		g.b_main_client_cpp.writeln("\t\treturn nullptr;")
+		g.b_main_client_cpp.writeln("\t}")
+		g.b_main_client_cpp.writeln("")
+		g.b_main_client_cpp.writeln("\treturn static_cast<${impl_type_name}>(obj->GetAlignedPointerFromInternalField(0));")
+		g.b_main_client_cpp.writeln("}")
 		
 		g.b_main_client_cpp.writeln("")
 
-		g.b_main_client_cpp.writeln("Napi::Value ${bind_class_name}::ToNapiValue(Napi::Env env, ${impl_type_name} self)")
+		g.b_main_client_cpp.writeln("v8::Local<v8::Value> ${bind_class_name}::Wrap(v8::Isolate* isolate, ${impl_type_name} self)")
 		g.b_main_client_cpp.writeln("{")
+		g.b_main_client_cpp.writeln("\tv8::Isolate* isolate = args.GetIsolate();")
+		g.b_main_client_cpp.writeln("\tv8::EscapableHandleScope handleScope(isolate);")
+		g.b_main_client_cpp.writeln("")
 		g.b_main_client_cpp.writeln("\tif (!self)")
 		g.b_main_client_cpp.writeln("\t{")
-		g.b_main_client_cpp.writeln("\t\tERR(\"invalid object in cast (${bind_class_name}::ToNapiValue)\")")
-		g.b_main_client_cpp.writeln("\t\treturn env.Null();")
+		g.b_main_client_cpp.writeln("\t\tERR_AND_THROW(\"${bind_class_name}::Wrap - self is nullptr\");")
 		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("\t// Создаем новый экземпляр ${bind_class_name}")
-		g.b_main_client_cpp.writeln("\tNapi::EscapableHandleScope scope(env);")
+		g.b_main_client_cpp.writeln("")
 		g.b_main_client_cpp.writeln("\tNapi::Function ctor = ${c_util.gen_ctor_name(sym.name)}.Value();")
 		g.b_main_client_cpp.writeln("\tNapi::Object instance = ctor.New({});")
 		g.b_main_client_cpp.writeln("\t${bind_class_name}* wrapper = Napi::ObjectWrap<${bind_class_name}>::Unwrap(instance);")
@@ -385,7 +425,7 @@ fn (mut g Gen) gen_client_main_cpp_end_class(sym &ast.TypeSymbol) {
 		g.b_main_client_cpp.writeln("\t{")
 		g.b_main_client_cpp.writeln("\t\twrapper->self = self;")
 		g.b_main_client_cpp.writeln("\t}")
-		g.b_main_client_cpp.writeln("\treturn scope.Escape(instance);")
+		g.b_main_client_cpp.writeln("\treturn handleScope.Escape(instance);")
 		g.b_main_client_cpp.writeln("}")
 	}
 }

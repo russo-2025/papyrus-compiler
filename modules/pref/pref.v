@@ -210,6 +210,7 @@ pub fn parse_args() Preferences {
 
 			p.paths << path
 		}
+		"ts-bindings",
 		"ts-binding" {
 			if args.len < 3 {
 				error(errors.msg_wrong_number_of_arguments)

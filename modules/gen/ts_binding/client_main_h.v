@@ -56,16 +56,15 @@ fn (mut g Gen) gen_client_main_h_file() {
 		obj_type := g.table.find_type_idx(sym.name)
 		bind_class_name := c_util.gen_bind_class_name(sym.obj_name)
 
-		g.b_main_client_h.writeln("class ${bind_class_name} final : public Napi::ObjectWrap<${bind_class_name}> {")
+		g.b_main_client_h.writeln("class ${bind_class_name} {")
 		g.b_main_client_h.writeln("public:")
-		g.b_main_client_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
-		g.b_main_client_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
-		g.b_main_client_h.writeln("\t~${bind_class_name}() {};")
+		g.b_main_client_h.writeln("\tstatic void Init(v8::Isolate* isolate, v8::Local<v8::Object>& exports);")
+		g.b_main_client_h.writeln("\texplicit ${bind_class_name}() {};")
 		g.b_main_client_h.writeln("")
 		g.b_main_client_h.writeln("\t// wrappers")
 		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
-			g.b_main_client_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
-			g.b_main_client_h.writeln("\tNapi::Value As(const Napi::CallbackInfo& info);")
+			g.b_main_client_h.writeln("\tstatic void From(const v8::FunctionCallbackInfo<v8::Value>& args);")
+			g.b_main_client_h.writeln("\tstatic void As(const v8::FunctionCallbackInfo<v8::Value>& args);")
 		}
 
 		g.b_main_client_h.writeln("\t// ${sym.name} methods")
@@ -87,10 +86,11 @@ fn (mut g Gen) gen_client_main_h_file() {
 		g.b_main_client_h.writeln("")
 		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
 			g.b_main_client_h.writeln("\t// tools")
-			g.b_main_client_h.writeln("\tstatic ${impl_type_name} Cast(const Napi::Value& value);")
-			g.b_main_client_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-			g.b_main_client_h.writeln("\tstatic ${impl_type_name} ToImplValue(const Napi::Value& value);")
-			g.b_main_client_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, ${impl_type_name} value);")
+			g.b_main_client_h.writeln("\tstatic ${impl_type_name} Cast(v8::Isolate* isolate, v8::Local<v8::Value> value);")
+			g.b_main_client_h.writeln("\tstatic bool IsInstance(v8::Isolate* isolate, v8::Local<v8::Value> value);")
+			g.b_main_client_h.writeln("\tstatic ${impl_type_name} Unwrap(v8::Isolate* isolate, v8::Local<v8::Value> value);")
+			g.b_main_client_h.writeln("\tstatic ${impl_type_name} UnwrapSelf(v8::Isolate* isolate, v8::Local<v8::Value> value);")
+			g.b_main_client_h.writeln("\tstatic v8::Local<v8::Value> Wrap(v8::Isolate* isolate, ${impl_type_name} value);")
 			g.b_main_client_h.writeln("")
 			g.b_main_client_h.writeln("\t${impl_type_name} self = nullptr;")
 		}
@@ -108,10 +108,10 @@ fn (mut g Gen) gen_client_main_h_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSym
 	js_fn_name := c_util.gen_js_fn_name(func.name)
 
 	if func.is_global {
-		g.b_main_client_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tstatic void ${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& args);")
 	}
 	else {
-		g.b_main_client_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
+		g.b_main_client_h.writeln("\tstatic void ${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& args);")
 	}
 }
 
@@ -120,14 +120,13 @@ const client_main_h_start_file =
 
 #pragma once
 
-#include <napi.h>
-#include \"../NapiHelper.h\"
+#include \"../JsHelper.h\"
 
 namespace JSBinding
 {"
 
 const client_main_h_end_file = 
-"void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
+"void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object>& exports);
 void HandleSpSnippet(RpcPacket packet);
 }; // end namespace JSBinding
 "

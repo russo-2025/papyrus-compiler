@@ -126,19 +126,19 @@ pub fn gen_convert_to_napivalue(table &ast.Table, typ ast.Type, var_value string
 
 	match typ {
 		ast.none_type {
-			return "info.Env().Null();"
+			return "v8::Null(isolate)"
 		}
 		ast.int_type {
-			return "Napi::Number::New(info.Env(), ${var_value})"
+			return "v8::Int32::New(isolate, ${var_value})"
 		}
 		ast.float_type {
-			return "Napi::Number::New(info.Env(), ${var_value})"
+			return "v8::Number::New(isolate, ${var_value})"
 		}
 		ast.string_type {
-			return "Napi::String::New(info.Env(), ${var_value})"
+			return "v8::String::NewFromUtf8(isolate, ${var_value}.c_str(), v8::NewStringType::kNormal, ${var_value}.size()).ToLocalChecked()"
 		}
 		ast.bool_type {
-			return "Napi::Boolean::New(info.Env(), (bool)${var_value})"
+			return "v8::Boolean::New(isolate, ${var_value})"
 		}
 		ast.array_type {
 			panic("invlid type")
@@ -158,11 +158,11 @@ pub fn gen_convert_to_napivalue(table &ast.Table, typ ast.Type, var_value string
 		else {
 			sym := table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "${gen_bind_class_name(type_name)}::ToNapiValue(info.Env(), ${var_value})"
+				return "${gen_bind_class_name(type_name)}::Wrap(isolate, ${var_value})"
 			}
 			else {
 				eprintln("TODO gen_convert_to_napivalue support type ${sym.name}")
-				return "info.Env().Undefined()/*${sym.name}*/"
+				return "v8::Undefined(isolate)/*${sym.name}*/"
 			}
 		}
 	}
@@ -178,16 +178,16 @@ pub fn gen_convert_to_varvalue(table &ast.Table, typ ast.Type, js_value string) 
 			panic("invlid type")
 		}
 		ast.int_type {
-			return "NapiHelper::ExtractInt32(${js_value}, \"${js_value}\")"
+			return "JsHelper::ExtractInt32(isolate, ${js_value}, \"${js_value}\")"
 		}
 		ast.float_type {
-			return "NapiHelper::ExtractFloat(${js_value}, \"${js_value}\")"
+			return "JsHelper::ExtractFloat(isolate, ${js_value}, \"${js_value}\")"
 		}
 		ast.string_type {
-			return "NapiHelper::ExtractString(${js_value}, \"${js_value}\")"
+			return "JsHelper::ExtractString(isolate, ${js_value}, \"${js_value}\")"
 		}
 		ast.bool_type {
-			return "NapiHelper::ExtractBoolean(${js_value}, \"${js_value}\")"
+			return "JsHelper::ExtractBoolean(isolate, ${js_value}, \"${js_value}\")"
 		}
 		ast.array_type {
 			panic("invlid type")
@@ -207,7 +207,7 @@ pub fn gen_convert_to_varvalue(table &ast.Table, typ ast.Type, js_value string) 
 		else {
 			sym := table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "!${js_value}.IsNull() ? ${gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
+				return "!${js_value}->IsNull() ? ${gen_bind_class_name(type_name)}::Unwrap(isolate, ${js_value}) : nullptr"
 			}
 			else {
 				panic("unknown type ${sym}")
@@ -225,16 +225,16 @@ pub fn gen_convert_to_varvalue_optional(table &ast.Table, typ ast.Type, js_value
 			panic("invlid type")
 		}
 		ast.int_type {
-			return "NapiHelper::ExtractOptionalInt32(${js_value}, ${default_value}, \"${desc}\")"
+			return "JsHelper::ExtractOptionalInt32(isolate, ${js_value}, ${default_value}, \"${desc}\")"
 		}
 		ast.float_type {
-			return "NapiHelper::ExtractOptionalFloat(${js_value}, ${default_value}, \"${desc}\")"
+			return "JsHelper::ExtractOptionalFloat(isolate, ${js_value}, ${default_value}, \"${desc}\")"
 		}
 		ast.string_type {
-			return "NapiHelper::ExtractOptionalString(${js_value}, ${default_value}, \"${desc}\")"
+			return "JsHelper::ExtractOptionalString(isolate, ${js_value}, ${default_value}, \"${desc}\")"
 		}
 		ast.bool_type {
-			return "NapiHelper::ExtractOptionalBoolean(${js_value}, ${default_value}, \"${desc}\")"
+			return "JsHelper::ExtractOptionalBoolean(isolate, ${js_value}, ${default_value}, \"${desc}\")"
 		}
 		ast.array_type {
 			panic("invlid type")
@@ -254,7 +254,7 @@ pub fn gen_convert_to_varvalue_optional(table &ast.Table, typ ast.Type, js_value
 		else {
 			sym := table.get_type_symbol(typ)
 			if sym.kind == .script {
-				return "${js_value}.IsObject() && !${js_value}.IsNull() ? ${gen_bind_class_name(type_name)}::ToImplValue(${js_value}) : nullptr"
+				return "${js_value}.IsObject() && !${js_value}.IsNull() ? ${gen_bind_class_name(type_name)}::Unwrap(${js_value}) : nullptr"
 			}
 			else {
 				panic("unknown type ${sym}")
