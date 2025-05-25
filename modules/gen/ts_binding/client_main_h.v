@@ -58,11 +58,11 @@ fn (mut g Gen) gen_client_main_h_file() {
 
 		g.b_main_client_h.writeln("class ${bind_class_name} {")
 		g.b_main_client_h.writeln("public:")
-		g.b_main_client_h.writeln("\tstatic void Init(v8::Isolate* isolate, v8::Local<v8::Object>& exports);")
+		g.b_main_client_h.writeln("\tstatic void Init(v8::Isolate* isolate, v8::Local<v8::Object> exports);")
 		g.b_main_client_h.writeln("\texplicit ${bind_class_name}() {};")
 		g.b_main_client_h.writeln("")
-		g.b_main_client_h.writeln("\t// wrappers")
 		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+			g.b_main_client_h.writeln("\tstatic void Сtor(const v8::FunctionCallbackInfo<v8::Value>& args);")
 			g.b_main_client_h.writeln("\tstatic void From(const v8::FunctionCallbackInfo<v8::Value>& args);")
 			g.b_main_client_h.writeln("\tstatic void As(const v8::FunctionCallbackInfo<v8::Value>& args);")
 		}
@@ -91,8 +91,6 @@ fn (mut g Gen) gen_client_main_h_file() {
 			g.b_main_client_h.writeln("\tstatic ${impl_type_name} Unwrap(v8::Isolate* isolate, v8::Local<v8::Value> value);")
 			g.b_main_client_h.writeln("\tstatic ${impl_type_name} UnwrapSelf(v8::Isolate* isolate, v8::Local<v8::Value> value);")
 			g.b_main_client_h.writeln("\tstatic v8::Local<v8::Value> Wrap(v8::Isolate* isolate, ${impl_type_name} value);")
-			g.b_main_client_h.writeln("")
-			g.b_main_client_h.writeln("\t${impl_type_name} self = nullptr;")
 		}
 		g.b_main_client_h.writeln("}; // end class ${bind_class_name}")
 		g.b_main_client_h.writeln("")
@@ -126,7 +124,7 @@ namespace JSBinding
 {"
 
 const client_main_h_end_file = 
-"void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object>& exports);
+"void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object> exports);
 void HandleSpSnippet(RpcPacket packet);
 }; // end namespace JSBinding
 "
