@@ -16,7 +16,6 @@ body:
       label: Reproduction Steps
       description: |
         Provide a self-contained, concise snippet of code that can be used to reproduce the issue.
-        For more complex issues provide a repo with the smallest sample that reproduces the bug.
     validations:
       required: true
 
@@ -34,9 +33,6 @@ body:
       label: Current Behavior
       description: |
         What actually happened?
-
-        Please include full errors, uncaught exceptions, stack traces, and relevant logs.
-        If service/functions responses are relevant, please include wire logs.
     validations:
       required: true
 
@@ -53,7 +49,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: papyrus-compiler version
+      label: Compiler version
     validations:
       required: true
 
