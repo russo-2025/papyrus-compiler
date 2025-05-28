@@ -107,7 +107,9 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	assert to_sym.kind != .placeholder, to_sym.name
 
 	match to_sym.kind {
-		.placeholder { panic("wtf") }
+		.placeholder {
+			util.compiler_error(msg: "placeholder type symbol / invalid type in can_autocast", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
+		}
 		.none_ {
 			return false
 		}
@@ -162,7 +164,9 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 	assert to_sym.kind != .placeholder, to_sym.name
 
 	match from_sym.kind {
-		.placeholder { panic("wtf") }
+		.placeholder {
+			util.compiler_error(msg: "placeholder type symbol / invalid type in can_cast", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
+		}
 		.none_ {
 			match to_sym.kind {
 				.string,
@@ -397,9 +401,11 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 		.script {
 			return ast.NoneLiteral{ val: "None" }
 		}
-		.none_,
+		.none_ {
+			util.compiler_error(msg: "none type / invalid type in get_default_value", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
+		}
 		.placeholder {
-			panic("invalid typ")
+			util.compiler_error(msg: "placeholder type symbol / invalid type in get_default_value", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 }

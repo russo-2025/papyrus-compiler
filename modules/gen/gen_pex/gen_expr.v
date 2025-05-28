@@ -3,6 +3,7 @@ module gen_pex
 import papyrus.ast
 import pex
 import papyrus.token
+import papyrus.util
 
 @[inline]
 fn (mut g Gen) get_free_temp(typ ast.Type) pex.VariableValue {
@@ -452,7 +453,7 @@ fn (mut g Gen) get_operand_from_expr(mut expr ast.Expr) pex.VariableValue {
 			g.gen_cast(result_value, expr_value)
 		}
 		ast.EmptyExpr {
-			panic("wtf")
+			util.compiler_error(msg: "invalid expr(ast.EmptyExpr)", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 
@@ -470,14 +471,14 @@ fn (mut g Gen) get_prefix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpC
 				return .fneg
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 		}
 		.not {
 			return .not
 		}
 		else {
-			panic("Gen error: invalid infix operator: `$kind`")
+			util.compiler_error(msg: "invalid infix operator: `${kind}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 }
@@ -496,7 +497,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				return .fadd
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 		}
 		.minus {
@@ -507,7 +508,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				return .fsub
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 		}
 		.mul {
@@ -518,7 +519,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				return .fmul
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 		}
 		.div {
@@ -529,7 +530,7 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				return .fdiv
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 		}
 		.mod {
@@ -537,20 +538,11 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 				return .imod
 			}
 			else {
-				panic("Gen error: operator: `$kind` not supported type: ${g.table.type_to_str(typ)}")
+				util.compiler_error(msg: "operator: `${kind}` not supported type: ${g.table.type_to_str(typ)}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
-		}
-		.logical_and {
-			panic("Gen error: infix operator: `and`")
-		}
-		.logical_or {
-			panic("Gen error: infix operator: `or`")
 		}
 		.eq {
 			return .cmp_eq
-		}
-		.ne {
-			panic("Gen error: infix operator: `not equal`")
 		}
 		.gt {
 			return .cmp_gt
@@ -564,8 +556,17 @@ fn (mut g Gen) get_infix_opcode_operator(typ ast.Type, kind token.Kind) pex.OpCo
 		.le {
 			return .cmp_le
 		}
+		.logical_and {
+			util.compiler_error(msg: "invalid infix operator: `${kind}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
+		}
+		.logical_or {
+			util.compiler_error(msg: "invalid infix operator: `${kind}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
+		}
+		.ne {
+			util.compiler_error(msg: "invalid infix operator: `${kind}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
+		}
 		else {
-			panic("Gen error: invalid infix operator: `$kind`")
+			util.compiler_error(msg: "invalid infix operator: `${kind}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 }

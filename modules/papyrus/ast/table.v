@@ -2,6 +2,7 @@ module ast
 
 import papyrus.token
 import datatypes
+import papyrus.util
 
 
 @[heap]
@@ -162,7 +163,7 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
 					return existing_idx
 				}
 				else {
-					panic("Warning: override type(${sym.name}) - table.register_type_symbol()")
+					util.compiler_error(msg: "Warning: override type(${sym.name}) - table.register_type_symbol()", phase: "table register_type_symbol", file: @FILE, func: @FN, line: @LINE)
 					return existing_idx
 				}
 			}
@@ -208,7 +209,8 @@ pub fn (t &Table) get_type_symbol(typ Type) &TypeSymbol {
 		return unsafe { &t.types[idx] }
 	}
 	// this should never happen
-	panic('get_type_symbol: invalid type (typ=${typ} idx=${idx}). Compiler bug.')
+	util.compiler_error(msg: "get_type_symbol: invalid type (typ=${typ} idx=${idx}). Compiler bug.", phase: "table get_type_symbol", file: @FILE, func: @FN, line: @LINE)
+
 	return 0
 }
 

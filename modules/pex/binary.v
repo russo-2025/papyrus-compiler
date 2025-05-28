@@ -60,7 +60,7 @@ pub fn (mut r Reader) read[T]() T {
 	}
 	$else {
 		$compile_error('[pex.Reader.read] invalid type')
-		panic('[pex.Reader.read] invalid type ${T.name}')
+		util.compiler_error(msg: "invalid type ${T.name}", phase: "pex binary read", file: @FILE, func: @FN, line: @LINE)
 	}
 }
 
@@ -125,7 +125,7 @@ pub fn (mut w Writer) write[T](v T) {
 	}
 	$else {
 		$compile_error('[pex.Reader.write] invalid type')
-		panic('[pex.Writer.write] invalid type ${T.name}')
+		util.compiler_error(msg: "invalid type ${T.name}", phase: "pex binary write", file: @FILE, func: @FN, line: @LINE)
 	}
 }
 

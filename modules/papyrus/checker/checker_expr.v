@@ -1,6 +1,7 @@
 module checker
 
 import papyrus.ast
+import papyrus.util
 
 const base_objects_events = [ "oninit", "onbeginstate", "onendstate" ]
 
@@ -178,7 +179,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	}
 
 	eprintln(node)
-	panic("expression not processed in file: `${c.file.path}`")
+	util.compiler_error(msg: "expression not processed in file: `${c.file.path}`", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
 }
 
 pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
@@ -371,7 +372,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 			node.result_type = ast.bool_type
 		}
 		else {
-			panic("wtf (${node.op})")
+			util.compiler_error(msg: "invalid operator(${node.op}) in expr_infix", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 

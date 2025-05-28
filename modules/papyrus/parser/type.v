@@ -1,10 +1,11 @@
 module parser
 
 import papyrus.ast
+import papyrus.util
 
 pub fn (mut p Parser) get_parsed_type() ast.Type {
 	if p.parsed_type == 0 {
-		panic("invalid type")
+		util.compiler_error(msg: "invalid parsed type", phase: "parser", prefs: p.pref, file: @FILE, func: @FN, line: @LINE)
 	}
 	
 	typ := p.parsed_type

@@ -3,6 +3,7 @@ module gen_pex
 import papyrus.ast
 import papyrus.token
 import pex
+import papyrus.util
 
 @[inline]
 fn (mut g Gen) script_decl(mut s ast.ScriptDecl) {
@@ -23,7 +24,7 @@ fn (mut g Gen) script_decl(mut s ast.ScriptDecl) {
 			g.cur_obj.user_flags |= 0b0010
 		}
 		else {
-			panic("invalid flag: `${flag.str()}`")
+			util.compiler_error(msg: "invalid flag: `${flag.str()}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 
@@ -53,7 +54,9 @@ fn (mut g Gen) state_decl(mut s ast.StateDecl) {
 	}
 	
 	if s.name.to_lower() in g.states {
-		g.cur_state = g.states[s.name.to_lower()] or { panic("wtf") }
+		g.cur_state = g.states[s.name.to_lower()] or {
+			util.compiler_error(msg: "failed to find state `${s.name.to_lower()}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
+		}
 	}
 	else {
 		mut state := g.create_state(s.name)
@@ -170,7 +173,7 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
 			f.info.flags |= 0b0010
 		}
 		else {
-			panic("invalid flag: `${flag.str()}`")
+			util.compiler_error(msg: "invalid flag: `${flag.str()}`", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
 
@@ -271,7 +274,7 @@ fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 		}
 	}
 	else {
-		panic("Gen assign stmt TODO")
+		util.compiler_error(msg: "unprocessed expression on the left ${stmt.left.type_name()}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 	}
 }
 
@@ -289,7 +292,7 @@ fn (mut g Gen) var_decl(mut stmt ast.VarDecl) {
 		if stmt.assign.right !is ast.EmptyExpr  {
 			if !stmt.assign.right.is_literal() {
 				eprintln(stmt)
-				panic("wtf")
+				util.compiler_error(msg: "stmt.assign.right is not literal", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 
 			data = g.get_operand_from_expr(mut &stmt.assign.right)
@@ -338,7 +341,7 @@ fn (mut g Gen) prop_decl(mut stmt ast.PropertyDecl) {
 		
 		if stmt.expr !is ast.EmptyExpr {
 			if !stmt.expr.is_literal() {
-				panic("wtf ${stmt}")
+				util.compiler_error(msg: "unexpected expression (${stmt.expr.type_name()}), expected literal", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
 			}
 
 			value = g.get_operand_from_expr(mut &stmt.expr)

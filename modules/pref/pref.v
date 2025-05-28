@@ -1,6 +1,7 @@
 module pref
 
 import os
+import strings
 import papyrus.errors
 
 pub enum OutputMode {
@@ -14,12 +15,30 @@ pub enum Backend {
 	original // use a vanilla compiler to compile files
 }
 
+pub fn (b Backend) str() string {
+	return match b {
+		.pex { "-pex" }
+		.check { "-check" }
+		.original { "-original" }
+	}
+}
+
 pub enum RunMode {
 	compile
 	read
 	disassembly
 	create_dump
 	help
+}
+
+pub fn (m RunMode) str() string {
+	return match m {
+		.compile { "compile" }
+		.read { "read" }
+		.disassembly { "disassembly" }
+		.create_dump { "create-dump" }
+		.help { "help" }
+	}
 }
 
 @[heap]
@@ -35,6 +54,32 @@ pub mut:
 	is_verbose			bool
 	use_threads			bool
 	stats_enabled		bool
+}
+
+pub fn (p Preferences) cmd_str() string {
+	mut b := strings.new_builder(30)
+
+	b.write_string(p.mode.str())
+	b.write_string(" ")
+
+	b.write_string(p.backend.str())
+	b.write_string(" ")
+
+	for path in p.paths {
+		b.write_string("-i \"${path}\" ")
+	}
+	
+	b.write_string("-o \"${p.output_dir}\" ")
+	
+	for dir in p.header_dirs {
+		b.write_string("-h \"${dir}\" ")
+	}
+
+	if p.no_cache {
+		b.write_string("-nocache")
+	}
+
+	return b.str()
 }
 
 fn (mut p Preferences) parse_compile_args(args []string) {
@@ -101,6 +146,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 				}
 				
 				p.header_dirs << path
+				i++
+			}
+			"-pex" {
+				p.backend = .pex
 				i++
 			}
 			"-check" {
@@ -194,6 +243,8 @@ pub fn parse_args() Preferences {
 
 			p.paths << path
 		}
+		"createdump",
+		"create_dump",
 		"create-dump" {
 			if args.len < 2 {
 				error(errors.msg_wrong_number_of_arguments)

@@ -2,6 +2,7 @@ module parser
 
 import papyrus.ast
 import papyrus.token
+import papyrus.util
 
 pub fn (mut p Parser) expr(precedence int) ?ast.Expr {
 	mut node := ast.Expr(ast.EmptyExpr{ pos:p.tok.position() })
@@ -176,7 +177,7 @@ pub fn (mut p Parser) parse_number_literal() ast.Expr {
 	}
 
 	if is_hex && is_neg {
-		panic("negative hex wtf")
+		util.compiler_error(msg: "negative hex wtf", phase: "parser", prefs: p.pref, file: @FILE, func: @FN, line: @LINE)
 	}
 
 	if is_neg {
