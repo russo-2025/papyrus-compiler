@@ -140,35 +140,7 @@ pub fn fatal_error(msg string) {
 
 @[noreturn]
 pub fn compiler_error(params CompilerConfigParams) {
-//pub fn compiler_error(msg string, phase string, file string, func string, line string, prefs pref.Preferences) {
-	/*
-	default_mod := vmod.Manifest {
-		name: "Papyrus Compiler"
-		description: "Papyrus Compiler"
-		version: "unknown"
-		license: "MIT"
-		repo_url: "https://github.com/russo-2025/papyrus-compiler"
-		author: "russo-2025"
-	}
-
-	mod := vmod.decode(@VMOD_FILE) or { default_mod }
-
-
-
-	name := mod.name
-	version := mod.version
-	commit_hash := @VMODHASH
-	build_type := $if prod { "release" } $else { "debug" }
-	build_date := "${@BUILD_DATE} ${@BUILD_TIME} UTC"
-	os_kind := os.user_os()
-
-	println(os.uname())
-	println(collect_info())
-	*/
-	
 	info := collect_info()
-
-	flags := if params.prefs != none { params.prefs.cmd_str() } else { "N/A" }
 
 	println(
 "
@@ -195,14 +167,14 @@ ERROR DETAILS:
 ENVIRONMENT:
   OS:       ${info.os}
   exe:      ${info.exe}
-  flags:    ${flags} 
+  flags:    ${arguments()} 
 
 STACK TRACE:")
 print_backtrace()
 
 println("
 PLEASE REPORT THIS BUG:
-  GitHub: https://github.com/mycompiler/mycompiler/issues/new?template=ice_report.md
+  GitHub: https://github.com/russo-2025/papyrus-compiler/issues/new?template=bug-report.yml
   Discord: https://discord.gg/JqQZXAXvPT (channel: #help)
 
 When reporting, please:

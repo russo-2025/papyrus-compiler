@@ -1,4 +1,13 @@
 ## Next release
+
+### Improvements
+  - Все паники заменены на более информативную альтернативу
+  - добавлен bug report issue template
+  - добавлена комманда version
+  - TODO up version
+  - TODO up v version (ci/cd...)
+  - TODO обновить help команды
+
 ...
 
 ## V 0.0.3

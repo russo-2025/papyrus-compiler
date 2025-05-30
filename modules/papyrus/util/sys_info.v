@@ -54,7 +54,7 @@ fn parse(config string, sep string) map[string]string {
 	return m
 }
 
-fn collect_info() DeviceInfo {
+pub fn collect_info() DeviceInfo {
 	mut os_kind := os.user_os()
 
 	mut arch_details := []string{}
@@ -167,6 +167,10 @@ fn collect_info() DeviceInfo {
 
 	mod := vmod.decode(@VMOD_FILE) or { default_mod }
 
+	mut build_type := $if gcc { "gcc" } $else $if tinyc { "tinyc" } $else $if clang { "clang" } $else $if mingw { "mingw" } $else $if msvc { "msvc" } $else { "unknown" }
+	build_type += ", "
+	build_type += $if prod && debug { "release with debug info" } $else $if prod { "release" }  $else $if debug { "with debug info" } $else { "default" }
+
 	return util.DeviceInfo{
 		os: "${os_kind}, ${os_details}"
 		processor: arch_details.join(', ')
@@ -179,12 +183,13 @@ fn collect_info() DeviceInfo {
 		git_commit: @VMODHASH
 		version: "${mod.name} v${mod.version}"
 		name: mod.name
-		build_type: $if prod { "release" } $else { "debug" }
+		build_type: build_type
 		build_date: "${@BUILD_DATE} ${@BUILD_TIME} UTC"
 	}
 }
 
 struct DeviceInfo {
+pub:
 	os	string
 	processor string
 	memory string

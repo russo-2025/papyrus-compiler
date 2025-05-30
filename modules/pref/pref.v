@@ -29,10 +29,12 @@ pub enum RunMode {
 	disassembly
 	create_dump
 	help
+	version
 }
 
 pub fn (m RunMode) str() string {
 	return match m {
+		.version { "version" }
 		.compile { "compile" }
 		.read { "read" }
 		.disassembly { "disassembly" }
@@ -206,6 +208,9 @@ pub fn parse_args() Preferences {
 	}
 
 	match args[0] {
+		"version" {
+			p.mode = .version
+		}
 		"help" {
 			p.mode = .help
 		}

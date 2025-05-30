@@ -17,6 +17,15 @@ fn main() {
 	sw.start()
 
 	match prefs.mode {
+		.version {
+			info := util.collect_info()
+			println("https://github.com/russo-2025/papyrus-compiler")
+			println("Version: ${info.version}")
+			println("Commit:  ${info.git_commit}")
+			println("build date:  ${info.build_date}")
+			println("build type:  ${info.build_type}")
+			exit(0)
+		}
 		.compile {
 			builder.compile(prefs)
 		}
