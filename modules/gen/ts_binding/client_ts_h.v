@@ -98,6 +98,10 @@ fn (mut g Gen) gen_client_ts_h_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeSymbo
 
 const client_ts_start_file = 
 "// !!! Generated automatically. Do not edit. !!!
+/*
+Ограничения:
+- Не работают массивы
+*/
 
 declare global {
 "

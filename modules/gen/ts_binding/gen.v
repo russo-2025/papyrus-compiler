@@ -27,6 +27,9 @@ mut:
 // server rpc files
 	b_rpc_server_cpp		strings.Builder = strings.new_builder(file_init_size)
 	b_rpc_server_h			strings.Builder = strings.new_builder(file_init_size)
+	b_rpc_server_wrap_cpp	strings.Builder = strings.new_builder(file_init_size)
+	b_rpc_server_wrap_h		strings.Builder = strings.new_builder(file_init_size)
+	b_rpc_server_ts			strings.Builder = strings.new_builder(file_init_size)
 // server ts header file
 	server_ts_h				strings.Builder = strings.new_builder(file_init_size)
 // server main h file
@@ -77,11 +80,16 @@ pub fn gen(mut client_files []&ast.File, mut client_table ast.Table, mut server_
 	g.gen_client_main_cpp_file()
 	g.gen_rpc_client()
 	g.gen_rpc_server()
+	g.gen_rpc_server_wrap()
+	g.gen_rpc_server_ts()
 
 	println("write client files to `${client_output_dir}`")
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_client_bindings.cpp"), g.b_rpc_client_cpp.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_bindings.cpp"), g.b_rpc_server_cpp.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_bindings.h"), g.b_rpc_server_h.str()) or { panic(err) }
+	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_wrap_bindings.cpp"), g.b_rpc_server_wrap_cpp.str()) or { panic(err) }
+	os.write_file(os.join_path(client_output_dir, "__js_rpc_server_wrap_bindings.h"), g.b_rpc_server_wrap_h.str()) or { panic(err) }
+	os.write_file(os.join_path(client_output_dir, "ServerSpSnippet.d.ts"), g.b_rpc_server_ts.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_bindings.h"), g.b_main_client_h.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "__js_bindings.cpp"), g.b_main_client_cpp.str()) or { panic(err) }
 	os.write_file(os.join_path(client_output_dir, "papyrusObjects.d.ts"), g.b_main_client_ts.str()) or { panic(err) }

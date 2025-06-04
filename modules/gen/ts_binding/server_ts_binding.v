@@ -98,6 +98,10 @@ fn (mut g Gen) gen_server_ts_h_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 
 const server_main_ts_h_file_start = 
 "// !!! Generated automatically. Do not edit. !!!
+/*
+Ограничения:
+- Не работают массивы
+*/
 
 declare global {
 "

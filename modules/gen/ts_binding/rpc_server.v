@@ -115,7 +115,6 @@ fn (mut g Gen) gen_rpc_server_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	g.b_rpc_server_cpp.writeln("")
 	g.b_rpc_server_cpp.writeln("\tser.adapter().flush();")
 	g.b_rpc_server_cpp.writeln("")
-	g.b_rpc_server_cpp.writeln("\tspdlog::error(\"send rpc ${fn_name}; actorFormId: {}, vec.size:{}, ser.bytes: {}\", actor->GetFormId(), buffer.size(), ser.adapter().writtenBytesCount());")
 	g.b_rpc_server_cpp.writeln("\tSendToClient(actor, buffer);")
 	g.b_rpc_server_cpp.writeln("}")
 	g.b_rpc_server_cpp.writeln("")

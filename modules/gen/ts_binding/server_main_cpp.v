@@ -48,6 +48,9 @@ fn (mut g Gen) gen_server_main_cpp_file() {
 		bind_class_name := s_util.gen_bind_class_name(sym.name)
 		g.server_main_cpp.writeln("\t${bind_class_name}::Init(env, exports);")
 	})
+
+	g.server_main_cpp.writeln("")
+	g.server_main_cpp.writeln("\tRegisterSpSnippet(env, exports);")
 	g.server_main_cpp.writeln("}")
 
 	g.server_main_cpp.writeln(server_main_cpp_file_end)
@@ -226,21 +229,11 @@ fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File
 
 		g.server_main_cpp.writeln("\t\tif (!form.has_value())")
 		g.server_main_cpp.writeln("\t\t{")
-		g.server_main_cpp.writeln("\t\t\tspdlog::error(\"form not found `${s_util.gen_bind_class_name(obj_name2)}::From`\");")
-		g.server_main_cpp.writeln("\t\t\tthrow std::runtime_error(\"form not found `${s_util.gen_bind_class_name(obj_name2)}::From`\");")
+		g.server_main_cpp.writeln("\t\t\treturn info.Env().Null();")
 		g.server_main_cpp.writeln("\t\t}")
 		g.server_main_cpp.writeln("")
 		g.server_main_cpp.writeln("\t\treturn ${s_util.gen_bind_class_name(obj_name2)}::ToNapiValue(info.Env(), form.value());")
 
-	/*
-		g.server_main_cpp.writeln("\t\tauto formId = NapiHelper::ExtractUInt32(info[0], \"formId\");")
-		g.server_main_cpp.writeln("\t\tauto& form = g_partOne->worldState.GetFormAt<MpForm>(formId);")
-		g.server_main_cpp.writeln("\t\t// if(!form) {")
-		g.server_main_cpp.writeln("\t\t//\t throw std::runtime_error(\"form not found `${s_util.gen_bind_class_name(obj_name2)}::From`\");")
-		g.server_main_cpp.writeln("\t\t// }")
-		g.server_main_cpp.writeln("")
-		g.server_main_cpp.writeln("\t\treturn ${s_util.gen_convert_to_napivalue(g.table, obj_type, "VarValue(form.ToGameObject())")};")
-	*/
 		g.server_main_cpp.writeln("\t}")
 		g.server_main_cpp.writeln("\tcatch(std::exception& e) {")
 		g.server_main_cpp.writeln("\t\tspdlog::error((std::string)e.what());")
@@ -300,6 +293,7 @@ fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File
 const server_main_cpp_file_start = 
 "// !!! Generated automatically. Do not edit. !!!
 #include \"__js_bindings.h\"
+#include \"__js_rpc_server_wrap_bindings.h\"
 #include \"PartOne.h\"
 #include \"script_objects/EspmGameObject.h\"
 
