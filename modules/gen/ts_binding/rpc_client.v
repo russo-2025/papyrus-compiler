@@ -24,7 +24,7 @@ fn (mut g Gen) gen_rpc_client() {
 		
 		g.b_rpc_client_cpp.writeln("\tcase ${g.get_rpc_enum_func(sym.name, func.name)}:")
 		//g.b_rpc_client_cpp.writeln("\t\t${g.get_fn_rpc_impl_name(sym.name, func.name)}(des, resultBuffer);")
-		g.b_rpc_client_cpp.writeln("\t\t${c_util.get_fn_rpc_impl_name(sym.name, func.name)}(des, maxSize);")
+		g.b_rpc_client_cpp.writeln("\t\t${c_util.get_fn_rpc_impl_name(sym.name, func.name)}(playerContainer, des, maxSize);")
 		g.b_rpc_client_cpp.writeln("\t\tbreak;")
 	})
 
@@ -37,7 +37,7 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	obj_type := g.table.find_type_idx(sym.name)
 
 	//g.b_rpc_client_cpp.writeln("void ${rpc_fn_name}(bitsery::Deserializer<Reader>& d, std::vector<uint8_t>& resultBuffer)")
-	g.b_rpc_client_cpp.writeln("void ${rpc_fn_name}(bitsery::Deserializer<Reader>& d, size_t maxSize)")
+	g.b_rpc_client_cpp.writeln("void ${rpc_fn_name}(std::shared_ptr<PlayerContainer> playerContainer, bitsery::Deserializer<Reader>& d, size_t maxSize)")
 	g.b_rpc_client_cpp.writeln("{")
 
 	mut call_args_list := ""
@@ -53,11 +53,20 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 	if !func.is_global {
 		g.b_rpc_client_cpp.writeln("\tuint32_t selfFormId = 0;")
 		g.b_rpc_client_cpp.writeln("\td.value4b(selfFormId);")
-		g.b_rpc_client_cpp.writeln("\t${c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)} self = RE::TESForm::LookupByID<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, obj_type)}>(selfFormId);")
+		g.b_rpc_client_cpp.writeln("\tif(selfFormId >= 0xFF000000)")
+		g.b_rpc_client_cpp.writeln("\t{")
+		g.b_rpc_client_cpp.writeln("\t\tauto mb_self = playerContainer->GetLocalIdByRemoteId(selfFormId);")
+		g.b_rpc_client_cpp.writeln("\t\tif(!mb_self.has_value())")
+		g.b_rpc_client_cpp.writeln("\t\t{")
+		g.b_rpc_client_cpp.writeln("\t\t\tERR_AND_THROW(\"self not found(by remoteID: {})\", selfFormId);")
+		g.b_rpc_client_cpp.writeln("\t\t}")
+		g.b_rpc_client_cpp.writeln("\t\tselfFormId = mb_self.value();")
+		g.b_rpc_client_cpp.writeln("\t}")
 		g.b_rpc_client_cpp.writeln("")
+		g.b_rpc_client_cpp.writeln("\t${c_util.get_impl_type_name(g.table, g.client_impl_classes, obj_type)} self = RE::TESForm::LookupByID<${c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, obj_type)}>(selfFormId);")
 		g.b_rpc_client_cpp.writeln("\tif(!self)")
 		g.b_rpc_client_cpp.writeln("\t{")
-		g.b_rpc_client_cpp.writeln("\t\tERR_AND_THROW(\"Invalid self\");")
+		g.b_rpc_client_cpp.writeln("\t\tERR_AND_THROW(\"Invalid self: {}\", selfFormId);")
 		g.b_rpc_client_cpp.writeln("\t}")
 		g.b_rpc_client_cpp.writeln("")
 
@@ -75,7 +84,6 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 		
 		
 		g.b_rpc_client_cpp.writeln("\t// read arg ${i + 1}")
-		g.b_rpc_client_cpp.writeln("\t${param_impl_type_name} ${param.name};")
 
 		match param_sym.kind {
 			.placeholder,
@@ -83,14 +91,16 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 				panic("invalid type in param ${sym.name}.${func.name}")
 			}
 			.bool {
+				g.b_rpc_client_cpp.writeln("\t${param_impl_type_name} ${param.name} = false;")
 				g.b_rpc_client_cpp.writeln("\td.value1b(${param.name});")
 			}
 			.int,
 			.float {
+				g.b_rpc_client_cpp.writeln("\t${param_impl_type_name} ${param.name} = 0;")
 				g.b_rpc_client_cpp.writeln("\td.value4b(${param.name});")
 			}
 			.string {
-				//g.b_rpc_client_cpp.writeln("\t${param.name}.reserve(maxSize);")
+				g.b_rpc_client_cpp.writeln("\t${param_impl_type_name} ${param.name};")
 				g.b_rpc_client_cpp.writeln("\td.text1b(${param.name}, ${max_string_size_serialization});")
 			}
 			.array {
@@ -100,7 +110,20 @@ fn (mut g Gen) gen_rpc_clint_impl_fn(sym &ast.TypeSymbol, func &ast.FnDecl) {
 				param_impl_obj_type_name := c_util.get_impl_obj_type_name(g.table, g.client_impl_classes, param.typ)
 				g.b_rpc_client_cpp.writeln("\tuint32_t ${param.name}_id;")
 				g.b_rpc_client_cpp.writeln("\td.value4b(${param.name}_id);")
-				g.b_rpc_client_cpp.writeln("\t${param.name} = RE::TESForm::LookupByID<${param_impl_obj_type_name}>(${param.name}_id);")
+				g.b_rpc_client_cpp.writeln("\tif(${param.name}_id >= 0xFF000000)")
+				g.b_rpc_client_cpp.writeln("\t{")
+				g.b_rpc_client_cpp.writeln("\t\tauto mb_id = playerContainer->GetLocalIdByRemoteId(${param.name}_id);")
+				g.b_rpc_client_cpp.writeln("\t\tif(!mb_id.has_value())")
+				g.b_rpc_client_cpp.writeln("\t\t{")
+				g.b_rpc_client_cpp.writeln("\t\t\tERR_AND_THROW(\"self not found(by remoteID: {})\", ${param.name}_id);")
+				g.b_rpc_client_cpp.writeln("\t\t}")
+				g.b_rpc_client_cpp.writeln("\t\t${param.name}_id = mb_id.value();")
+				g.b_rpc_client_cpp.writeln("\t}")
+				g.b_rpc_client_cpp.writeln("\t${param_impl_type_name} ${param.name} = RE::TESForm::LookupByID<${param_impl_obj_type_name}>(${param.name}_id);")
+				g.b_rpc_client_cpp.writeln("\tif(!${param.name})")
+				g.b_rpc_client_cpp.writeln("\t{")
+				g.b_rpc_client_cpp.writeln("\t\tWARN(\"argument `${param.name}` in fn `${rpc_fn_name}` is nullptr\");")
+				g.b_rpc_client_cpp.writeln("\t}")
 			}
 		}
 		g.b_rpc_client_cpp.writeln("")
@@ -180,6 +203,7 @@ const rpc_client_cpp_start_file =
 #include <bitsery/adapter/buffer.h>
 #include <bitsery/traits/vector.h>
 #include <bitsery/traits/string.h>
+#include \"../data/PlayerContainer.h\"
 
 namespace JSBinding {
 
@@ -198,7 +222,7 @@ struct RpcPacket
 };"
 
 const rpc_client_run_snippet_start = 
-"void HandleSpSnippet(RpcPacket packet)
+"void HandleSpSnippet(std::shared_ptr<PlayerContainer> playerContainer, RpcPacket packet)
 {
 	bitsery::Deserializer<Reader> des{packet.data.begin(), packet.data.size()};
 	size_t maxSize = packet.data.size();

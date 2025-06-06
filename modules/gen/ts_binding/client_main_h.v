@@ -119,12 +119,13 @@ const client_main_h_start_file =
 #pragma once
 
 #include \"../JsHelper.h\"
+#include \"../data/PlayerContainer.h\"
 
 namespace JSBinding
 {"
 
 const client_main_h_end_file = 
 "void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object> exports);
-void HandleSpSnippet(RpcPacket packet);
+void HandleSpSnippet(std::shared_ptr<PlayerContainer> playerContainer, RpcPacket packet);
 }; // end namespace JSBinding
 "
