@@ -9,7 +9,7 @@ fn (mut g Gen) gen_server_main_cpp_file() {
 	g.server_main_cpp.writeln(server_main_cpp_file_start)
 
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
-		g.server_main_cpp.writeln("static inline Napi::FunctionReference ${s_util.gen_ctor_name(file.obj_name)};")
+		g.server_main_cpp.writeln("static v8::Persistent<v8::Function> ${s_util.gen_ctor_name(file.obj_name)};")
 		g.each_all_this_fns(sym, fn(mut g Gen, sym &ast.TypeSymbol, func &ast.FnDecl) {
 			assert func.is_native
 		
@@ -42,15 +42,15 @@ fn (mut g Gen) gen_server_main_cpp_file() {
 		g.gen_server_main_cpp_end_class(sym, file)
 	})
 
-	g.server_main_cpp.writeln("void RegisterAllVMObjects(Napi::Env env, Napi::Object exports)")
+	g.server_main_cpp.writeln("void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object> exports)")
 	g.server_main_cpp.writeln("{")
 	g.each_all_files(fn(mut g Gen, sym &ast.TypeSymbol, file &ast.File) {
 		bind_class_name := s_util.gen_bind_class_name(sym.name)
-		g.server_main_cpp.writeln("\t${bind_class_name}::Init(env, exports);")
+		g.server_main_cpp.writeln("\t${bind_class_name}::Init(isolate, exports);")
 	})
 
 	g.server_main_cpp.writeln("")
-	g.server_main_cpp.writeln("\tRegisterSpSnippet(env, exports);")
+	g.server_main_cpp.writeln("\tRegisterSpSnippet(isolate, exports);")
 	g.server_main_cpp.writeln("}")
 
 	g.server_main_cpp.writeln(server_main_cpp_file_end)
@@ -60,10 +60,15 @@ fn (mut g Gen) gen_server_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	js_class_name := s_util.gen_bind_class_name(sym.name)
 	js_fn_name := s_util.gen_js_fn_name(func.name)
 
-	g.server_main_cpp.writeln("Napi::Value ${js_class_name}::${js_fn_name}(const Napi::CallbackInfo& info)")
+	g.server_main_cpp.writeln("void ${js_class_name}::${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& info)")
 	g.server_main_cpp.writeln("{")
 	g.server_main_cpp.writeln("\ttry")
 	g.server_main_cpp.writeln("\t{")
+
+	g.server_main_cpp.writeln("\t\tv8::Isolate* isolate = info.GetIsolate();")
+	g.server_main_cpp.writeln("\t\tv8::HandleScope scope(isolate);")
+	g.server_main_cpp.writeln("")
+
 	g.server_main_cpp.writeln("\t\tstd::vector<VarValue> args = {")
 
 	for i in 0..func.params.len {
@@ -95,6 +100,7 @@ fn (mut g Gen) gen_server_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 		}
 		else {
 			arg := "info[${i}]"
+
 			g.server_main_cpp.write_string("\t\t\t${s_util.gen_convert_to_varvalue(g.table, param.typ, arg, param.name)}")
 		}
 		
@@ -110,14 +116,13 @@ fn (mut g Gen) gen_server_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 
 	if !func.is_global {
 		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\t\tVarValue self = ${js_class_name}::UnwrapSelf(isolate, info.This());")
 		g.server_main_cpp.writeln("\t\tif (!self || self.GetType() != VarValue::Type::kType_Object)")
 		g.server_main_cpp.writeln("\t\t{")
-		g.server_main_cpp.writeln("\t\t\tthrow std::runtime_error(\"invalid self in ${js_class_name}::${js_fn_name}\");")
+		g.server_main_cpp.writeln("\t\t\tERR_AND_THROW(\"invalid self in ${js_class_name}::${js_fn_name}\");")
 		g.server_main_cpp.writeln("\t\t}")
 		g.server_main_cpp.writeln("")
 	}
-
-	g.server_main_cpp.writeln("\t\tNapi::Env env = info.Env();")
 	
 	if func.is_global {
 		g.server_main_cpp.writeln("\t\tVarValue res = ${s_util.gen_vm_fn_impl_name(parent_sym.obj_name, func.name)}(VarValue::None(), args);")
@@ -127,13 +132,15 @@ fn (mut g Gen) gen_server_main_cpp_fn(sym &ast.TypeSymbol, parent_sym &ast.TypeS
 	}
 	
 	g.server_main_cpp.writeln("")
-	g.server_main_cpp.writeln("\t\treturn ${s_util.gen_convert_to_napivalue(g.table, func.return_type, "res")};")
+	g.server_main_cpp.writeln("\t\tinfo.GetReturnValue().Set(${s_util.gen_convert_to_napivalue(g.table, func.return_type, "res")});")
+	g.server_main_cpp.writeln("\t\treturn;")
 	g.server_main_cpp.writeln("\t}")
 	g.server_main_cpp.writeln("\tcatch(std::exception& e) {")
-	g.server_main_cpp.writeln("\t\tspdlog::error((std::string)e.what());")
-	g.server_main_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+	g.server_main_cpp.writeln("\t\tstd::string msg = e.what();")
+	g.server_main_cpp.writeln("\t\tERR(msg);")
+	g.server_main_cpp.writeln("\t\tinfo.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(info.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+	g.server_main_cpp.writeln("\t\treturn;")
 	g.server_main_cpp.writeln("\t}")
-	g.server_main_cpp.writeln("\treturn info.Env().Undefined();")
 	g.server_main_cpp.writeln("}")
 	g.server_main_cpp.writeln("")
 }
@@ -153,6 +160,8 @@ fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File
 	obj_name := sym.obj_name
 	obj_name2 := sym.name
 	obj_type := g.table.find_type_idx(sym.name)
+	
+	bind_class_name := c_util.gen_bind_class_name(sym.name)
 	
 	g.each_all_fns(sym, fn[mut init_methods_bind_cpp_ptr, obj_name](mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl) {
 		assert func.is_native
@@ -175,7 +184,7 @@ fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File
 		init_methods_bind_cpp_ptr.go_back(",\n".len) // remove last `,` + `\n`
 	}
 
-	g.server_main_cpp.writeln("Napi::Object ${s_util.gen_bind_class_name(obj_name2)}::Init(Napi::Env env, Napi::Object exports)")
+	g.server_main_cpp.writeln("void ${s_util.gen_bind_class_name(obj_name2)}::Init(v8::Isolate* isolate, v8::Local<v8::Object> exports)")
 	g.server_main_cpp.writeln("{")
 	
 	g.each_all_this_fns(sym, fn(mut g Gen, sum &ast.TypeSymbol, func &ast.FnDecl){
@@ -190,101 +199,189 @@ fn (mut g Gen) gen_server_main_cpp_end_class(sym &ast.TypeSymbol, file &ast.File
 		g.server_main_cpp.writeln("")
 	})
 
-	g.server_main_cpp.writeln("\tNapi::HandleScope scope(env);")
+	g.server_main_cpp.writeln("\tv8::HandleScope scope(isolate);")
+	g.server_main_cpp.writeln("\tv8::Local<v8::Context> context = isolate->GetCurrentContext();")
 	g.server_main_cpp.writeln("")
-	g.server_main_cpp.writeln("\tNapi::Function func = DefineClass(env, \"${obj_name2}\", {")
 	if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
-		g.server_main_cpp.writeln("\t\tStaticMethod(\"From\", &${s_util.gen_bind_class_name(obj_name2)}::From),")
+		g.server_main_cpp.writeln("\tv8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(isolate, ${bind_class_name}::Сtor);")
 	}
-	g.server_main_cpp.writeln("${init_methods_bind_cpp_ptr.str()}")
-	g.server_main_cpp.writeln("\t});")
+	else {
+		g.server_main_cpp.writeln("\tv8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(isolate);")
+	}
+	g.server_main_cpp.writeln("\ttpl->SetClassName(v8CString(\"${sym.name}\"));")
+	g.server_main_cpp.writeln("\ttpl->InstanceTemplate()->SetInternalFieldCount(1);")
 	g.server_main_cpp.writeln("")
-	g.server_main_cpp.writeln("\t${s_util.gen_ctor_name(obj_name2)} = Napi::Persistent(func);")
-	g.server_main_cpp.writeln("\t${s_util.gen_ctor_name(obj_name2)}.SuppressDestruct();")
-	g.server_main_cpp.writeln("\texports.Set(\"${obj_name2}\", func);")
-	g.server_main_cpp.writeln("")
-	g.server_main_cpp.writeln("\treturn exports;")
-	g.server_main_cpp.writeln("};")
+	g.server_main_cpp.writeln("\tv8::Local<v8::ObjectTemplate> prototype = tpl->PrototypeTemplate();")
+	g.server_main_cpp.writeln("\t// set methods")
+
+	g.each_all_fns(sym, fn[sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
+		assert func.is_native
+		
+		if func.is_global {
+			return
+		}
+
+		js_class_name := c_util.gen_bind_class_name(sym.obj_name)
+		js_fn_name := c_util.gen_js_fn_name(func.name)
+		fn_name := func.name
+
+		g.server_main_cpp.writeln("\tprototype->Set(v8CString(\"${fn_name}\"), v8::FunctionTemplate::New(isolate, ${js_class_name}::${js_fn_name}));")
+	})
 
 	g.server_main_cpp.writeln("")
+	g.server_main_cpp.writeln("\tv8::Local<v8::Function> constructor = tpl->GetFunction(context).ToLocalChecked();")
+	g.server_main_cpp.writeln("\t${c_util.gen_ctor_name(sym.name)}.Reset(isolate, constructor);")
+	g.server_main_cpp.writeln("")
+	g.server_main_cpp.writeln("\t// set static methods")
 	
-	g.server_main_cpp.write_string("${s_util.gen_bind_class_name(obj_name2)}::${s_util.gen_bind_class_name(obj_name2)}(const Napi::CallbackInfo& info) : ObjectWrap(info)")
-
-	g.server_main_cpp.writeln("{")
-	if !c_util.is_no_instance_class(g.no_instance_class, obj_type)
-	{
-		g.server_main_cpp.writeln("\tself = VarValue::None();")
+	if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
+		g.server_main_cpp.writeln("\tconstructor->Set(context, v8CString(\"From\"), v8::FunctionTemplate::New(isolate, ${bind_class_name}::From)->GetFunction(context).ToLocalChecked()).Check();")
 	}
+
+	g.each_all_fns(sym, fn[sym](mut g Gen, _ &ast.TypeSymbol, func &ast.FnDecl) {
+		assert func.is_native
+		
+		if !func.is_global {
+			return
+		}
+
+		js_class_name := c_util.gen_bind_class_name(sym.obj_name)
+		js_fn_name := c_util.gen_js_fn_name(func.name)
+		fn_name := func.name
+
+		g.server_main_cpp.writeln("\tconstructor->Set(context, v8::String::NewFromUtf8(isolate, \"${fn_name}\").ToLocalChecked(), v8::FunctionTemplate::New(isolate, ${js_class_name}::${js_fn_name})->GetFunction(context).ToLocalChecked()).Check();")
+	})
+
+	g.server_main_cpp.writeln("")
+	g.server_main_cpp.writeln("\t// set constructor")
+	g.server_main_cpp.writeln("\texports->Set(context, v8::String::NewFromUtf8(isolate, \"${sym.name}\").ToLocalChecked(), constructor).Check();")
 	g.server_main_cpp.writeln("};")
 
 	g.server_main_cpp.writeln("")
 
 	if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
-		g.server_main_cpp.writeln("Napi::Value ${s_util.gen_bind_class_name(obj_name2)}::From(const Napi::CallbackInfo& info)")
+		g.server_main_cpp.writeln("void ${bind_class_name}::Сtor(const v8::FunctionCallbackInfo<v8::Value>& args)")
+		g.server_main_cpp.writeln("{")
+		g.server_main_cpp.writeln("\tv8::Isolate* isolate = args.GetIsolate();")
+		g.server_main_cpp.writeln("\tv8::HandleScope scope(isolate);")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(isolate);")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(!isolate->GetCurrentContext().IsEmpty());")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\ttry")
+		g.server_main_cpp.writeln("\t{")
+		g.server_main_cpp.writeln("\t\tif (args.IsConstructCall())")
+		g.server_main_cpp.writeln("\t\t{")
+		g.server_main_cpp.writeln("\t\t\targs.This()->SetAlignedPointerInInternalField(0, nullptr);")
+		g.server_main_cpp.writeln("\t\t\targs.GetReturnValue().Set(args.This());")
+		g.server_main_cpp.writeln("\t\t\treturn;")
+		g.server_main_cpp.writeln("\t\t}")
+		g.server_main_cpp.writeln("\t\telse")
+		g.server_main_cpp.writeln("\t\t{")
+        g.server_main_cpp.writeln("\t\t\tv8::Local<v8::Context> context = isolate->GetCurrentContext();")
+        g.server_main_cpp.writeln("\t\t\tv8::Local<v8::Function> ctor = v8::Local<v8::Function>::New(isolate, ${c_util.gen_ctor_name(sym.name)});")
+        g.server_main_cpp.writeln("\t\t\tv8::Local<v8::Object> instance = ctor->NewInstance(context, 0, nullptr).ToLocalChecked();")
+        g.server_main_cpp.writeln("\t\t\targs.GetReturnValue().Set(instance);")
+		g.server_main_cpp.writeln("\t\t\treturn;")
+		g.server_main_cpp.writeln("\t\t}")
+		g.server_main_cpp.writeln("\t}")
+		g.server_main_cpp.writeln("\tcatch(std::exception& e) {")
+		g.server_main_cpp.writeln("\t\tstd::string msg = e.what();")
+		g.server_main_cpp.writeln("\t\tERR(msg);")
+		g.server_main_cpp.writeln("\t\targs.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(args.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+		g.server_main_cpp.writeln("\t\treturn;")
+		g.server_main_cpp.writeln("\t}")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\targs.GetReturnValue().Set(v8::Null(args.GetIsolate()));")
+		g.server_main_cpp.writeln("\treturn;")
+		g.server_main_cpp.writeln("}")
+
+		g.server_main_cpp.writeln("")
+
+		g.server_main_cpp.writeln("void ${s_util.gen_bind_class_name(obj_name2)}::From(const v8::FunctionCallbackInfo<v8::Value>& info)")
 		g.server_main_cpp.writeln("{")
 		g.server_main_cpp.writeln("\ttry")
 		g.server_main_cpp.writeln("\t{")
-		g.server_main_cpp.writeln("\t\tuint32_t formId = NapiHelper::ExtractUInt32(info[0], \"formId\");")
+		g.server_main_cpp.writeln("\t\tv8::Isolate* isolate = info.GetIsolate();")
+		g.server_main_cpp.writeln("\t\tv8::HandleScope scope(isolate);")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\t\tDEBUG_ASSERT(isolate);")
+		g.server_main_cpp.writeln("\t\tDEBUG_ASSERT(!isolate->GetCurrentContext().IsEmpty());")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\t\tuint32_t formId = JsHelper::ExtractUInt32(isolate, info[0], \"formId\");")
 		g.server_main_cpp.writeln("\t\tstd::optional<VarValue> form = LookupForm(formId);")
-
+		g.server_main_cpp.writeln("")
 		g.server_main_cpp.writeln("\t\tif (!form.has_value())")
 		g.server_main_cpp.writeln("\t\t{")
-		g.server_main_cpp.writeln("\t\t\treturn info.Env().Null();")
+		g.server_main_cpp.writeln("\t\t\tinfo.GetReturnValue().Set(v8::Null(isolate));")
 		g.server_main_cpp.writeln("\t\t}")
 		g.server_main_cpp.writeln("")
-		g.server_main_cpp.writeln("\t\treturn ${s_util.gen_bind_class_name(obj_name2)}::ToNapiValue(info.Env(), form.value());")
-
+		g.server_main_cpp.writeln("\t\tinfo.GetReturnValue().Set(${s_util.gen_convert_to_napivalue(g.table, obj_type, "form.value()")});")
+		g.server_main_cpp.writeln("\t\treturn;")
 		g.server_main_cpp.writeln("\t}")
 		g.server_main_cpp.writeln("\tcatch(std::exception& e) {")
-		g.server_main_cpp.writeln("\t\tspdlog::error((std::string)e.what());")
-		g.server_main_cpp.writeln("\t\tthrow Napi::Error::New(info.Env(), (std::string)e.what());")
+		g.server_main_cpp.writeln("\t\tstd::string msg = e.what();")
+		g.server_main_cpp.writeln("\t\tERR(msg);")
+		g.server_main_cpp.writeln("\t\tinfo.GetIsolate()->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(info.GetIsolate(), msg.c_str()).ToLocalChecked()));")
+		g.server_main_cpp.writeln("\t\treturn;")
 		g.server_main_cpp.writeln("\t}")
-		g.server_main_cpp.writeln("\treturn info.Env().Undefined();")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tinfo.GetReturnValue().Set(v8::Null(info.GetIsolate()));")
+		g.server_main_cpp.writeln("\treturn;")
 		g.server_main_cpp.writeln("};")
 
 		g.server_main_cpp.writeln("")
 
-		g.server_main_cpp.writeln("bool ${s_util.gen_bind_class_name(obj_name2)}::IsInstance(const Napi::Value& value)")
+		g.server_main_cpp.writeln("VarValue ${s_util.gen_bind_class_name(obj_name2)}::UnwrapSelf(v8::Isolate* isolate, v8::Local<v8::Value> value)")
 		g.server_main_cpp.writeln("{")
-		g.server_main_cpp.writeln("\tif (!value.IsObject())")
-		g.server_main_cpp.writeln("\t{")
-		g.server_main_cpp.writeln("\t\treturn false;")
-		g.server_main_cpp.writeln("\t}")
-		g.server_main_cpp.writeln("\tNapi::Object obj = value.As<Napi::Object>();")
-		g.server_main_cpp.writeln("\treturn obj.InstanceOf(${s_util.gen_ctor_name(obj_name2)}.Value());")
-		g.server_main_cpp.writeln("};")
-
+		g.server_main_cpp.writeln("\tv8::HandleScope handleScope(isolate);")
 		g.server_main_cpp.writeln("")
-
-		g.server_main_cpp.writeln("VarValue ${s_util.gen_bind_class_name(obj_name2)}::ToVMValue(const Napi::Value& value)")
-		g.server_main_cpp.writeln("{")
-		g.server_main_cpp.writeln("\tif (!IsInstance(value))")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(isolate);")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(!isolate->GetCurrentContext().IsEmpty());")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tif (!value->IsObject())")
 		g.server_main_cpp.writeln("\t{")
 		g.server_main_cpp.writeln("\t\treturn VarValue::None();")
 		g.server_main_cpp.writeln("\t}")
-		g.server_main_cpp.writeln("\tNapi::Object obj = value.As<Napi::Object>();")
-		g.server_main_cpp.writeln("\t${s_util.gen_bind_class_name(obj_name2)}* wrapper = Napi::ObjectWrap<${s_util.gen_bind_class_name(obj_name2)}>::Unwrap(obj);")
-		g.server_main_cpp.writeln("\treturn wrapper->self;")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tauto obj = value.As<v8::Object>();")
+		g.server_main_cpp.writeln("\tif (obj.IsEmpty() || obj->InternalFieldCount() <= 0)")
+		g.server_main_cpp.writeln("\t{")
+		g.server_main_cpp.writeln("\t\treturn VarValue::None();")
+		g.server_main_cpp.writeln("\t}")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tSelfHolder* holder = static_cast<SelfHolder*>(obj->GetAlignedPointerFromInternalField(0));")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\treturn holder->self;")
 		g.server_main_cpp.writeln("};")
 		
 		g.server_main_cpp.writeln("")
 
-		g.server_main_cpp.writeln("Napi::Value ${s_util.gen_bind_class_name(obj_name2)}::ToNapiValue(Napi::Env env, const VarValue& self)")
+		g.server_main_cpp.writeln("v8::Local<v8::Value> ${s_util.gen_bind_class_name(obj_name2)}::Wrap(v8::Isolate* isolate, const VarValue& self)")
 		g.server_main_cpp.writeln("{")
-		g.server_main_cpp.writeln("\tif (self.GetType() != VarValue::Type::kType_Object || !self)")
+		g.server_main_cpp.writeln("\tv8::EscapableHandleScope scope(isolate);")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(isolate);")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(!isolate->GetCurrentContext().IsEmpty());")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tif (!self)")
 		g.server_main_cpp.writeln("\t{")
-		g.server_main_cpp.writeln("\t\t//todo error invalid self")
-		g.server_main_cpp.writeln("\t\treturn env.Null();")
+		g.server_main_cpp.writeln("\t\tERR(\"${bind_class_name}::Wrap - self is nullptr\");")
+		g.server_main_cpp.writeln("\t\treturn scope.Escape(v8::Null(isolate));")
 		g.server_main_cpp.writeln("\t}")
-		g.server_main_cpp.writeln("\t// Создаем новый экземпляр ${s_util.gen_bind_class_name(obj_name2)}")
-		g.server_main_cpp.writeln("\tNapi::EscapableHandleScope scope(env);")
-		g.server_main_cpp.writeln("\tNapi::Function ctor = ${s_util.gen_ctor_name(obj_name2)}.Value();")
-		g.server_main_cpp.writeln("\tNapi::Object instance = ctor.New({});")
-		g.server_main_cpp.writeln("\t${s_util.gen_bind_class_name(obj_name2)}* wrapper = Napi::ObjectWrap<${s_util.gen_bind_class_name(obj_name2)}>::Unwrap(instance);")
-		g.server_main_cpp.writeln("\tif (wrapper)")
-		g.server_main_cpp.writeln("\t{")
-		g.server_main_cpp.writeln("\t\twrapper->self = self;")
-		g.server_main_cpp.writeln("\t}")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tv8::Local<v8::Context> context = isolate->GetCurrentContext();")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tv8::Local<v8::Function> constructor = v8::Local<v8::Function>::New(isolate, ${s_util.gen_ctor_name(sym.name)});")
+		g.server_main_cpp.writeln("\tv8::Local<v8::Object> instance = constructor->NewInstance(context, 0, nullptr).ToLocalChecked();")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(!instance.IsEmpty());")
+		g.server_main_cpp.writeln("\tDEBUG_ASSERT(instance->InternalFieldCount() > 0);")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tSelfHolder* holder = new SelfHolder(isolate, self, instance);")
+		g.server_main_cpp.writeln("")
+		g.server_main_cpp.writeln("\tinstance->SetAlignedPointerInInternalField(0, holder);")
+		g.server_main_cpp.writeln("")
 		g.server_main_cpp.writeln("\treturn scope.Escape(instance);")
 		g.server_main_cpp.writeln("}")
 	}
@@ -294,8 +391,9 @@ const server_main_cpp_file_start =
 "// !!! Generated automatically. Do not edit. !!!
 #include \"__js_bindings.h\"
 #include \"__js_rpc_server_wrap_bindings.h\"
-#include \"PartOne.h\"
-#include \"script_objects/EspmGameObject.h\"
+#include <PartOne.h>
+#include <script_objects/EspmGameObject.h>
+#include \"ScampServer.h\"
 
 #ifdef GetForm
 #undef GetForm
@@ -304,6 +402,31 @@ const server_main_cpp_file_start =
 extern std::shared_ptr<PartOne> g_partOne;
 
 namespace JSBinding {
+
+struct SelfHolder {
+    VarValue                  self;
+    v8::Global<v8::Object>    js_handle;     // держит js-объект до колбэка
+
+    SelfHolder(v8::Isolate* isolate,
+               const VarValue& value,
+               v8::Local<v8::Object> obj)
+        : self(value), js_handle(isolate, obj)
+    {
+        //   kParameter → одностадийный вызов, колбэк получит this
+        js_handle.SetWeak(this, WeakCallback,
+                          v8::WeakCallbackType::kParameter);
+    }
+
+    ~SelfHolder() {                     // гарантировано вызывается из того же
+        js_handle.Reset();              // изолята, «self» можно чистить
+        /* …освобождаем VarValue, если нужно… */
+    }
+
+    static void WeakCallback(const v8::WeakCallbackInfo<SelfHolder>& info)
+    {
+        delete info.GetParameter();     // запускает ~SelfHolder()
+    }
+};
 
 std::optional<VarValue> LookupForm(int32_t formId)
 {

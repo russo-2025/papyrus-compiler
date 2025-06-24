@@ -11,12 +11,12 @@ fn (mut g Gen) gen_server_main_h_file() {
 		bind_class_name := s_util.gen_bind_class_name(sym.name)
 		obj_type := g.table.find_type_idx(sym.name)
 
-		g.server_main_h.writeln("class ${bind_class_name} final : public Napi::ObjectWrap<${bind_class_name}> {")
+		g.server_main_h.writeln("class ${bind_class_name} {")
 		g.server_main_h.writeln("public:")
-		g.server_main_h.writeln("\tstatic Napi::Object Init(Napi::Env env, Napi::Object exports);")
-		g.server_main_h.writeln("\t${bind_class_name}(const Napi::CallbackInfo& info);")
-		g.server_main_h.writeln("\t~${bind_class_name}() {};")
+		g.server_main_h.writeln("\tstatic void Init(v8::Isolate* isolate, v8::Local<v8::Object> exports);")
+		g.server_main_h.writeln("\texplicit ${bind_class_name}() {};")
 		g.server_main_h.writeln("")
+		g.server_main_h.writeln("static void Сtor(const v8::FunctionCallbackInfo<v8::Value>& args);")
 		g.server_main_h.writeln("\t// wrappers")
 
 		g.server_main_h.writeln("\t// ${sym.name} methods")
@@ -26,12 +26,7 @@ fn (mut g Gen) gen_server_main_h_file() {
 		
 			js_fn_name := s_util.gen_js_fn_name(func.name)
 
-			if func.is_global {
-				g.server_main_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-			}
-			else {
-				g.server_main_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-			}
+			g.server_main_h.writeln("\tstatic void ${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& info);")
 		})
 
 		g.server_main_h.writeln("\t// parent methods")
@@ -40,24 +35,15 @@ fn (mut g Gen) gen_server_main_h_file() {
 		
 			js_fn_name := s_util.gen_js_fn_name(func.name)
 
-			if func.is_global {
-				g.server_main_h.writeln("\tstatic Napi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-			}
-			else {
-				g.server_main_h.writeln("\tNapi::Value ${js_fn_name}(const Napi::CallbackInfo& info);")
-			}
+			g.server_main_h.writeln("\tstatic void ${js_fn_name}(const v8::FunctionCallbackInfo<v8::Value>& info);")
 		})
 
 		if !c_util.is_no_instance_class(g.no_instance_class, obj_type) {
 			g.server_main_h.writeln("")
 			g.server_main_h.writeln("\t// tools")
-			g.server_main_h.writeln("\tstatic Napi::Value From(const Napi::CallbackInfo& info);")
-			g.server_main_h.writeln("\tstatic bool IsInstance(const Napi::Value& value);")
-			g.server_main_h.writeln("\tstatic VarValue ToVMValue(const Napi::Value& value);")
-			g.server_main_h.writeln("\tstatic Napi::Value ToNapiValue(Napi::Env env, const VarValue& value);")
-			g.server_main_h.writeln("")
-			g.server_main_h.writeln("private:")
-			g.server_main_h.writeln("\tVarValue self;")
+			g.server_main_h.writeln("\tstatic void From(const v8::FunctionCallbackInfo<v8::Value>& info);")
+			g.server_main_h.writeln("\tstatic VarValue UnwrapSelf(v8::Isolate* isolate, v8::Local<v8::Value> value);")
+			g.server_main_h.writeln("\tstatic v8::Local<v8::Value> Wrap(v8::Isolate* isolate, const VarValue& value);")
 		}
 		g.server_main_h.writeln("}; // end class ${bind_class_name}")
 		g.server_main_h.writeln("")
@@ -69,15 +55,14 @@ fn (mut g Gen) gen_server_main_h_file() {
 const server_main_h_file_start = 
 "// !!! Generated automatically. Do not edit. !!!
 #pragma once
-#include <napi.h>
-#include \"NapiHelper.h\"
-#include \"papyrus-vm/Utils.h\"
-#include \"papyrus-vm/VarValue.h\"
+#include <JsHelper.h>
+#include <papyrus-vm/Utils.h>
+#include <papyrus-vm/VarValue.h>
 
 namespace JSBinding
 {
 "
 
 const server_main_h_file_end = 
-"void RegisterAllVMObjects(Napi::Env env, Napi::Object exports);
+"void RegisterAllVMObjects(v8::Isolate* isolate, v8::Local<v8::Object> exports);
 }; // end namespace JSBinding"

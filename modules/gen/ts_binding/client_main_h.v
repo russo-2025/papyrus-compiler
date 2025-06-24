@@ -118,7 +118,7 @@ const client_main_h_start_file =
 
 #pragma once
 
-#include \"../JsHelper.h\"
+#include <JsHelper.h>
 #include \"../data/PlayerContainer.h\"
 
 namespace JSBinding
