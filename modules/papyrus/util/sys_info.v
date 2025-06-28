@@ -141,8 +141,8 @@ pub fn collect_info() DeviceInfo {
 		os_details = '${ouname.release}, ${ouname.version}'
 	}
 
-	total_memory := f32(runtime.total_memory()) / (1024.0 * 1024.0 * 1024.0)
-	free_memory := f32(runtime.free_memory()) / (1024.0 * 1024.0 * 1024.0)
+	total_memory := f32(runtime.total_memory() or { 0 }) / (1024.0 * 1024.0 * 1024.0)
+	free_memory := f32(runtime.free_memory() or { 0 }) / (1024.0 * 1024.0 * 1024.0)
 /*
 	mut git_status := "N/A"
 

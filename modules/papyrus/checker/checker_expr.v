@@ -467,7 +467,7 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 
 			lname := param.name.to_lower()
 			if lname in node.redefined_args {
-				mut r_arg := &(node.redefined_args[lname])
+				mut r_arg := unsafe { &(node.redefined_args[lname]) }
 
 				node.args << ast.CallArg {
 					expr: r_arg.expr
