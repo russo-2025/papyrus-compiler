@@ -3,6 +3,7 @@ module builder
 import os
 import strings
 import papyrus.ast
+import papyrus.util
 
 struct FnInfo {
 pub mut:
@@ -172,7 +173,9 @@ fn (s Stats) save() {
 	b.writeln("| native global fns | ${s.count_native_static_fns} |")
 	b.writeln("| all methods | ${s.count_all_methods} |")
 	b.writeln("| native methods | ${s.count_native_methods}")
-	os.write_file("stats.md", b.str()) or { panic(err) }
+	os.write_file("stats.md", b.str()) or {
+		util.fatal_error("failed to write file: ${err}")
+	}
 
 	mut obj_info_arr := s.obj_info.values()
 	obj_info_arr.sort(a.count > b.count)
@@ -186,7 +189,9 @@ fn (s Stats) save() {
 		b.writeln("| ${obj_info.name} | ${obj_info.count} | ")
 	}
 
-	os.write_file("obj_extends_count.md", b.str()) or { panic(err) }
+	os.write_file("obj_extends_count.md", b.str()) or {
+		util.fatal_error("failed to write file: ${err}")
+	}
 
 	mut call_info_arr := s.call_info.values()
 	call_info_arr.sort(a.count > b.count)
@@ -200,7 +205,9 @@ fn (s Stats) save() {
 		b.writeln("| ${call_info.obj_name}.${call_info.name} | ${call_info.count} | ")
 	}
 	
-	os.write_file("all_fns_count.md", b.str()) or { panic(err) }
+	os.write_file("all_fns_count.md", b.str()) or {
+		util.fatal_error("failed to write file: ${err}")
+	}
 
 	// only native
 	b = strings.new_builder(100)
@@ -213,5 +220,7 @@ fn (s Stats) save() {
 		}
 	}
 
-	os.write_file("native_fns_count.md", b.str()) or { panic(err) }
+	os.write_file("native_fns_count.md", b.str()) or {
+		util.fatal_error("failed to write file: ${err}")
+	}
 }

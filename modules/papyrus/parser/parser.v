@@ -184,7 +184,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 		}
 	}
 
-	panic("wtf")
+	util.compiler_error(msg: "dead code / break while?", phase: "parse", prefs: p.pref, file: @FILE, func: @FN, line: @LINE)
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {

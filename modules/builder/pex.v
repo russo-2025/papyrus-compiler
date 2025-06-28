@@ -6,6 +6,7 @@ import pex
 import papyrus.ast
 import papyrus.parser
 import papyrus.checker
+import papyrus.util
 
 @[inline]
 fn (mut b Builder) compile_pex() {
@@ -20,8 +21,6 @@ fn (mut b Builder) compile_pex() {
 	b.start_timer('parse headers files')
 	b.parse_deps()
 	b.print_timer('parse headers files')
-	
-	//fns_dump.load("FunctionsDump.json", mut b.table) or { panic(err) }
 
 	b.start_timer('check files')
 	mut c := checker.new_checker(b.table, b.pref)
@@ -29,17 +28,17 @@ fn (mut b Builder) compile_pex() {
 	b.print_timer('check files')
 
 	if !os.exists(cache_path) {
-		os.mkdir(cache_path) or { panic(err) }
+		os.mkdir(cache_path) or {
+			util.fatal_error("failed to make dir: ${err}")
+		}
 	}
 
 	if c.errors.len != 0 {
-		println("failed to compile files, ${c.errors.len} errors")
-
 		$if test {
 			assert false, "checker.errors.len != 0"
 		}
 
-		exit(1)
+		util.fatal_error("failed to compile files, ${c.errors.len} errors")
 	}
 
 	if b.pref.backend == .check {
@@ -106,8 +105,12 @@ fn (mut b Builder) gen_to_pex_file(mut parsed_file ast.File, mut buff_bytes pex.
 		
 		assert !buff_bytes.is_empty()
 		
-		mut file := os.create(output_file_path) or { panic(err) }
-		file.write(buff_bytes.bytes) or { panic(err) }
+		mut file := os.create(output_file_path) or {
+			util.fatal_error("failed to create file: ${err}")
+		}
+		file.write(buff_bytes.bytes) or {
+			util.fatal_error("failed to write file: ${err}")
+		}
 		file.close()
 	}
 }

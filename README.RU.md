@@ -2,6 +2,8 @@
 
 Компилятор скриптового языка Papyrus с открытым исходным кодом. На данный момент компилятор поддерживает только Skyrim (тестировался на Skyrim SE/AE). 
 
+[![Discord Chat](https://img.shields.io/discord/1377359857220321416?label=Discord&logo=Discord)](https://discord.gg/JqQZXAXvPT)
+
 Компилятор был создан для следующих целей:
 1. **Понимание языков программирования:** Проект разработан для того, чтобы глубже понять, как работают языки программирования.
 2. **Эксперименты с языком V:** Использует язык программирования V для реализации.
@@ -125,7 +127,7 @@ Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = f
 ## Сборка
 
 ### Требования:
-- [V compiler f3d2eb1 (weekly.2025.09)](https://github.com/vlang/v/releases/tag/weekly.2025.09)
+- [V compiler d6a3f31 (weekly.2025.26)](https://github.com/vlang/v/releases/tag/weekly.2025.26)
 
 ```bash
 v -o "bin\papyrus.exe" -prod -gc none compiler.v

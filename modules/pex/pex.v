@@ -1,5 +1,7 @@
 module pex
 
+import papyrus.util
+
 pub const empty_state_name = ""
 
 @[inline]
@@ -470,7 +472,7 @@ pub fn (p PexFile) get_string[T](v T) string {
 	$else {
 		$compile_error("[pex.PexFile.get_string] invalid argument type")
 		assert false, "[pex.PexFile.get_string] invalid argument type ${T.name}"
-		panic("[pex.PexFile.get_string] invalid argument type ${T.name}")
+		util.compiler_error(msg: "invalid argument type ${T.name}", phase: "pex get string", file: @FILE, func: @FN, line: @LINE)
 	}
 }
 
@@ -613,7 +615,7 @@ fn build_opcode_str() []string {
 @[inline]
 pub fn opcode_from_byte(v u8) OpCode {
 	if v >= u8(OpCode._opcode_end) {
-		panic("invalid opcode: 0x" + v.hex())
+		util.compiler_error(msg: "invalid opcode: 0x${v.hex()}", phase: "pex opcode_from_byte", file: @FILE, func: @FN, line: @LINE)
 	}
 
 	return unsafe { OpCode(v) }
@@ -684,7 +686,8 @@ fn (op OpCode) get_count_arguments() int {
 			return 3//3+
 		}
 		._opcode_end {
-			panic("error")
+			util.compiler_error(msg: "invalid op code ${op}", phase: "pex op", file: @FILE, func: @FN, line: @LINE)
+			return 0
 		}
 	}
 }

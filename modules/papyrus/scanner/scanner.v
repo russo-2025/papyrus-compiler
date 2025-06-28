@@ -29,11 +29,11 @@ mut:
 
 pub fn new_scanner_file(file_path string, prefs &pref.Preferences) &Scanner {
 	if !os.exists(file_path) {
-		panic("$file_path doesn't exist")
+		util.fatal_error("file not exist `${file_path}`")
 	}
 
 	raw_text := util.read_file(file_path) or {
-		panic(err)
+		util.fatal_error("failed to read file: ${err}")
 	}
 
 	return &Scanner{
@@ -349,8 +349,9 @@ fn (mut s Scanner) end_of_file() token.Token {
 	s.eofs++
 	if s.eofs > 50 {
 		s.line_nr--
-		panic('the end of file `$s.file_path` has been reached 50 times already, the v parser is probably stuck.\n' +
-			'This should not happen. Please report the bug here, and include the last 2-3 lines of your source code:\n')
+		util.compiler_error(msg: "the end of file `${s.file_path}` has been reached 50 times already, the v parser is probably stuck.\n' +
+			'This should not happen. Please report the bug here, and include the last 2-3 lines of your source code:\n", phase: "scanner", prefs: s.pref, file: @FILE, func: @FN, line: @LINE)
+
 	}
 	if s.pos != s.text.len && s.eofs == 1 {
 		s.inc_line_number()
@@ -476,7 +477,9 @@ fn trim_slash_line_break(s string) string {
 	mut start := 0
 	mut ret_str := s
 	for {
-		idx := ret_str.index_after('\\\n', start)
+		idx := ret_str.index_after('\\\n', start) or {
+			util.compiler_error(msg: "index_after `\\n`; ${err}", phase: "scanner", file: @FILE, func: @FN, line: @LINE)
+		}
 		if idx != -1 {
 			ret_str = ret_str[..idx] + ret_str[idx + 2..].trim_left(' \n\t\v\f\r')
 			start = idx
@@ -642,6 +645,5 @@ pub fn (mut s Scanner) error(msg string) {
 		pos: s.pos
 	}
 	
-	eprintln(util.formatted_error('Scanner error:', msg, s.file_path, pos))
-	exit(1)
+	util.fatal_error(util.formatted_error('Scanner error:', msg, s.file_path, pos))
 }

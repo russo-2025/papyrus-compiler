@@ -4,6 +4,7 @@ import os
 import term
 import papyrus.token
 import papyrus.errors
+import pref
 
 const error_context_before = 2
 const error_context_after  = 2
@@ -36,14 +37,14 @@ pub fn formatted_error(kind string, omsg string, filepath string, pos token.Posi
 	}
 	//
 	source, column := filepath_pos_to_source_and_column(filepath, pos)
-	position := '$path:${pos.line_nr + 1}:${imax(1, column + 1)}:'
+	position := '${path}:${pos.line_nr + 1}:${imax(1, column + 1)}:'
 	scontext := source_context(kind, source, column, pos).join('\n')
 	final_position := bold(position)
 	final_kind := bold(color(kind, kind))
 	final_msg := emsg
 	final_context := if scontext.len > 0 { '\n$scontext' } else { '' }
 	//
-	return '$final_position $final_kind $final_msg$final_context'.trim_space()
+	return '${final_position} ${final_kind} ${final_msg}${final_context}'.trim_space()
 }
 
 pub fn filepath_pos_to_source_and_column(filepath string, pos token.Position) (string, int) {
@@ -118,4 +119,72 @@ pub fn source_context(kind string, source string, column int, pos token.Position
 pub fn show_compiler_message(kind string, err errors.CompilerMessage) {
 	ferror := util.formatted_error(kind, err.message, err.file_path, err.pos)
 	eprintln(ferror)
+}
+
+@[params]
+pub struct CompilerConfigParams {
+pub mut:
+	msg string
+	phase string
+	prefs ?&pref.Preferences
+	file string = @FILE
+	func string = @FN
+	line string = @LINE
+}
+
+@[noreturn]
+pub fn fatal_error(msg string) {
+	eprintln(msg)
+	exit(1)
+}
+
+@[noreturn]
+pub fn compiler_error(params CompilerConfigParams) {
+	info := collect_info()
+
+	println(
+"
+
+================================================================================
+            INTERNAL COMPILER ERROR - This is a bug in the compiler!
+================================================================================
+
+You have encountered an internal compiler error. This is NOT your fault - it's 
+a bug in our compiler that should never happen. We apologize for the inconvenience.
+
+COMPILER INFORMATION:
+  Version: ${info.version}
+  Commit:  ${info.git_commit}
+  Built:   ${info.build_date}
+  Type:    ${info.build_type}
+
+ERROR DETAILS:
+  Phase:    ${params.phase}
+  Function: ${params.func}
+  File:     ${params.file}:${params.line}
+  Message:  ${params.msg}
+
+ENVIRONMENT:
+  OS:       ${info.os}
+  exe:      ${info.exe}
+  flags:    ${arguments()} 
+
+STACK TRACE:")
+print_backtrace()
+
+println("
+PLEASE REPORT THIS BUG:
+  GitHub: https://github.com/russo-2025/papyrus-compiler/issues/new?template=bug-report.yml
+  Discord: https://discord.gg/JqQZXAXvPT (channel: #help)
+
+When reporting, please:
+  1. Copy this ENTIRE error message
+  2. Include the source code that triggered this error (if possible)
+  3. Mention what you were trying to do
+
+Thank you for helping us improve the compiler!
+================================================================================
+")
+
+	exit(1)
 }

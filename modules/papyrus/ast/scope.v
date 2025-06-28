@@ -1,6 +1,7 @@
 module ast
 
 import papyrus.token
+import papyrus.util
 
 @[heap]
 pub struct Scope {
@@ -40,7 +41,9 @@ pub fn (mut s Scope) find(name string) ?ScopeObject {
 	mut current_scope := &Scope(&s)
 	for {
 		if lname in current_scope.objects {
-			return current_scope.objects[lname] or { panic('key not found') }
+			return current_scope.objects[lname] or {
+				util.compiler_error(msg: "key not found(${lname})", phase: "scope find", file: @FILE, func: @FN, line: @LINE)
+			}
 		}
 
 		if !isnil(current_scope.parent) {
@@ -87,6 +90,6 @@ pub fn (mut s Scope) register(obj ScopeObject) {
 		s.objects[name] = obj
 	}
 	else {
-		panic("invalid scope object")
+		util.compiler_error(msg: "unexpected ScopeObject(${obj.type_name()})", phase: "scope register", file: @FILE, func: @FN, line: @LINE)
 	}
 }

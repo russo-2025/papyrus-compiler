@@ -16,7 +16,7 @@ jobs:
       - name: Install V
         uses: vlang/setup-v@v1
         with:
-          version: weekly.2025.09
+          version: weekly.2025.26
 
       - name: Checkout ${{ github.event.repository.name }}
         uses: actions/checkout@v2
