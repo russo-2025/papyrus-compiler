@@ -164,7 +164,9 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 
 				node.typ = left_type
 
-				if c.valid_type(left_type, right_type) {}
+				valid_obj_none_value := node.is_object_var && node.right is ast.NoneLiteral && (c.table.get_type_symbol(left_type).kind == .script || c.table.get_type_symbol(left_type).kind == .array)
+				
+				if c.valid_type(left_type, right_type) || valid_obj_none_value {}
 				else if c.can_autocast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
 					right_type = left_type
