@@ -4,7 +4,7 @@ import os
 import pref
 import builder
 
-fn test_selective_headers_loading() {
+fn test_project_sexlab() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "SexLabSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled", "SexLab"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
