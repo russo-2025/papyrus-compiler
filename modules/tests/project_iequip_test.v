@@ -4,8 +4,8 @@ import os
 import pref
 import builder
 
-fn test_selective_headers_loading() {
-	input_dir := os.real_path(os.join_path("modules", "tests", "iEquip"))
+fn test_project_iequip() {
+	input_dir := os.real_path(os.join_path("modules", "tests", "iEquipSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 
