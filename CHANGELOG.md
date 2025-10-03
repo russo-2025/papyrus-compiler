@@ -10,6 +10,10 @@
   - Added `version` command to display current compiler version.
   - Updated supported V compiler version.
   - TODO: Update help command documentation.
+  - исправлен автокаст значений у property
+  - добавлены проверки родителей у объектов
+  - исправлена проверка аргумента функции в состоянии с параметром по умолчанию
+  - добавлена проверка параметра по умолчанию
 
 ...
 

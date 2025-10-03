@@ -56,7 +56,7 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	}
 	
 	sym := c.table.get_type_symbol(typ)
-	assert sym.kind != .placeholder, sym.name
+	
 	if sym.kind == .placeholder {
 		return false
 	}
@@ -244,13 +244,82 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	return &new_node
 }
 
+pub fn (mut c Checker) compile_time_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {
+	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
+
+	match from_type {
+		ast.none_type {
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: "False" } }
+				ast.string_type { return &ast.StringLiteral{ val: "None" } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.bool_type {
+			bool_lit := node as ast.BoolLiteral
+
+			match to_type {
+				ast.int_type { return &ast.IntegerLiteral{ val: bool_lit.int().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: bool_lit.f32().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: bool_lit.string() } }
+				// object
+				// array
+				else {
+					return none
+				}
+			}
+		}
+		ast.int_type {
+			int_lit := node as ast.IntegerLiteral
+
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: int_lit.bool().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: int_lit.f32().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: int_lit.string() } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.float_type {
+			float_lit := node as ast.FloatLiteral
+
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: float_lit.bool().str() } }
+				ast.int_type { return &ast.IntegerLiteral{ val: float_lit.int().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: float_lit.string() } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.string_type {
+			string_value := (node as ast.StringLiteral)
+			
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: string_value.bool().str() } }
+				ast.int_type { return &ast.IntegerLiteral{ val: string_value.int().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: string_value.f32().str() } }
+				else {
+					return none
+				}
+			}
+		}
+		else {
+			return none
+		}
+	}
+
+	return none
+}
+
 pub fn (mut c Checker) find_method(typ ast.Type, name string) ?ast.Fn {
 	mut sym := c.table.get_type_symbol(typ)
 
 	mut tsym := sym
 	for {
-		assert tsym.kind != .placeholder, tsym.name
-
 		if func := tsym.find_method(name) {
 			return func
 		}

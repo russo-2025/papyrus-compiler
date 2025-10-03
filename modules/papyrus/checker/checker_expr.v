@@ -413,6 +413,11 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 			//find method
 			typ = c.expr(mut node.left)
 
+			if !c.type_is_valid(typ) {
+				c.error("invalid type in method call",  node.pos)
+				return ast.none_type
+			}
+
 			if mut tfunc := c.find_method(typ, node.name) {
 				func = &tfunc
 			}
