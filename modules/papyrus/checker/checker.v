@@ -69,6 +69,7 @@ fn (c &Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
 
+// TODO rename to can_assign / valid_value_for_type
 //может ли тип var_typ иметь значение с типом value_typ
 pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type) bool {
 	assert var_typ != 0
@@ -103,12 +104,22 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	assert from_type != to_type
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
-	assert from_sym.kind != .placeholder, from_sym.name
-	assert to_sym.kind != .placeholder, to_sym.name
+	
+	/*
+	if from_sym.kind == .placeholder {
+		print_backtrace()
+	}
+
+	if to_sym.kind == .placeholder {
+		print_backtrace()
+	}*/
+
+	assert from_sym.kind != .placeholder, 'from_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
+	assert to_sym.kind != .placeholder, 'to_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
 
 	match to_sym.kind {
 		.placeholder {
-			util.compiler_error(msg: "placeholder type symbol / invalid type in can_autocast", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
+			return false
 		}
 		.none_ {
 			return false

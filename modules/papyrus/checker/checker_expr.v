@@ -88,8 +88,9 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 				node.is_object_var = true
 				return node.typ
 			}
+
+			c.error("undefined identifier `${node.name}`", node.pos)
 			
-			c.error("variable declaration not found: `${node.name}`",  node.pos)
 			return ast.none_type
 		}
 		ast.CallExpr {
@@ -139,11 +140,18 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			}
 			else {
 				if typ := c.find_var_or_property_type(node.typ, node.field_name) {
+					if !c.type_is_valid(typ) {
+						prop_var_type_name := c.get_type_name(typ)
+						accessor_type := c.get_type_name(node.typ)
+						c.error("invalid type `${prop_var_type_name}` for property or variable `${node.field_name}` in `${accessor_type}`", node.pos)
+						return ast.none_type
+					}
+
 					node.typ = typ
 					return typ
 				}
 
-				c.error("`${sym.obj_name}.${node.field_name}` property declaration not found", node.pos)
+				c.error("field or property `${node.field_name}` not found", node.pos)				
 				return ast.none_type
 			}
 			
@@ -448,7 +456,13 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 		arg_typ := c.expr(mut node.args[i].expr)
 		node.args[i].typ = arg_typ
 		func_arg_type := func.params[i].typ
-		
+
+		if !c.type_is_valid(arg_typ) {
+			c.error("invalid type in function argument", node.args[i].pos)
+			i++
+			continue
+		}
+
 		if c.valid_type(func_arg_type, arg_typ) {}
 		else if c.can_autocast(arg_typ, func_arg_type) {
 			node.args[i].expr = c.cast_to_type(node.args[i].expr, arg_typ, func_arg_type)

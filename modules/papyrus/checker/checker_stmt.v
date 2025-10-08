@@ -54,51 +54,52 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			c.var_decl(mut node)
 		}
 		ast.PropertyDecl {
-			if c.type_is_valid(node.typ) {
-				c.inside_property = true
+			if !c.type_is_valid(node.typ) {
+				type_name := c.get_type_name(node.typ)
+				c.error("invalid type `${type_name}` for property `${node.name}`", node.pos)
+				return
+			}
 
-				if node.expr !is ast.EmptyExpr {
-					if !node.expr.is_literal() {
-						c.error("expression in object property can only be a literal", node.pos)
+			c.inside_property = true
+
+			if node.expr !is ast.EmptyExpr {
+				if !node.expr.is_literal() {
+					c.error("expression in object property can only be a literal", node.pos)
+				}
+
+				left_type := node.typ
+				mut right_type := c.expr(mut node.expr)
+
+				if c.valid_prop_type(left_type, right_type) {}
+				else {
+					mb_new_expr := c.compile_time_cast_to_type(node.expr, right_type, left_type)
+					if new_expr := mb_new_expr {
+						node.expr = new_expr
 					}
-
-					left_type := node.typ
-					mut right_type := c.expr(mut node.expr)
-
-					if c.valid_prop_type(left_type, right_type) {}
 					else {
-						mb_new_expr := c.compile_time_cast_to_type(node.expr, right_type, left_type)
-						if new_expr := mb_new_expr {
-							node.expr = new_expr
-						}
-						else {
-							ltype_name := c.get_type_name(left_type)
-							rtype_name := c.get_type_name(right_type)
-							c.error("value with type `${rtype_name}` cannot be assigned to a property with type `${ltype_name}`",  node.pos)
-						}
+						ltype_name := c.get_type_name(left_type)
+						rtype_name := c.get_type_name(right_type)
+						c.error("value with type `${rtype_name}` cannot be assigned to a property with type `${ltype_name}`",  node.pos)
 					}
 				}
-
-				if mut node.read is ast.FnDecl {
-					c.top_stmt(mut &node.read)
-				}
-
-				if mut node.write is ast.FnDecl {
-					c.top_stmt(mut &node.write)
-				}
-
-				sym := c.table.get_type_symbol(c.cur_obj)
-				if t_prop := sym.find_property(node.name) {
-					if t_prop.pos.pos != node.pos.pos {
-						c.error("property with this name already exists", node.pos)
-					}
-				}
-				
-				c.inside_property = false
 			}
-			else {
-				c.error("invalid type in property declaration", node.pos)
+
+			if mut node.read is ast.FnDecl {
+				c.top_stmt(mut &node.read)
 			}
+
+			if mut node.write is ast.FnDecl {
+				c.top_stmt(mut &node.write)
+			}
+
+			sym := c.table.get_type_symbol(c.cur_obj)
+			if t_prop := sym.find_property(node.name) {
+				if t_prop.pos.pos != node.pos.pos {
+					c.error("property with this name already exists", node.pos)
+				}
+			}
+			
+			c.inside_property = false
 		}
 		ast.Comment {}
 	}
@@ -182,7 +183,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 				valid_obj_none_value := node.is_object_var && node.right is ast.NoneLiteral && (c.table.get_type_symbol(left_type).kind == .script || c.table.get_type_symbol(left_type).kind == .array)
 				
 				if c.valid_type(left_type, right_type) || valid_obj_none_value {}
-				else if c.can_autocast(right_type, left_type) {
+				else if c.type_is_valid(left_type) && c.type_is_valid(right_type) && c.can_autocast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
 					right_type = left_type
 				}
@@ -240,7 +241,7 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 
 		if !c.type_is_valid(param.typ) {
 			type_name := c.get_type_name(param.typ)
-			c.error("invalid type `${type_name}` in function parameter", node.pos)
+			c.error("invalid type `${type_name}` for parameter #${i + 1} `${param.name}` in function `${node.name}`", node.pos)
 			continue
 		}
 

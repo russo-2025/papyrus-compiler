@@ -1329,21 +1329,22 @@ fn test_fn_default_arg() {
 	assert errs[0].message == "TODO444"
 }
 
-fn test_call_expr_arg_with_invalid_type()
+fn test_error_msg()
 {
 	mut stmts := []ast.TopStmt{}
 	mut table := ast.new_table()
 	mut errs := []errors.Error{}
 	mut src := ""
-/*
+
 	src = "
 		Function MyFunc(int n1, int n2)
 			MyFunc(foooo, 1)
 		EndFunction"
 
 	stmts, table, errs = compile_top_stmts_error(src)
-	assert errs.len == 1
-	assert errs[0].message == "TODO111"
+	assert errs.len == 2
+	assert errs[0].message == "undefined identifier `foooo`"
+	assert errs[1].message == "cannot convert type `None` to type `Int`"
 
 	src = "
 		Function MyFunc(int n1, int n2)
@@ -1351,9 +1352,10 @@ fn test_call_expr_arg_with_invalid_type()
 		EndFunction"
 
 	stmts, table, errs = compile_top_stmts_error(src)
-	assert errs.len == 1
-	assert errs[0].message == "TODO222"
-*/
+	assert errs.len == 3
+	assert errs[0].message == "undefined identifier `ABCD`"
+	assert errs[1].message == "field or property `foooo` not found"
+	assert errs[2].message == "cannot convert type `None` to type `Int`"
 	
 	src = "
 		InvalidType Property propWithInvalidType Auto
@@ -1362,17 +1364,7 @@ fn test_call_expr_arg_with_invalid_type()
 		EndFunction"
 
 	stmts, table, errs = compile_top_stmts_error(src)
-	assert errs.len == 1
-	assert errs[0].message == "TODO222"
+	assert errs.len == 2
+	assert errs[0].message == "invalid type `InvalidType` for property `propWithInvalidType`"
+	assert errs[1].message == "invalid type in function argument"
 }
-
-/*
-modules\tests\SexLabSources\sslActorAlias.psc:1434:20: Checker error: cannot convert type `Furniture` to type `Form`
- 1432 |         FormList FrostExceptions = Config.FrostExceptions
- 1433 |         if FrostExceptions
- 1434 |             FrostExceptions.RemoveAddedForm(Config.BaseMarker)
-      |                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- 1435 |         endIf
- 1436 |         Thread.RemoveFade()
-
-*/
