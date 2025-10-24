@@ -44,9 +44,9 @@ jobs:
         uses: actions/checkout@v2
   
       - name: Install V
-        uses: vlang/setup-v@v1
+        uses: vlang/setup-v@v1.4
         with:
-          version: weekly.2025.26
+          version: weekly.2025.38
      
       - name: Build Project
         run: v -prod -gc none -o "bin/papyrus" compiler.v

@@ -682,6 +682,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 			}
 			right: expr
 			typ: typ
+			is_object_var: is_object_var
 		}
 		flags: flags
 		pos: pos

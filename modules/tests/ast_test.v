@@ -3,6 +3,7 @@ import papyrus.ast
 import papyrus.parser
 import papyrus.checker
 import papyrus.token
+import papyrus.errors
 
 const prefs = pref.Preferences {
 		paths: []string{}
@@ -58,7 +59,7 @@ int Property myAutoProp = 123 Auto
 OtherScript Property otherProp Auto
 OtherScript Property OtherScript2 Auto\n"
 
-fn compile(src string) (&ast.File, &ast.Table) {
+fn compile(src string) (&ast.File, &ast.Table, []errors.Error) {
 	mut table := ast.new_table()
 	mut global_scope := &ast.Scope{}
 	
@@ -76,14 +77,18 @@ fn compile(src string) (&ast.File, &ast.Table) {
 	c.check(mut parent_file)
 	c.check(mut file)
 
-	assert c.errors.len == 0, src
-
-	return file, table
+	return file, table, c.errors
 }
 
 fn compile_top_stmts(src string) ([]ast.TopStmt, &ast.Table) {
-	mut file, table := compile(src)
+	mut file, table, errs := compile(src)
+	assert errs.len == 0, src
 	return file.stmts, table
+}
+
+fn compile_top_stmts_error(src string) ([]ast.TopStmt, &ast.Table, []errors.Error) {
+	mut file, table, errs := compile(src)
+	return file.stmts, table, errs
 }
 
 fn compile_stmts(src string) ([]ast.Stmt, &ast.Table) {
@@ -1058,4 +1063,308 @@ fn test_line_nr_bug() {
 	assert stmts.len == 3
 	assert (((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).right as ast.IntegerLiteral).val == "123"
 	assert ((stmts[2] as ast.VarDecl).assign as ast.AssignStmt).pos.line_nr == start_line + 2
+}
+
+fn test_object_property_object_none() {
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut prop := ast.PropertyDecl{}
+
+	stmts, table = compile_top_stmts("ABCD Property MyPropAutoCast = none Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	abcd_type := table.find_type_idx("ABCD")
+	assert abcd_type != 0
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == abcd_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.NoneLiteral
+
+	stmts, table = compile_top_stmts("ABCD[] Property MyPropAutoCast = none Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	abcd_array_type := table.find_type_idx("ABCD[]")
+	assert abcd_array_type != 0
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == abcd_array_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.NoneLiteral
+}
+
+fn test_object_property_cast() {
+	mut stmts := []ast.TopStmt{}
+	mut prop := ast.PropertyDecl{}
+
+	// to bool
+	stmts, _ = compile_top_stmts("bool Property MyPropAutoCast = none Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.bool_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.BoolLiteral
+	assert (prop.expr as ast.BoolLiteral).val == "False"
+
+	stmts, _ = compile_top_stmts("bool Property MyPropAutoCast = 0 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.bool_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.BoolLiteral
+	assert (prop.expr as ast.BoolLiteral).val == "false"
+
+	stmts, _ = compile_top_stmts("bool Property MyPropAutoCast = 1 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.bool_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.BoolLiteral
+	assert (prop.expr as ast.BoolLiteral).val == "true"
+
+	stmts, _ = compile_top_stmts("bool Property MyPropAutoCast = \"\" Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.bool_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.BoolLiteral
+	assert (prop.expr as ast.BoolLiteral).val == "false"
+
+	stmts, _ = compile_top_stmts("bool Property MyPropAutoCast = \"asd\" Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.bool_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.BoolLiteral
+	assert (prop.expr as ast.BoolLiteral).val == "true"
+
+
+	// to int
+	stmts, _ = compile_top_stmts("int Property MyPropAutoCast = 111.0 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.int_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.IntegerLiteral
+	assert (prop.expr as ast.IntegerLiteral).val == "111"
+
+	stmts, _ = compile_top_stmts("int Property MyPropAutoCast = \"123\" Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.int_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.IntegerLiteral
+	assert (prop.expr as ast.IntegerLiteral).val == "123"
+
+	stmts, _ = compile_top_stmts("int Property MyPropAutoCast = true Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.int_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.IntegerLiteral
+	assert (prop.expr as ast.IntegerLiteral).val == "1"
+
+	// to float
+	stmts, _ = compile_top_stmts("float Property MyPropAutoCast = 111 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.float_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.FloatLiteral
+	assert (prop.expr as ast.FloatLiteral).val == "111.0"
+
+	stmts, _ = compile_top_stmts("float Property MyPropAutoCast = \"123.12\" Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.float_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.FloatLiteral
+	assert (prop.expr as ast.FloatLiteral).val == "123.12"
+
+	stmts, _ = compile_top_stmts("float Property MyPropAutoCast = false Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.float_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.FloatLiteral
+	assert (prop.expr as ast.FloatLiteral).val == "0.0"
+
+	// to string
+	stmts, _ = compile_top_stmts("string Property MyPropAutoCast = 1 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.string_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.StringLiteral
+	assert (prop.expr as ast.StringLiteral).val == "1"
+
+	stmts, _ = compile_top_stmts("string Property MyPropAutoCast = 12.13 Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.string_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.StringLiteral
+	assert (prop.expr as ast.StringLiteral).val == "12.13"
+
+	stmts, _ = compile_top_stmts("string Property MyPropAutoCast = false Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.string_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.StringLiteral
+	assert (prop.expr as ast.StringLiteral).val == "false"
+
+	stmts, _ = compile_top_stmts("string Property MyPropAutoCast = none Auto")
+	prop = stmts.last() as ast.PropertyDecl
+
+	assert prop.name == "MyPropAutoCast"
+	assert prop.typ == ast.string_type
+	assert prop.is_auto == true
+	assert prop.expr is ast.StringLiteral
+	assert (prop.expr as ast.StringLiteral).val == "None"
+}
+
+fn test_state_fn_with_default_arg() {
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut errs := []errors.Error{}
+
+	mut src := "
+		Int Function MyFunc(int n1, int n2 = 12)
+			return n1 + n2
+		EndFunction
+	
+		State Disabled
+			Int Function MyFunc(int n1, int n2 = 12)
+				return n1 + n2
+			EndFunction
+		EndState"
+
+	stmts, table = compile_top_stmts(src)
+
+	src = "
+		Int Function MyFunc(int n1, int n2 = 12)
+			return n1 + n2
+		EndFunction
+	
+		State Disabled
+			Int Function MyFunc(int n1, int n2 = none)
+				return n1 + n2
+			EndFunction
+		EndState"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
+
+	src = "
+		Int Function MyFunc(int n1, int n2 = 12)
+			return n1 + n2
+		EndFunction
+	
+		State Disabled
+			Int Function MyFunc(int n1, int n2 = 11)
+				return n1 + n2
+			EndFunction
+		EndState"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
+}
+
+fn test_fn_default_arg() {
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut errs := []errors.Error{}
+
+	mut src := "
+		Int Function MyFunc(int n1, int n2 = none)
+			return n1 + n2
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "TODO111"
+
+	src = "
+		Int Function MyFunc(int n1, int n2 = )
+			return n1 + n2
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "TODO222"
+
+	src = "
+		Int Function MyFunc(int n1, int n2 = 1 + 1)
+			return n1 + n2
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "TODO333"
+
+	src = "
+		Int Function MyFunc(int n1, int n2 = \"12\")
+			return n1 + n2
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 1
+	assert errs[0].message == "TODO444"
+}
+
+fn test_error_msg()
+{
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut errs := []errors.Error{}
+	mut src := ""
+
+	src = "
+		Function MyFunc(int n1, int n2)
+			MyFunc(foooo, 1)
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 2
+	assert errs[0].message == "undefined identifier `foooo`"
+	assert errs[1].message == "cannot convert type `None` to type `Int`"
+
+	src = "
+		Function MyFunc(int n1, int n2)
+			MyFunc(ABCD.foooo, 1)
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 3
+	assert errs[0].message == "undefined identifier `ABCD`"
+	assert errs[1].message == "field or property `foooo` not found"
+	assert errs[2].message == "cannot convert type `None` to type `Int`"
+	
+	src = "
+		InvalidType Property propWithInvalidType Auto
+		Function MyFunc(ABCD n1, int n2)
+			MyFunc(n1.propWithInvalidType, 1)
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 2
+	assert errs[0].message == "invalid type `InvalidType` for property `propWithInvalidType`"
+	assert errs[1].message == "invalid type in function argument"
 }

@@ -12,10 +12,19 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			c.cur_obj = c.table.find_type_idx(node.name)
 			c.auto_state_is_exist = false
 
-			if node.parent_name != "" {
-				if !c.table.known_type(node.parent_name) {
-					c.error("invalid parent `${node.parent_name}`", node.pos)
+			mut tsym := c.table.get_type_symbol(c.cur_obj)
+			for {
+				if tsym.kind == .placeholder {
+					c.error("script with name `${tsym.name}` not found", node.pos)
+					break
 				}
+
+				if tsym.parent_idx != 0 {
+					tsym = c.table.get_type_symbol(tsym.parent_idx)
+					continue
+				}
+
+				break
 			}
 		}
 		ast.StateDecl {
@@ -45,45 +54,52 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			c.var_decl(mut node)
 		}
 		ast.PropertyDecl {
-			if c.type_is_valid(node.typ) {
-				c.inside_property = true
+			if !c.type_is_valid(node.typ) {
+				type_name := c.get_type_name(node.typ)
+				c.error("invalid type `${type_name}` for property `${node.name}`", node.pos)
+				return
+			}
 
-				if node.expr !is ast.EmptyExpr {
-					if !node.expr.is_literal() {
-						c.error("expression in object property can only be a literal", node.pos)
+			c.inside_property = true
+
+			if node.expr !is ast.EmptyExpr {
+				if !node.expr.is_literal() {
+					c.error("expression in object property can only be a literal", node.pos)
+				}
+
+				left_type := node.typ
+				mut right_type := c.expr(mut node.expr)
+
+				if c.valid_prop_type(left_type, right_type) {}
+				else {
+					mb_new_expr := c.compile_time_cast_to_type(node.expr, right_type, left_type)
+					if new_expr := mb_new_expr {
+						node.expr = new_expr
 					}
-
-					left_type := node.typ
-					mut right_type := c.expr(mut node.expr)
-
-					if c.valid_prop_type(left_type, right_type) {}
 					else {
 						ltype_name := c.get_type_name(left_type)
 						rtype_name := c.get_type_name(right_type)
 						c.error("value with type `${rtype_name}` cannot be assigned to a property with type `${ltype_name}`",  node.pos)
 					}
 				}
-
-				if mut node.read is ast.FnDecl {
-					c.top_stmt(mut &node.read)
-				}
-
-				if mut node.write is ast.FnDecl {
-					c.top_stmt(mut &node.write)
-				}
-
-				sym := c.table.get_type_symbol(c.cur_obj)
-				if t_prop := sym.find_property(node.name) {
-					if t_prop.pos.pos != node.pos.pos {
-						c.error("property with this name already exists", node.pos)
-					}
-				}
-				
-				c.inside_property = false
 			}
-			else {
-				c.error("invalid type in property declaration", node.pos)
+
+			if mut node.read is ast.FnDecl {
+				c.top_stmt(mut &node.read)
 			}
+
+			if mut node.write is ast.FnDecl {
+				c.top_stmt(mut &node.write)
+			}
+
+			sym := c.table.get_type_symbol(c.cur_obj)
+			if t_prop := sym.find_property(node.name) {
+				if t_prop.pos.pos != node.pos.pos {
+					c.error("property with this name already exists", node.pos)
+				}
+			}
+			
+			c.inside_property = false
 		}
 		ast.Comment {}
 	}
@@ -164,8 +180,10 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 
 				node.typ = left_type
 
-				if c.valid_type(left_type, right_type) {}
-				else if c.can_autocast(right_type, left_type) {
+				valid_obj_none_value := node.is_object_var && node.right is ast.NoneLiteral && (c.table.get_type_symbol(left_type).kind == .script || c.table.get_type_symbol(left_type).kind == .array)
+				
+				if c.valid_type(left_type, right_type) || valid_obj_none_value {}
+				else if c.type_is_valid(left_type) && c.type_is_valid(right_type) && c.can_autocast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
 					right_type = left_type
 				}
@@ -218,10 +236,45 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.cur_scope = node.scope
 	c.inside_fn = true
 
-	for param in node.params {
+	for i := 0; i < node.params.len; i++ {
+		mut param := node.params[i]
+
 		if !c.type_is_valid(param.typ) {
 			type_name := c.get_type_name(param.typ)
-			c.error("unknown type of function argument `${type_name}`", node.pos)
+			c.error("invalid type `${type_name}` for parameter #${i + 1} `${param.name}` in function `${node.name}`", node.pos)
+			continue
+		}
+
+		if param.is_optional {
+			if !param.default_value.is_literal() {
+				c.error("default value of function argument `${param.name}` must be a literal", node.pos)
+				continue
+			}
+
+			expected_typ := match param.default_value {
+				ast.FloatLiteral { ast.float_type }
+				ast.IntegerLiteral { ast.int_type }
+				ast.BoolLiteral { ast.bool_type }
+				ast.StringLiteral { ast.string_type }
+				ast.NoneLiteral { ast.none_type }
+				else { ast.none_type }
+			}
+
+			typ := c.expr(mut node.params[i].default_value)
+
+			if c.valid_prop_type(expected_typ, typ) {}
+			else {
+				mb_new_expr := c.compile_time_cast_to_type(node.params[i].default_value, typ, expected_typ)
+				if new_expr := mb_new_expr {
+					node.params[i].default_value = new_expr
+				}
+				else {
+					expected_type_name := c.get_type_name(expected_typ)
+					type_name := c.get_type_name(typ)
+					c.error("value with type `${type_name}` cannot be assigned to a property with type `${expected_type_name}`",  node.pos)
+					continue
+				}
+			}
 		}
 	}
 	
@@ -251,11 +304,11 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 
 		if func := c.find_fn(c.cur_obj, c.cur_obj_name, node.name) {
 			if node.is_global != func.is_global {
-				c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+				c.error('declaration of the ${node.name} function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 			}
 
 			if node.return_type != func.return_type {
-				c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+				c.error('declaration of the ${node.name} function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
 			}
 
 			if node.params.len == func.params.len {
@@ -265,15 +318,54 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 					func_param := func.params[i]
 
 					if node_param.typ != func_param.typ {
-						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+						c.error('declaration of the ${node.name} function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+						i++
+						continue
 					}
 
 					if node_param.is_optional != func_param.is_optional {
-						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+						c.error('declaration of the ${node.name} function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+						i++
+						continue
 					}
 
-					if node_param.default_value != func_param.default_value {
-						c.error('declaration of the $node.name function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+					if node_param.is_optional {
+						mut bad_default_value := false
+
+						if node_param.default_value is ast.NoneLiteral && func_param.default_value is ast.NoneLiteral {
+							if (node_param.default_value as ast.NoneLiteral).val != (func_param.default_value as ast.NoneLiteral).val {
+								bad_default_value = true
+							}
+						}
+						else if node_param.default_value is ast.FloatLiteral && func_param.default_value is ast.FloatLiteral {
+							if (node_param.default_value as ast.FloatLiteral).val != (func_param.default_value as ast.FloatLiteral).val {
+								bad_default_value = true
+							}
+						}
+						else if node_param.default_value is ast.IntegerLiteral && func_param.default_value is ast.IntegerLiteral {
+							if (node_param.default_value as ast.IntegerLiteral).val != (func_param.default_value as ast.IntegerLiteral).val {
+								bad_default_value = true
+							}
+						}
+						else if node_param.default_value is ast.BoolLiteral && func_param.default_value is ast.BoolLiteral {
+							if (node_param.default_value as ast.BoolLiteral).val != (func_param.default_value as ast.BoolLiteral).val {
+								bad_default_value = true
+							}
+						}
+						else if node_param.default_value is ast.StringLiteral && func_param.default_value is ast.StringLiteral {
+							if (node_param.default_value as ast.StringLiteral).val != (func_param.default_value as ast.StringLiteral).val {
+								bad_default_value = true
+							}
+						}
+						else {
+							bad_default_value = true
+						}
+
+						if bad_default_value {
+							c.error('declaration of the ${node.name} function in the ${c.cur_state_name} state is different from the declaration in the empty state', node.pos)
+							i++
+							continue
+						}
 					}
 
 					i++

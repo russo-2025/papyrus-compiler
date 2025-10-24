@@ -43,10 +43,30 @@ pub:
 	val		string
 }
 
+pub fn (lit IntegerLiteral) string() string {
+	return lit.val
+}
+
+pub fn (lit IntegerLiteral) f32() f32 {
+	return f32(lit.int())
+}
+
+pub fn (lit IntegerLiteral) int() int {
+	return lit.val.int()
+}
+
+pub fn (lit IntegerLiteral) bool() bool {
+	return if lit.int() > 0 { true } else { false }
+}
+
 pub struct NoneLiteral {
 pub:
 	pos		token.Position
 	val		string
+}
+
+pub fn (lit NoneLiteral) bool() bool {
+	return false
 }
 
 pub struct FloatLiteral {
@@ -55,16 +75,64 @@ pub:
 	val		string
 }
 
+pub fn (lit FloatLiteral) string() string {
+	return lit.val
+}
+
+pub fn (lit FloatLiteral) f32() f32 {
+	return lit.val.f32()
+}
+
+pub fn (lit FloatLiteral) int() int {
+	return int(lit.f32())
+}
+
+pub fn (lit FloatLiteral) bool() bool {
+	return if lit.f32() > 0 { true } else { false }
+}
+
 pub struct StringLiteral {
 pub:
 	pos      token.Position
 	val      string
 }
 
+pub fn (lit StringLiteral) string() string {
+	return lit.val
+}
+
+pub fn (lit StringLiteral) f32() f32 {
+	return lit.val.f32()
+}
+
+pub fn (lit StringLiteral) int() int {
+	return lit.val.int()
+}
+
+pub fn (lit StringLiteral) bool() bool {
+	return lit.val.len != 0
+}
+
 pub struct BoolLiteral {
 pub:
 	pos      token.Position
 	val      string
+}
+
+pub fn (lit BoolLiteral) bool() bool {
+	return lit.val.to_lower() == 'true'
+}
+
+pub fn (lit BoolLiteral) f32() f32 {
+	return if lit.val.to_lower() == 'true' { f32(1.0) } else { f32(0.0) }
+}
+
+pub fn (lit BoolLiteral) int() int {
+	return if lit.val.to_lower() == 'true' { 1 } else { 0 }
+}
+
+pub fn (lit BoolLiteral) string() string {
+	return if lit.val.to_lower() == 'true' { "true" } else { "false" }
 }
 
 pub struct Ident {

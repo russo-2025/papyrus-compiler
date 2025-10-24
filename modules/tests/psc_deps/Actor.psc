@@ -181,6 +181,9 @@ Package Function GetCurrentPackage() native
 ; Gets this actor's current dialogue target
 Actor Function GetDialogueTarget() native
 
+; Obtain the armor currently equipped in the specified slot
+Armor Function GetEquippedArmorInSlot(int aiSlot) native
+
 ; Obtains the item quipped in the specified hand (0 - Left hand, 1 - Right hand)
 ; Return values are:
 ; -1 - Error

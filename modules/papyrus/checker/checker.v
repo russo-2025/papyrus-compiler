@@ -56,7 +56,7 @@ fn (mut c Checker) type_is_valid(typ ast.Type) bool {
 	}
 	
 	sym := c.table.get_type_symbol(typ)
-	assert sym.kind != .placeholder, sym.name
+	
 	if sym.kind == .placeholder {
 		return false
 	}
@@ -69,6 +69,7 @@ fn (c &Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
 
+// TODO rename to can_assign / valid_value_for_type
 //может ли тип var_typ иметь значение с типом value_typ
 pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type) bool {
 	assert var_typ != 0
@@ -103,12 +104,22 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	assert from_type != to_type
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
-	assert from_sym.kind != .placeholder, from_sym.name
-	assert to_sym.kind != .placeholder, to_sym.name
+	
+	/*
+	if from_sym.kind == .placeholder {
+		print_backtrace()
+	}
+
+	if to_sym.kind == .placeholder {
+		print_backtrace()
+	}*/
+
+	assert from_sym.kind != .placeholder, 'from_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
+	assert to_sym.kind != .placeholder, 'to_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
 
 	match to_sym.kind {
 		.placeholder {
-			util.compiler_error(msg: "placeholder type symbol / invalid type in can_autocast", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
+			return false
 		}
 		.none_ {
 			return false
@@ -244,13 +255,82 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	return &new_node
 }
 
+pub fn (mut c Checker) compile_time_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {
+	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
+
+	match from_type {
+		ast.none_type {
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: "False" } }
+				ast.string_type { return &ast.StringLiteral{ val: "None" } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.bool_type {
+			bool_lit := node as ast.BoolLiteral
+
+			match to_type {
+				ast.int_type { return &ast.IntegerLiteral{ val: bool_lit.int().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: bool_lit.f32().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: bool_lit.string() } }
+				// object
+				// array
+				else {
+					return none
+				}
+			}
+		}
+		ast.int_type {
+			int_lit := node as ast.IntegerLiteral
+
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: int_lit.bool().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: int_lit.f32().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: int_lit.string() } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.float_type {
+			float_lit := node as ast.FloatLiteral
+
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: float_lit.bool().str() } }
+				ast.int_type { return &ast.IntegerLiteral{ val: float_lit.int().str() } }
+				ast.string_type { return &ast.StringLiteral{ val: float_lit.string() } }
+				else {
+					return none
+				}
+			}
+		}
+		ast.string_type {
+			string_value := (node as ast.StringLiteral)
+			
+			match to_type {
+				ast.bool_type { return &ast.BoolLiteral{ val: string_value.bool().str() } }
+				ast.int_type { return &ast.IntegerLiteral{ val: string_value.int().str() } }
+				ast.float_type { return &ast.FloatLiteral{ val: string_value.f32().str() } }
+				else {
+					return none
+				}
+			}
+		}
+		else {
+			return none
+		}
+	}
+
+	return none
+}
+
 pub fn (mut c Checker) find_method(typ ast.Type, name string) ?ast.Fn {
 	mut sym := c.table.get_type_symbol(typ)
 
 	mut tsym := sym
 	for {
-		assert tsym.kind != .placeholder, tsym.name
-
 		if func := tsym.find_method(name) {
 			return func
 		}

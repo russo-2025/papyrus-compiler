@@ -177,7 +177,7 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) Type {
 
 @[inline]
 pub fn (t &Table) find_type_idx(name string) Type {
-	return t.type_idxs[name.to_lower()]
+	return t.type_idxs[name.to_lower()] or { 0 }
 }
 
 @[inline]

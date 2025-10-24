@@ -1,11 +1,19 @@
-## Next release
+## Next Release
 
 ### Improvements
-  - Все паники заменены на более информативную альтернативу
-  - добавлен bug report issue template
-  - добавлена комманда version
-  - обновлена поддерживаемая версия компилятора v
-  - TODO обновить help команды
+
+- **Improved Error Handling**
+  - All panics replaced with more informative alternatives for better debugging.
+
+- **Developer Experience Enhancements**
+  - Added bug report issue template to streamline problem reporting.
+  - Added `version` command to display current compiler version.
+  - Updated supported V compiler version.
+  - TODO: Update help command documentation.
+  - исправлен автокаст значений у property
+  - добавлены проверки родителей у объектов
+  - исправлена проверка аргумента функции в состоянии с параметром по умолчанию
+  - добавлена проверка параметра по умолчанию
 
 ...
 

@@ -128,7 +128,7 @@ Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = f
 ## Сборка
 
 ### Требования:
-- [V compiler d6a3f31 (weekly.2025.26)](https://github.com/vlang/v/releases/tag/weekly.2025.26)
+- [V compiler fa49b76 (weekly.2025.38)](https://github.com/vlang/v/releases/tag/weekly.2025.38)
 
 ```bash
 v -o "bin\papyrus.exe" -prod -gc none compiler.v

@@ -366,21 +366,19 @@ fn test_object_var_decl_5() {
 }
 
 fn test_object_var_decl_6() {
-	pex_file := compile_top('ABCD objVarTest = None')
-	
-	var := pex_file.get_var("ABCD", "objVarTest") or { assert false, "object variable not found"; panic("object variable not found") }
+	pex_file := compile_top('ABCD objVarTest11111 = None')
+	var := pex_file.get_var("ABCD", "objVarTest11111") or { assert false, "object variable not found"; panic("object variable not found") }
 
-	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.name) == "objVarTest11111"
 	assert pex_file.get_string(var.type_name) == "ABCD"
 	assert var.data.typ == .null
 }
 
 fn test_object_var_decl_7() {
-	pex_file := compile_top('ABCD[] objVarTest = None')
+	pex_file := compile_top('ABCD[] objVarTest22222 = None')
+	var := pex_file.get_var("ABCD", "objVarTest22222") or { assert false, "object variable not found"; panic("object variable not found") }
 	
-	var := pex_file.get_var("ABCD", "objVarTest") or { assert false, "object variable not found"; panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.name) == "objVarTest22222"
 	assert pex_file.get_string(var.type_name) == "ABCD[]"
 	assert var.data.typ == .null
 }
