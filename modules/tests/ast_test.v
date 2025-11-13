@@ -1238,7 +1238,7 @@ fn test_object_property_cast() {
 	assert (prop.expr as ast.StringLiteral).val == "None"
 }
 
-fn test_state_fn_with_default_arg() {
+fn test_error_state_fn_with_default_arg() {
 	mut stmts := []ast.TopStmt{}
 	mut table := ast.new_table()
 	mut errs := []errors.Error{}
@@ -1268,8 +1268,10 @@ fn test_state_fn_with_default_arg() {
 		EndState"
 
 	stmts, table, errs = compile_top_stmts_error(src)
-	assert errs.len == 1
-	assert errs[0].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
+	eprintln(errs)
+	assert errs.len == 2
+	assert errs[0].message == "default value for parameter `n2` has type `None` which cannot be assigned to parameter type `Int`"
+	assert errs[1].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
 
 	src = "
 		Int Function MyFunc(int n1, int n2 = 12)
@@ -1287,7 +1289,37 @@ fn test_state_fn_with_default_arg() {
 	assert errs[0].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
 }
 
-fn test_fn_default_arg() {
+fn test_fn_default_arg_comptime_cast() {
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut errs := []errors.Error{}
+
+	mut src := "
+		Int Function MyFunc(int n1, int n2 = \"12\")
+			return n1
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 0
+
+	src = "
+		Int Function MyFunc(int n1, string n2 = 12)
+			return n1
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 0
+
+	src = "
+		Int Function MyFunc(int n1, bool n2 = 1)
+			return n1
+		EndFunction"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 0
+}
+
+fn test_error_fn_default_arg() {
 	mut stmts := []ast.TopStmt{}
 	mut table := ast.new_table()
 	mut errs := []errors.Error{}
@@ -1299,7 +1331,7 @@ fn test_fn_default_arg() {
 
 	stmts, table, errs = compile_top_stmts_error(src)
 	assert errs.len == 1
-	assert errs[0].message == "TODO111"
+	assert errs[0].message == "default value for parameter `n2` has type `None` which cannot be assigned to parameter type `Int`"
 
 	src = "
 		Int Function MyFunc(int n1, int n2 = )
@@ -1308,7 +1340,7 @@ fn test_fn_default_arg() {
 
 	stmts, table, errs = compile_top_stmts_error(src)
 	assert errs.len == 1
-	assert errs[0].message == "TODO222"
+	assert errs[0].message == "optional parameter `n2` must have a default value"
 
 	src = "
 		Int Function MyFunc(int n1, int n2 = 1 + 1)
@@ -1317,16 +1349,7 @@ fn test_fn_default_arg() {
 
 	stmts, table, errs = compile_top_stmts_error(src)
 	assert errs.len == 1
-	assert errs[0].message == "TODO333"
-
-	src = "
-		Int Function MyFunc(int n1, int n2 = \"12\")
-			return n1 + n2
-		EndFunction"
-
-	stmts, table, errs = compile_top_stmts_error(src)
-	assert errs.len == 1
-	assert errs[0].message == "TODO444"
+	assert errs[0].message == "default value for parameter `n2` must be a literal"
 }
 
 fn test_error_msg()
@@ -1364,7 +1387,84 @@ fn test_error_msg()
 		EndFunction"
 
 	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 3
+	assert errs[0].message == "undefined type: `InvalidType`" // checker property error
+	assert errs[1].message == "undefined type: `InvalidType`" // checker expr error
+	assert errs[2].message == "undefined type: `InvalidType`" // checker expr error
+
+
+	src = "
+		InvalidType propWithInvalidType
+		Function MyFunc(ABCD n1, int n2)
+			If propWithInvalidType
+			EndIf
+		EndFunction"
+	stmts, table, errs = compile_top_stmts_error(src)
+	eprintln(errs)
 	assert errs.len == 2
-	assert errs[0].message == "invalid type `InvalidType` for property `propWithInvalidType`"
-	assert errs[1].message == "invalid type in function argument"
+	assert errs[0].message == "undefined type: `InvalidType`"
+	assert errs[1].message == "undefined type: `InvalidType`"
+}
+
+fn test_none_value()
+{
+	mut stmts := []ast.TopStmt{}
+	mut table := ast.new_table()
+	mut errs := []errors.Error{}
+	mut src := ""
+
+	src = "ABCD ABCDInstance = none
+		string[] MyStringArray = none
+
+		String[] MyStringArrayValue = none
+		String[] Property MyStringArrayProp
+			String[] Function Get()
+				return none
+			EndFunction
+			Function Set(string[] value)
+				MyStringArrayValue = none
+			EndFunction
+		EndProperty
+
+		ABCD ABCDValue = none
+		ABCD Property ABCDProp
+			ABCD Function Get()
+				return none
+			EndFunction
+			Function Set(ABCD value)
+				ABCDValue = none
+			EndFunction
+		EndProperty
+		
+		Function MyFunc1(int n1, ABCD n_1_2)
+		EndFunction
+
+		Function MyFunc2(int n1, string[] n_2_2)
+		EndFunction
+
+		Function MyFunc3(int n1, ABCD n_3_2 = none)
+		EndFunction
+
+		Function MyFunc4(int n1, string[] n_4_2 = none)
+		EndFunction
+		
+		String[] Function Foo()
+			ABCD localValue1 = none
+			String[] localValue2 = none
+
+			ABCDInstance = none
+			MyStringArray = none
+			MyStringArrayProp = none
+			ABCDProp = none
+			MyFunc1(123, none)
+			MyFunc2(123, none)
+			MyFunc3(123)
+			MyFunc4(123)
+
+			return none
+		EndFunction
+		"
+
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 0
 }

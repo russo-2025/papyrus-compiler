@@ -810,7 +810,7 @@ pub fn (mut p Parser) error(s string) {
 @[noreturn]
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
 	if p.pref.output_mode == .stdout {
-		$if debug {
+		$if debug && !test {
 			print_backtrace()
 		}
 		$else {

@@ -2005,7 +2005,7 @@ string function GenderLabel(string id)
 		return "$SSL_Male"
 	elseIf id == "1" || id == "F"
 		return "$SSL_Female"
-	elseIf id >= "2" || id == "C"
+	elseIf id == "2" || id == "C"
 		return "$SSL_Creature"
 	endIf
 	return "$SSL_Unknown"

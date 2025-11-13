@@ -28,6 +28,158 @@ fn test_project_skyrim_deps_sources() {
 	builder.compile(&prefs)
 }
 
+fn test_project_skyui_sdk() {
+	input_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "SkyuiSDK"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "SKI_ConfigBase.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
+fn test_project_mcm_helper() {
+	input_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "MCMHelper"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "MCM_ConfigBase.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(skyui_dir) || !os.is_file(os.join_path(skyui_dir, "SKI_ConfigBase.psc")) {
+		assert false, "invalid skyui dir ${skyui_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir, skyui_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
+fn test_project_lovense_api() {
+	input_dir := os.real_path(os.join_path("modules", "tests", "LovenseAPISources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "LovenseAPI"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "Lovense.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
+fn test_project_fnis()
+{
+	input_dir := os.real_path(os.join_path("modules", "tests", "FNISSources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "FNIS"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "fnis.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
+fn test_project_mfgfix()
+{
+	input_dir := os.real_path(os.join_path("modules", "tests", "MfgFixSources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "MfgFix"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "MfgFix_Settings.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
 fn test_project_libfire() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "LibFireSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled", "LibFire"))
@@ -308,7 +460,7 @@ fn test_project_iequip() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "iEquipSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled", "iEquip"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
-	skyui_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 	libturtle_dir := os.real_path(os.join_path("modules", "tests", "LibTurtleClubSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "dubhMonitorEffectScript.psc")) {
@@ -343,13 +495,12 @@ fn test_project_iequip() {
 	builder.compile(&prefs)
 }
 
-// bug
 fn test_project_mantella_spell() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "MantellaSpellSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled", "MantellaSpell"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 	ui_extensions_dir := os.real_path(os.join_path("modules", "tests", "UIExtensionsSources"))
-	skyui_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "MantellaLauncher.psc")) {
 		assert false, "invalid input dir ${input_dir}"
@@ -389,7 +540,7 @@ fn test_project_master_of_disguise() {
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 	libfire_dir := os.real_path(os.join_path("modules", "tests", "LibFireSources"))
 	libturtle_dir := os.real_path(os.join_path("modules", "tests", "LibTurtleClubSources"))
-	skyui_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 	libmathf_dir := os.real_path(os.join_path("modules", "tests", "LibMathfSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "dubhDisguiseMCMQuestScript.psc")) {
@@ -439,8 +590,10 @@ fn test_project_ostim() {
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 	papyrus_util_dir := os.real_path(os.join_path("modules", "tests", "PapyrusUtilSources"))
 	jcontainers_dir := os.real_path(os.join_path("modules", "tests", "JContainersSources"))
-	skyui_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources"))
+	mcmhelper_dir := os.real_path(os.join_path("modules", "tests", "MCMHelperSources")) // SkyuiSDKSources ???
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 	console_util_dir := os.real_path(os.join_path("modules", "tests", "ConsoleUtilSources"))
+	mfgfix_dir := os.real_path(os.join_path("modules", "tests", "MfgFixSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "OStimAddon.psc")) {
 		assert false, "invalid input dir ${input_dir}"
@@ -458,12 +611,20 @@ fn test_project_ostim() {
 		assert false, "invalid jcontainers dir ${jcontainers_dir}"
 	}
 
+	if !os.is_dir(mcmhelper_dir) || !os.is_file(os.join_path(mcmhelper_dir, "MCM.psc")) {
+		assert false, "invalid mcmhelper dir ${mcmhelper_dir}"
+	}
+
 	if !os.is_dir(skyui_dir) || !os.is_file(os.join_path(skyui_dir, "SKI_ConfigBase.psc")) {
 		assert false, "invalid skyui dir ${skyui_dir}"
 	}
 
 	if !os.is_dir(console_util_dir) || !os.is_file(os.join_path(console_util_dir, "ConsoleUtil.psc")) {
 		assert false, "invalid console util dir ${console_util_dir}"
+	}
+
+	if !os.is_dir(mfgfix_dir) || !os.is_file(os.join_path(mfgfix_dir, "MfgFix_Settings.psc")) {
+		assert false, "invalid mfgfix dir ${mfgfix_dir}"
 	}
 
 	if !os.is_dir(output_dir) {
@@ -476,18 +637,21 @@ fn test_project_ostim() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ header_dir, papyrus_util_dir, jcontainers_dir, skyui_dir, console_util_dir ]
+		header_dirs: [ header_dir, papyrus_util_dir, jcontainers_dir, mcmhelper_dir, console_util_dir, skyui_dir, mfgfix_dir ]
 	}
 
 	builder.compile(&prefs)
 }
 
-// bug
 fn test_project_sexlab() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "SexLabSources"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled", "SexLab"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
 	ni_override_dir := os.real_path(os.join_path("modules", "tests", "NiOverrideSources"))
+	mfgfix_dir := os.real_path(os.join_path("modules", "tests", "MfgFixSources"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
+	lovense_api_dir := os.real_path(os.join_path("modules", "tests", "LovenseAPISources"))
+	fnis_dir := os.real_path(os.join_path("modules", "tests", "FNISSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "SexLabFramework.psc")) {
 		assert false, "invalid input dir ${input_dir}"
@@ -501,6 +665,22 @@ fn test_project_sexlab() {
 		assert false, "invalid ni override dir ${ni_override_dir}"
 	}
 
+	if !os.is_dir(mfgfix_dir) || !os.is_file(os.join_path(mfgfix_dir, "MfgFix_Settings.psc")) {
+		assert false, "invalid mfgfix dir ${mfgfix_dir}"
+	}
+
+	if !os.is_dir(skyui_dir) || !os.is_file(os.join_path(skyui_dir, "SKI_ConfigBase.psc")) {
+		assert false, "invalid skyui dir ${skyui_dir}"
+	}
+	
+	if !os.is_dir(lovense_api_dir) || !os.is_file(os.join_path(lovense_api_dir, "Lovense.psc")) {
+		assert false, "invalid lovense api dir ${lovense_api_dir}"
+	}
+
+	if !os.is_dir(fnis_dir) || !os.is_file(os.join_path(fnis_dir, "fnis.psc")) {
+		assert false, "invalid fnis dir ${fnis_dir}"
+	}
+
 	if !os.is_dir(output_dir) {
 		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
 	}
@@ -511,7 +691,7 @@ fn test_project_sexlab() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ header_dir, ni_override_dir ]
+		header_dirs: [ header_dir, ni_override_dir, mfgfix_dir, skyui_dir, lovense_api_dir, fnis_dir ]
 	}
 
 	builder.compile(&prefs)

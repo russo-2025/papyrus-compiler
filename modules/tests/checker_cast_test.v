@@ -210,9 +210,9 @@ fn test_cast2() {
 	int_array_typ := table.find_type_idx("Int[]")
 	assert int_array_typ != 0
 
-	assert !c.valid_type(typ, ast.none_type)
+	assert !c.valid_type(typ, ast.none_type, false)
 	assert c.can_autocast(ast.none_type, typ)
 	
-	assert !c.valid_type(int_array_typ, ast.none_type)
+	assert !c.valid_type(int_array_typ, ast.none_type, false)
 	assert c.can_autocast(ast.none_type, int_array_typ)
 }

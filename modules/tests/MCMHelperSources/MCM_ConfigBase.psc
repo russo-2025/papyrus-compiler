@@ -12,6 +12,18 @@ EndEvent
 Event OnPageSelect(string a_page)
 EndEvent
 
+; Event raised when a config menu is first initialized.
+Event OnConfigInit()
+EndEvent
+
+; Event raised when a config menu is opened.
+Event OnConfigOpen()
+EndEvent
+
+; Event raised when a config menu is closed.
+Event OnConfigClose()
+EndEvent
+
 ;-----------------
 ; MCM
 ;-----------------
@@ -39,31 +51,3 @@ Function SetModSettingInt(string a_settingName, int a_value) native
 Function SetModSettingBool(string a_settingName, bool a_value) native
 Function SetModSettingFloat(string a_settingName, float a_value) native
 Function SetModSettingString(string a_settingName, string a_value) native
-
-;-------------------
-; SkyUI Overrides
-;-------------------
-
-; SkyUI functions delegated to MCM Helper's SKSE plugin.
-Event OnPageReset(string a_page) native
-Event OnOptionHighlight(int a_option) native
-Event OnOptionSelect(int a_option) native
-Event OnOptionDefault(int a_option) native
-Event OnOptionSliderOpen(int a_option) native
-Event OnOptionSliderAccept(int a_option, float a_value) native
-Event OnOptionMenuOpen(int a_option) native
-Event OnOptionMenuAccept(int a_option, int a_index) native
-Event OnOptionColorOpen(int a_option) native
-Event OnOptionColorAccept(int a_option, int a_color) native
-Event OnOptionKeyMapChange(int a_option, int a_keyCode, string a_conflictControl, string a_conflictName) native
-Event OnOptionInputOpen(int a_option) native
-Event OnOptionInputAccept(int a_option, string a_input) native
-
-Event OnConfigManagerReady(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
-	LoadConfig()
-	parent.OnConfigManagerReady(a_eventName, a_strArg, a_numArg, a_sender)
-EndEvent
-
-string Function GetCustomControl(int a_keyCode) native
-
-Function LoadConfig() native

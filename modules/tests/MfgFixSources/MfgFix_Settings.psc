@@ -1,0 +1,141 @@
+scriptname MfgFix_Settings
+
+		function Save() native global
+
+; eyes blinking
+float	function GetFBlinkDownTime() native global
+		function SetFBlinkDownTime(float a_value) native global
+float	function GetFBlinkUpTime() native global
+		function SetFBlinkUpTime(float a_value) native global
+float	function GetFBlinkDelayMin() native global
+		function SetFBlinkDelayMin(float a_value) native global
+float	function GetFBlinkDelayMax() native global
+		function SetFBlinkDelayMax(float a_value) native global
+
+; eyes movement
+float	function GetFTrackSpeed() native global
+		function SetFTrackSpeed(float a_value) native global
+float	function GetFTrackEyeXY() native global
+		function SetFTrackEyeXY(float a_value) native global
+float	function GetFTrackEyeZ() native global
+		function SetFTrackEyeZ(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionAngry() native global
+		function SetFEyeHeadingMinOffsetEmotionAngry(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionAngry() native global
+		function SetFEyeHeadingMaxOffsetEmotionAngry(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionAngry() native global
+		function SetFEyePitchMinOffsetEmotionAngry(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionAngry() native global
+		function SetFEyePitchMaxOffsetEmotionAngry(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionAngry() native global
+		function SetFEyeOffsetDelayMinEmotionAngry(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionAngry() native global
+		function SetFEyeOffsetDelayMaxEmotionAngry(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionHappy() native global
+		function SetFEyeHeadingMinOffsetEmotionHappy(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionHappy() native global
+		function SetFEyeHeadingMaxOffsetEmotionHappy(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionHappy() native global
+		function SetFEyePitchMinOffsetEmotionHappy(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionHappy() native global
+		function SetFEyePitchMaxOffsetEmotionHappy(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionHappy() native global
+		function SetFEyeOffsetDelayMinEmotionHappy(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionHappy() native global
+		function SetFEyeOffsetDelayMaxEmotionHappy(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionSurprise() native global
+		function SetFEyeHeadingMinOffsetEmotionSurprise(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionSurprise() native global
+		function SetFEyeHeadingMaxOffsetEmotionSurprise(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionSurprise() native global
+		function SetFEyePitchMinOffsetEmotionSurprise(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionSurprise() native global
+		function SetFEyePitchMaxOffsetEmotionSurprise(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionSurprise() native global
+		function SetFEyeOffsetDelayMinEmotionSurprise(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionSurprise() native global
+		function SetFEyeOffsetDelayMaxEmotionSurprise(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionSad() native global
+		function SetFEyeHeadingMinOffsetEmotionSad(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionSad() native global
+		function SetFEyeHeadingMaxOffsetEmotionSad(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionSad() native global
+		function SetFEyePitchMinOffsetEmotionSad(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionSad() native global
+		function SetFEyePitchMaxOffsetEmotionSad(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionSad() native global
+		function SetFEyeOffsetDelayMinEmotionSad(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionSad() native global
+		function SetFEyeOffsetDelayMaxEmotionSad(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionFear() native global
+		function SetFEyeHeadingMinOffsetEmotionFear(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionFear() native global
+		function SetFEyeHeadingMaxOffsetEmotionFear(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionFear() native global
+		function SetFEyePitchMinOffsetEmotionFear(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionFear() native global
+		function SetFEyePitchMaxOffsetEmotionFear(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionFear() native global
+		function SetFEyeOffsetDelayMinEmotionFear(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionFear() native global
+		function SetFEyeOffsetDelayMaxEmotionFear(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionNeutral() native global
+		function SetFEyeHeadingMinOffsetEmotionNeutral(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionNeutral() native global
+		function SetFEyeHeadingMaxOffsetEmotionNeutral(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionNeutral() native global
+		function SetFEyePitchMinOffsetEmotionNeutral(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionNeutral() native global
+		function SetFEyePitchMaxOffsetEmotionNeutral(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionNeutral() native global
+		function SetFEyeOffsetDelayMinEmotionNeutral(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionNeutral() native global
+		function SetFEyeOffsetDelayMaxEmotionNeutral(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionPuzzled() native global
+		function SetFEyeHeadingMinOffsetEmotionPuzzled(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionPuzzled() native global
+		function SetFEyeHeadingMaxOffsetEmotionPuzzled(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionPuzzled() native global
+		function SetFEyePitchMinOffsetEmotionPuzzled(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionPuzzled() native global
+		function SetFEyePitchMaxOffsetEmotionPuzzled(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionPuzzled() native global
+		function SetFEyeOffsetDelayMinEmotionPuzzled(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionPuzzled() native global
+		function SetFEyeOffsetDelayMaxEmotionPuzzled(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionDisgusted() native global
+		function SetFEyeHeadingMinOffsetEmotionDisgusted(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionDisgusted() native global
+		function SetFEyeHeadingMaxOffsetEmotionDisgusted(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionDisgusted() native global
+		function SetFEyePitchMinOffsetEmotionDisgusted(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionDisgusted() native global
+		function SetFEyePitchMaxOffsetEmotionDisgusted(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionDisgusted() native global
+		function SetFEyeOffsetDelayMinEmotionDisgusted(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionDisgusted() native global
+		function SetFEyeOffsetDelayMaxEmotionDisgusted(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionCombatAnger() native global
+		function SetFEyeHeadingMinOffsetEmotionCombatAnger(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionCombatAnger() native global
+		function SetFEyeHeadingMaxOffsetEmotionCombatAnger(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionCombatAnger() native global
+		function SetFEyePitchMinOffsetEmotionCombatAnger(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionCombatAnger() native global
+		function SetFEyePitchMaxOffsetEmotionCombatAnger(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionCombatAnger() native global
+		function SetFEyeOffsetDelayMinEmotionCombatAnger(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionCombatAnger() native global
+		function SetFEyeOffsetDelayMaxEmotionCombatAnger(float a_value) native global
+float	function GetFEyeHeadingMinOffsetEmotionCombatShout() native global
+		function SetFEyeHeadingMinOffsetEmotionCombatShout(float a_value) native global
+float	function GetFEyeHeadingMaxOffsetEmotionCombatShout() native global
+		function SetFEyeHeadingMaxOffsetEmotionCombatShout(float a_value) native global
+float	function GetFEyePitchMinOffsetEmotionCombatShout() native global
+		function SetFEyePitchMinOffsetEmotionCombatShout(float a_value) native global
+float	function GetFEyePitchMaxOffsetEmotionCombatShout() native global
+		function SetFEyePitchMaxOffsetEmotionCombatShout(float a_value) native global
+float	function GetFEyeOffsetDelayMinEmotionCombatShout() native global
+		function SetFEyeOffsetDelayMinEmotionCombatShout(float a_value) native global
+float	function GetFEyeOffsetDelayMaxEmotionCombatShout() native global
+		function SetFEyeOffsetDelayMaxEmotionCombatShout(float a_value) native global

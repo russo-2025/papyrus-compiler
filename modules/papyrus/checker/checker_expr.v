@@ -23,7 +23,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 
 			match node.op {
 				.not {
-					if c.valid_type(ast.bool_type, node.right_type) {}
+					if c.valid_type(ast.bool_type, node.right_type, false) {}
 					else if c.can_autocast(node.right_type, ast.bool_type) {
 						new_expr := ast.CastExpr {
 							expr: node.right
@@ -75,20 +75,19 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		}
 		ast.Ident {
 			if var := c.cur_scope.find_var(node.name) {
-				node.typ = var.typ
+				node.typ = c.check_type_or_error(var.typ, node.pos)
 				return var.typ
 			}
 			else if prop := c.table.find_object_property(c.cur_obj, node.name) {
-				node.typ = prop.typ
+				node.typ = c.check_type_or_error(prop.typ, node.pos)
 				node.is_object_property = true
 				return node.typ
 			}
 			else if var := c.table.find_object_var(c.cur_obj, node.name) {
-				node.typ = var.typ
+				node.typ = c.check_type_or_error(var.typ, node.pos)
 				node.is_object_var = true
 				return node.typ
 			}
-
 			c.error("undefined identifier `${node.name}`", node.pos)
 			
 			return ast.none_type
@@ -140,14 +139,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 			}
 			else {
 				if typ := c.find_var_or_property_type(node.typ, node.field_name) {
-					if !c.type_is_valid(typ) {
-						prop_var_type_name := c.get_type_name(typ)
-						accessor_type := c.get_type_name(node.typ)
-						c.error("invalid type `${prop_var_type_name}` for property or variable `${node.field_name}` in `${accessor_type}`", node.pos)
-						return ast.none_type
-					}
-
-					node.typ = typ
+					node.typ = c.check_type_or_error(typ, node.pos)
 					return typ
 				}
 
@@ -349,7 +341,7 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 		.eq, .ne {
 			node.result_type = ast.bool_type
 
-			if c.valid_type(node.left_type, node.right_type) || c.valid_type(node.right_type, node.left_type) {}
+			if c.valid_type(node.left_type, node.right_type, false) || c.valid_type(node.right_type, node.left_type, false) {}
 			else {
 				if c.can_autocast(node.right_type, node.left_type) {
 					node.right = c.cast_to_type(node.right, node.right_type, node.left_type)
@@ -422,7 +414,7 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 			typ = c.expr(mut node.left)
 
 			if !c.type_is_valid(typ) {
-				c.error("invalid type in method call",  node.pos)
+				c.undefined_type_error(typ, node.pos)
 				return ast.none_type
 			}
 
@@ -458,15 +450,14 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 		func_arg_type := func.params[i].typ
 
 		if !c.type_is_valid(arg_typ) {
-			c.error("invalid type in function argument", node.args[i].pos)
+			c.undefined_type_error(arg_typ, node.args[i].pos)
 			i++
 			continue
 		}
 
-		if c.valid_type(func_arg_type, arg_typ) {}
+		if c.valid_type(func_arg_type, arg_typ, false) {}
 		else if c.can_autocast(arg_typ, func_arg_type) {
 			node.args[i].expr = c.cast_to_type(node.args[i].expr, arg_typ, func_arg_type)
-			
 		}
 		else {
 			left_type_name := c.get_type_name(func_arg_type)
@@ -507,11 +498,13 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 			assert param.default_value.is_literal()
 			assert param.default_value !is ast.EmptyExpr
 
-			default_value_typ := c.expr(mut param.default_value)
+			mut default_value := param.default_value
+			default_value_typ := c.expr(mut default_value)
 	
-			optional_is_valid := c.table.type_is_script(param.typ) && default_value_typ == ast.none_type
-
-			if c.valid_type(param.typ, default_value_typ) || optional_is_valid {}
+			if c.valid_type(param.typ, default_value_typ, false) {}
+			else if c.can_autocast(default_value_typ, param.typ) {
+				default_value = *c.cast_to_type(default_value, default_value_typ, param.typ)
+			}
 			else {
 				arg_type_name := c.get_type_name(param.typ)
 				expr_type_name := c.get_type_name(default_value_typ)
@@ -519,7 +512,7 @@ pub fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 			}
 
 			node.args << ast.CallArg {
-				expr: param.default_value
+				expr: default_value
 				typ: param.typ
 			}
 			

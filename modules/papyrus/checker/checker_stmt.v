@@ -55,8 +55,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 		}
 		ast.PropertyDecl {
 			if !c.type_is_valid(node.typ) {
-				type_name := c.get_type_name(node.typ)
-				c.error("invalid type `${type_name}` for property `${node.name}`", node.pos)
+				c.undefined_type_error(node.typ, node.pos)
 				return
 			}
 
@@ -70,7 +69,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 				left_type := node.typ
 				mut right_type := c.expr(mut node.expr)
 
-				if c.valid_prop_type(left_type, right_type) {}
+				if c.valid_type(left_type, right_type, true) {}
 				else {
 					mb_new_expr := c.compile_time_cast_to_type(node.expr, right_type, left_type)
 					if new_expr := mb_new_expr {
@@ -95,7 +94,7 @@ fn (mut c Checker) top_stmt(mut node ast.TopStmt) {
 			sym := c.table.get_type_symbol(c.cur_obj)
 			if t_prop := sym.find_property(node.name) {
 				if t_prop.pos.pos != node.pos.pos {
-					c.error("property with this name already exists", node.pos)
+					c.error("property with `${node.name}` name already exists", node.pos)
 				}
 			}
 			
@@ -116,7 +115,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.Return {
 			typ := c.expr(mut node.expr)
 			
-			if c.valid_type(c.cur_fn.return_type, typ) {}
+			if c.valid_type(c.cur_fn.return_type, typ, false) {}
 			else if c.can_autocast(typ, c.cur_fn.return_type) {
 				new_expr := ast.CastExpr {
 					expr: node.expr
@@ -178,10 +177,32 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 					c.error("invalid right exression in assignment",  node.pos)
 				}
 
+				if !c.type_is_valid(left_type) {
+					c.undefined_type_error(left_type, node.pos)
+					return
+				}
+
+				if !c.type_is_valid(right_type) {
+					c.undefined_type_error(right_type, node.pos)
+					return
+				}
+
 				node.typ = left_type
 
+				if c.valid_type(left_type, right_type, node.is_object_var) {}
+				else if c.can_autocast(right_type, left_type) {
+					node.right = c.cast_to_type(node.right, right_type, left_type)
+					right_type = left_type
+				}
+				else {
+					ltype_name := c.get_type_name(left_type)
+					rtype_name := c.get_type_name(right_type)
+					c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
+				}
+
+/*
 				valid_obj_none_value := node.is_object_var && node.right is ast.NoneLiteral && (c.table.get_type_symbol(left_type).kind == .script || c.table.get_type_symbol(left_type).kind == .array)
-				
+
 				if c.valid_type(left_type, right_type) || valid_obj_none_value {}
 				else if c.type_is_valid(left_type) && c.type_is_valid(right_type) && c.can_autocast(right_type, left_type) {
 					node.right = c.cast_to_type(node.right, right_type, left_type)
@@ -192,6 +213,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 					rtype_name := c.get_type_name(right_type)
 					c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
 				}
+*/
 
 				if node.op != .assign {
 					new_node := ast.InfixExpr{
@@ -246,12 +268,17 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 		}
 
 		if param.is_optional {
-			if !param.default_value.is_literal() {
-				c.error("default value of function argument `${param.name}` must be a literal", node.pos)
+			if param.default_value is ast.EmptyExpr {
+				c.error("optional parameter `${param.name}` must have a default value", node.pos)
 				continue
 			}
 
-			expected_typ := match param.default_value {
+			if !param.default_value.is_literal() {
+				c.error("default value for parameter `${param.name}` must be a literal", node.pos)
+				continue
+			}
+
+			default_value_typ := match param.default_value {
 				ast.FloatLiteral { ast.float_type }
 				ast.IntegerLiteral { ast.int_type }
 				ast.BoolLiteral { ast.bool_type }
@@ -260,18 +287,22 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 				else { ast.none_type }
 			}
 
-			typ := c.expr(mut node.params[i].default_value)
+			c.expr(mut node.params[i].default_value)
 
-			if c.valid_prop_type(expected_typ, typ) {}
+			//t_default_value_type_name := c.get_type_name(default_value_typ)
+			//t_type_name := c.get_type_name(param.typ)
+			//eprintln("${t_default_value_type_name} -> ${t_type_name}, isValid: ${c.valid_type(default_value_typ, param.typ, true)}")
+
+			if c.valid_type(param.typ, default_value_typ, true) {}
 			else {
-				mb_new_expr := c.compile_time_cast_to_type(node.params[i].default_value, typ, expected_typ)
+				mb_new_expr := c.compile_time_cast_to_type(node.params[i].default_value, default_value_typ, param.typ)
 				if new_expr := mb_new_expr {
 					node.params[i].default_value = new_expr
 				}
 				else {
-					expected_type_name := c.get_type_name(expected_typ)
-					type_name := c.get_type_name(typ)
-					c.error("value with type `${type_name}` cannot be assigned to a property with type `${expected_type_name}`",  node.pos)
+					default_value_name := c.get_type_name(default_value_typ)
+					type_name := c.get_type_name(param.typ)
+					c.error("default value for parameter `${param.name}` has type `${default_value_name}` which cannot be assigned to parameter type `${type_name}`", node.pos)
 					continue
 				}
 			}
@@ -411,7 +442,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 	}
 
 	if !c.type_is_valid(node.typ) {
-		c.error("invalid type in variable declaration", node.pos)
+		c.undefined_type_error(node.typ, node.pos)
 		return
 	}
 	
@@ -423,7 +454,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 
 			left_type := node.typ
 			mut right_type := c.expr(mut node.assign.right)
-			if c.valid_prop_type(left_type, right_type) {}
+			if c.valid_type(left_type, right_type, true) {}
 			else {
 				ltype_name := c.get_type_name(left_type)
 				rtype_name := c.get_type_name(right_type)
@@ -434,7 +465,7 @@ pub fn (mut c Checker) var_decl(mut node ast.VarDecl) {
 			left_type := node.typ
 			mut right_type := c.expr(mut node.assign.right)
 
-			if c.valid_type(left_type, right_type) {}
+			if c.valid_type(left_type, right_type, false) {}
 			else if c.can_autocast(right_type, left_type) {
 				node.assign.right = c.cast_to_type(node.assign.right, right_type, left_type)
 			}

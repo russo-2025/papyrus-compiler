@@ -50,7 +50,7 @@ pub fn (mut c Checker) check(mut ast_file ast.File) {
 	}
 }
 
-fn (mut c Checker) type_is_valid(typ ast.Type) bool {
+fn (c Checker) type_is_valid(typ ast.Type) bool {
 	if typ == 0 {
 		return false
 	}
@@ -69,20 +69,34 @@ fn (c &Checker) get_type_name(typ ast.Type) string {
 	return c.table.get_type_symbol(typ).name
 }
 
-// TODO rename to can_assign / valid_value_for_type
-//может ли тип var_typ иметь значение с типом value_typ
-pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type) bool {
+pub fn (mut c Checker) valid_type(var_typ ast.Type, value_typ ast.Type, allow_none_type_for_object_and_array bool) bool {
 	assert var_typ != 0
 	assert value_typ != 0
+
+	if var_typ == 0 || value_typ == 0 {
+		return false
+	}
 
 	if var_typ == value_typ {
 		return true
 	}
 
+	if allow_none_type_for_object_and_array {
+		var_sym := c.table.get_type_symbol(var_typ)
+		if var_sym.kind == .script || var_sym.kind == .array {
+			if value_typ == ast.none_type {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
-pub fn (mut c Checker) valid_prop_type(var_typ ast.Type, value_typ ast.Type) bool {
+/*
+//может ли тип var_typ иметь значение с типом value_typ
+// TODO rename -> value_type_is_valid
+pub fn (mut c Checker) value_type_is_valid(var_typ ast.Type, value_typ ast.Type) bool {
 	if c.valid_type(var_typ, value_typ) {
 		return true
 	}
@@ -96,6 +110,7 @@ pub fn (mut c Checker) valid_prop_type(var_typ ast.Type, value_typ ast.Type) boo
 
 	return false
 }
+*/
 
 //можно ли кастануть тип from_type к типу to_type
 pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
@@ -105,14 +120,14 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
 	
-	/*
+	
 	if from_sym.kind == .placeholder {
 		print_backtrace()
 	}
 
 	if to_sym.kind == .placeholder {
 		print_backtrace()
-	}*/
+	}
 
 	assert from_sym.kind != .placeholder, 'from_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
 	assert to_sym.kind != .placeholder, 'to_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
@@ -256,7 +271,7 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 }
 
 pub fn (mut c Checker) compile_time_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {
-	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
+	//assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
 
 	match from_type {
 		ast.none_type {
@@ -488,6 +503,21 @@ pub fn (mut c Checker) get_default_value(typ ast.Type) ast.Expr {
 			util.compiler_error(msg: "placeholder type symbol / invalid type in get_default_value", phase: "checker", prefs: c.pref, file: @FILE, func: @FN, line: @LINE)
 		}
 	}
+}
+
+fn (mut c Checker) check_type_or_error(typ ast.Type, pos token.Position) ast.Type {
+	if !c.type_is_valid(typ) {
+		c.undefined_type_error(typ, pos)
+		return ast.none_type
+	}
+
+	return typ
+}
+
+fn (mut c Checker) undefined_type_error(typ ast.Type, pos token.Position) {
+	type_name := c.get_type_name(typ)
+	c.error("undefined type: `${type_name}`", pos)
+
 }
 
 fn (c &Checker) find_var_or_property_type(typ ast.Type, name string) ?ast.Type {

@@ -1642,7 +1642,8 @@ fn test_call_cast() {
 		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]"
 		"opcode: 'cast', args: [ident(::temp2), none]"
 		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
-		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), none]"
+		"opcode: 'cast', args: [ident(::temp2), none]"
+		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
 	]
 
 	assert ins.len == expected.len

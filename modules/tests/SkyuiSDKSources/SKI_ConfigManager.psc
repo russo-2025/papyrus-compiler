@@ -70,8 +70,6 @@ event OnGameReload()
 	RegisterForModEvent("SKICP_menuAccepted", "OnMenuAccept")
 	RegisterForModEvent("SKICP_colorSelected", "OnColorSelect")
 	RegisterForModEvent("SKICP_colorAccepted", "OnColorAccept")
-	self.RegisterForModEvent("SKICP_inputSelected", "OnInputSelect")
-	self.RegisterForModEvent("SKICP_inputAccepted", "OnInputAccept")
 	RegisterForModEvent("SKICP_dialogCanceled", "OnDialogCancel")
 
 	RegisterForMenu(JOURNAL_MENU)
@@ -359,15 +357,6 @@ function Log(string a_msg)
 	Debug.Trace(self + ": " + a_msg)
 endFunction
 
-function OnInputSelect(String a_eventName, String a_strArg, Float a_numArg, Form a_sender)
-	Int optionIndex = a_numArg as Int
-	_activeConfig.RequestInputDialogData(optionIndex)
-endFunction
-
-function OnInputAccept(String a_eventName, String a_strArg, Float a_numArg, Form a_sender)
-	_activeConfig.SetInputText(a_strArg)
-	ui.InvokeBool(self.JOURNAL_MENU, self.MENU_ROOT + ".unlock", true)
-endFunction
 
 ; STATES ---------------------------------------------------------------------------------------
 
