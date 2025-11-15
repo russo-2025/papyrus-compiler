@@ -583,6 +583,46 @@ fn test_project_master_of_disguise() {
 	builder.compile(&prefs)
 }
 
+fn test_project_osa()
+{
+	input_dir := os.real_path(os.join_path("modules", "tests", "OSASources"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled", "OSA"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
+	papyrus_util_dir := os.real_path(os.join_path("modules", "tests", "PapyrusUtilSources"))
+
+	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "OSA.psc")) {
+		assert false, "invalid input dir ${input_dir}"
+	}
+
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		assert false, "invalid header dir ${header_dir}"
+	}
+
+	if !os.is_dir(skyui_dir) || !os.is_file(os.join_path(skyui_dir, "SKI_ConfigBase.psc")) {
+		assert false, "invalid skyui dir ${skyui_dir}"
+	}
+
+	if !os.is_dir(papyrus_util_dir) || !os.is_file(os.join_path(papyrus_util_dir, "PapyrusUtil.psc")) {
+		assert false, "invalid papyrus util dir ${papyrus_util_dir}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_dir, skyui_dir, papyrus_util_dir ]
+	}
+
+	builder.compile(&prefs)
+}
+
 // bug
 fn test_project_ostim() {
 	input_dir := os.real_path(os.join_path("modules", "tests", "OStimSources"))
@@ -594,6 +634,7 @@ fn test_project_ostim() {
 	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 	console_util_dir := os.real_path(os.join_path("modules", "tests", "ConsoleUtilSources"))
 	mfgfix_dir := os.real_path(os.join_path("modules", "tests", "MfgFixSources"))
+	osa_dir := os.real_path(os.join_path("modules", "tests", "OSASources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "OStimAddon.psc")) {
 		assert false, "invalid input dir ${input_dir}"
@@ -626,6 +667,10 @@ fn test_project_ostim() {
 	if !os.is_dir(mfgfix_dir) || !os.is_file(os.join_path(mfgfix_dir, "MfgFix_Settings.psc")) {
 		assert false, "invalid mfgfix dir ${mfgfix_dir}"
 	}
+	
+	if !os.is_dir(osa_dir) || !os.is_file(os.join_path(osa_dir, "OSA.psc")) {
+		assert false, "invalid osa dir ${osa_dir}"
+	}
 
 	if !os.is_dir(output_dir) {
 		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
@@ -637,7 +682,7 @@ fn test_project_ostim() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ header_dir, papyrus_util_dir, jcontainers_dir, mcmhelper_dir, console_util_dir, skyui_dir, mfgfix_dir ]
+		header_dirs: [ header_dir, papyrus_util_dir, jcontainers_dir, mcmhelper_dir, console_util_dir, skyui_dir, mfgfix_dir, osa_dir ]
 	}
 
 	builder.compile(&prefs)
@@ -652,6 +697,7 @@ fn test_project_sexlab() {
 	skyui_dir := os.real_path(os.join_path("modules", "tests", "SkyuiSDKSources"))
 	lovense_api_dir := os.real_path(os.join_path("modules", "tests", "LovenseAPISources"))
 	fnis_dir := os.real_path(os.join_path("modules", "tests", "FNISSources"))
+	papyrus_util_dir := os.real_path(os.join_path("modules", "tests", "PapyrusUtilSources"))
 
 	if !os.is_dir(input_dir) || !os.is_file(os.join_path(input_dir, "SexLabFramework.psc")) {
 		assert false, "invalid input dir ${input_dir}"
@@ -681,6 +727,10 @@ fn test_project_sexlab() {
 		assert false, "invalid fnis dir ${fnis_dir}"
 	}
 
+	if !os.is_dir(papyrus_util_dir) || !os.is_file(os.join_path(papyrus_util_dir, "PapyrusUtil.psc")) {
+		assert false, "invalid papyrus util dir ${papyrus_util_dir}"
+	}
+
 	if !os.is_dir(output_dir) {
 		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
 	}
@@ -691,7 +741,7 @@ fn test_project_sexlab() {
 		mode: .compile
 		backend: .check
 		no_cache: true
-		header_dirs: [ header_dir, ni_override_dir, mfgfix_dir, skyui_dir, lovense_api_dir, fnis_dir ]
+		header_dirs: [ header_dir, ni_override_dir, mfgfix_dir, skyui_dir, lovense_api_dir, fnis_dir, papyrus_util_dir ]
 	}
 
 	builder.compile(&prefs)
