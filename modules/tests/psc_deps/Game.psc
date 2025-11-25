@@ -266,7 +266,7 @@ Function UnlockWord(WordOfPower akWord) native global
 bool Function UsingGamepad() native global
 
 
-; SKSE additions built 2015-05-24 00:46:48.937000 UTC
+; SKSE64 additions built 2022-09-21 00:46:55.729000 UTC
 ; Get/Set Perk Points
 int Function GetPerkPoints() global native
 Function SetPerkPoints(int perkPoints) global native
@@ -291,7 +291,18 @@ string Function GetModDescription(int modIndex) native global
 int Function GetModDependencyCount(int modIndex) native global
 
 ; gets the index of the nth mod dependency of the specfied mod
-int Function GetNthModDependency(int modIndex, int n) native global
+; int Function GetNthModDependency(int modIndex, int n) native global
+
+bool Function IsPluginInstalled(string name) native global
+
+; light mod functions
+int Function GetLightModCount() native global
+int Function GetLightModByName(string name) native global
+string Function GetLightModName(int idx) native global
+string Function GetLightModAuthor(int idx) native global
+string Function GetLightModDescription(int idx) native global
+int Function GetLightModDependencyCount(int idx) native global
+int Function GetNthLightModDependency(int modIdx, int idx) native global
 
 ; GameSetting functions - SKSE 1.5.10
 Function SetGameSettingFloat(string setting, float value) global native
@@ -375,7 +386,9 @@ Function UpdateHairColor() global native
 ; 10 - horse
 ; 11 - bleedout
 ; 12 - dragon
-int Function GetCameraState() global native
+int Function GetCameraState() global
+	return Camera.GetCameraState()
+EndFunction
 
 ; set a misc stat value
 ; use QueryStat to read the value
@@ -412,7 +425,9 @@ float Function GetExperienceForLevel(int currentLevel) global native
 bool Function GetPlayerMovementMode() global native
 
 ; Updates the camera when changing Shoulder positions
-Function UpdateThirdPerson() global native
+Function UpdateThirdPerson() global
+	Camera.UpdateThirdPerson()
+EndFunction
 
 ; Hotkeys 0-7 reflect keys 1-8
 ; Unbinds a favorited item bound to the specified hotkey
