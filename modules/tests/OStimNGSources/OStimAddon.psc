@@ -31,11 +31,6 @@ Function InstallAddon(string name)
 	
 	outils.RegisterForOUpdate(self) ;register to update system
 
-	if LoadGameEvents
-		OStim.RegisterForGameLoadEvent(self) ; register for OnGameLoad() 
-		osanative.SendEvent(self, "OnGameLoad") ; call ongameload once.
-	endif 
-
 	outils.console(name + " installed")
 	debug.Notification(name + " installed")
 EndFunction

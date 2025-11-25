@@ -39,44 +39,31 @@ actor[] Function RemoveActorsWithGender(actor[] actors, int gender) Global Nativ
 
 form[] Function GetEquippedAmmo(actor act) Global Native
 
+bool Function IsWig(Actor act, Armor item) Global Native
 
-;  ██████╗ █████╗ ███╗   ███╗███████╗██████╗  █████╗
-; ██╔════╝██╔══██╗████╗ ████║██╔════╝██╔══██╗██╔══██╗
-; ██║     ███████║██╔████╔██║█████╗  ██████╔╝███████║
-; ██║     ██╔══██║██║╚██╔╝██║██╔══╝  ██╔══██╗██╔══██║
-; ╚██████╗██║  ██║██║ ╚═╝ ██║███████╗██║  ██║██║  ██║
-;  ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+Function SetFaceLight (string stateVal, Actor act, string light) Global Native
+Function ApplyFaceLight (string stateVal, Actor act) Global
+	SetFaceLight(stateVal, act, "")
+EndFunction
 
+Function FireDebugOption(string stateVal) Global
+	Debug.MessageBox("Debug " + stateVal)
+EndFunction
 
-; Is FreeCam enabled
-Bool Function IsFreeCam() Global Native
+Function FireDebugActorOption(string stateVal, Actor act) Global 
+	Debug.MessageBox("Debug " + stateVal + " " + act.GetDisplayName())
+EndFunction
 
-; Enable/Disable FreeCam
-Function EnableFreeCam(Bool StopTime = False) Global Native
-Function DisableFreeCam() Global Native
+;  ██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗     ███████╗
+; ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔═══██╗██║     ██╔════╝
+; ██║     ██║   ██║██╔██╗ ██║   ██║   ██████╔╝██║   ██║██║     ███████╗
+; ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║     ╚════██║
+; ╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗███████║
+;  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝
+                                                                     
+Function Control(Int direction, Int glyph) Global Native
 
-; Set FreeCam speed (default: 10.0)
-Function SetFreeCamSpeed(Float Speed = 10.0) Global Native
-
-; Set FOV
-Function SetFOV(Float Value, Bool FirstPerson = False) Global Native
-
-; Get camera coordinates
-; Coordinates are relative to users screen right now, not recomended.
-Float[] Function GetCameraPos() Global Native
-Function SetCameraPos(Float X, Float Y, Float Z) Global Native
-
-
-; ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ ███████╗███████╗
-; ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝
-; ██║  ██║███████║   ██║   ███████║██████╔╝███████║███████╗█████╗
-; ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║╚════██║██╔══╝
-; ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║███████║███████╗
-; ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
-
-
-; Build the json database
-Function BuildDB() Global Native
+Function EndPlayerDialogue() Global Native
 
 
 ; ███████╗ █████╗  ██████╗███████╗
@@ -149,6 +136,17 @@ ObjectReference	Function GetLocationMarker(location loc) Global Native
 
 form[] Function RemoveFormsBelowValue(form[] forms, int goldvalue) Global Native
 
+; ███████╗ ██████╗███████╗███╗   ██╗███████╗    ████████╗██████╗  █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗ 
+; ██╔════╝██╔════╝██╔════╝████╗  ██║██╔════╝    ╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝ 
+; ███████╗██║     █████╗  ██╔██╗ ██║█████╗         ██║   ██████╔╝███████║██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗
+; ╚════██║██║     ██╔══╝  ██║╚██╗██║██╔══╝         ██║   ██╔══██╗██╔══██║██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║
+; ███████║╚██████╗███████╗██║ ╚████║███████╗       ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗██║██║ ╚████║╚██████╔╝
+; ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═══╝╚══════╝       ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ 
+
+Function AddActor(int stageId, Actor Act) Global Native
+
+Function RemoveActor(int stageId) Global Native
+
 ; ██╗   ██╗████████╗██╗██╗
 ; ██║   ██║╚══██╔══╝██║██║
 ; ██║   ██║   ██║   ██║██║
@@ -184,3 +182,9 @@ Function Unlock(String a_lock) Global Native
 ; Experimental
 String Function Translate(String a_key) Global Native
 Function SetLocale(String a_locale = "") Global Native
+
+string Function GetSceneIdFromAnimId(string Id) Global Native
+int Function GetSpeedFromAnimId(string Id) Global Native
+string Function GetAnimClass(string Id) Global Native
+
+Function SetGlyph(int Glyph) Global Native

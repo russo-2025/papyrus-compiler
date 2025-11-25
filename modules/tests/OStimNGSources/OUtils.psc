@@ -32,11 +32,6 @@ float Function GetCurrentHourOfDay() global
 EndFunction
 
 Function RegisterForOUpdate(form f) Global
-	(game.GetFormFromFile(0x000D67, "Ostim.esp") as OStimUpdaterScript).AddFormToDatabase(f)
-EndFunction
-
-Function ForceOUpdate() Global
-	(game.GetFormFromFile(0x000D67, "OStim.esp") as OStimUpdaterScript).DoUpdate()
 EndFunction
 
 
@@ -77,7 +72,7 @@ Bool function GetNPCDataBool(actor npc, string keys) Global
 EndFunction
 
 Bool Function IntArrayContainsValue(Int[] Arr, Int Val) Global
-	return Arr.Find(Val) != -1
+	return Arr.Find(Val) >= 0
 EndFunction
 
 Bool Function StringArrayContainsValue(String[] Arr, String Val) Global
@@ -359,8 +354,6 @@ bool Function MenuOpen() global
 EndFunction
 
 actor[] Function FilterToPlayerFollowers(actor[] acts) Global
-	;faction followerfaction = Game.GetFormFromFile(0x05C84E, "Skyrim.esm") as faction
-
 	int i = 0
 	int l = acts.Length
 	while i < l 
@@ -408,7 +401,7 @@ bool Function IsUIVisible() Global
 endfunction 
 
 objectreference Function GetBlankObject() Global
-	return game.GetPlayer().PlaceAtMe((Quest.GetQuest("0SA") as _oOmni).OBlankStatic) as ObjectReference
+	return None
 EndFunction
 
 Actor[] Function ShuffleActorArray(Actor[] arr) Global
@@ -582,4 +575,25 @@ string[] Function StringArray(string one = "", string two = "", string three = "
 		return ret 
 	endif
 
+EndFunction
+
+Function RestoreOffset(Actor act, float offset) Global
+	float[] offsets
+	bool isFemale = act.GetActorBase().GetSex() == 1
+
+	If nioverride.HasNodeTransformPosition(act, false, isFemale, "NPC", "internal")
+		offsets = nioverride.GetNodeTransformPosition(act, false, isFemale, "NPC", "internal")
+		If offsets[2] != 0
+			Return
+		EndIf
+		offsets[2] = offset
+	Else
+		offsets = new float[3]
+		offsets[0] = 0
+		offsets[1] = 0
+		offsets[2] = offset
+	EndIf
+
+	nioverride.AddNodeTransformPosition(act, false, isFemale, "NPC", "internal", offsets)
+	nioverride.UpdateNodeTransform(act, false, isFemale, "NPC")
 EndFunction
