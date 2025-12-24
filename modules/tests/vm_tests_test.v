@@ -31,7 +31,7 @@ fn test_builder() {
 		backend: .pex
 		no_cache: true
 		header_dirs: []
-		output_mode: pref.OutputMode.silent
+		output_mode: .silent
 	}
 
 	out_file1 := os.join_path(prefs.output_dir, "AAATestObject.pex")

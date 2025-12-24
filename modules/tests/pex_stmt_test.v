@@ -10,6 +10,7 @@ const prefs = pref.Preferences {
 		mode: .compile
 		backend: .pex
 		no_cache: true
+		output_mode: .silent
 	}
 
 const other_src = 

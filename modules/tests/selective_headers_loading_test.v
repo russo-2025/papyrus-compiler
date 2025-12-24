@@ -34,6 +34,7 @@ fn test_selective_headers_loading() {
 		backend: .check
 		no_cache: true
 		header_dirs: [ header_dir ]
+		output_mode: .silent
 	}
 
 	mut b := builder.new_builder(&prefs)
