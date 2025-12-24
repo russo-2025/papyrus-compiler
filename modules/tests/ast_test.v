@@ -1268,7 +1268,6 @@ fn test_error_state_fn_with_default_arg() {
 		EndState"
 
 	stmts, table, errs = compile_top_stmts_error(src)
-	eprintln(errs)
 	assert errs.len == 2
 	assert errs[0].message == "default value for parameter `n2` has type `None` which cannot be assigned to parameter type `Int`"
 	assert errs[1].message == "declaration of the MyFunc function in the Disabled state is different from the declaration in the empty state"
@@ -1400,7 +1399,6 @@ fn test_error_msg()
 			EndIf
 		EndFunction"
 	stmts, table, errs = compile_top_stmts_error(src)
-	eprintln(errs)
 	assert errs.len == 2
 	assert errs[0].message == "undefined type: `InvalidType`"
 	assert errs[1].message == "undefined type: `InvalidType`"
