@@ -65,9 +65,7 @@ pub fn (mut b Builder) run() bool {
 	
 	b.pref.header_dirs = b.pref.header_dirs.reverse()
 
-	$if !test {
-		println("used header dirs ${b.pref.header_dirs}")
-	}
+	b.print("used header dirs ${b.pref.header_dirs}")
 
 	b.files, b.files_names = find_all_src_files(b.pref.paths)
 	
@@ -144,7 +142,7 @@ fn (mut b Builder) start_timer(name string) {
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
 		time_ms := f32(sw.elapsed().microseconds()) / 1000
-		b.print('$name: $time_ms ms')
+		b.print('${name}: ${time_ms} ms')
 		b.timers.delete(name)
 	}
 	else {

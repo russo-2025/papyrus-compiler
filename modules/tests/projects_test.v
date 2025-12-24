@@ -5,7 +5,7 @@ import pref
 import builder
 
 fn get_source_dir(dir_name string, required_file_name string) string {
-	path := os.real_path(os.join_path("modules", "tests", dir_name))
+	path := os.abs_path(os.join_path("modules", "tests", dir_name))
 	required_file := os.join_path(path, required_file_name)
 
 	if !os.is_dir(path) || !os.is_file(required_file) {
@@ -16,10 +16,10 @@ fn get_source_dir(dir_name string, required_file_name string) string {
 }
 
 fn get_output_dir(dir_name string) string {
-	path := os.real_path(os.join_path("test-files", "compiled", dir_name))
+	path := os.abs_path(os.join_path("test-files", "compiled", dir_name))
 
 	if !os.is_dir(path) {
-		os.mkdir(path, os.MkdirParams{}) or { assert false, "[get_output_dir] failed to create output folder ${path}" }
+		os.mkdir_all(path, os.MkdirParams{}) or { assert false, "[get_output_dir] failed to create output folder ${path}; error: ${err}" }
 	}
 
 	if !os.is_dir(path) {
@@ -36,6 +36,7 @@ fn test_project_skyrim_deps_sources() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ ]
 	}
 
@@ -49,6 +50,7 @@ fn test_project_skyui_sdk_51() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -62,6 +64,7 @@ fn test_project_skyui_sdk_52() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -75,6 +78,7 @@ fn test_project_mcm_helper() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc")
@@ -91,6 +95,7 @@ fn test_project_lovense_api() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -105,6 +110,7 @@ fn test_project_fnis()
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -119,6 +125,7 @@ fn test_project_mfgfix()
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -132,6 +139,7 @@ fn test_project_libfire() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -145,6 +153,7 @@ fn test_project_libturtleclub() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -158,6 +167,7 @@ fn test_project_papyrus_util() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -171,6 +181,7 @@ fn test_project_console_util() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -184,6 +195,7 @@ fn test_project_ni_override() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -197,6 +209,7 @@ fn test_project_race_menu() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("NiOverrideSources", "NiOverride.psc")
@@ -213,6 +226,7 @@ fn test_project_ui_extensions() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("NiOverrideSources", "NiOverride.psc"),
@@ -230,6 +244,7 @@ fn test_project_lib_mathf() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -243,6 +258,7 @@ fn test_project_jcontainers() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
 	}
 
@@ -256,6 +272,7 @@ fn test_project_iequip() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"),
@@ -275,6 +292,7 @@ fn test_project_mantella_spell() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
@@ -292,6 +310,7 @@ fn test_project_master_of_disguise() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("LibFireSources", "LibFire.psc"),
@@ -328,6 +347,7 @@ fn test_project_ostim() {
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
@@ -349,6 +369,7 @@ fn test_project_sexlab(){
 		mode: .compile
 		backend: .check
 		no_cache: true
+		output_mode: .silent
 		header_dirs: [
 			get_source_dir("psc_deps", "Form.psc"),
 			get_source_dir("NiOverrideSources", "NiOverride.psc"),
