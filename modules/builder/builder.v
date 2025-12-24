@@ -65,7 +65,9 @@ pub fn (mut b Builder) run() bool {
 	
 	b.pref.header_dirs = b.pref.header_dirs.reverse()
 
-	println("used header dirs ${b.pref.header_dirs}")
+	$if !test {
+		println("used header dirs ${b.pref.header_dirs}")
+	}
 
 	b.files, b.files_names = find_all_src_files(b.pref.paths)
 	
