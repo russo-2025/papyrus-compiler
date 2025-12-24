@@ -207,6 +207,8 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr ast.CallExpr) pex.Variable
 	//имя функции
 	args << pex.value_ident(g.gen_string_ref(expr.name))
 
+	mut need_free_left := ?pex.VariableValue(none)
+
 	if calltype == .callmethod {
 		//у кого вызывать метод
 
@@ -219,9 +221,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr ast.CallExpr) pex.Variable
 			left_obj := g.get_operand_from_expr(mut &expr.left)
 			args << left_obj
 			
-			defer {
-				g.free_temp(left_obj)
-			}
+			need_free_left = left_obj
 		}
 	}
 
@@ -248,6 +248,10 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr ast.CallExpr) pex.Variable
 	g.cur_fn.info.instructions << pex.Instruction{
 		op: calltype
 		args: args
+	}
+
+	if need_free_left != none {
+		g.free_temp(need_free_left)
 	}
 
 	return result_value
