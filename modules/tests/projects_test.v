@@ -4,6 +4,18 @@ import os
 import pref
 import builder
 
+fn get_prefs(input_dir string, header_dirs []string, output_dir string) pref.Preferences {
+	return pref.Preferences {
+		paths: [ input_dir ]
+		output_dir: output_dir
+		mode: .compile
+		backend: .check
+		no_cache: true
+		output_mode: .silent
+		header_dirs: header_dirs
+	}
+}
+
 fn get_source_dir(dir_name string, required_file_name string) string {
 	path := os.abs_path(os.join_path("modules", "tests", dir_name))
 	required_file := os.join_path(path, required_file_name)
@@ -30,356 +42,205 @@ fn get_output_dir(dir_name string) string {
 }
 
 fn test_project_skyrim_deps_sources() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("psc_deps", "Form.psc") ]
-		output_dir: get_output_dir("LibFire")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ ]
-	}
+	prefs := get_prefs(get_source_dir("psc_deps", "Form.psc"), [], get_output_dir("LibFire"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_skyui_sdk_51() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc") ]
-		output_dir: get_output_dir("SkyuiSDK")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("SkyuiSDK"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_skyui_sdk_52() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc") ]
-		output_dir: get_output_dir("SkyuiSDK")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("SkyuiSDK"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_mcm_helper() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("MCMHelperSources", "MCM_ConfigBase.psc") ]
-		output_dir: get_output_dir("MCMHelper")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("MCMHelperSources", "MCM_ConfigBase.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc")
+	], get_output_dir("MCMHelper"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_lovense_api() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("LovenseAPISources", "Lovense.psc") ]
-		output_dir: get_output_dir("LovenseAPI")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("LovenseAPISources", "Lovense.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("LovenseAPI"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_fnis()
 {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("FNISSources", "fnis.psc") ]
-		output_dir: get_output_dir("FNIS")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("FNISSources", "fnis.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("FNIS"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_mfgfix()
 {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("MfgFixSources", "MfgFix_Settings.psc") ]
-		output_dir: get_output_dir("MfgFix")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("MfgFixSources", "MfgFix_Settings.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("MfgFix"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_libfire() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("LibFireSources", "LibFire.psc") ]
-		output_dir: get_output_dir("LibFire")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("LibFireSources", "LibFire.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("LibFire"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_libturtleclub() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc") ]
-		output_dir: get_output_dir("LibTurtleClub")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("LibTurtleClub"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_papyrus_util() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc") ]
-		output_dir: get_output_dir("PapyrusUtil")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("PapyrusUtil"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_console_util() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("ConsoleUtilSources", "ConsoleUtil.psc") ]
-		output_dir: get_output_dir("ConsoleUtil")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("ConsoleUtilSources", "ConsoleUtil.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("ConsoleUtil"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_ni_override() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("NiOverrideSources", "NiOverride.psc") ]
-		output_dir: get_output_dir("NiOverride")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("NiOverrideSources", "NiOverride.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("NiOverride"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_race_menu() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("RaceMenuSources", "racemenu.psc") ]
-		output_dir: get_output_dir("RaceMenu")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("NiOverrideSources", "NiOverride.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("RaceMenuSources", "racemenu.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("NiOverrideSources", "NiOverride.psc")
+	], get_output_dir("RaceMenu"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_ui_extensions() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("UIExtensionsSources", "UIExtensions.psc") ]
-		output_dir: get_output_dir("UIExtensions")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("NiOverrideSources", "NiOverride.psc"),
-			get_source_dir("RaceMenuSources", "racemenu.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("UIExtensionsSources", "UIExtensions.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("NiOverrideSources", "NiOverride.psc"),
+		get_source_dir("RaceMenuSources", "racemenu.psc")
+	], get_output_dir("UIExtensions"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_lib_mathf() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("LibMathfSources", "LibMathf.psc") ]
-		output_dir: get_output_dir("LibMathf")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("LibMathfSources", "LibMathf.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("LibMathf"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_jcontainers() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("JContainersSources", "JContainers.psc") ]
-		output_dir: get_output_dir("JContainers")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [ get_source_dir("psc_deps", "Form.psc") ]
-	}
+	prefs := get_prefs(get_source_dir("JContainersSources", "JContainers.psc"), [
+		get_source_dir("psc_deps", "Form.psc")
+	], get_output_dir("JContainers"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_iequip() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("iEquipSources", "dubhMonitorEffectScript.psc") ]
-		output_dir: get_output_dir("iEquip")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"),
-			get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc"),
-			get_source_dir("LibMathfSources", "LibMathf.psc"),
-			get_source_dir("LibFireSources", "LibFire.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("iEquipSources", "dubhMonitorEffectScript.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"),
+		get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc"),
+		get_source_dir("LibMathfSources", "LibMathf.psc"),
+		get_source_dir("LibFireSources", "LibFire.psc")
+	], get_output_dir("iEquip"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_mantella_spell() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("MantellaSpellSources", "MantellaLauncher.psc") ]
-		output_dir: get_output_dir("MantellaSpell")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
-			get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("MantellaSpellSources", "MantellaLauncher.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
+		get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc")
+	], get_output_dir("MantellaSpell"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_master_of_disguise() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("MasterOfDisguiseSources", "dubhDisguiseMCMQuestScript.psc") ]
-		output_dir: get_output_dir("MasterOfDisguise")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("LibFireSources", "LibFire.psc"),
-			get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc"),
-			get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
-			get_source_dir("LibMathfSources", "LibMathf.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("MasterOfDisguiseSources", "dubhDisguiseMCMQuestScript.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("LibFireSources", "LibFire.psc"),
+		get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc"),
+		get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
+		get_source_dir("LibMathfSources", "LibMathf.psc")
+	], get_output_dir("MasterOfDisguise"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_osa() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("OSASources", "OSA.psc") ]
-		output_dir: get_output_dir("OSA")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"),
-			get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("OSASources", "OSA.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc"),
+		get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc")
+	], get_output_dir("OSA"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_ostim() {
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("OStimNGSources", "OStimAddon.psc") ]
-		output_dir: get_output_dir("OStim")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
-			get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc"),
-			get_source_dir("NiOverrideSources", "NiOverride.psc"),
-			get_source_dir("JContainersSources", "JContainers.psc"),
-			get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
-			get_source_dir("ConsoleUtilSources", "ConsoleUtil.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("OStimNGSources", "OStimAddon.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("UIExtensionsSources", "UIExtensions.psc"),
+		get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc"),
+		get_source_dir("NiOverrideSources", "NiOverride.psc"),
+		get_source_dir("JContainersSources", "JContainers.psc"),
+		get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
+		get_source_dir("ConsoleUtilSources", "ConsoleUtil.psc")
+	], get_output_dir("OStim"))
 
 	builder.compile(&prefs)
 }
 
 fn test_project_sexlab(){
-	prefs := pref.Preferences {
-		paths: [ get_source_dir("SexLabSources", "SexLabFramework.psc") ]
-		output_dir: get_output_dir("SexLab")
-		mode: .compile
-		backend: .check
-		no_cache: true
-		output_mode: .silent
-		header_dirs: [
-			get_source_dir("psc_deps", "Form.psc"),
-			get_source_dir("NiOverrideSources", "NiOverride.psc"),
-			get_source_dir("MfgFixSources", "MfgFix_Settings.psc"),
-			get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
-			get_source_dir("LovenseAPISources", "Lovense.psc"),
-			get_source_dir("FNISSources", "fnis.psc"),
-			get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc")
-		]
-	}
+	prefs := get_prefs(get_source_dir("SexLabSources", "SexLabFramework.psc"), [
+		get_source_dir("psc_deps", "Form.psc"),
+		get_source_dir("NiOverrideSources", "NiOverride.psc"),
+		get_source_dir("MfgFixSources", "MfgFix_Settings.psc"),
+		get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc"),
+		get_source_dir("LovenseAPISources", "Lovense.psc"),
+		get_source_dir("FNISSources", "fnis.psc"),
+		get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc")
+	], get_output_dir("SexLab"))
 
 	builder.compile(&prefs)
 }
