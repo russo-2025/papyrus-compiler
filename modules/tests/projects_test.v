@@ -65,7 +65,7 @@ const ostim = get_source_dir("OStimNGSources", "OStimAddon.psc")
 const sexlab = get_source_dir("SexLabSources", "SexLabFramework.psc")
 
 fn test_project_skyrim_deps_sources() {
-	prefs := get_prefs(skyrim_deps, [], get_output_dir("LibFire"))
+	prefs := get_prefs(skyrim_deps, [], get_output_dir("SkyrimDeps"))
 
 	builder.compile(&prefs)
 }
@@ -73,7 +73,7 @@ fn test_project_skyrim_deps_sources() {
 fn test_project_skyui_sdk_51() {
 	prefs := get_prefs(skyui_sdk_51, [
 		skyrim_deps
-	], get_output_dir("SkyuiSDK"))
+	], get_output_dir("SkyuiSDK51"))
 
 	builder.compile(&prefs)
 }
@@ -81,7 +81,7 @@ fn test_project_skyui_sdk_51() {
 fn test_project_skyui_sdk_52() {
 	prefs := get_prefs(skyui_sdk_52, [
 		skyrim_deps
-	], get_output_dir("SkyuiSDK"))
+	], get_output_dir("SkyuiSDK52"))
 
 	builder.compile(&prefs)
 }
