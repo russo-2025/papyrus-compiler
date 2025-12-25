@@ -39,7 +39,7 @@ fn main() {
 			pex_file := pex.read_from_file(prefs.paths[0])
 			output_file_name := prefs.paths[0] + ".txt"
 			os.write_file(output_file_name, pex_file.str()) or {
-				util.fatal_error("ERROR: failed to write file ${output_file_name}; ${err}")
+				util.fatal_error("failed to write file ${output_file_name}; ${err}")
 			}
 		}
 		.create_dump {
@@ -47,7 +47,7 @@ fn main() {
 			json_data := json.encode_pretty(dump_objects)
 			output_file_name := os.real_path("dump.json")
 			os.write_file(output_file_name, json_data) or {
-				util.fatal_error("ERROR: failed to write file ${output_file_name}; ${err}")
+				util.fatal_error("failed to write file ${output_file_name}; ${err}")
 			}
 		}
 		.help {

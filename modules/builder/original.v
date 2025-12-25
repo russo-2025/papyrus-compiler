@@ -17,17 +17,17 @@ fn (mut b Builder) compile_original() {
 	for file in b.files {
 		cmd := '"${compiler_exe_path}" "${file}" -quiet -i="${header_dirs}" -o="${b.pref.output_dir}" -f="${compiler_flags_path}"'
 		
-		println("executing: `${cmd}`")
+		b.print("executing: `${cmd}`")
 		
 		res := unsafe { os.raw_execute(cmd) }
 		
 		if res.exit_code == 0 {
-			println('successfully - ${file}')
+			b.print('successfully - ${file}')
 		}
 		else {
-			println('failed - ${file}')
-			println('console output:')
-			println(res.output)
+			b.print('failed - ${file}')
+			b.print('console output:')
+			b.print(res.output)
 		}
 	}
 }

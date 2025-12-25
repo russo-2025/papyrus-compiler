@@ -35,6 +35,8 @@ fn (mut b Builder) compile_pex() {
 
 	if c.errors.len != 0 {
 		$if test {
+			println(c.errors)
+			print_backtrace()
 			assert false, "checker.errors.len != 0"
 		}
 
