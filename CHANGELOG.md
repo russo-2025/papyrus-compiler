@@ -10,8 +10,18 @@
   - Added `version` command to display current compiler version.
   - Updated supported V compiler version.
   - TODO: Update help command documentation.
-  - исправлен автокаст значений у property
-  - добавлены проверки родителей у объектов
+  - добавлен compile-time каст значений-литералов (int "123" -> 123) для параметров по умолчанию и значений в объявлении свойства
+      ```
+      int Property MyPropAutoCast = \"123\" Auto`
+      ```
+      ```
+      Int Function MyFunc(int n1, int n2 = \"12\")
+        return n1
+      EndFunction"
+      ```
+  - исправлены none значения у property и параметров по умолчанию в функцях
+  - добавлены проверки отсутствующих скриптов в некоторых местах
+  - добавлены проверки родителей у скриптов
   - исправлена проверка аргумента функции в состоянии с параметром по умолчанию
   - добавлена проверка параметра по умолчанию
 

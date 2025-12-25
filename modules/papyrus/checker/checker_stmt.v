@@ -114,6 +114,11 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.Return {
 			typ := c.expr(mut node.expr)
+
+			if !c.type_is_valid(c.cur_fn.return_type) {
+				c.undefined_type_error(c.cur_fn.return_type, node.pos)
+				return
+			}
 			
 			if c.valid_type(c.cur_fn.return_type, typ, false) {}
 			else if c.can_autocast(typ, c.cur_fn.return_type) {
@@ -200,21 +205,6 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 					c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
 				}
 
-/*
-				valid_obj_none_value := node.is_object_var && node.right is ast.NoneLiteral && (c.table.get_type_symbol(left_type).kind == .script || c.table.get_type_symbol(left_type).kind == .array)
-
-				if c.valid_type(left_type, right_type) || valid_obj_none_value {}
-				else if c.type_is_valid(left_type) && c.type_is_valid(right_type) && c.can_autocast(right_type, left_type) {
-					node.right = c.cast_to_type(node.right, right_type, left_type)
-					right_type = left_type
-				}
-				else {
-					ltype_name := c.get_type_name(left_type)
-					rtype_name := c.get_type_name(right_type)
-					c.error("value with type `${rtype_name}` cannot be assigned to a variable with type `${ltype_name}`",  node.pos)
-				}
-*/
-
 				if node.op != .assign {
 					new_node := ast.InfixExpr{
 						left: node.left
@@ -258,6 +248,10 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 	c.cur_scope = node.scope
 	c.inside_fn = true
 
+	if !c.type_is_valid(node.return_type) {
+		c.undefined_type_error(node.return_type, node.pos)
+	}
+
 	for i := 0; i < node.params.len; i++ {
 		mut param := node.params[i]
 
@@ -288,10 +282,6 @@ fn (mut c Checker) fn_decl(mut node ast.FnDecl) {
 			}
 
 			c.expr(mut node.params[i].default_value)
-
-			//t_default_value_type_name := c.get_type_name(default_value_typ)
-			//t_type_name := c.get_type_name(param.typ)
-			//eprintln("${t_default_value_type_name} -> ${t_type_name}, isValid: ${c.valid_type(default_value_typ, param.typ, true)}")
 
 			if c.valid_type(param.typ, default_value_typ, true) {}
 			else {

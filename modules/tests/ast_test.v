@@ -1392,12 +1392,20 @@ fn test_error_msg()
 	assert errs[1].message == "undefined type: `InvalidType`" // checker expr error
 	assert errs[2].message == "undefined type: `InvalidType`" // checker expr error
 
-
 	src = "
 		InvalidType propWithInvalidType
 		Function MyFunc(ABCD n1, int n2)
 			If propWithInvalidType
 			EndIf
+		EndFunction"
+	stmts, table, errs = compile_top_stmts_error(src)
+	assert errs.len == 2
+	assert errs[0].message == "undefined type: `InvalidType`"
+	assert errs[1].message == "undefined type: `InvalidType`"
+
+	src = "
+		InvalidType Function MyFunc()
+			return none
 		EndFunction"
 	stmts, table, errs = compile_top_stmts_error(src)
 	assert errs.len == 2
