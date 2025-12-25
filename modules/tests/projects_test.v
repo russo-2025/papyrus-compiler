@@ -28,7 +28,7 @@ fn get_source_dir(dir_name string, required_file_name string) string {
 }
 
 fn get_output_dir(dir_name string) string {
-	path := os.abs_path(os.join_path("test-files", "compiled", dir_name))
+	path := os.abs_path(os.join_path("test-files", "compiled", "__project_test_" + dir_name))
 
 	if !os.is_dir(path) {
 		os.mkdir_all(path, os.MkdirParams{}) or { assert false, "[get_output_dir] failed to create output folder ${path}; error: ${err}" }
