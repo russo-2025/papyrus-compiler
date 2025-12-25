@@ -6,12 +6,12 @@ import papyrus.token
 import papyrus.errors
 
 const prefs = pref.Preferences {
-		paths: []string{}
-		mode: .compile
-		backend: .pex
-		no_cache: true
-		output_mode: .silent
-	}
+	paths: []string{}
+	mode: .compile
+	backend: .pex
+	no_cache: true
+	output_mode: .silent
+}
 
 const other_src = 
 "Scriptname OtherScript
