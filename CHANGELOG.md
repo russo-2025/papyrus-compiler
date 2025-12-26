@@ -22,8 +22,9 @@
   - исправлены none значения у property и параметров по умолчанию в функцях
   - добавлены проверки отсутствующих скриптов в некоторых местах
   - добавлены проверки родителей у скриптов
-  - исправлена проверка аргумента функции в состоянии с параметром по умолчанию
+  - исправлена проверка аргумента с параметром по умолчанию в функции в состоянии #14
   - добавлена проверка параметра по умолчанию
+  - добавлены тесты с компиляцией скриптов из сторонних проектов(SkyuiSDK, MCMHelper, LovenseAPI, FNIS, MfgFix, LibFire, LibTurtleClub, PapyrusUtil, ConsoleUtil, NiOverride, RaceMenu, UIExtensions, LibMath, JContainers, iEquip, MantellaSpell, MasterOfDisguise, OSA, OStimNG, SexLab)
 
 ...
 
