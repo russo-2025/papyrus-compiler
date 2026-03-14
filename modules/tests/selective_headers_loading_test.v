@@ -11,7 +11,7 @@ const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect",
 	"enchantment"] // used in headers
 
 fn test_selective_headers_loading() {
-	src_file := os.real_path(os.join_path("modules", "tests", "sources", "psc", "TestSelectiveLoading.psc"))
+	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestSelectiveLoading.psc"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled"))
 	header_dir := os.real_path(os.join_path("modules", "tests", "sources", "psc_deps"))
 
