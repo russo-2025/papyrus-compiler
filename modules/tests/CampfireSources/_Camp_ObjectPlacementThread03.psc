@@ -1,1 +1,0 @@
-scriptname _Camp_ObjectPlacementThread03 extends _Camp_ObjectPlacementThread

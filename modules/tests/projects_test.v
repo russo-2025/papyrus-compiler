@@ -17,7 +17,7 @@ fn get_prefs(input_dir string, header_dirs []string, output_dir string) pref.Pre
 }
 
 fn get_source_dir(dir_name string, required_file_name string) string {
-	path := os.abs_path(os.join_path("modules", "tests", dir_name))
+	path := os.abs_path(os.join_path("modules", "tests", "sources", dir_name))
 	required_file := os.join_path(path, required_file_name)
 
 	if !os.is_dir(path) || !os.is_file(required_file) {
@@ -42,29 +42,30 @@ fn get_output_dir(dir_name string) string {
 }
 
 const skyrim_deps = get_source_dir("psc_deps", "Form.psc")
-const skyui_sdk_51 = get_source_dir("SkyuiSDKSources_v5.1", "SKI_ConfigBase.psc")
-const skyui_sdk_52 = get_source_dir("SkyuiSDKSources_v5.2", "SKI_ConfigBase.psc")
-const mcm_helper = get_source_dir("MCMHelperSources", "MCM_ConfigBase.psc")
-const lovense_api = get_source_dir("LovenseAPISources", "Lovense.psc")
-const fnis = get_source_dir("FNISSources", "fnis.psc")
-const mfgfix = get_source_dir("MfgFixSources", "MfgFix_Settings.psc")
-const libfire = get_source_dir("LibFireSources", "LibFire.psc")
-const libturtleclub = get_source_dir("LibTurtleClubSources", "LibTurtleClub.psc")
-const papyrus_util = get_source_dir("PapyrusUtilSources", "PapyrusUtil.psc")
-const console_util = get_source_dir("ConsoleUtilSources", "ConsoleUtil.psc")
-const ni_override = get_source_dir("NiOverrideSources", "NiOverride.psc")
-const race_menu = get_source_dir("RaceMenuSources", "racemenu.psc")
-const ui_extensions = get_source_dir("UIExtensionsSources", "UIExtensions.psc")
-const lib_mathf = get_source_dir("LibMathfSources", "LibMathf.psc")
-const jcontainers = get_source_dir("JContainersSources", "JContainers.psc")
-const iequip = get_source_dir("iEquipSources", "dubhMonitorEffectScript.psc")
-const mantella_spell = get_source_dir("MantellaSpellSources", "MantellaLauncher.psc")
-const master_of_disguise = get_source_dir("MasterOfDisguiseSources", "dubhDisguiseMCMQuestScript.psc")
-const osa = get_source_dir("OSASources", "OSA.psc")
-const ostim = get_source_dir("OStimNGSources", "OStimAddon.psc")
-const sexlab = get_source_dir("SexLabSources", "SexLabFramework.psc")
-const campfire = get_source_dir("CampfireSources", "CampfireAPI.psc")
-const requiem = get_source_dir("RequiemSources", "Req_VampireDustScript.psc")
+const skyui_sdk_51 = get_source_dir("SkyuiSDK_v5.1", "SKI_ConfigBase.psc")
+const skyui_sdk_52 = get_source_dir("SkyuiSDK_v5.2", "SKI_ConfigBase.psc")
+const mcm_helper = get_source_dir("MCMHelper", "MCM_ConfigBase.psc")
+const lovense_api = get_source_dir("LovenseAPI", "Lovense.psc")
+const fnis = get_source_dir("FNIS", "fnis.psc")
+const mfgfix = get_source_dir("MfgFix", "MfgFix_Settings.psc")
+const libfire = get_source_dir("LibFire", "LibFire.psc")
+const libturtleclub = get_source_dir("LibTurtleClub", "LibTurtleClub.psc")
+const papyrus_util = get_source_dir("PapyrusUtil", "PapyrusUtil.psc")
+const console_util = get_source_dir("ConsoleUtil", "ConsoleUtil.psc")
+const ni_override = get_source_dir("NiOverride", "NiOverride.psc")
+const race_menu = get_source_dir("RaceMenu", "racemenu.psc")
+const ui_extensions = get_source_dir("UIExtensions", "UIExtensions.psc")
+const lib_mathf = get_source_dir("LibMathf", "LibMathf.psc")
+const jcontainers = get_source_dir("JContainers", "JContainers.psc")
+const iequip = get_source_dir("iEquip", "dubhMonitorEffectScript.psc")
+const mantella_spell = get_source_dir("MantellaSpell", "MantellaLauncher.psc")
+const master_of_disguise = get_source_dir("MasterOfDisguise", "dubhDisguiseMCMQuestScript.psc")
+const osa = get_source_dir("OSA", "OSA.psc")
+const ostim = get_source_dir("OStimNG", "OStimAddon.psc")
+const sexlab = get_source_dir("SexLab", "SexLabFramework.psc")
+const campfire = get_source_dir("Campfire", "CampfireAPI.psc")
+const requiem = get_source_dir("Requiem", "Req_VampireDustScript.psc")
+const ussep = get_source_dir("USSEP", "ussep_clearaliasonactivate.psc")
 
 fn test_project_skyrim_deps_sources() {
 	prefs := get_prefs(skyrim_deps, [], get_output_dir("SkyrimDeps"))
@@ -274,17 +275,26 @@ fn test_project_sexlab(){
 fn test_project_campfire(){
 	prefs := get_prefs(campfire, [
 		skyrim_deps
-	], get_output_dir("CampfireSources"))
+	], get_output_dir("Campfire"))
+
+	builder.compile(&prefs)
+}
+
+fn test_project_requiem(){
+	prefs := get_prefs(requiem, [
+		skyrim_deps
+	], get_output_dir("Requiem"))
+
+	builder.compile(&prefs)
+}
+
+fn test_project_ussep(){
+	prefs := get_prefs(ussep, [
+		skyrim_deps
+	], get_output_dir("USSEP"))
 
 	builder.compile(&prefs)
 }
 */
 
-fn test_project_requiem(){
-	prefs := get_prefs(requiem, [
-		skyrim_deps
-	], get_output_dir("RequiemSources"))
-
-	builder.compile(&prefs)
-}
 

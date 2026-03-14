@@ -1,7 +1,0 @@
-scriptname _Camp_IndicatorTrigger extends ObjectReference
-
-GlobalVariable property _Camp_CurrentlyPlacingObject auto
-
-Event OnActivate(ObjectReference akActionRef)
-	_Camp_CurrentlyPlacingObject.SetValue(1)
-endEvent

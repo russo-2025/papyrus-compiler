@@ -1,0 +1,3 @@
+[submodule "modules/tests/sources"]
+	path = modules/tests/sources
+	url = https://github.com/russo-2025/papyrus-compiler-test-sources
