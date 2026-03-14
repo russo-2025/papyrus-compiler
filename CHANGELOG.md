@@ -1,32 +1,29 @@
 ## Next Release
 
+### New Features
+
+- Added `version` command — run `papyrus version` to display the current compiler version.
+- String literals are now accepted as default values for typed properties and function parameters and are automatically converted to the declared type.
+  ```
+  int Property MyProp = "123" Auto  ; now valid — "123" is converted to 123
+  ```
+  ```
+  Int Function MyFunc(int n1, int n2 = "12")  ; "12" is converted to 12
+  EndFunction
+  ```
+
 ### Improvements
 
-- **Improved Error Handling**
-  - All panics replaced with more informative alternatives for better debugging.
+- The compiler now reports an error when a script referenced in `extends` or a variable type cannot be found, instead of failing silently.
+- The compiler now reports an error when two scripts with the same name are found in different source folders.
+- Added a check that the script name declared in `Scriptname` matches the source file name.
+- Default parameter values are now validated to be type-compatible with the declared parameter type.
 
-- **Developer Experience Enhancements**
-  - Added bug report issue template to streamline problem reporting.
-  - Added `version` command to display current compiler version.
-  - Updated supported V compiler version.
-  - TODO: Update help command documentation.
-  - добавлен compile-time каст значений-литералов (int "123" -> 123) для параметров по умолчанию и значений в объявлении свойства
-      ```
-      int Property MyPropAutoCast = \"123\" Auto`
-      ```
-      ```
-      Int Function MyFunc(int n1, int n2 = \"12\")
-        return n1
-      EndFunction"
-      ```
-  - исправлены none значения у property и параметров по умолчанию в функцях
-  - добавлены проверки отсутствующих скриптов в некоторых местах
-  - добавлены проверки родителей у скриптов
-  - исправлена проверка аргумента с параметром по умолчанию в функции в состоянии #14
-  - добавлена проверка параметра по умолчанию
-  - добавлена проверка соответствие имени скринта и имени файла
-  - добавлена проверка переопределения скриптов(два скрипта с одним именем в разных папках) 
-  - добавлены тесты с компиляцией скриптов из сторонних проектов(SkyuiSDK, MCMHelper, LovenseAPI, FNIS, MfgFix, LibFire, LibTurtleClub, PapyrusUtil, ConsoleUtil, NiOverride, RaceMenu, UIExtensions, LibMath, JContainers, iEquip, MantellaSpell, MasterOfDisguise, OSA, OStimNG, SexLab)
+### Fixes
+
+- Fixed incorrect handling of `None` as a default value in properties and function parameters.
+- Fixed a compiler crash when `None` was used in arithmetic or logical expressions (e.g., `None + 1`). A proper error message is now shown instead.
+- Fixed an issue where calling a function with default parameters inside a `State` block was not validated correctly (#14).
 
 ...
 
