@@ -369,6 +369,19 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		name: name
 		name_pos: p.tok.position()
 	}
+	
+	if os.base(p.path).to_lower().ends_with('.psc') {
+		file_name := os.base(p.path).all_before_last('.')
+		if name.to_lower() != file_name.to_lower() {
+			p.error_with_pos("script name `${name}` does not match file name `${file_name}`", node.name_pos)
+		}
+	}
+
+	if existing := p.table.find_type(name) {
+		if existing.kind == .script {
+			p.error_with_pos("script with name `${name}` is already defined", node.name_pos)
+		}
+	}
 
 	mut parent_idx := 0
 
