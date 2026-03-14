@@ -41,7 +41,9 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
   
       - name: Install V
         uses: vlang/setup-v@v1.4

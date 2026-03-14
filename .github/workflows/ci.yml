@@ -19,7 +19,9 @@ jobs:
           version: weekly.2025.48
 
       - name: Checkout ${{ github.event.repository.name }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build ${{ github.event.repository.name }}
         run: v -prod -gc none compiler.v
