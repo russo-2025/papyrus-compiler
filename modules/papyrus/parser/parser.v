@@ -752,6 +752,13 @@ fn (mut p Parser) next() {
 }
 
 @[inline]
+fn (mut p Parser) skip_comments() {
+	for p.tok.kind == .comment {
+		p.next()
+	}
+}
+
+@[inline]
 pub fn (mut p Parser) check_name() string {
 	name := p.tok.lit
 	p.check(.name)

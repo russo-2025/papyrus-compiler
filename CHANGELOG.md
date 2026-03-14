@@ -23,7 +23,9 @@
 
 - Fixed incorrect handling of `None` as a default value in properties and function parameters.
 - Fixed a compiler crash when `None` was used in arithmetic or logical expressions (e.g., `None + 1`). A proper error message is now shown instead.
+- Fixed a compiler crash when an undefined script type was used in expressions that require conversion (for example, `value && true` where `value` has an unknown type). The compiler now reports an undefined type error instead of crashing.
 - Fixed an issue where calling a function with default parameters inside a `State` block was not validated correctly (#14).
+- Fixed parsing of comments inside parenthesized expressions and call argument lists (for example, `if !(PlayerRef ;/comment/;)`). The compiler now accepts these scripts instead of failing with a parser error.
 
 ...
 

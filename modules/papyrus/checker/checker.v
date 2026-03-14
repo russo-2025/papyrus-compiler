@@ -120,6 +120,10 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
 
+	if from_sym.kind == .placeholder || to_sym.kind == .placeholder {
+		return false
+	}
+
 	//assert from_sym.kind != .placeholder, 'from_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
 	//assert to_sym.kind != .placeholder, 'to_sym.kind == .placeholder, from_sym.name: ${from_sym.name}, to_sym.name: ${to_sym.name}'
 
@@ -177,8 +181,9 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 	
 	from_sym := c.table.get_type_symbol(from_type)
 	to_sym := c.table.get_type_symbol(to_type)
-	assert from_sym.kind != .placeholder, from_sym.name
-	assert to_sym.kind != .placeholder, to_sym.name
+	if from_sym.kind == .placeholder || to_sym.kind == .placeholder {
+		return false
+	}
 
 	match from_sym.kind {
 		.placeholder {
@@ -262,6 +267,16 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 }
 
 pub fn (mut c Checker) try_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {
+	if !c.type_is_valid(from_type) {
+		c.undefined_type_error(from_type, node.pos)
+		return none
+	}
+
+	if !c.type_is_valid(to_type) {
+		c.undefined_type_error(to_type, node.pos)
+		return none
+	}
+
 	if !c.can_cast(from_type, to_type) && !c.can_autocast(from_type, to_type) {
 		c.error("cannot cast from `${c.get_type_name(from_type)}` to `${c.get_type_name(to_type)}`", node.pos)
 		return none

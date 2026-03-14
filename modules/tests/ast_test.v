@@ -164,6 +164,28 @@ fn test_prefix_expr() {
 	assert ((expr as ast.PrefixExpr).right as ast.Ident).typ == ast.int_type
 }
 
+fn test_multiline_comment_inside_paren_condition() {
+	stmts, _ := compile_stmts('
+		if !(arg4 ;/&& False/;)
+			return
+		endif
+	')
+
+	assert stmts.len == 1
+	assert stmts[0] is ast.If
+
+	if_stmt := stmts[0] as ast.If
+	assert if_stmt.branches.len == 1
+
+	cond := if_stmt.branches[0].cond as ast.PrefixExpr
+	assert cond.op == token.Kind.not
+	assert cond.right is ast.ParExpr
+
+	inner := (cond.right as ast.ParExpr).expr
+	assert inner is ast.Ident
+	assert (inner as ast.Ident).name == 'arg4'
+}
+
 fn test_infix() {
 	mut expr := &ast.Expr(ast.EmptyExpr{})
 	
