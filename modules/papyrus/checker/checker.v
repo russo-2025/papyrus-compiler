@@ -249,7 +249,7 @@ pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 }
 
 pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) &ast.Expr {
-	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type)
+	assert c.can_cast(from_type, to_type) || c.can_autocast(from_type, to_type), "cannot cast from `${c.get_type_name(from_type)}` to `${c.get_type_name(to_type)}`"
 
 	new_node := ast.CastExpr {
 		expr: node
