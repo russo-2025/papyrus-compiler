@@ -13,7 +13,7 @@ const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect",
 fn test_selective_headers_loading() {
 	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestSelectiveLoading.psc"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled"))
-	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
+	header_dir := os.real_path(os.join_path("modules", "tests", "sources", "psc_deps"))
 
 	if !os.is_file(src_file) {
 		assert false, "invalid input file ${src_file}"
@@ -47,8 +47,8 @@ fn test_selective_headers_loading() {
 	}
 
 	/*
-	// нужно проверить все ли необходимые типы загружены.
-	// есть те типы которые могут быть placeholder, но они не нужны??????????????????????????????????????????????
+	// verify that all required types are loaded
+	// some types can be placeholders, but they are not needed
 	for obj_name in placeholder_objects {
 		if sym := b.table.find_type(obj_name) {
 			assert sym.kind == .placeholder, obj_name
