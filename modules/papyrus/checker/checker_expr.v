@@ -208,36 +208,48 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				node.result_type = ast.string_type
 
 				if node.left_type == ast.string_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.string_type)
-					node.right_type = ast.string_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.string_type) {
+						node.right = cast_expr
+						node.right_type = ast.string_type
+					}
 				}
 				else if node.right_type == ast.string_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.string_type)
-					node.left_type = ast.string_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.string_type) {
+						node.left = cast_expr
+						node.left_type = ast.string_type
+					}
 				}
 			}
 			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
 				node.result_type = ast.float_type
 
 				if node.left_type == ast.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
-					node.right_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.float_type) {
+						node.right = cast_expr
+						node.right_type = ast.float_type
+					}
 				}
 				else if node.right_type == ast.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
-					node.left_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.float_type) {
+						node.left = cast_expr
+						node.left_type = ast.float_type
+					}
 				}
 			}
 			else {
 				node.result_type = ast.int_type
 
 				if node.left_type == ast.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
-					node.right_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.int_type) {
+						node.right = cast_expr
+						node.right_type = ast.int_type
+					}
 				}
 				else if node.right_type == ast.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
-					node.left_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.int_type) {
+						node.left = cast_expr
+						node.left_type = ast.int_type
+					}
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -258,24 +270,32 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 				node.result_type = ast.float_type
 
 				if node.left_type == ast.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
-					node.right_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.float_type) {
+						node.right = cast_expr
+						node.right_type = ast.float_type
+					}
 				}
 				else if node.right_type == ast.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
-					node.left_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.float_type) {
+						node.left = cast_expr
+						node.left_type = ast.float_type
+					}
 				}
 			}
 			else {
 				node.result_type = ast.int_type
 
 				if node.left_type == ast.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
-					node.right_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.int_type) {
+						node.right = cast_expr
+						node.right_type = ast.int_type
+					}
 				}
 				else if node.right_type == ast.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
-					node.left_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.int_type) {
+						node.left = cast_expr
+						node.left_type = ast.int_type
+					}
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -295,22 +315,30 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 			}
 			else if node.left_type == ast.float_type || node.right_type == ast.float_type {
 				if node.left_type == ast.float_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.float_type)
-					node.right_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.float_type) {
+						node.right = cast_expr
+						node.right_type = ast.float_type
+					}
 				}
 				else if node.right_type == ast.float_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.float_type)
-					node.left_type = ast.float_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.float_type) {
+						node.left = cast_expr
+						node.left_type = ast.float_type
+					}
 				}
 			}
 			else {
 				if node.left_type == ast.int_type {
-					node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
-					node.right_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.int_type) {
+						node.right = cast_expr
+						node.right_type = ast.int_type
+					}
 				}
 				else if node.right_type == ast.int_type {
-					node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
-					node.left_type = ast.int_type
+					if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.int_type) {
+						node.left = cast_expr
+						node.left_type = ast.int_type
+					}
 				}
 				else {
 					type_name := c.get_type_name(node.left_type)
@@ -325,12 +353,16 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 
 			}
 			else if node.left_type == ast.int_type {
-				node.right = c.cast_to_type(node.right, node.right_type, ast.int_type)
-				node.right_type = ast.int_type
+				if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.int_type) {
+					node.right = cast_expr
+					node.right_type = ast.int_type
+				}
 			}
 			else if node.right_type == ast.int_type {
-				node.left = c.cast_to_type(node.left, node.left_type, ast.int_type)
-				node.left_type = ast.int_type
+				if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.int_type) {
+					node.left = cast_expr
+					node.left_type = ast.int_type
+				}
 			}
 			else {
 				ltype_name := c.get_type_name(node.left_type)
@@ -360,13 +392,17 @@ pub fn (mut c Checker) expr_infix(mut node ast.InfixExpr) ast.Type {
 		}
 		.logical_and, .logical_or {
 			if node.left_type != ast.bool_type {
-				node.left = c.cast_to_type(node.left, node.left_type, ast.bool_type)
-				node.left_type = ast.bool_type
+				if cast_expr := c.try_cast_to_type(node.left, node.left_type, ast.bool_type) {
+					node.left = cast_expr
+					node.left_type = ast.bool_type
+				}
 			}
 			
 			if node.right_type != ast.bool_type {
-				node.right = c.cast_to_type(node.right, node.right_type, ast.bool_type)
-				node.right_type = ast.bool_type
+				if cast_expr := c.try_cast_to_type(node.right, node.right_type, ast.bool_type) {
+					node.right = cast_expr
+					node.right_type = ast.bool_type
+				}
 			}
 
 			node.result_type = ast.bool_type

@@ -112,7 +112,7 @@ pub fn (mut c Checker) value_type_is_valid(var_typ ast.Type, value_typ ast.Type)
 }
 */
 
-//можно ли кастануть тип from_type к типу to_type
+// checks whether from_type can be implicitly cast to to_type
 pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	assert from_type != 0
 	assert to_type != 0
@@ -169,7 +169,7 @@ pub fn (mut c Checker) can_autocast(from_type ast.Type, to_type ast.Type) bool {
 	return false
 }
 
-//можно ли кастануть тип from_type к типу to_type
+// checks whether from_type can be explicitly cast to to_type
 pub fn (mut c Checker) can_cast(from_type ast.Type, to_type ast.Type) bool {
 	assert from_type != 0
 	assert to_type != 0
@@ -259,6 +259,15 @@ pub fn (mut c Checker) cast_to_type(node ast.Expr, from_type ast.Type, to_type a
 	}
 
 	return &new_node
+}
+
+pub fn (mut c Checker) try_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {
+	if !c.can_cast(from_type, to_type) && !c.can_autocast(from_type, to_type) {
+		c.error("cannot cast from `${c.get_type_name(from_type)}` to `${c.get_type_name(to_type)}`", node.pos)
+		return none
+	}
+
+	return c.cast_to_type(node, from_type, to_type)
 }
 
 pub fn (mut c Checker) compile_time_cast_to_type(node ast.Expr, from_type ast.Type, to_type ast.Type) ?&ast.Expr {

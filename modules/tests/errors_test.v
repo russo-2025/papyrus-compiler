@@ -65,3 +65,9 @@ fn test_call_expr() {
 	assert errs.len == 1
 	assert errs[0].message == 'function takes 1 parameters not 0'
 }
+
+fn test_none_plus_int_reports_error() {
+	errs := compile_expr('none + 1')
+	assert errs.len == 1
+	assert errs[0].message == 'cannot cast from `None` to `Int`'
+}
