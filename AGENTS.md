@@ -185,6 +185,16 @@ Generated `.pex` files must be binary-compatible with Bethesda's Papyrus VM. The
 ### 7. Do not modify third-party test sources
 Files in `modules/tests/*Sources/` directories are real-world Skyrim mod scripts. They must not be modified — they serve as regression test fixtures.
 
+### 8. Update changelog for user-visible changes
+When you modify behavior, add features, or fix bugs, update the `Next Release` section in `CHANGELOG.md` in the same change. Use clear, user-facing bullet points that state what was changed or added. Changelog entries in this section must be written in English; if Russian text is present, translate it to English.
+
+Changelog entries must be written for **users of the compiler** (people writing Papyrus scripts), not for compiler developers. Follow these rules:
+- Describe what the user would observe: what input previously failed or behaved incorrectly, and what happens now.
+- Do **not** mention internal implementation details: no function names (`try_cast_to_type`, `cast_to_type`), no module names (`checker`, `gen_pex`), no compiler-internal terms (`AST`, `infix expression`, `autocast`, `opcode`, `assert`).
+- Do **not** include entries about internal tests, CI, or build system changes unless they directly affect the user.
+- Good example: `Fixed a compiler crash when using None in arithmetic expressions (e.g., None + 1). A proper error is now shown.`
+- Bad example: `Fixed a checker assert on invalid autocasts in infix expressions: added try_cast_to_type.`
+
 ---
 
 ## How To: Common Tasks
