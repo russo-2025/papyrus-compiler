@@ -104,7 +104,7 @@ The compiler processes files through these stages in order:
 v -o "bin\papyrus.exe" compiler.v
 
 # Production build (optimized, no GC)
-v -o "bin\papyrus.exe" -prod -gc none compiler.v
+v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
 
 # Debug with symbols
 v -g -gc none -o "bin\papyrus.exe" compiler.v
@@ -149,8 +149,8 @@ All test files define `const prefs` with `no_cache: true, output_mode: .silent` 
 
 ### Test Fixtures
 - `modules/tests/psc/` — Small custom `.psc` files for specific tests
-- `modules/tests/psc_deps/` — Skyrim base script headers (dependencies for all tests)
-- `modules/tests/*Sources/` — Real Skyrim mod source trees for integration tests
+- `modules/tests/sources/psc_deps/` — Skyrim base script headers (dependencies for all tests)
+- `modules/tests/sources/*` — Real Skyrim mod source trees for integration tests
 
 ---
 
@@ -249,7 +249,6 @@ pref       → papyrus.errors
 
 - **Selective header loading**: Only headers referenced by `table.deps` stack are parsed — not the entire Skyrim script library. This is a key performance optimization.
 - **Caching**: File modification times are cached in `.papyrus/*.obj` files. Use `-nocache` to bypass.
-- **Parallel codegen**: Enabled with `-use-threads`, divides work across up to 8 OS threads. Parse and check remain sequential.
 - **String interning**: PEX uses a shared string table. All strings are interned via `gen_string_ref()` during code generation.
 - **Temp variables**: Code generator manages a pool of `::temp0`, `::temp1`, etc. with free/reuse tracking.
 - **Built-in methods**: `GetState`, `GotoState`, `onBeginState`, `onEndState` are auto-added to every object. Arrays have `Find`, `RFind`, `Length`.
