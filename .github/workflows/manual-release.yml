@@ -51,7 +51,7 @@ jobs:
           version: weekly.2025.48
      
       - name: Build Project
-        run: v -prod -gc none -o "bin/papyrus" compiler.v
+        run: v -prod -g -gc none -o "bin/papyrus" compiler.v
       
       - name: Get the date
         id: date
