@@ -152,3 +152,9 @@ v -stats test modules
 - [PapyrusDotNet](https://github.com/zerratar/PapyrusDotNet) - PapyrusDotNet - A .NET Papyrus Compiler for Fallout 4 and Skyrim
 - [Open Papyrus - Docs](https://open-papyrus.github.io/docs/Papyrus_Language_Reference/index.html)
 - [Open Papyrus - Compiler](https://github.com/open-papyrus/papyrus-compiler) - (WIP, Rust lang) Open-source compiler for the Papyrus scripting language of Bethesda games.
+- [Scribe Papyrus](https://github.com/karledenstal/scribe-papyrus) - A command-line wrapper for the Papyrus compiler with an embedded compiler binary (Rust)
+- [Scribe Papyrus VSCode](https://github.com/karledenstal/scribe-papyrus-vscode) - A VS Code extension for compiling Papyrus scripts for Skyrim modding
+- [Washington Independent - Papyrus Compiler Skyrim](https://washingtonindependent.org/papyrus-compiler-skyrim/) - An article about the Papyrus Compiler with script optimization techniques
+- [Papyrus Header Generator](https://github.com/langfod/Papyrus-Header-Generator) - A tool to generate Papyrus header files from source scripts and compiled .pex files
+- [DeepWiki - Papyrus Compiler](https://deepwiki.com/russo-2025/papyrus-compiler) - AI-generated wiki and documentation for the Papyrus Compiler
+- [RepositoryStats - Papyrus Compiler](https://repositorystats.com/russo-2025/papyrus-compiler) - Statistics and analytics for the Papyrus Compiler
