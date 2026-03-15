@@ -17,10 +17,28 @@ fn get_prefs(input_dir string, header_dirs []string, output_dir string) pref.Pre
 }
 
 fn get_source_dir(dir_name string, required_file_name string) string {
-	path := os.abs_path(os.join_path("modules", "tests", "sources", dir_name))
-	required_file := os.join_path(path, required_file_name)
+	// First try with the new submodule structure
+	mut path := os.abs_path(os.join_path("modules", "tests", "sources", dir_name))
+	mut required_file := os.join_path(path, required_file_name)
 
+	// If not found, try original structure (for backward compatibility)
 	if !os.is_dir(path) || !os.is_file(required_file) {
+		// For psc_deps specifically, check if it exists directly under sources
+		if dir_name == "psc_deps" {
+			path = os.abs_path(os.join_path("modules", "tests", "sources", "psc_deps"))
+			required_file = os.join_path(path, required_file_name)
+			if os.is_dir(path) && os.is_file(required_file) {
+				return path
+			}
+		}
+		
+		// Check the old path as a fallback
+		path = os.abs_path(os.join_path("modules", "tests", dir_name))
+		required_file = os.join_path(path, required_file_name)
+		if os.is_dir(path) && os.is_file(required_file) {
+			return path
+		}
+
 		assert false, "[get_source_dir] invalid directory ${path} or missing required file ${required_file}"
 	}
 

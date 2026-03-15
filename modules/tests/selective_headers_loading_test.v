@@ -13,14 +13,20 @@ const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect",
 fn test_selective_headers_loading() {
 	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestSelectiveLoading.psc"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled"))
-	header_dir := os.real_path(os.join_path("modules", "tests", "sources", "psc_deps"))
-
+	
+	// Try multiple possible locations for the header directory
+	mut header_dir := os.real_path(os.join_path("modules", "tests", "sources", "psc_deps"))
+	
+	// If not found, try the original location
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		header_dir = os.real_path(os.join_path("modules", "tests", "psc_deps"))
+		if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+			assert false, "invalid header dir ${header_dir}"
+		}
+	}
+	
 	if !os.is_file(src_file) {
 		assert false, "invalid input file ${src_file}"
-	}
-
-	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
-		assert false, "invalid header dir ${header_dir}"
 	}
 
 	if !os.is_dir(output_dir) {
