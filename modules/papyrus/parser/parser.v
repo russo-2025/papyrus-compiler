@@ -184,7 +184,7 @@ pub fn (mut p Parser) top_stmt() ?ast.TopStmt {
 		}
 	}
 
-	panic("wtf")
+	util.compiler_error(msg: "dead code / break while?", phase: "parse", prefs: p.pref, file: @FILE, func: @FN, line: @LINE)
 }
 
 pub fn (mut p Parser) stmts() []ast.Stmt {
@@ -368,6 +368,19 @@ pub fn (mut p Parser) script_decl() ast.ScriptDecl {
 		pos: pos
 		name: name
 		name_pos: p.tok.position()
+	}
+	
+	if os.base(p.path).to_lower().ends_with('.psc') {
+		file_name := os.base(p.path).all_before_last('.')
+		if name.to_lower() != file_name.to_lower() {
+			p.error_with_pos("script name `${name}` does not match file name `${file_name}`", node.name_pos)
+		}
+	}
+
+	if existing := p.table.find_type(name) {
+		if existing.kind == .script {
+			p.error_with_pos("script with name `${name}` is already defined", node.name_pos)
+		}
 	}
 
 	mut parent_idx := 0
@@ -682,6 +695,7 @@ pub fn (mut p Parser) var_decl(is_object_var bool) ast.VarDecl {
 			}
 			right: expr
 			typ: typ
+			is_object_var: is_object_var
 		}
 		flags: flags
 		pos: pos
@@ -735,6 +749,13 @@ fn (mut p Parser) next() {
 	p.peek_tok = p.peek_tok2
 	p.peek_tok2 = p.peek_tok3
 	p.peek_tok3 = p.scanner.scan()
+}
+
+@[inline]
+fn (mut p Parser) skip_comments() {
+	for p.tok.kind == .comment {
+		p.next()
+	}
 }
 
 @[inline]
@@ -809,7 +830,7 @@ pub fn (mut p Parser) error(s string) {
 @[noreturn]
 pub fn (mut p Parser) error_with_pos(s string, pos token.Position) {
 	if p.pref.output_mode == .stdout {
-		$if debug {
+		$if debug && !test {
 			print_backtrace()
 		}
 		$else {

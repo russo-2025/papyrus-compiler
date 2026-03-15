@@ -1,1 +1,0 @@
-Scriptname EncounterZone extends Form Hidden

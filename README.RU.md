@@ -1,6 +1,10 @@
 # Papyrus Compiler
 
+[![Discord Chat](https://img.shields.io/discord/1377359857220321416?label=Discord&logo=Discord)](https://discord.gg/JqQZXAXvPT)
+
 Компилятор скриптового языка Papyrus с открытым исходным кодом. На данный момент компилятор поддерживает только Skyrim (тестировался на Skyrim SE/AE). 
+
+![Papyrus Compiler](docs/image.png)
 
 Компилятор был создан для следующих целей:
 1. **Понимание языков программирования:** Проект разработан для того, чтобы глубже понять, как работают языки программирования.
@@ -29,6 +33,7 @@ papyrus <command> [arguments]
 ```
 
 ### Команды:
+- `version`: Выводит версию компилятора и некоторую дополнительную информацию о билде.
 - `compile`: Компилирует файлы с расширением `.psc` в бинарный формат `.pex`.
 - `read`: Читает и дизассемблирует файл с расширением `.pex`, выводя его содержимое в человекочитаемом формате в консоль.
 - `disassembly`: Читает и дизассемблирует файл с расширением `.pex`, сохраняя содержимое в человекочитаемом формате в текстовый файл.
@@ -45,7 +50,7 @@ papyrus <command> [arguments]
 - `-silent`: Отключает вывод сообщений об ошибках в консоль.
 - `-original`: Использует оригинальный компилятор Papyrus для компиляции.
 - `-stats`: Сохраняет статистику по скомпилированным файлам в .md файлы (количество вызовов функций, наследований, файлов).
-- `-check`: Проверяет синтаксис .psc файлов без генерации .pex файлов.
+- `-check`: Проверяет синтаксис .psc файлов, но не создает .pex файлы.
 - `-verbose`: ...
 
 ### Примеры использования
@@ -125,10 +130,10 @@ Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = f
 ## Сборка
 
 ### Требования:
-- [V compiler f3d2eb1 (weekly.2025.09)](https://github.com/vlang/v/releases/tag/weekly.2025.09)
+- [V compiler d0dc13e (weekly.2025.48)](https://github.com/vlang/v/releases/tag/weekly.2025.48)
 
 ```bash
-v -o "bin\papyrus.exe" -prod -gc none compiler.v
+v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
 ```
 
 ## Тестирование

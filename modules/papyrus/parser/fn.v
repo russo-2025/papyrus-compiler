@@ -136,11 +136,14 @@ pub fn (mut p Parser) fn_decl() ast.FnDecl {
 
 fn (mut p Parser) fn_args() []ast.Param {
 	p.check(.lpar)
+	p.skip_comments()
 
 	mut args := []ast.Param{}
 
 	if p.tok.kind != .rpar {
 		for {
+			p.skip_comments()
+
 			mut param := ast.Param{}
 			
 			mut pos := p.tok.position()
@@ -153,11 +156,6 @@ fn (mut p Parser) fn_args() []ast.Param {
 				p.next()
 
 				default_value := p.expr(0) or { ast.EmptyExpr{} }
-
-				if !default_value.is_literal() {
-					println(default_value)
-					p.error("default value is not literal")
-				}
 
 				param.default_value = default_value
 				param.is_optional = true
@@ -176,6 +174,7 @@ fn (mut p Parser) fn_args() []ast.Param {
 
 			if p.tok.kind == .comma {
 				p.next()
+				p.skip_comments()
 				continue
 			}
 
@@ -196,6 +195,12 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 	mut optional_args_is_started := false
 
 	for p.tok.kind != .rpar {
+		p.skip_comments()
+
+		if p.tok.kind == .rpar {
+			break
+		}
+
 		if p.tok.kind == .eof {
 			p.error_with_pos('unexpected eof reached, while parsing call argument', start_pos)
 		}
@@ -211,7 +216,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 			pos := arg_start_pos.extend(p.prev_tok.position())
 			
 			if name in redefined_args {
-				p.error('a parameter named `$name` has already been set') // уже присутствует
+				p.error('a parameter named `$name` has already been set') // already provided
 			}
 
 			redefined_args[name.to_lower()] = ast.RedefinedOptionalArg{
@@ -222,7 +227,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 		}
 		else {
 			if optional_args_is_started {
-				p.error("parameter is expected in the format 'name = value`") // ожидается параметр в формате `name = value`
+				p.error("parameter is expected in the format 'name = value`") // expected format is 'name = value'
 			}
 
 			e := p.expr(0) or { p.error("invalid expression") }
@@ -238,6 +243,7 @@ pub fn (mut p Parser) call_args() ([]ast.CallArg, map[string]ast.RedefinedOption
 		}
 
 		p.check(.comma)
+		p.skip_comments()
 
 		if p.tok.kind == .rpar {
 			p.error('unexpected end of arguments `$p.tok.lit`')

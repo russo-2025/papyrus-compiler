@@ -13,14 +13,20 @@ const placeholder_objects = ["actor", "textureset", "keyword", "magiceffect",
 fn test_selective_headers_loading() {
 	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestSelectiveLoading.psc"))
 	output_dir := os.real_path(os.join_path("test-files", "compiled"))
-	header_dir := os.real_path(os.join_path("modules", "tests", "psc_deps"))
-
+	
+	// Try multiple possible locations for the header directory
+	mut header_dir := os.real_path(os.join_path("modules", "tests", "sources", "psc_deps"))
+	
+	// If not found, try the original location
+	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+		header_dir = os.real_path(os.join_path("modules", "tests", "psc_deps"))
+		if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
+			assert false, "invalid header dir ${header_dir}"
+		}
+	}
+	
 	if !os.is_file(src_file) {
 		assert false, "invalid input file ${src_file}"
-	}
-
-	if !os.is_dir(header_dir) || !os.is_file(os.join_path(header_dir, "Form.psc")) {
-		assert false, "invalid header dir ${header_dir}"
 	}
 
 	if !os.is_dir(output_dir) {
@@ -34,6 +40,7 @@ fn test_selective_headers_loading() {
 		backend: .check
 		no_cache: true
 		header_dirs: [ header_dir ]
+		output_mode: .silent
 	}
 
 	mut b := builder.new_builder(&prefs)
@@ -46,8 +53,8 @@ fn test_selective_headers_loading() {
 	}
 
 	/*
-	// нужно проверить все ли необходимые типы загружены.
-	// есть те типы которые могут быть placeholder, но они не нужны??????????????????????????????????????????????
+	// verify that all required types are loaded
+	// some types can be placeholders, but they are not needed
 	for obj_name in placeholder_objects {
 		if sym := b.table.find_type(obj_name) {
 			assert sym.kind == .placeholder, obj_name

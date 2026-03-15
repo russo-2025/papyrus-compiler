@@ -119,12 +119,13 @@ pub mut:
 
 pub struct AssignStmt {
 pub:
-	pos			token.Position
+	pos				token.Position
 pub mut:
-	op			token.Kind
-	right		Expr
-	left		Expr
-	typ		 	Type
+	op				token.Kind
+	right			Expr
+	left			Expr
+	typ		 		Type
+	is_object_var	bool
 }
 
 pub struct VarDecl {

@@ -1,6 +1,7 @@
 module pex
 
 import os
+import papyrus.util
 
 pub struct DumpObject {
 pub mut:
@@ -31,7 +32,9 @@ fn create_dump_from_pex(file string) &DumpObject {
 	assert pex_file.objects.len == 1
 	
 	obj := pex_file.objects[0]
-	state := pex_file.get_default_state(obj) or { panic(err) }
+	state := pex_file.get_default_state(obj) or {
+		util.compiler_error(msg: "default state not found", phase: "dump create_dump_from_pex", file: @FILE, func: @FN, line: @LINE)
+	}
 	mut dump_obj := &DumpObject{
 		name: pex_file.get_string(obj.name)
 		parent_name: pex_file.get_string(obj.parent_class_name) 
@@ -92,8 +95,7 @@ pub fn create_dump_from_pex_files(files []string) []DumpObject {
 
 pub fn create_dump_from_pex_dir(dir string) []DumpObject {
 	if !os.is_dir(dir) {
-		println("invalid dir: `${dir}`")
-		exit(1)
+		util.fatal_error("invalid dir: `${dir}`")
 	}
 
 	pex_files := os.walk_ext(dir, ".pex")

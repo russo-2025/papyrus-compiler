@@ -65,3 +65,16 @@ fn test_call_expr() {
 	assert errs.len == 1
 	assert errs[0].message == 'function takes 1 parameters not 0'
 }
+
+fn test_none_plus_int_reports_error() {
+	errs := compile_expr('none + 1')
+	assert errs.len == 1
+	assert errs[0].message == 'cannot cast from `None` to `Int`'
+}
+
+fn test_undefined_type_in_infix_reports_error() {
+	errs := compile_top_stmts('Function Broken(Actor value)\n\tbool b = value && true\nEndFunction')
+	assert errs.len >= 1
+	assert errs[0].message == 'invalid type `Actor` for parameter #1 `value` in function `Broken`'
+	assert errs.any(it.message == 'undefined type: `Actor`')
+}

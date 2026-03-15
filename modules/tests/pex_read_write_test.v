@@ -23,6 +23,7 @@ fn test_build() {
 		mode: .compile
 		backend: .pex
 		no_cache: true
+		output_mode: .silent
 	}
 	mut table := ast.new_table()
 	mut global_scope := &ast.Scope{}

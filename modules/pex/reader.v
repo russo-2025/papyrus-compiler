@@ -1,6 +1,7 @@
 module pex
 
 import os
+import papyrus.util
 
 pub struct Reader{
 pub mut:
@@ -11,16 +12,16 @@ pub mut:
 
 pub fn read_from_file(path string) &PexFile {
 	if !os.is_file(path) {
-		eprintln("invalid file path: `${path}`")
-		exit(1)
+		util.fatal_error("invalid file path: `${path}`")
 	}
 
 	if os.file_ext(path) != ".pex" {
-		eprintln("unexpected file extension `*${os.file_ext(path)}` , expecting `*.pex`")
-		exit(1)
+		util.fatal_error("unexpected file extension `*${os.file_ext(path)}` , expecting `*.pex`")
 	}
 
-	mut bytes := os.read_bytes(path) or { panic(err) }
+	mut bytes := os.read_bytes(path) or {
+		util.fatal_error("failed to read bytes: ${err}")
+	}
 
 	assert bytes.len > 0
 	
@@ -321,6 +322,5 @@ fn (mut r Reader) read_variable_value() !VariableValue {
 }
 
 fn (mut r Reader) error(msg string) {
-	eprintln("Reader error: " + msg)
-	exit(1)
+	util.fatal_error("Reader error: ${msg}")
 }

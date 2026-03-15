@@ -1,6 +1,10 @@
 # Papyrus Compiler
 
+[![Discord Chat](https://img.shields.io/discord/1377359857220321416?label=Discord&logo=Discord)](https://discord.gg/JqQZXAXvPT)
+
 An open-source compiler for the Papyrus scripting language. Currently, the compiler only supports Skyrim (tested on Skyrim SE/AE).
+
+![Papyrus Compiler](docs/image.png)
 
 The compiler was created for the following purposes:
 1. **Understanding Programming Languages:** The project is designed to gain a deeper understanding of how programming languages work.
@@ -125,10 +129,10 @@ Scripts from the directory specified by the `-h "..."` argument will NOT be comp
 ## Building
 
 ### Requirements:
-- [V compiler f3d2eb1 (weekly.2025.09)](https://github.com/vlang/v/releases/tag/weekly.2025.09)
+- [V compiler d0dc13e (weekly.2025.48)](https://github.com/vlang/v/releases/tag/weekly.2025.48)
 
 ```bash
-v -o "bin\papyrus.exe" -prod -gc none compiler.v
+v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
 ```
 
 ## Testing

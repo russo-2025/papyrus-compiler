@@ -7,6 +7,7 @@ import pref
 import papyrus.ast
 import papyrus.checker
 import gen.gen_pex
+import papyrus.util
 
 const cache_path = os.real_path('./.papyrus')
 const compiler_exe_path = os.real_path('./Original Compiler/PapyrusCompiler.exe')
@@ -64,7 +65,7 @@ pub fn (mut b Builder) run() bool {
 	
 	b.pref.header_dirs = b.pref.header_dirs.reverse()
 
-	println("used header dirs ${b.pref.header_dirs}")
+	b.print("used header dirs ${b.pref.header_dirs}")
 
 	b.files, b.files_names = find_all_src_files(b.pref.paths)
 	
@@ -141,11 +142,11 @@ fn (mut b Builder) start_timer(name string) {
 fn (mut b Builder) print_timer(name string) {
 	if sw := b.timers[name] {
 		time_ms := f32(sw.elapsed().microseconds()) / 1000
-		b.print('$name: $time_ms ms')
+		b.print('${name}: ${time_ms} ms')
 		b.timers.delete(name)
 	}
 	else {
-		panic('invalid timer')
+		util.compiler_error(msg: "failed to find timer", phase: "builder", prefs: b.pref, file: @FILE, func: @FN, line: @LINE)
 	}
 }
 
@@ -167,8 +168,7 @@ fn (b Builder) print(msg string) {
 
 @[noreturn]
 fn error(msg string) {
-	eprintln(msg)
-	exit(1)
+	util.fatal_error(msg)
 }
 
 /*
@@ -188,7 +188,9 @@ fn (mut b Builder) register_info_from_dump(dump_obj &pex.DumpObject) {
 		methods: []ast.Fn{}
 	)
 
-	mut sym := b.table.find_type(dump_obj.name) or { panic("failed to find type") }
+	mut sym := b.table.find_type(dump_obj.name) or {
+		util.compiler_error(msg: "failed to find type", phase: "builder", prefs: b.pref, file: @FILE, func: @FN, line: @LINE)
+	}
 
 	for dump_method in dump_obj.methods {
 		if !sym.has_method(dump_method.name) {

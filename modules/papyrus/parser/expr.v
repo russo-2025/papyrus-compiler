@@ -2,8 +2,11 @@ module parser
 
 import papyrus.ast
 import papyrus.token
+import papyrus.util
 
 pub fn (mut p Parser) expr(precedence int) ?ast.Expr {
+	p.skip_comments()
+
 	mut node := ast.Expr(ast.EmptyExpr{ pos:p.tok.position() })
 
 	match p.tok.kind {
@@ -59,6 +62,7 @@ pub fn (mut p Parser) expr(precedence int) ?ast.Expr {
 			mut pos := p.tok.position()
 			p.check(.lpar)
 			node = p.expr(0) or { ast.EmptyExpr{} }
+			p.skip_comments()
 			p.check(.rpar)
 			
 			node = ast.ParExpr{
@@ -76,6 +80,7 @@ pub fn (mut p Parser) expr(precedence int) ?ast.Expr {
 
 pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	mut node := left
+	p.skip_comments()
 
 	for p.tok.precedence() > precedence {
 		//println("aaaasw ${left} ${p.tok}")
@@ -95,6 +100,8 @@ pub fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 		else {
 			return node
 		}
+
+		p.skip_comments()
 	}
 	
 	return node
@@ -176,7 +183,7 @@ pub fn (mut p Parser) parse_number_literal() ast.Expr {
 	}
 
 	if is_hex && is_neg {
-		panic("negative hex wtf")
+		util.compiler_error(msg: "negative hex wtf", phase: "parser", prefs: p.pref, file: @FILE, func: @FN, line: @LINE)
 	}
 
 	if is_neg {

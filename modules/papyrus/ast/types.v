@@ -1,5 +1,7 @@
 module ast
 
+import papyrus.util
+
 pub type Type = int
 
 pub struct TypeSymbol {
@@ -114,7 +116,7 @@ pub fn (t Type) idx() int {
 @[inline]
 pub fn new_type(idx int) Type {
 	if idx < 1 || idx > 65535 {
-		panic('new_type: idx(${idx}) must be between 1 & 65535')
+		util.compiler_error(msg: "new_type: idx(${idx}) must be between 1 & 65535", phase: "table new_type", file: @FILE, func: @FN, line: @LINE)
 	}
 	return idx
 }
@@ -255,7 +257,9 @@ pub fn (t &TypeSymbol) find_method_in_state(state_name string, name string) ?Fn 
 
 pub fn (mut t TypeSymbol) register_method_in_state(state_name string, new_fn Fn) int {
 	key := state_name.to_lower()
-	mut state := t.states[key] or { panic("state not found") }
+	mut state := t.states[key] or {
+		util.compiler_error(msg: "state not found(${key})", phase: "TypeSymbol.register_method_in_state", file: @FILE, func: @FN, line: @LINE)
+	}
 
 	state.methods << new_fn
 	return state.methods.len - 1

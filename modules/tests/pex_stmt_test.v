@@ -10,6 +10,7 @@ const prefs = pref.Preferences {
 		mode: .compile
 		backend: .pex
 		no_cache: true
+		output_mode: .silent
 	}
 
 const other_src = 
@@ -142,7 +143,7 @@ fn compile(src string) &pex.PexFile {
 }
 
 fn get_instructions(pex_file &pex.PexFile) []pex.Instruction {
-	func := pex_file.get_function_from_empty_state("ABCD", "Bar") or { panic("function not found") }
+	func := pex_file.get_function_from_empty_state("ABCD", "Bar") or { assert false, "function not found"; panic("function not found") }
 
 	$if false {
 		println("")
@@ -167,8 +168,8 @@ fn test_state_decl_1() {
 	pex_file := compile_top('State MyTestState1
 							EndState')
 
-	obj := pex_file.get_object("ABCD") or { panic("object not found") }
-	state := pex_file.get_state(obj, "MyTestState1") or { panic("state not found") }
+	obj := pex_file.get_object("ABCD") or { assert false, "object not found"; panic("object not found") }
+	state := pex_file.get_state(obj, "MyTestState1") or { assert false, "state not found"; panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyTestState1"
 	assert state.functions.len == 0
@@ -206,8 +207,8 @@ fn test_state_decl_2() {
 								EndFunction
 							EndState')
 
-	obj := pex_file.get_object("ABCD") or { panic("object not found") }
-	state := pex_file.get_state(obj, "MyTestState2") or { panic("state not found") }
+	obj := pex_file.get_object("ABCD") or { assert false, "object not found"; panic("object not found") }
+	state := pex_file.get_state(obj, "MyTestState2") or { assert false, "state not found"; panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyTestState2"
 	assert state.functions.len == 1
@@ -267,10 +268,10 @@ fn test_state_decl_3() {
 
 	pex_file := compile_top('')
 
-	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	obj := pex_file.get_object("ABCD") or { assert false, "object not found"; panic("object not found") }
 	assert pex_file.get_string(obj.auto_state_name) == "MyAutoState"
 
-	state := pex_file.get_state(obj, "MyAutoState") or { panic("state not found") }
+	state := pex_file.get_state(obj, "MyAutoState") or { assert false, "state not found"; panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "MyAutoState"
 	assert state.functions.len == 1
@@ -302,11 +303,11 @@ fn test_state_decl_4() {
 		Function ReadyStateFn3()
 		EndFunction')
 
-	obj := pex_file.get_object("ABCD") or { panic("object not found") }
+	obj := pex_file.get_object("ABCD") or { assert false, "object not found"; panic("object not found") }
 	assert pex_file.get_string(obj.auto_state_name) == "MyAutoState"
 
 	assert obj.states.len == 5
-	state := pex_file.get_state(obj, "ready") or { panic("state not found") }
+	state := pex_file.get_state(obj, "ready") or { assert false, "state not found"; panic("state not found") }
 
 	assert pex_file.get_string(state.name) == "ready"
 	assert state.functions.len == 3
@@ -318,7 +319,7 @@ fn test_state_decl_4() {
 fn test_object_var_decl_1() {
 	pex_file := compile_top('ABCD myTestObjectVar')
 	
-	var := pex_file.get_var("ABCD", "myTestObjectVar") or { panic("object variable not found") }
+	var := pex_file.get_var("ABCD", "myTestObjectVar") or { assert false, "object variable not found"; panic("object variable not found") }
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar"
 	assert pex_file.get_string(var.type_name) == "ABCD"
@@ -327,7 +328,7 @@ fn test_object_var_decl_1() {
 
 fn test_object_var_decl_2() {
 	pex_file := compile_top('int myTestObjectVar2 = 10')
-	var := pex_file.get_var("ABCD", "myTestObjectVar2") or { panic("object variable not found") }
+	var := pex_file.get_var("ABCD", "myTestObjectVar2") or { assert false, "object variable not found"; panic("object variable not found") }
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar2"
 	assert pex_file.get_string(var.type_name) == "Int"
@@ -338,7 +339,7 @@ fn test_object_var_decl_2() {
 fn test_object_var_decl_3() {
 	pex_file := compile_top('ABCD[] myTestObjectVar3')
 	
-	var := pex_file.get_var("ABCD", "myTestObjectVar3") or { panic("object variable not found") }
+	var := pex_file.get_var("ABCD", "myTestObjectVar3") or { assert false, "object variable not found"; panic("object variable not found") }
 
 	assert pex_file.get_string(var.name) == "myTestObjectVar3"
 	assert pex_file.get_string(var.type_name) == "ABCD[]"
@@ -348,7 +349,7 @@ fn test_object_var_decl_3() {
 fn test_object_var_decl_4() {
 	pex_file := compile_top('bool waiting')
 	
-	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+	var := pex_file.get_var("ABCD", "waiting") or { assert false, "object variable not found"; panic("object variable not found") }
 
 	assert pex_file.get_string(var.name) == "waiting"
 	assert pex_file.get_string(var.type_name) == "Bool"
@@ -358,7 +359,7 @@ fn test_object_var_decl_4() {
 fn test_object_var_decl_5() {
 	pex_file := compile_top('int waiting')
 	
-	var := pex_file.get_var("ABCD", "waiting") or { panic("object variable not found") }
+	var := pex_file.get_var("ABCD", "waiting") or { assert false, "object variable not found"; panic("object variable not found") }
 
 	assert pex_file.get_string(var.name) == "waiting"
 	assert pex_file.get_string(var.type_name) == "Int"
@@ -366,21 +367,19 @@ fn test_object_var_decl_5() {
 }
 
 fn test_object_var_decl_6() {
-	pex_file := compile_top('ABCD objVarTest = None')
-	
-	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
+	pex_file := compile_top('ABCD objVarTest11111 = None')
+	var := pex_file.get_var("ABCD", "objVarTest11111") or { assert false, "object variable not found"; panic("object variable not found") }
 
-	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.name) == "objVarTest11111"
 	assert pex_file.get_string(var.type_name) == "ABCD"
 	assert var.data.typ == .null
 }
 
 fn test_object_var_decl_7() {
-	pex_file := compile_top('ABCD[] objVarTest = None')
+	pex_file := compile_top('ABCD[] objVarTest22222 = None')
+	var := pex_file.get_var("ABCD", "objVarTest22222") or { assert false, "object variable not found"; panic("object variable not found") }
 	
-	var := pex_file.get_var("ABCD", "objVarTest") or { panic("object variable not found") }
-
-	assert pex_file.get_string(var.name) == "objVarTest"
+	assert pex_file.get_string(var.name) == "objVarTest22222"
 	assert pex_file.get_string(var.type_name) == "ABCD[]"
 	assert var.data.typ == .null
 }
@@ -430,7 +429,7 @@ fn test_property_decl_1() {
 	//			auto var name: '::Hello_var'
 
 	mut pex_file := compile_top('string Property Hello = "Hello world!" Auto')
-	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+	mut prop := pex_file.get_property("ABCD", "Hello") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello"
@@ -442,10 +441,7 @@ fn test_property_decl_1() {
 	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
 	
-	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0
@@ -473,7 +469,7 @@ fn test_property_decl_2() {
 	//							opcode: 'ret', args: [string('Hello world!')]
 
 	pex_file := compile_top('string Property Hello2 = "Hello world2!" AutoReadOnly')
-	prop := pex_file.get_property("ABCD", "Hello2") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello2") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello2"
@@ -505,7 +501,7 @@ fn test_property_decl_3() {
 	//			auto var name: '::Hello3_var'
 	
 	pex_file := compile_top('string Property Hello3 = "Hello world3!" Auto Hidden')
-	prop := pex_file.get_property("ABCD", "Hello3") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello3") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello3"
@@ -519,10 +515,7 @@ fn test_property_decl_3() {
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello3_var"
 
 	//var
-	var := pex_file.get_var("ABCD", "::Hello3_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	var := pex_file.get_var("ABCD", "::Hello3_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello3_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0
@@ -541,7 +534,7 @@ fn test_property_decl_4() {
 	//			auto var name: '::Hello5_var'
 
 	pex_file := compile_top('string Property Hello5 = "Hello world5!" Auto Conditional')
-	prop := pex_file.get_property("ABCD", "Hello5") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello5") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello5"
@@ -554,10 +547,7 @@ fn test_property_decl_4() {
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello5_var"
 
 	//var
-	var := pex_file.get_var("ABCD", "::Hello5_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	var := pex_file.get_var("ABCD", "::Hello5_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello5_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "string"
 	assert var.user_flags == 0b0010
@@ -612,7 +602,7 @@ fn test_property_decl_5() {
 									return myValue
 								EndFunction
 							EndProperty')
-	prop := pex_file.get_property("ABCD", "Hello6") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello6") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello6"
@@ -676,7 +666,7 @@ fn test_property_decl_6() {
 									myValue = value
 								EndFunction
 							EndProperty')
-	prop := pex_file.get_property("ABCD", "Hello7") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello7") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello7"
@@ -728,7 +718,7 @@ fn test_property_decl_7() {
 									return myValue
 								EndFunction
 							EndProperty')
-	prop := pex_file.get_property("ABCD", "Hello8") or { panic("property not found") }
+	prop := pex_file.get_property("ABCD", "Hello8") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello8"
@@ -750,7 +740,7 @@ fn test_property_decl_7() {
 
 fn test_property_decl_8() {
 	mut pex_file := compile_top('int Property Hello Auto')
-	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+	mut prop := pex_file.get_property("ABCD", "Hello") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello"
@@ -762,10 +752,7 @@ fn test_property_decl_8() {
 	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
 	
-	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "int"
 	assert var.user_flags == 0
@@ -774,7 +761,7 @@ fn test_property_decl_8() {
 
 fn test_property_decl_9() {
 	mut pex_file := compile_top('ABCD Property Hello = None Auto')
-	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+	mut prop := pex_file.get_property("ABCD", "Hello") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello"
@@ -786,10 +773,7 @@ fn test_property_decl_9() {
 	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
 	
-	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "abcd"
 	assert var.user_flags == 0
@@ -798,7 +782,7 @@ fn test_property_decl_9() {
 
 fn test_property_decl_10() {
 	mut pex_file := compile_top('ABCD[] Property Hello = None Auto')
-	mut prop := pex_file.get_property("ABCD", "Hello") or { panic("property not found") }
+	mut prop := pex_file.get_property("ABCD", "Hello") or { assert false, "property not found"; panic("property not found") }
 
 	//prop
 	assert pex_file.get_string(prop.name) == "Hello"
@@ -810,10 +794,7 @@ fn test_property_decl_10() {
 	assert prop.is_autovar()
 	assert pex_file.get_string(prop.auto_var_name) == "::Hello_var"
 	
-	mut var := pex_file.get_var("ABCD", "::Hello_var") or {
-		assert false, "variable not found"
-		panic("variable not found")
-	}
+	mut var := pex_file.get_var("ABCD", "::Hello_var") or { assert false, "variable not found"; panic("variable not found") }
 	assert pex_file.get_string(var.name) == "::Hello_var"
 	assert pex_file.get_string(var.type_name).to_lower() == "abcd[]"
 	assert var.user_flags == 0
@@ -1662,7 +1643,8 @@ fn test_call_cast() {
 		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(obj)]"
 		"opcode: 'cast', args: [ident(::temp2), none]"
 		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
-		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), none]"
+		"opcode: 'cast', args: [ident(::temp2), none]"
+		"opcode: 'callmethod', args: [ident(FuncWithOptionalObjArg), ident(self), ident(::NoneVar), integer(1), ident(::temp2)]"
 	]
 
 	assert ins.len == expected.len
