@@ -1,5 +1,9 @@
 ## Next Release
 
+...
+
+## V 0.0.4
+
 ### New Features
 
 - Added `version` command — run `papyrus version` to display the current compiler version.
@@ -18,6 +22,8 @@
 - The compiler now reports an error when two scripts with the same name are found in different source folders.
 - Added a check that the script name declared in `Scriptname` matches the source file name.
 - Default parameter values are now validated to be type-compatible with the declared parameter type.
+- Improved error messages to be clearer and more consistent (e.g., "undefined identifier" instead of "variable declaration not found").
+- Internal compiler errors now display a structured diagnostic message with version info, a stack trace, and instructions for reporting the issue, instead of crashing with an unhelpful message.
 
 ### Fixes
 
@@ -26,8 +32,6 @@
 - Fixed a compiler crash when an undefined script type was used in expressions that require conversion (for example, `value && true` where `value` has an unknown type). The compiler now reports an undefined type error instead of crashing.
 - Fixed an issue where calling a function with default parameters inside a `State` block was not validated correctly (#14).
 - Fixed parsing of comments inside parenthesized expressions and call argument lists (for example, `if !(PlayerRef ;/comment/;)`). The compiler now accepts these scripts instead of failing with a parser error.
-
-...
 
 ## V 0.0.3
 
