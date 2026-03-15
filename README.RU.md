@@ -1,8 +1,10 @@
 # Papyrus Compiler
 
+[![Discord Chat](https://img.shields.io/discord/1377359857220321416?label=Discord&logo=Discord)](https://discord.gg/JqQZXAXvPT)
+
 Компилятор скриптового языка Papyrus с открытым исходным кодом. На данный момент компилятор поддерживает только Skyrim (тестировался на Skyrim SE/AE). 
 
-[![Discord Chat](https://img.shields.io/discord/1377359857220321416?label=Discord&logo=Discord)](https://discord.gg/JqQZXAXvPT)
+![Papyrus Compiler](docs/image.png)
 
 Компилятор был создан для следующих целей:
 1. **Понимание языков программирования:** Проект разработан для того, чтобы глубже понять, как работают языки программирования.
