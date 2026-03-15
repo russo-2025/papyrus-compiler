@@ -63,7 +63,6 @@ const master_of_disguise = get_source_dir("MasterOfDisguise", "dubhDisguiseMCMQu
 const osa = get_source_dir("OSA", "OSA.psc")
 const ostim = get_source_dir("OStimNG", "OStimAddon.psc")
 const sexlab = get_source_dir("SexLab", "SexLabFramework.psc")
-const campfire = get_source_dir("Campfire", "CampfireAPI.psc")
 const requiem = get_source_dir("Requiem", "Req_VampireDustScript.psc")
 const ussep = get_source_dir("USSEP", "ussep_clearaliasonactivate.psc")
 
@@ -271,18 +270,11 @@ fn test_project_sexlab(){
 	builder.compile(&prefs)
 }
 
-/*
-fn test_project_campfire(){
-	prefs := get_prefs(campfire, [
-		skyrim_deps
-	], get_output_dir("Campfire"))
-
-	builder.compile(&prefs)
-}
-
 fn test_project_requiem(){
 	prefs := get_prefs(requiem, [
-		skyrim_deps
+		skyrim_deps,
+		ussep,
+		skyui_sdk_51
 	], get_output_dir("Requiem"))
 
 	builder.compile(&prefs)
@@ -295,6 +287,5 @@ fn test_project_ussep(){
 
 	builder.compile(&prefs)
 }
-*/
 
 
