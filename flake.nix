@@ -57,7 +57,7 @@
             export PS1="$PS1[nix develop]:"
             echo "Welcome to the dev shell."
             echo "Build the package with: nix build"
-            echo "Use built package ./result/bin/papyrus-compiler"
+            echo "Use built package with: ./result/bin/papyrus-compiler"
           '';
         };
       });
