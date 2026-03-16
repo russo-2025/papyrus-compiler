@@ -15,7 +15,7 @@
         tag = "2026.03.15"; # Use tags to avoid hash mismatch after each commit to master.
       in
       {
-        packages.default = pkgs.stdenv.mkDerivation {
+        packages.papyrus-compiler = pkgs.stdenv.mkDerivation {
           pname = "papyrus-compiler";
           version = tag;
           # Local source code (no external files needed)
@@ -50,11 +50,11 @@
         # Development shell with tools for hacking on the package
         # Enter with `nix develop`
         devShells.default = pkgs.mkShell {
-          inputsFrom = [ self.packages.${system}.default ];
+          inputsFrom = [ self.packages.${system}.papyrus-compiler ];
           shellHook = ''
             export PS1="$PS1[nix develop]:"
             echo "Welcome to the dev shell."
-            echo "Build the package with: nix build"
+            echo "Build the package with: nix build .#papyrus-compiler"
           '';
         };
       });
