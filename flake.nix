@@ -62,3 +62,37 @@
         };
       });
 }
+
+/*
+Bellow we can see an vague example of how would install of papyrus-compiler look like. Please note that this is only a reference and not complete working flake.
+
+{
+  description = "Example papyrus-compiler flake.nix";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    papyrus-compiler.url = "github:DioKyrie-Git/papyrus-compiler";
+  };
+
+  outputs = { nixpkgs, papyrus-compiler, ... } @ inputs:
+    let
+      system = "x86_64-linux";
+
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in {
+      nixosConfigurations."UserName" = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs system; };
+        modules = [
+          #configuation.nix start
+          ({ config, pkgs, unstable, inputs, ... }: {
+            environment.systemPackages = with pkgs; [
+              papyrus-compiler.packages.${system}.default
+            ];
+          };)
+          #configuation.nix end
+}
+*/
+
