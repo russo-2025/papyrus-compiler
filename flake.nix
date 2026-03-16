@@ -67,7 +67,7 @@
 }
 
 /*
-Bellow we can see an approximate example of how one would install papyrus-compiler in NixOS with flakes. Please note that this is only a reference and not complete working flake.
+Bellow we can see an approximate example of how one would install papyrus-compiler in NixOS with flakes. Please note that this is only a reference and not a fully functioning flake.
 
 {
   description = "Example papyrus-compiler flake.nix";
@@ -90,7 +90,7 @@ Bellow we can see an approximate example of how one would install papyrus-compil
         specialArgs = { inherit inputs system; };
         modules = [
           #configuation.nix start
-          ({ config, pkgs, unstable, inputs, ... }: {
+          ({ config, pkgs, inputs, ... }: {
             environment.systemPackages = with pkgs; [
               papyrus-compiler.packages.${system}.default
             ];
