@@ -25,11 +25,16 @@
             rev = tag;
             hash = "sha256-0zWJdifY7XB8XbFP2ZPqiu5MKSHjcyFXXdadO/CWqew=";
             fetchSubmodules = true;
-            leaveDotGit = true; # Preserve .git/ upon unpacking to satisfy @VMODHASH
+            #leaveDotGit = true; # Preserve .git/ upon unpacking to satisfy @VMODHASH
           };
           buildPhase = ''
             #This will set home to /tmp directory rather than /homeless-shelter/
             export HOME=$TMP
+
+            # Extract the actual commit hash and patch @VMODHASH in sys_info.v
+            echo "Patching sys_info.v with commit hash @VMODHASH"
+            sed -i "s/@VMODHASH/\"$(git rev-parse HEAD)\"/" modules/papyrus/util/sys_info.v
+
             # Build
             v -prod -g -gc none -o "bin/papyrus" compiler.v
           '';
@@ -39,6 +44,7 @@
           '';
           nativeBuildInputs = with pkgs; [
             vlang
+            git
           ];
         };
         # Development shell with tools for hacking on the package
