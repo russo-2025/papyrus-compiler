@@ -101,13 +101,13 @@ The compiler processes files through these stages in order:
 ### Build
 ```bash
 # Debug build
-v -o "bin\papyrus.exe" compiler.v
+v -o "bin\papyrus-compiler.exe" compiler.v
 
 # Production build (optimized, no GC)
-v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
+v -o "bin\papyrus-compiler.exe" -prod -g -gc none compiler.v
 
 # Debug with symbols
-v -g -gc none -o "bin\papyrus.exe" compiler.v
+v -g -gc none -o "bin\papyrus-compiler.exe" compiler.v
 ```
 
 ### Run Tests
