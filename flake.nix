@@ -15,14 +15,14 @@
         tag = "2026.03.15"; # Use tags of stable releases, instead of using master branch as src, to avoid hash mismatch, which will change on each commit to master.
       in
       {
-        packages.default = pkgs.stdenv.mkDerivation { # packages.default is used for build and install. E.g. nix build .# is used for default; nix build .#abc is used for packages.abc.
+        packages.default = pkgs.stdenv.mkDerivation { # packages.default is used for build and install. E.g. nix build .#default is used for packages.default; nix build .#abc is used for packages.abc.
           pname = "papyrus-compiler"; # Package name.
           version = tag;
           # Source code from GitHub.
           src = pkgs.fetchFromGitHub {
             owner = "russo-2025";
             repo = "papyrus-compiler";
-            rev = tag;
+            rev = tag; # Downloads repo at the state of tag, instead of master branch, to avoid constant hash changes.
             hash = "sha256-0zWJdifY7XB8XbFP2ZPqiu5MKSHjcyFXXdadO/CWqew="; # Hash, if the tag was changed to new, this line will cause error, we will need to replace this hash. New hash will be in the error itself.
             # E.g. Expected - Old Hash, Got - New Hash. Use whatever hash is displayed inside of the Got message.
             fetchSubmodules = true;
@@ -58,7 +58,7 @@
           shellHook = ''
             export PS1="$PS1[nix develop]:" # Add a postfix, so we see that we are inside of a nix develop shell.
             echo "Welcome to the dev shell."
-            echo "Build the package with: nix build .#"
+            echo "Build the package with: nix build .#default"
             echo "Use built package with: ./result/bin/papyrus-compiler"
           '';
         };
