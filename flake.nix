@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; # Get access to Nix packages.
-    flake-utils.url = "github:numtide/flake-utils"; # Support package build on differen architectures.
+    flake-utils.url = "github:numtide/flake-utils"; # Support package build for hosts on different architectures. E.g. x86_64, arm, etc.
   };
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -29,11 +29,12 @@
           };
           buildPhase = ''
             # This will set home to /tmp directory rather than /homeless-shelter/
-            # vlang seems to have issues with automating it
+            # vlang seems to struggle with it during nix build,
             # so we add this export.
             export HOME=$TMP
 
-            # Extract the actual commit hash and patch @VMODHASH in sys_info.v. Required as Nix build occurs in isolated environment.
+            # Extract the actual commit hash and patch @VMODHASH in sys_info.v.
+            # Required as Nix build occurs in an isolated environment. And @VMODHASH can't find commit hash itself.
             echo "Patching sys_info.v with commit hash @VMODHASH"
             sed -i "s/@VMODHASH/\"$(git rev-parse HEAD)\"/" modules/papyrus/util/sys_info.v
 
@@ -66,7 +67,7 @@
 }
 
 /*
-Bellow we can see a vague example of how one would install papyrus-compiler in NixOS with flakes. Please note that this is only a reference and not complete working flake.
+Bellow we can see an approximate example of how one would install papyrus-compiler in NixOS with flakes. Please note that this is only a reference and not complete working flake.
 
 {
   description = "Example papyrus-compiler flake.nix";
