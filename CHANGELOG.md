@@ -6,6 +6,8 @@
 
 ...
 
+## V 0.0.4
+
 ### New Features
 
 - Added `version` command — run `papyrus version` to display the current compiler version.
