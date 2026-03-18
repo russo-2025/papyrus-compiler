@@ -23,7 +23,7 @@
             owner = "russo-2025";
             repo = "papyrus-compiler";
             rev = tag; # Downloads repo at the state of tag, instead of master branch, to avoid constant hash changes.
-            hash = "sha256-0zWJdifY7XB8XbFP2ZPqiu5MKSHjcyFXXdadO/CWqew="; # Hash, if the tag was changed to new, this line will cause error, we will need to replace this hash. New hash will be in the error itself.
+            hash = "sha256-117aL+ng8ZLWdoSCzyh53MYaSgU3IoX3iC0/oak5H94="; # Hash, if the tag was changed to new, this line will cause error, we will need to replace this hash. New hash will be in the error itself.
             # E.g. Expected - Old Hash, Got - New Hash. Use whatever hash is displayed inside of the Got message.
             fetchSubmodules = true;
           };
