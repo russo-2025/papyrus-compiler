@@ -26,7 +26,7 @@ fn test_builder() {
 
 	prefs := pref.Preferences {
 		paths: [ input_dir ]
-		output_dir: output_dir
+		output_dirs: [ output_dir ]
 		mode: .compile
 		backend: .pex
 		no_cache: true
@@ -34,9 +34,9 @@ fn test_builder() {
 		output_mode: .silent
 	}
 
-	out_file1 := os.join_path(prefs.output_dir, "AAATestObject.pex")
-	out_file2 := os.join_path(prefs.output_dir, "LatentTest.pex")
-	out_file3 := os.join_path(prefs.output_dir, "OpcodesTest.pex")
+	out_file1 := os.join_path(prefs.output_dirs[0], "AAATestObject.pex")
+	out_file2 := os.join_path(prefs.output_dirs[0], "LatentTest.pex")
+	out_file3 := os.join_path(prefs.output_dirs[0], "OpcodesTest.pex")
 
 	if os.is_file(out_file1) {
 		os.rm(out_file1) or { assert false, "failed to delete file" }
@@ -100,4 +100,65 @@ fn test_builder() {
 	for func in pex3.objects[0].states[0].functions {
 		assert pex3.get_string(func.name) in pex3_string_table
 	}
+}
+
+fn test_multiple_output_dirs() {
+	input_dir := os.real_path('test-files/vm-tests')
+	output_dir1 := os.real_path('test-files/compiled/multi1')
+	output_dir2 := os.real_path('test-files/compiled/multi2')
+
+	file1 := os.join_path(input_dir, "AAATestObject.psc")
+
+	if !os.is_file(file1) {
+		assert false, "invalid input file ${file1}"
+	}
+
+	// Create output directories
+	if !os.is_dir(output_dir1) {
+		os.mkdir(output_dir1, os.MkdirParams{}) or { assert false, "failed to create output_dir1" }
+	}
+	if !os.is_dir(output_dir2) {
+		os.mkdir(output_dir2, os.MkdirParams{}) or { assert false, "failed to create output_dir2" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ input_dir ]
+		output_dirs: [ output_dir1, output_dir2 ]
+		mode: .compile
+		backend: .pex
+		no_cache: true
+		header_dirs: []
+		output_mode: .silent
+	}
+
+	out_file1 := os.join_path(prefs.output_dirs[0], "AAATestObject.pex")
+	out_file2 := os.join_path(prefs.output_dirs[1], "AAATestObject.pex")
+
+	// Clean up previous runs
+	if os.is_file(out_file1) {
+		os.rm(out_file1) or { assert false, "failed to delete file" }
+	}
+	if os.is_file(out_file2) {
+		os.rm(out_file2) or { assert false, "failed to delete file" }
+	}
+
+	builder.compile(&prefs)
+
+	// Verify file exists in first output directory
+	assert os.is_file(out_file1), "pex file should exist in first output directory"
+
+	// Verify file was copied to second output directory
+	assert os.is_file(out_file2), "pex file should exist in second output directory (copied)"
+
+	// Verify both files are identical
+	pex1_content := os.read_bytes(out_file1) or { panic("failed to read pex1") }
+	pex2_content := os.read_bytes(out_file2) or { panic("failed to read pex2") }
+	assert pex1_content.len == pex2_content.len, "both pex files should have same size"
+	assert pex1_content == pex2_content, "both pex files should be identical"
+
+	// Clean up
+	os.rm(out_file1) or {}
+	os.rm(out_file2) or {}
+	os.rmdir(output_dir1) or {}
+	os.rmdir(output_dir2) or {}
 }

@@ -68,7 +68,12 @@ pub fn (mut b Builder) run() bool {
 	b.print("used header dirs ${b.pref.header_dirs}")
 
 	b.files, b.files_names = find_all_src_files(b.pref.paths)
-	
+
+	// Warn if using multiple output directories with -original flag
+	if b.pref.output_dirs.len > 1 && b.pref.backend == .original {
+		b.print("Warning: Using multiple output directories with -original flag is not fully supported. Files will only be compiled to the first directory.")
+	}
+
 	match b.pref.backend {
 		.check,
 		.pex {

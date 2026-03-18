@@ -15,7 +15,7 @@ fn (mut b Builder) compile_original() {
 	header_dirs = header_dirs[..header_dirs.len-1]
 	
 	for file in b.files {
-		cmd := '"${compiler_exe_path}" "${file}" -quiet -i="${header_dirs}" -o="${b.pref.output_dir}" -f="${compiler_flags_path}"'
+		cmd := '"${compiler_exe_path}" "${file}" -quiet -i="${header_dirs}" -o="${b.pref.output_dirs[0]}" -f="${compiler_flags_path}"'
 		
 		b.print("executing: `${cmd}`")
 		

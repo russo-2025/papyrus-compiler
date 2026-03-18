@@ -47,7 +47,7 @@ pub fn (m RunMode) str() string {
 pub struct Preferences {
 pub mut:
 	paths				[]string	// folders with files to compile
-	output_dir			string		// folder for output files
+	output_dirs			[]string	// folders for output files
 	mode				RunMode = .compile
 	backend				Backend = .pex
 	no_cache			bool
@@ -71,7 +71,9 @@ pub fn (p Preferences) cmd_str() string {
 		b.write_string("-i \"${path}\" ")
 	}
 	
-	b.write_string("-o \"${p.output_dir}\" ")
+	for dir in p.output_dirs {
+		b.write_string("-o \"${dir}\" ")
+	}
 	
 	for dir in p.header_dirs {
 		b.write_string("-h \"${dir}\" ")
@@ -124,17 +126,13 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			"-output" {
 				i++
 
-				if p.output_dir != "" {
-					error(errors.msg_duplicate_output_flag) // path
-				}
-
 				path := os.real_path(args[i])
 
 				if !os.is_dir(path) {
 					error(errors.msg_invalid_output_path) // path
 				}
 
-				p.output_dir = path
+				p.output_dirs << path
 				i++
 			}
 			"-h",
@@ -192,7 +190,7 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 		error(errors.msg_missing_input)
 	}
 
-	if p.output_dir == "" {
+	if p.output_dirs.len == 0 {
 		error(errors.msg_missing_output)
 	}
 }

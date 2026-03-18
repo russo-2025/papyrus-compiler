@@ -1,8 +1,10 @@
 ## Next Release
 
-...
+### New Features
 
-## V 0.0.4
+- Added support for multiple output directories - you can now specify multiple `-o` flags to copy compiled .pex files to multiple locations. #18
+
+...
 
 ### New Features
 
