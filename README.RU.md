@@ -29,7 +29,7 @@
 3. Используйте следующий синтаксис для работы с компилятором:
 
 ```
-papyrus <command> [arguments]
+papyrus-compiler <command> [arguments]
 ```
 
 ### Команды:
@@ -58,30 +58,30 @@ papyrus <command> [arguments]
 
 #### Компиляция всех скриптов в директории с игнорированием кэша:
 ```bash
-papyrus compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
+papyrus-compiler compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
 ```
 Эта команда компилирует все скрипты (кэш игнорируется), расположенные в `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source`, и помещает скомпилированные `.pex` файлы в каталог `../test-files/compiled/skyrimSources`.
 
 #### Компиляция всех скриптов в директории:
 ```bash
-papyrus compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
+papyrus-compiler compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
 ```
 Эта команда компилирует все скрипты, расположенные в `../../RH-workspace/scripts`, и помещает скомпилированные `.pex` файлы в каталог `../../RH-workspace/compiled`.
 
 #### Компиляция скриптов с использованием файлов заголовков/импортов:
 ```bash
-papyrus compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
+papyrus-compiler compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
 ```
 Эта команда скомпилирует все скрипты из каталога `../test-files/compiler` в каталог `../test-files/compiled`, а недостающая информация об объектах (`Form`, `ObjectReference`, `Actor` и т.д.) будет взята из `.psc` файлов в каталоге `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source`.
 
 #### Чтение скомпилированного `.pex` файла:
 ```bash
-papyrus read "../test-files/compiled/ABCD.pex"
+papyrus-compiler read "../test-files/compiled/ABCD.pex"
 ```
 
 #### Создание JSON-дампа `.pex` файлов:
 ```bash
-papyrus create-dump "../folder_with_pex_files"
+papyrus-compiler create-dump "../folder_with_pex_files"
 ```
 Создает JSON-файл `dump.json`, содержащий некоторую информацию обо всех `.pex` файлах, расположенных в каталоге `../folder_with_pex_files`. Вот как это будет выглядеть:
 ```json
@@ -133,7 +133,7 @@ Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = f
 - [V compiler d0dc13e (weekly.2025.48)](https://github.com/vlang/v/releases/tag/weekly.2025.48)
 
 ```bash
-v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
+v -o "bin\papyrus-compiler.exe" -prod -g -gc none compiler.v
 ```
 
 ## Тестирование

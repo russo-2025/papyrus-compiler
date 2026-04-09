@@ -35,7 +35,7 @@ fn test_selective_headers_loading() {
 
 	prefs := pref.Preferences {
 		paths: [ src_file ]
-		output_dir: output_dir
+		output_dirs: [ output_dir ]
 		mode: .compile
 		backend: .check
 		no_cache: true

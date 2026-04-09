@@ -7,7 +7,7 @@ import builder
 fn get_prefs(input_dir string, header_dirs []string, output_dir string) pref.Preferences {
 	return pref.Preferences {
 		paths: [ input_dir ]
-		output_dir: output_dir
+		output_dirs: [ output_dir ]
 		mode: .compile
 		backend: .check
 		no_cache: true

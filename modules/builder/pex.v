@@ -99,7 +99,8 @@ fn (mut b Builder) compile_pex() {
 fn (mut b Builder) gen_to_pex_file(mut parsed_file ast.File, mut buff_bytes pex.Buffer) {
 	if is_outdated(parsed_file, b.pref) {
 		output_file_name := parsed_file.file_name + ".pex"
-		output_file_path := os.join_path(b.pref.output_dir, output_file_name)
+		// Use first output directory for writing
+		output_file_path := os.join_path(b.pref.output_dirs[0], output_file_name)
 		
 		mut pex_file := b.generator.gen(mut parsed_file)
 
@@ -114,6 +115,16 @@ fn (mut b Builder) gen_to_pex_file(mut parsed_file ast.File, mut buff_bytes pex.
 			util.fatal_error("failed to write file: ${err}")
 		}
 		file.close()
+
+		// Copy to additional output directories
+		if b.pref.output_dirs.len > 1 {
+			for j in 1 .. b.pref.output_dirs.len {
+				copy_path := os.join_path(b.pref.output_dirs[j], output_file_name)
+				os.cp(output_file_path, copy_path) or {
+					util.fatal_error("failed to copy file to ${copy_path}: ${err}")
+				}
+			}
+		}
 	}
 }
 

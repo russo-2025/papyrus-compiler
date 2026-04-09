@@ -29,7 +29,7 @@ The compiler was created for the following purposes:
 3. Use the following syntax to work with the compiler:
 
 ```
-papyrus <command> [arguments]
+papyrus-compiler <command> [arguments]
 ```
 
 ### Commands:
@@ -57,30 +57,30 @@ Below are several examples demonstrating the use of various compiler commands an
 
 #### Compile all scripts in a directory, ignoring the cache:
 ```bash
-papyrus compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
+papyrus-compiler compile -nocache -i "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -o "../test-files/compiled/skyrimSources"
 ```
 This command compiles all scripts (ignoring the cache) located in `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source` and places the compiled `.pex` files in the `../test-files/compiled/skyrimSources` directory.
 
 #### Compile all scripts in a directory:
 ```bash
-papyrus compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
+papyrus-compiler compile -i "../../RH-workspace/scripts" -o "../../RH-workspace/compiled"
 ```
 This command compiles all scripts located in `../../RH-workspace/scripts` and places the compiled `.pex` files in the `../../RH-workspace/compiled` directory.
 
 #### Compile scripts using header/import files:
 ```bash
-papyrus compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
+papyrus-compiler compile -nocache -h "D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source" -i "../test-files/compiler" -o "../test-files/compiled" 
 ```
 This command will compile all scripts from the `../test-files/compiler` directory to the `../test-files/compiled` directory, and missing information about objects (`Form`, `ObjectReference`, `Actor`, etc.) will be taken from `.psc` files in the `D:\Steam\steamapps\common\Skyrim Special Edition\Data\Scripts\Source` directory.
 
 #### Reading a compiled `.pex` file:
 ```bash
-papyrus read "../test-files/compiled/ABCD.pex"
+papyrus-compiler read "../test-files/compiled/ABCD.pex"
 ```
 
 #### Creating a JSON dump of `.pex` files:
 ```bash
-papyrus create-dump "../folder_with_pex_files"
+papyrus-compiler create-dump "../folder_with_pex_files"
 ```
 Creates a JSON file `dump.json` containing some information about all `.pex` files located in the `../folder_with_pex_files` directory. Here's what it will look like:
 ```json
@@ -132,7 +132,7 @@ Scripts from the directory specified by the `-h "..."` argument will NOT be comp
 - [V compiler d0dc13e (weekly.2025.48)](https://github.com/vlang/v/releases/tag/weekly.2025.48)
 
 ```bash
-v -o "bin\papyrus.exe" -prod -g -gc none compiler.v
+v -o "bin\papyrus-compiler.exe" -prod -g -gc none compiler.v
 ```
 
 ## Testing
