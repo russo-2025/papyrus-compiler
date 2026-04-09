@@ -74,7 +74,7 @@ Bellow we can see an approximate example of how one would install papyrus-compil
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
-    papyrus-compiler.url = "github:DioKyrie-Git/papyrus-compiler";
+    papyrus-compiler.url = "github:russo-2025/papyrus-compiler";
   };
 
   outputs = { nixpkgs, papyrus-compiler, ... } @ inputs:
