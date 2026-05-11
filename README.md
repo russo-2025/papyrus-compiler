@@ -129,7 +129,7 @@ Scripts from the directory specified by the `-h "..."` argument will NOT be comp
 ## Building
 
 ### Requirements:
-- [V compiler d0dc13e (weekly.2025.48)](https://github.com/vlang/v/releases/tag/weekly.2025.48)
+- [V compiler 0c3183c (0.5.1)](https://github.com/vlang/v/releases/tag/0.5.1)
 
 ```bash
 v -o "bin\papyrus-compiler.exe" -prod -g -gc none compiler.v
