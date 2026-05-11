@@ -36,7 +36,7 @@
             # Extract the actual commit hash and patch @VMODHASH in sys_info.v.
             # Required as Nix build occurs in an isolated environment. And @VMODHASH can't find commit hash itself.
             echo "Patching sys_info.v with commit hash @VMODHASH"
-            sed -i "s/@VMODHASH/\"$(git rev-parse HEAD)\"/" modules/papyrus/util/sys_info.v
+            sed -i "s/@VMODHASH/\"${self.rev or "unknown"}\"/" modules/papyrus/util/sys_info.v
 
             # Build papyrus-compiler.
             v -prod -g -gc none -o "bin/papyrus-compiler" compiler.v
