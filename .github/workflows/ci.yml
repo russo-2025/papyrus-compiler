@@ -13,15 +13,51 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install V
-        uses: vlang/setup-v@v1.4
-        with:
-          version: 0.5.1
-
       - name: Checkout ${{ github.event.repository.name }}
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Diagnostic info (macOS runner)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          echo "runner.os=${{ runner.os }}"
+          echo "runner.arch=${{ runner.arch }}"
+          echo "image.os=${ImageOS:-unknown}"
+          echo "image.version=${ImageVersion:-unknown}"
+          uname -a || true
+          sw_vers || true
+          env | sort
+
+      - name: Install V
+        id: install_v
+        uses: vlang/setup-v@v1.4
+        continue-on-error: ${{ matrix.os == 'macos-latest' }}
+        with:
+          version: 0.5.1
+
+      - name: Diagnostic info (after setup-v)
+        if: always() && matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          echo "setup-v outcome: ${{ steps.install_v.outcome }}"
+          echo "setup-v conclusion: ${{ steps.install_v.conclusion }}"
+          command -v v || true
+          v version || true
+          v -version || true
+          ls -la "$GITHUB_WORKSPACE" || true
+          ls -la "$GITHUB_WORKSPACE/vlang" || true
+
+      - name: Fallback V bootstrap from source (macOS)
+        if: matrix.os == 'macos-latest' && steps.install_v.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch 0.5.1 https://github.com/vlang/v "$GITHUB_WORKSPACE/vlang-fallback"
+          make -C "$GITHUB_WORKSPACE/vlang-fallback"
+          echo "$GITHUB_WORKSPACE/vlang-fallback" >> "$GITHUB_PATH"
+          "$GITHUB_WORKSPACE/vlang-fallback/v" version
 
       - name: Build ${{ github.event.repository.name }}
         run: v -prod -gc none compiler.v
