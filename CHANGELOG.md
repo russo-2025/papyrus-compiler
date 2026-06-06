@@ -3,6 +3,16 @@
 ### New Features
 
 - Added support for multiple output directories - you can now specify multiple `-o` flags to copy compiled .pex files to multiple locations. #18
+- Added Nix flake (`flake.nix`) — the compiler can now be built and run as a Nix package. #15
+
+### Improvements
+
+- Updated required V compiler version to [0.5.1](https://github.com/vlang/v/releases/tag/0.5.1) (previously `weekly.2025.48`).
+
+### CI/CD
+
+- Fixed CI pipeline on all platforms: replaced `vlang/setup-v` (which fell back to building V from source and failed due to a bootstrap compiler incompatibility with `$if native` in V 0.5.x) with a direct download of prebuilt release binaries from GitHub Releases.
+- Updated `actions/checkout` from v4 to v6 (Node.js 24).
 
 ...
 
