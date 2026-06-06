@@ -34,22 +34,38 @@ jobs:
         include:
           - os: windows-latest
             artifact: papyrus-compiler-windows.zip
+            v_asset: v_windows.zip
           - os: ubuntu-latest
             artifact: papyrus-compiler-ubuntu.tar.gz
+            v_asset: v_linux.zip
           - os: macos-latest
             artifact: papyrus-compiler-macos.tar.gz
+            v_asset: v_macos_arm64.zip
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: recursive
-  
-      - name: Install V
-        uses: vlang/setup-v@v1.4
-        with:
-          version: 0.5.1
-     
+
+      - name: Install V (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -fsSL "https://github.com/vlang/v/releases/download/0.5.1/${{ matrix.v_asset }}" -o v.zip
+          unzip -q v.zip
+          echo "$PWD/v" >> "$GITHUB_PATH"
+          ./v/v version
+
+      - name: Install V (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/vlang/v/releases/download/0.5.1/${{ matrix.v_asset }}" -OutFile v.zip
+          Expand-Archive -Path v.zip -DestinationPath .
+          echo "$PWD\v" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          .\v\v.exe version
+
       - name: Build Project
         run: v -prod -g -gc none -o "bin/papyrus-compiler" compiler.v
       
