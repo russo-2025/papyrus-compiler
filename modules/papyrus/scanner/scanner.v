@@ -427,7 +427,6 @@ fn (mut s Scanner) ident_string() string {
 		quote = double_quote
 	}
 
-	mut n_cr_chars := 0
 	mut result := []u8{}
 
 	for {
@@ -459,7 +458,7 @@ fn (mut s Scanner) ident_string() string {
 			} else if next == `n` {
 				result << `\n`
 			} else if next == `t` {
-				result << u8(9)
+				result << `\t`
 			} else if next == `\n` {
 				s.inc_line_number()
 			} else {
@@ -469,22 +468,19 @@ fn (mut s Scanner) ident_string() string {
 		}
 
 		if c == `\r` {
-			n_cr_chars++
-		}
-		if c == `\n` {
+			// skip CR characters (CRLF normalization)
+		} else if c == `\n` {
 			s.inc_line_number()
+			result << c
+		} else {
+			result << c
 		}
-		result << c
 	}
 
-	mut lit := result.bytestr()
-	if n_cr_chars > 0 {
-		lit = lit.replace('\r', '')
-	}
-
-	return lit
+	return result.bytestr()
 }
 
+@[direct_array_access]
 fn (mut s Scanner) ident_dec_number() string {
 	mut has_wrong_digit := false
 	mut first_wrong_digit_pos := 0
