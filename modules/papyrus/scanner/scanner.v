@@ -410,9 +410,9 @@ fn (mut s Scanner) ident_number() string {
 
 @[direct_array_access]
 fn (mut s Scanner) ident_string() string {
-	
+
 	q := s.text[s.pos]
-	
+
 	if q != single_quote && q != double_quote {
 		s.error('first quote not found')
 		return ''
@@ -422,75 +422,69 @@ fn (mut s Scanner) ident_string() string {
 
 	if q == single_quote {
 		quote = single_quote
-	} 
+	}
 	else {
 		quote = double_quote
 	}
-	
+
 	mut n_cr_chars := 0
-	mut start := s.pos + 1
-	
-	slash := `\\`
+	mut result := []u8{}
 
 	for {
 		s.pos++
 
 		if s.pos >= s.text.len {
 			s.error('unfinished string literal')
-			break
+			return ''
 		}
 
 		c := s.text[s.pos]
-		prevc := s.text[s.pos - 1]
 
-		if c == quote && (prevc != slash || (prevc == slash && s.text[s.pos - 2] == slash)) {
+		if c == quote {
 			s.pos++
 			break
 		}
+
+		if c == `\\` {
+			s.pos++
+			if s.pos >= s.text.len {
+				s.error('unfinished string literal')
+				return ''
+			}
+			next := s.text[s.pos]
+			if next == `\\` {
+				result << `\\`
+			} else if next == `"` {
+				result << `"`
+			} else if next == `n` {
+				result << `\n`
+			} else if next == `t` {
+				result << u8(9)
+			} else if next == `\n` {
+				s.inc_line_number()
+			} else {
+				s.error('unknown escape sequence in string literal: \\${next.ascii_str()}')
+			}
+			continue
+		}
+
 		if c == `\r` {
 			n_cr_chars++
 		}
 		if c == `\n` {
 			s.inc_line_number()
 		}
+		result << c
 	}
 
-	mut lit := ''
-	mut end := s.pos - 1
-
-	if start <= s.pos {
-		mut string_so_far := s.text[start..end]
-		if n_cr_chars > 0 {
-			string_so_far = string_so_far.replace('\r', '')
-		}
-		if string_so_far.contains('\\\n') {
-			lit = trim_slash_line_break(string_so_far)
-		} else {
-			lit = string_so_far
-		}
+	mut lit := result.bytestr()
+	if n_cr_chars > 0 {
+		lit = lit.replace('\r', '')
 	}
 
 	return lit
 }
 
-fn trim_slash_line_break(s string) string {
-	mut start := 0
-	mut ret_str := s
-	for {
-		idx := ret_str.index_after('\\\n', start) or {
-			util.compiler_error(msg: "index_after `\\n`; ${err}", phase: "scanner", file: @FILE, func: @FN, line: @LINE)
-		}
-		if idx != -1 {
-			ret_str = ret_str[..idx] + ret_str[idx + 2..].trim_left(' \n\t\v\f\r')
-			start = idx
-		} else {
-			break
-		}
-	}
-	return ret_str
-}
-
-@[direct_array_access]
 fn (mut s Scanner) ident_dec_number() string {
 	mut has_wrong_digit := false
 	mut first_wrong_digit_pos := 0

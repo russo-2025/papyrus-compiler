@@ -1685,8 +1685,81 @@ fn test_foo() { // ???
 	assert pex_file.get_string(ins[0].args[0].to_string_id()) == "::temp1"
 	assert ins[0].args[1].to_integer() == 1
 	assert ins[0].args[2].to_integer() == 2
-	
+
 	assert ins[1].op == pex.OpCode.assign
 	assert pex_file.get_string(ins[1].args[0].to_string_id()) == "n"
 	assert pex_file.get_string(ins[1].args[1].to_string_id()) == "::temp1"
+}
+
+fn string_table_contains(pex_file &pex.PexFile, needle string) bool {
+	for entry in pex_file.string_table {
+		if entry == needle {
+			return true
+		}
+	}
+	return false
+}
+
+fn test_string_escape_quote() {
+	// The scanner must translate \" to a literal double quote,
+	// matching the Bethesda reference Papyrus compiler. Before the
+	// fix, the string table contained a literal backslash followed
+	// by a quote.
+	pex_file := compile('string s = "He said: \\"hi\\""')
+	assert string_table_contains(pex_file, 'He said: "hi"'), 'escaped quote not decoded'
+}
+
+fn test_string_escape_newline() {
+	// The scanner must translate \n to a real LF byte. Before the
+	// fix, the string table contained a literal backslash followed
+	// by the letter n.
+	pex_file := compile('string s = "line1\\nline2"')
+	assert string_table_contains(pex_file, 'line1\nline2'), 'escaped newline not decoded'
+}
+
+fn test_string_escape_bug_report() {
+	// The exact case from the user bug report (with the
+	// "Debug.Trace(" prefix replaced by a plain assignment so the
+	// test compiles standalone).
+	pex_file := compile('string s = "This is a \\"Test\\" \\nWith a new Line! "')
+	assert string_table_contains(pex_file, 'This is a "Test" \nWith a new Line! '), 'bug-report string not decoded'
+}
+
+fn test_string_escape_combined() {
+	// Both escapes in the same string, with extra surrounding
+	// content to make sure the scanner keeps its place.
+	pex_file := compile('string s = "First sentence.\\nSecond \\"quoted\\" sentence."')
+	assert string_table_contains(pex_file, 'First sentence.\nSecond "quoted" sentence.'), 'combined escapes not decoded'
+}
+
+fn test_string_escape_multiple_newlines() {
+	// Several newlines in a row. After decoding, the string must
+	// contain real LF bytes in the string table (the table is a
+	// plain []string, so the comparison is by value).
+	pex_file := compile('string s = "a\\n\\n\\nb"')
+	assert string_table_contains(pex_file, 'a\n\n\nb'), 'multiple newlines not decoded'
+}
+
+fn test_string_no_escape_unchanged() {
+	// Sanity check: a string with no escape sequences is returned
+	// exactly as written, and the scanner fix did not regress this
+	// case.
+	pex_file := compile('string s = "no escape here"')
+	assert string_table_contains(pex_file, 'no escape here'), 'plain string missing from table'
+}
+
+fn test_string_escape_backslash() {
+	// \\ must produce a single literal backslash, matching the
+	// Bethesda reference compiler. This is the common case for
+	// Windows-style paths in Papyrus scripts (e.g. Skyrim mods use
+	// "meshes\\Clutter\\...").
+	pex_file := compile('string s = "C:\\\\Temp\\\\file"')
+	assert string_table_contains(pex_file, 'C:\\Temp\\file'), 'escaped backslash not decoded'
+}
+
+fn test_string_escape_tab() {
+	// \t must produce a real tab byte, matching the Bethesda
+	// reference compiler.
+	pex_file := compile('string s = "a\\tb"')
+	assert string_table_contains(pex_file, 'a\tb'), 'escaped tab not decoded'
 }
