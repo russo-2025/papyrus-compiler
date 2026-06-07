@@ -198,6 +198,14 @@ fn (mut b PexStrBuilder) debug_func_to_string(d_func &DebugFunction) {
 	b.writeln("func name: '${fn_name}'")
 	b.writeln("type: ${fn_type}")
 	b.writeln("instruction count: ${instruction_count}")
+
+	b.indent_size++
+
+	for i, line in d_func.instruction_line_numbers {
+		b.writeln("inst ${i}: line ${line}")
+	}
+	
+	b.indent_size--
 }
 
 pub fn (p PexFile) str() string {

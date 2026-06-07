@@ -177,7 +177,7 @@ fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 fn (mut g Gen) emit(instr pex.Instruction) {
 	g.cur_fn.info.instructions << instr
 	if g.cur_debug_fn_idx >= 0 {
-		g.pex.functions[g.cur_debug_fn_idx].instruction_line_numbers << u16(g.cur_line)
+		g.pex.functions[g.cur_debug_fn_idx].instruction_line_numbers << u16(g.cur_line + 1)
 	}
 }
 
@@ -248,7 +248,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 			state_name: g.cur_state.name
 			function_name: g.gen_string_ref("GetState")
 			function_type: .method
-			instruction_line_numbers: [u16(0)] // 1 instruction (ret), no source line
+			instruction_line_numbers: []u16{}
 		}
 	}
 	
@@ -311,7 +311,7 @@ fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 			state_name: g.cur_state.name
 			function_name: g.gen_string_ref("GotoState")
 			function_type: .method
-			instruction_line_numbers: [u16(0), u16(0), u16(0)] // 3 instructions, no source line
+			instruction_line_numbers: []u16{}
 		}
 	}
 	
@@ -341,10 +341,27 @@ fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 				docstring: g.gen_string_ref("Event received when this state is switched to")
 				user_flags: 0
 				flags: 0
-				
+
 				params: []pex.VariableType{}
 				locals: []pex.VariableType{}
 				instructions: []pex.Instruction{}
+			}
+		}
+
+		if g.pref.debug_info {
+			g.pex.functions << pex.DebugFunction{
+				object_name: g.cur_obj.name
+				state_name: g.cur_state.name
+				function_name: g.gen_string_ref("onEndState")
+				function_type: .method
+				instruction_line_numbers: []u16{}
+			}
+			g.pex.functions << pex.DebugFunction{
+				object_name: g.cur_obj.name
+				state_name: g.cur_state.name
+				function_name: g.gen_string_ref("onBeginState")
+				function_type: .method
+				instruction_line_numbers: []u16{}
 			}
 		}
 	}

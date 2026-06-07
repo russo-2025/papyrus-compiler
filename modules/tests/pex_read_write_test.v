@@ -48,21 +48,23 @@ fn test_build() {
 	assert out_pex_file.has_debug_info == 1
 	assert out_pex_file.modification_time > 0
 
-	// debug function entries: GetState, GotoState, Foo, Bar
-	assert out_pex_file.functions.len == 4
-	// auto-generated functions have placeholder zero line numbers
-	assert out_pex_file.functions[0].instruction_line_numbers.len == 1 // GetState: 1 instruction
-	assert out_pex_file.functions[1].instruction_line_numbers.len == 3 // GotoState: 3 instructions
-	// Foo: 3 instructions (cast + iadd + assign), all on line 4 of the source (scanner reports 3)
-	assert out_pex_file.functions[2].instruction_line_numbers.len == 3
-	assert out_pex_file.functions[2].instruction_line_numbers[0] == 3
-	assert out_pex_file.functions[2].instruction_line_numbers[1] == 3
-	assert out_pex_file.functions[2].instruction_line_numbers[2] == 3
-	// Bar: same shape as Foo, body on line 8 of the source (scanner reports 7)
-	assert out_pex_file.functions[3].instruction_line_numbers.len == 3
-	assert out_pex_file.functions[3].instruction_line_numbers[0] == 7
-	assert out_pex_file.functions[3].instruction_line_numbers[1] == 7
-	assert out_pex_file.functions[3].instruction_line_numbers[2] == 7
+	// debug function entries: GetState, GotoState, onEndState, onBeginState, Foo, Bar
+	assert out_pex_file.functions.len == 6
+	// auto-generated functions have no line number entries (matches original compiler behaviour)
+	assert out_pex_file.functions[0].instruction_line_numbers.len == 0 // GetState
+	assert out_pex_file.functions[1].instruction_line_numbers.len == 0 // GotoState
+	assert out_pex_file.functions[2].instruction_line_numbers.len == 0 // onEndState
+	assert out_pex_file.functions[3].instruction_line_numbers.len == 0 // onBeginState
+	// Foo: 3 instructions (cast + iadd + assign), all on line 4 of the source
+	assert out_pex_file.functions[4].instruction_line_numbers.len == 3
+	assert out_pex_file.functions[4].instruction_line_numbers[0] == 4
+	assert out_pex_file.functions[4].instruction_line_numbers[1] == 4
+	assert out_pex_file.functions[4].instruction_line_numbers[2] == 4
+	// Bar: same shape as Foo, body on line 8 of the source
+	assert out_pex_file.functions[5].instruction_line_numbers.len == 3
+	assert out_pex_file.functions[5].instruction_line_numbers[0] == 8
+	assert out_pex_file.functions[5].instruction_line_numbers[1] == 8
+	assert out_pex_file.functions[5].instruction_line_numbers[2] == 8
 
 	//user flags
 	assert out_pex_file.user_flags.len == 2
@@ -111,6 +113,157 @@ fn test_build() {
 	assert bar_fn.info.params.len == 2
 	assert bar_fn.info.locals.len == 2
 	assert bar_fn.info.instructions.len == 3
+}
+
+fn test_debug_info() {
+	debug_src :=
+"Scriptname Foo
+
+int Property Value
+	int Function Get()
+		Return 42
+	EndFunction
+	Function Set(int n)
+	EndFunction
+EndProperty
+
+Function Linear(int a, float b) global
+	int x = a + b as int
+	int y = x + 1
+	int z = y * 2
+EndFunction
+
+int Function IfElse(int a) global
+	int result = 0
+	if a > 0
+		result = 1
+	else
+		result = -1
+	endIf
+	Return result
+EndFunction
+
+int Function WhileLoop(int n) global
+	int i = 0
+	int sum = 0
+	while i < n
+		sum = sum + i
+		i = i + 1
+	endWhile
+	Return sum
+EndFunction
+
+Function PropertyOps()
+	int old = Value
+	Value = old + 1
+EndFunction
+"
+
+	mut prefs := pref.Preferences {
+		paths: []string{}
+		mode: .compile
+		backend: .pex
+		no_cache: true
+		output_mode: .silent
+	}
+	mut table := ast.new_table()
+	mut global_scope := &ast.Scope{}
+
+	mut file := parser.parse_text("::debug_info_test.v::", debug_src, mut table, prefs, mut global_scope)
+
+	mut c := checker.new_checker(table, prefs)
+	c.check(mut file)
+	assert c.errors.len == 0
+
+	mut pex_file := gen_pex.gen_pex_file(mut file, mut table, prefs)
+	bytes := pex.write(mut pex_file)
+	out_pex_file := pex.read(bytes)
+
+	// debug info enabled
+	assert out_pex_file.has_debug_info == 1
+
+	// expected functions in debug info: GetState, GotoState, onEndState, onBeginState,
+	// Value(getter), Value(setter), Linear, IfElse, WhileLoop, PropertyOps
+	assert out_pex_file.functions.len == 10
+
+	// auto-generated entries
+	assert out_pex_file.get_string(out_pex_file.functions[0].function_name) == "GetState"
+	assert out_pex_file.functions[0].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[1].function_name) == "GotoState"
+	assert out_pex_file.functions[1].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[2].function_name) == "onEndState"
+	assert out_pex_file.functions[2].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[3].function_name) == "onBeginState"
+	assert out_pex_file.functions[3].function_type == .method
+
+	// property accessors must use the property name ("Value"), not the function name ("Get"/"Set")
+	assert out_pex_file.get_string(out_pex_file.functions[4].function_name) == "Value"
+	assert out_pex_file.functions[4].function_type == .getter
+	assert out_pex_file.get_string(out_pex_file.functions[5].function_name) == "Value"
+	assert out_pex_file.functions[5].function_type == .setter
+
+	// user methods
+	assert out_pex_file.get_string(out_pex_file.functions[6].function_name) == "Linear"
+	assert out_pex_file.functions[6].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[7].function_name) == "IfElse"
+	assert out_pex_file.functions[7].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[8].function_name) == "WhileLoop"
+	assert out_pex_file.functions[8].function_type == .method
+	assert out_pex_file.get_string(out_pex_file.functions[9].function_name) == "PropertyOps"
+	assert out_pex_file.functions[9].function_type == .method
+
+	// 1-based line numbers for the getter body (source line 5: "Return 42")
+	value_getter := out_pex_file.functions[4]
+	assert value_getter.instruction_line_numbers.len == 1
+	assert value_getter.instruction_line_numbers[0] == 5
+
+	// setter has empty body
+	value_setter := out_pex_file.functions[5]
+	assert value_setter.instruction_line_numbers.len == 0
+
+	// Linear: 7 instructions on lines 12,12,12,13,13,14,14 of the source
+	linear_dbg := out_pex_file.functions[6]
+	assert linear_dbg.instruction_line_numbers.len == 7
+	assert linear_dbg.instruction_line_numbers[0] == 12
+	assert linear_dbg.instruction_line_numbers[1] == 12
+	assert linear_dbg.instruction_line_numbers[2] == 12
+	assert linear_dbg.instruction_line_numbers[3] == 13
+	assert linear_dbg.instruction_line_numbers[4] == 13
+	assert linear_dbg.instruction_line_numbers[5] == 14
+	assert linear_dbg.instruction_line_numbers[6] == 14
+
+	// IfElse: 7 instructions on lines 18,19,19,20,20,22,24 of the source
+	ifelse_dbg := out_pex_file.functions[7]
+	assert ifelse_dbg.instruction_line_numbers.len == 7
+	assert ifelse_dbg.instruction_line_numbers[0] == 18
+	assert ifelse_dbg.instruction_line_numbers[1] == 19
+	assert ifelse_dbg.instruction_line_numbers[2] == 19
+	assert ifelse_dbg.instruction_line_numbers[3] == 20
+	assert ifelse_dbg.instruction_line_numbers[4] == 20
+	assert ifelse_dbg.instruction_line_numbers[5] == 22
+	assert ifelse_dbg.instruction_line_numbers[6] == 24
+
+	// WhileLoop: 10 instructions on lines 28,29,30,30,31,31,32,32,32,34 of the source
+	while_dbg := out_pex_file.functions[8]
+	assert while_dbg.instruction_line_numbers.len == 10
+	assert while_dbg.instruction_line_numbers[0] == 28
+	assert while_dbg.instruction_line_numbers[1] == 29
+	assert while_dbg.instruction_line_numbers[2] == 30
+	assert while_dbg.instruction_line_numbers[3] == 30
+	assert while_dbg.instruction_line_numbers[4] == 31
+	assert while_dbg.instruction_line_numbers[5] == 31
+	assert while_dbg.instruction_line_numbers[6] == 32
+	assert while_dbg.instruction_line_numbers[7] == 32
+	assert while_dbg.instruction_line_numbers[8] == 32
+	assert while_dbg.instruction_line_numbers[9] == 34
+
+	// PropertyOps: 4 instructions on lines 38,38,39,39 of the source
+	prop_ops_dbg := out_pex_file.functions[9]
+	assert prop_ops_dbg.instruction_line_numbers.len == 4
+	assert prop_ops_dbg.instruction_line_numbers[0] == 38
+	assert prop_ops_dbg.instruction_line_numbers[1] == 38
+	assert prop_ops_dbg.instruction_line_numbers[2] == 39
+	assert prop_ops_dbg.instruction_line_numbers[3] == 39
 }
 
 fn test_build_no_debug_info() {

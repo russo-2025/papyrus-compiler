@@ -92,7 +92,8 @@ fn (mut g Gen) if_stmt(mut s ast.If) {
 	mut i := 0
 	for i < s.branches.len {
 		mut b := s.branches[i]
-		
+		g.cur_line = b.pos.line_nr
+
 		//если это не последний else то добавляем jmpf
 		if !s.has_else || i < s.branches.len - 1 {
 			//условие
@@ -132,7 +133,7 @@ fn (mut g Gen) if_stmt(mut s ast.If) {
 }
 
 @[inline]
-fn (mut g Gen) gen_fn(mut node ast.FnDecl, function_type pex.DebugFunctionType) &pex.Function {
+fn (mut g Gen) gen_fn(mut node ast.FnDecl, function_type pex.DebugFunctionType, debug_fn_name string) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
 		info: pex.FunctionInfo{
@@ -152,10 +153,11 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl, function_type pex.DebugFunctionType) 
 
 	if g.pref.debug_info {
 		g.cur_debug_fn_idx = g.pex.functions.len
+		debug_name := if debug_fn_name.len > 0 { g.gen_string_ref(debug_fn_name) } else { f.name }
 		g.pex.functions << pex.DebugFunction{
 			object_name: g.cur_obj.name
 			state_name: g.cur_state.name
-			function_name: f.name
+			function_name: debug_name
 			function_type: function_type
 			instruction_line_numbers: []u16{}
 		}
@@ -194,7 +196,7 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl, function_type pex.DebugFunctionType) 
 
 @[inline]
 fn (mut g Gen) fn_decl(mut node ast.FnDecl) {
-	g.cur_state.functions << g.gen_fn(mut node, .method)
+	g.cur_state.functions << g.gen_fn(mut node, .method, '')
 }
 
 @[inline]
@@ -378,12 +380,12 @@ fn (mut g Gen) prop_decl(mut stmt ast.PropertyDecl) {
 	else {
 		if mut stmt.read is ast.FnDecl {
 			prop.flags |= 0b0001
-			prop.read_handler = g.gen_fn(mut stmt.read, .getter).info
+			prop.read_handler = g.gen_fn(mut stmt.read, .getter, stmt.name).info
 		}
 
 		if mut stmt.write is ast.FnDecl {
 			prop.flags |= 0b0010
-			prop.write_handler = g.gen_fn(mut stmt.write, .setter).info
+			prop.write_handler = g.gen_fn(mut stmt.write, .setter, stmt.name).info
 		}
 	}
 	
