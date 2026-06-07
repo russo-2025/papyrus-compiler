@@ -14,3 +14,4 @@ test-files/*.*
 papyrus_fast.exe
 papyrus_fast.c
 ____fast_vm_tests
+vlib_docs/*
