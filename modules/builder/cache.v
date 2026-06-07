@@ -40,12 +40,19 @@ fn is_outdated(pfile &ast.File, prefs &pref.Preferences) bool {
 	if prefs.no_cache {
 		return true
 	}
-	
+
+	// If output file is missing, always rebuild
+	output_file_name := pfile.file_name + ".pex"
+	output_file_path := os.join_path(prefs.output_dirs[0], output_file_name)
+	if !os.is_file(output_file_path) {
+		return true
+	}
+
 	path := os.join_path(cache_path, pfile.file_name + ".obj")
-	
+
 	if os.is_file(path) {
 		mut cache := read_cache(path)
-		
+
 		if cache.last_mod_time == pfile.last_mod_time {
 			return false
 		}
