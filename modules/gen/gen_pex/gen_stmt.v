@@ -101,10 +101,7 @@ fn (mut g Gen) if_stmt(mut s ast.If) {
 			//добавляем индекс jmpf в массив(для добавления относительной позиции)
 			jmp_to_next_ids << g.cur_fn.info.instructions.len
 			//добавляем прыжок к следующему блоку (jmpf)
-			g.cur_fn.info.instructions << pex.Instruction{
-				op: pex.OpCode.jmpf
-				args: [ cond_value ]
-			}
+			g.emit(pex.Instruction{ op: pex.OpCode.jmpf, args: [ cond_value ] })
 		}
 		//выполняем блок
 		for mut stmt in b.stmts {
@@ -115,10 +112,7 @@ fn (mut g Gen) if_stmt(mut s ast.If) {
 			//добавляем индекс прыжка в массив
 			jmp_to_end_ids << g.cur_fn.info.instructions.len
 			//добавляем прыжок в конец
-			g.cur_fn.info.instructions << pex.Instruction{
-				op: pex.OpCode.jmp
-				args: [ ]
-			}
+			g.emit(pex.Instruction{ op: pex.OpCode.jmp, args: [] })
 		}
 
 		//если это не последний else, то добавляем относительный индекс к последнему jmpf
@@ -138,15 +132,15 @@ fn (mut g Gen) if_stmt(mut s ast.If) {
 }
 
 @[inline]
-fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
+fn (mut g Gen) gen_fn(mut node ast.FnDecl, function_type pex.DebugFunctionType) &pex.Function {
 	mut f := pex.Function{
 		name: g.gen_string_ref(node.name)
 		info: pex.FunctionInfo{
 			return_type: g.gen_string_ref(g.table.type_to_str(node.return_type))
 			docstring: g.gen_string_ref("")
-			user_flags: 0 //u32	
+			user_flags: 0 //u32
 			flags: 0
-			
+
 			params: []pex.VariableType{}
 			locals: []pex.VariableType{}
 			instructions: []pex.Instruction{}
@@ -154,13 +148,17 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
 	}
 
 	g.cur_fn = &f
+	g.cur_line = 0
 
-	g.pex.functions << pex.DebugFunction{
-		object_name: g.cur_obj.name
-		state_name: g.cur_state.name
-		function_name: f.name
-		function_type: 0 // TODO выяснить что это
-		instruction_line_numbers: []u16{}
+	if g.pref.debug_info {
+		g.cur_debug_fn_idx = g.pex.functions.len
+		g.pex.functions << pex.DebugFunction{
+			object_name: g.cur_obj.name
+			state_name: g.cur_state.name
+			function_name: f.name
+			function_type: function_type
+			instruction_line_numbers: []u16{}
+		}
 	}
 
 	g.temp_locals = []TempVariable{}
@@ -187,7 +185,8 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
 	for mut stmt in node.stmts {
 		g.stmt(mut stmt)
 	}
-	
+
+	g.cur_debug_fn_idx = -1
 	g.cur_fn = unsafe { voidptr(0) } // лучше пусть упадет с ошибкой, чем просто добавит инструкции туда куда не должен был
 
 	return &f
@@ -195,7 +194,7 @@ fn (mut g Gen) gen_fn(mut node ast.FnDecl) &pex.Function {
 
 @[inline]
 fn (mut g Gen) fn_decl(mut node ast.FnDecl) {
-	g.cur_state.functions << g.gen_fn(mut node)
+	g.cur_state.functions << g.gen_fn(mut node, .method)
 }
 
 @[inline]
@@ -215,14 +214,14 @@ fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 				g.free_temp(right_value)
 
 				//добавляем инструкцию в функцию
-				g.cur_fn.info.instructions << pex.Instruction{
+				g.emit(pex.Instruction{
 					op: pex.OpCode.propset
 					args: [
 						pex.value_ident(g.gen_string_ref(name)),
 						pex.value_ident(g.gen_string_ref("self")),
 						right_value
 					]
-				}
+				})
 
 				return
 			}
@@ -232,13 +231,13 @@ fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 		value := g.get_operand_from_expr(mut &stmt.right)
 		g.free_temp(value)
 
-		g.cur_fn.info.instructions << pex.Instruction{
+		g.emit(pex.Instruction{
 			op: pex.OpCode.assign
 			args: [
-				pex.value_ident(g.gen_string_ref(name)), 
-				value 
+				pex.value_ident(g.gen_string_ref(name)),
+				value
 			]
-		}
+		})
 	}
 	else if mut stmt.left is ast.IndexExpr {
 		//opcode: 'array_setelement', args: [ident(arr), integer(0), ident(::temp1)]
@@ -248,10 +247,10 @@ fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 		g.free_temp(index_value)
 		g.free_temp(right_value)
 
-		g.cur_fn.info.instructions << pex.Instruction{
+		g.emit(pex.Instruction{
 			op: pex.OpCode.array_setelement
 			args: [ left_value, index_value, right_value ]
-		}
+		})
 	}
 	else if mut stmt.left is ast.SelectorExpr {
 		//opcode: 'propset', args: [ident(myProperty), ident(arg), ident(::temp0)]
@@ -264,14 +263,14 @@ fn (mut g Gen) assign(mut stmt ast.AssignStmt) {
 		g.free_temp(right_value)
 
 		//добавляем инструкцию в функцию
-		g.cur_fn.info.instructions << pex.Instruction{
+		g.emit(pex.Instruction{
 			op: pex.OpCode.propset
 			args: [
 				pex.value_ident(g.gen_string_ref(stmt.left.field_name)),
 				expr_value,
 				right_value
 			]
-		}
+		})
 	}
 	else {
 		util.compiler_error(msg: "unprocessed expression on the left ${stmt.left.type_name()}", phase: "gen pex", prefs: g.pref, file: @FILE, func: @FN, line: @LINE)
@@ -379,12 +378,12 @@ fn (mut g Gen) prop_decl(mut stmt ast.PropertyDecl) {
 	else {
 		if mut stmt.read is ast.FnDecl {
 			prop.flags |= 0b0001
-			prop.read_handler = g.gen_fn(mut stmt.read).info
+			prop.read_handler = g.gen_fn(mut stmt.read, .getter).info
 		}
 
 		if mut stmt.write is ast.FnDecl {
 			prop.flags |= 0b0010
-			prop.write_handler = g.gen_fn(mut stmt.write).info
+			prop.write_handler = g.gen_fn(mut stmt.write, .setter).info
 		}
 	}
 	
@@ -410,10 +409,7 @@ fn (mut g Gen) while_stmt(mut s ast.While) {
 
 	jmpf_index := g.cur_fn.info.instructions.len
 
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: pex.OpCode.jmpf
-		args: [ cond_value ]
-	}
+	g.emit(pex.Instruction{ op: pex.OpCode.jmpf, args: [ cond_value ] })
 
 	g.free_temp(cond_value)
 
@@ -421,10 +417,10 @@ fn (mut g Gen) while_stmt(mut s ast.While) {
 		g.stmt(mut stmt)
 	}
 
-	g.cur_fn.info.instructions << pex.Instruction{
+	g.emit(pex.Instruction{
 		op: pex.OpCode.jmp
 		args: [ pex.value_integer(start_index - g.cur_fn.info.instructions.len) ]
-	}
+	})
 
 	g.cur_fn.info.instructions[jmpf_index].args << pex.value_integer(g.cur_fn.info.instructions.len - jmpf_index)
 }

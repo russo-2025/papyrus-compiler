@@ -50,6 +50,7 @@ The following arguments can be used with the `compile` command:
 - `-original`: Uses the original Papyrus compiler for compilation.
 - `-stats`: Saves statistics on compiled files to .md files (number of function calls, inheritances, files).
 - `-check`: Checks the syntax of .psc files without generating .pex files.
+- `-no-debug-info`: Excludes source line numbers and modification time from compiled .pex files. Debug info is included by default.
 - `-verbose`: ...
 
 ### Examples

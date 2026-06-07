@@ -34,8 +34,11 @@ pub mut:
 	states			map[string]&pex.State
 	empty_state		&pex.State = unsafe{ voidptr(0) }
 
-	cur_obj_type	ast.Type
-	cur_obj_name	string
+	cur_obj_type		ast.Type
+	cur_obj_name		string
+
+	cur_line			int  // source line number of the statement being compiled
+	cur_debug_fn_idx	int  // index into g.pex.functions for the current function's debug entry
 }
 
 pub fn gen_pex_file(mut file ast.File, mut table ast.Table, prefs &pref.Preferences) &pex.PexFile {
@@ -51,14 +54,15 @@ pub fn gen_pex_file(mut file ast.File, mut table ast.Table, prefs &pref.Preferen
 			user_name: os.loginname() or { "::USERNAME::" }
 			machine_name: os.hostname() or { "::MACHINENAME::" }
 
-			has_debug_info: u8(1) //debug info обязательна?!
-			modification_time: i64(1616261626) //TODO
+			has_debug_info: u8(prefs.debug_info)
+			modification_time: if file.last_mod_time != 0 { file.last_mod_time } else { time.utc().unix() }
 		}
 
 		table: table
 		pref: prefs
+		cur_debug_fn_idx: -1
 	}
-	
+
 	g.gen_objects()
 	return g.pex
 }
@@ -73,6 +77,8 @@ pub fn (mut g Gen) cleanup() {
 	g.empty_state = unsafe{ voidptr(0) }
 	g.cur_obj_type = ast.Type(0)
 	g.cur_obj_name = ""
+	g.cur_line = 0
+	g.cur_debug_fn_idx = -1
 }
 
 
@@ -90,8 +96,8 @@ pub fn (mut g Gen) gen(mut file ast.File) &pex.PexFile {
 		user_name: os.loginname() or { "::USERNAME::" }
 		machine_name: os.hostname() or { "::MACHINENAME::" }
 
-		has_debug_info: u8(1) //debug info обязательна?!
-		modification_time: i64(1616261626) //TODO
+		has_debug_info: u8(g.pref.debug_info)
+		modification_time: if file.last_mod_time != 0 { file.last_mod_time } else { time.utc().unix() }
 	}
 
 	assert g.string_table.len == 0
@@ -137,32 +143,41 @@ fn (mut g Gen) gen_objects() {
 fn (mut g Gen) stmt(mut stmt ast.Stmt) {
 	match mut stmt {
 		ast.Return {
+			g.cur_line = stmt.pos.line_nr
 			value := g.get_operand_from_expr(mut &stmt.expr)
-			
 			g.free_temp(value)
-
-			g.cur_fn.info.instructions << pex.Instruction{
-				op: pex.OpCode.ret
-				args: [ value ]
-			}
+			g.emit(pex.Instruction{ op: pex.OpCode.ret, args: [ value ] })
 		}
 		ast.If {
+			g.cur_line = stmt.pos.line_nr
 			g.if_stmt(mut stmt)
 		}
 		ast.While {
+			g.cur_line = stmt.pos.line_nr
 			g.while_stmt(mut stmt)
 		}
 		ast.ExprStmt {
+			g.cur_line = stmt.pos.line_nr
 			value := g.get_operand_from_expr(mut &stmt.expr)
 			g.free_temp(value)
 		}
 		ast.AssignStmt {
+			g.cur_line = stmt.pos.line_nr
 			g.assign(mut stmt)
 		}
 		ast.VarDecl {
+			g.cur_line = stmt.pos.line_nr
 			g.var_decl(mut stmt)
 		}
 		ast.Comment {}
+	}
+}
+
+@[inline]
+fn (mut g Gen) emit(instr pex.Instruction) {
+	g.cur_fn.info.instructions << instr
+	if g.cur_debug_fn_idx >= 0 {
+		g.pex.functions[g.cur_debug_fn_idx].instruction_line_numbers << u16(g.cur_line)
 	}
 }
 
@@ -227,12 +242,14 @@ fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 		}
 	}
 
-	g.pex.functions << pex.DebugFunction{
-		object_name: g.cur_obj.name
-		state_name: g.cur_state.name
-		function_name: g.gen_string_ref("GetState")
-		function_type: 0 // TODO выяснить что это
-		instruction_line_numbers: []u16{}
+	if g.pref.debug_info {
+		g.pex.functions << pex.DebugFunction{
+			object_name: g.cur_obj.name
+			state_name: g.cur_state.name
+			function_name: g.gen_string_ref("GetState")
+			function_type: .method
+			instruction_line_numbers: [u16(0)] // 1 instruction (ret), no source line
+		}
 	}
 	
 	//GotoState
@@ -288,12 +305,14 @@ fn (mut g Gen) add_default_functions_to_state(mut state pex.State) {
 		}
 	}
 
-	g.pex.functions << pex.DebugFunction{
-		object_name: g.cur_obj.name
-		state_name: g.cur_state.name
-		function_name: g.gen_string_ref("GotoState")
-		function_type: 0 // TODO выяснить что это
-		instruction_line_numbers: []u16{}
+	if g.pref.debug_info {
+		g.pex.functions << pex.DebugFunction{
+			object_name: g.cur_obj.name
+			state_name: g.cur_state.name
+			function_name: g.gen_string_ref("GotoState")
+			function_type: .method
+			instruction_line_numbers: [u16(0), u16(0), u16(0)] // 3 instructions, no source line
+		}
 	}
 	
 	sym := g.table.get_type_symbol(g.cur_obj_type)

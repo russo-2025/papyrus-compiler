@@ -56,6 +56,7 @@ pub mut:
 	is_verbose			bool
 	use_threads			bool
 	stats_enabled		bool
+	debug_info			bool = true
 }
 
 pub fn (p Preferences) cmd_str() string {
@@ -81,6 +82,10 @@ pub fn (p Preferences) cmd_str() string {
 
 	if p.no_cache {
 		b.write_string("-nocache")
+	}
+
+	if !p.debug_info {
+		b.write_string("-no-debug-info")
 	}
 
 	return b.str()
@@ -178,6 +183,10 @@ fn (mut p Preferences) parse_compile_args(args []string) {
 			}
 			"-stats" {
 				p.stats_enabled = true
+				i++
+			}
+			"-no-debug-info" {
+				p.debug_info = false
 				i++
 			}
 			else {
@@ -310,6 +319,7 @@ Arguments for the "compile" command:
   -original         Use the original Papyrus compiler for compilation.
   -stats            Save statistics on compiled files to .md files (number of function calls, inheritances, files).
   -check            Check the syntax of .psc files without generating .pex files.
+  -no-debug-info    Exclude debug info (source line numbers, modification time) from the output .pex files. Debug info is included by default.
 
 Examples:
   Compile all scripts in a directory, ignoring the cache:

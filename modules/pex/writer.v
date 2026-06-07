@@ -81,7 +81,7 @@ fn (mut w Writer) write_pex() {
 			w.write(func.object_name)
 			w.write(func.state_name)
 			w.write(func.function_name)
-			w.write(func.function_type)
+			w.write(u8(func.function_type))
 
 			w.write(cast_int_to_u16(func.instruction_line_numbers.len))
 

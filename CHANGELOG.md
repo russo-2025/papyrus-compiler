@@ -4,9 +4,12 @@
 
 - Added support for multiple output directories - you can now specify multiple `-o` flags to copy compiled .pex files to multiple locations. #18
 - Added Nix flake (`flake.nix`) — the compiler can now be built and run as a Nix package. #15
+- Added `-no-debug-info` flag to exclude source line numbers and modification time from compiled .pex files. Debug info is included by default.
 
 ### Improvements
 
+- Generated scripts now include real source line numbers in the debug info.
+- The `modificationTime` field in generated scripts is now set to the source file's last modification time instead of a fixed placeholder.
 - Updated required V compiler version to [0.5.1](https://github.com/vlang/v/releases/tag/0.5.1) (previously `weekly.2025.48`).
 
 ### CI/CD

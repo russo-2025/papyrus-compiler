@@ -53,10 +53,7 @@ fn (mut g Gen) free_temp(value pex.VariableValue) {
 //v2 what to convert
 @[inline]
 fn (mut g Gen) gen_cast(v1 pex.VariableValue, v2 pex.VariableValue) {
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: pex.OpCode.cast
-		args: [v1, v2]
-	}
+	g.emit(pex.Instruction{ op: pex.OpCode.cast, args: [v1, v2] })
 }
 
 @[inline]
@@ -66,10 +63,7 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 		e.op = .eq
 		result_value := g.gen_infix_operator(mut e)
 		
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.not
-			args: [result_value, result_value]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.not, args: [result_value, result_value] })
 
 		return result_value
 	}
@@ -92,27 +86,18 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 
 		mut result_value := g.get_free_temp(ast.bool_type)
 
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.assign
-			args: [ result_value, left_value ]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.assign, args: [ result_value, left_value ] })
 
 		left_jmp_index := g.cur_fn.info.instructions.len
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.jmpf
-			args: [ result_value ]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.jmpf, args: [ result_value ] })
 
 		right_value := g.get_operand_from_expr(mut &expr.right)
 		g.free_temp(right_value)
-		
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.assign
-			args: [ result_value, right_value ]
-		}
+
+		g.emit(pex.Instruction{ op: pex.OpCode.assign, args: [ result_value, right_value ] })
 
 		g.cur_fn.info.instructions[left_jmp_index].args << pex.value_integer(g.cur_fn.info.instructions.len - left_jmp_index)
-		
+
 		return result_value
 	}
 	else if expr.op == .logical_or {
@@ -134,27 +119,18 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 
 		mut result_value := g.get_free_temp(ast.bool_type)
 
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.assign
-			args: [ result_value, left_value ]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.assign, args: [ result_value, left_value ] })
 
 		left_jmp_index := g.cur_fn.info.instructions.len
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.jmpt
-			args: [ result_value ]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.jmpt, args: [ result_value ] })
 
 		right_value := g.get_operand_from_expr(mut &expr.right)
 		g.free_temp(right_value)
-		
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.assign
-			args: [ result_value, right_value ]
-		}
+
+		g.emit(pex.Instruction{ op: pex.OpCode.assign, args: [ result_value, right_value ] })
 
 		g.cur_fn.info.instructions[left_jmp_index].args << pex.value_integer(g.cur_fn.info.instructions.len - left_jmp_index)
-		
+
 		return result_value
 	}
 	
@@ -168,13 +144,9 @@ fn (mut g Gen) gen_infix_operator(mut expr ast.InfixExpr) pex.VariableValue {
 
 	result_value := g.get_free_temp(expr.result_type)
 
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: op
-		args: [result_value, left_value, right_value]
-	}
+	g.emit(pex.Instruction{ op: op, args: [result_value, left_value, right_value] })
 
 	return result_value
-	
 }
 
 @[inline]
@@ -186,10 +158,7 @@ fn (mut g Gen) gen_prefix_operator(mut expr ast.PrefixExpr) pex.VariableValue {
 	
 	result_value := g.get_free_temp(expr.right_type)
 
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: op
-		args: [result_value, right_value]
-	}
+	g.emit(pex.Instruction{ op: op, args: [result_value, right_value] })
 
 	return result_value
 }
@@ -245,10 +214,7 @@ fn (mut g Gen) gen_call(calltype pex.OpCode, mut expr ast.CallExpr) pex.Variable
 	}
 
 	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: calltype
-		args: args
-	}
+	g.emit(pex.Instruction{ op: calltype, args: args })
 
 	if need_free_left != none {
 		g.free_temp(need_free_left)
@@ -291,10 +257,7 @@ fn (mut g Gen) gen_array_init(mut expr ast.ArrayInit) pex.VariableValue {
 		//переменная для результата
 		result_value := g.get_free_temp(expr.typ)
 		//добавляем инструкцию в функцию
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.array_create
-			args: [result_value, len_value]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.array_create, args: [result_value, len_value] })
 		return result_value
 }
 
@@ -322,10 +285,10 @@ fn (mut g Gen) gen_array_find_element(mut expr ast.CallExpr) pex.VariableValue {
 	g.free_temp(value_start_index)
 
 	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
+	g.emit(pex.Instruction{
 		op: if lname == 'find' { pex.OpCode.array_findelement } else { pex.OpCode.array_rfindelement }
 		args: [target_value, result_value, value, value_start_index]
-	}
+	})
 	return result_value
 }
 
@@ -340,10 +303,7 @@ fn (mut g Gen) gen_array_get_element(mut expr ast.IndexExpr) pex.VariableValue {
 	//переменная для результата
 	result_value := g.get_free_temp(expr.typ)
 	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
-		op: pex.OpCode.array_getelement
-		args: [result_value, left_value, index_value]
-	}
+	g.emit(pex.Instruction{ op: pex.OpCode.array_getelement, args: [result_value, left_value, index_value] })
 	return result_value
 }
 
@@ -359,10 +319,7 @@ fn (mut g Gen) gen_selector(mut expr ast.SelectorExpr) pex.VariableValue {
 		result_value := g.get_free_temp(expr.typ)
 
 		//добавляем инструкцию в функцию
-		g.cur_fn.info.instructions << pex.Instruction{
-			op: pex.OpCode.array_length
-			args: [result_value, expr_value]
-		}
+		g.emit(pex.Instruction{ op: pex.OpCode.array_length, args: [result_value, expr_value] })
 
 		return result_value
 	}
@@ -376,14 +333,14 @@ fn (mut g Gen) gen_selector(mut expr ast.SelectorExpr) pex.VariableValue {
 	result_value := g.get_free_temp(expr.typ)
 
 	//добавляем инструкцию в функцию
-	g.cur_fn.info.instructions << pex.Instruction{
+	g.emit(pex.Instruction{
 		op: pex.OpCode.propget
 		args: [
 			pex.value_ident(g.gen_string_ref(expr.field_name)),
 			expr_value,
 			result_value
 		]
-	}
+	})
 
 	return result_value
 }

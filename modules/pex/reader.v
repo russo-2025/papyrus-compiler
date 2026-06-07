@@ -83,7 +83,13 @@ fn (mut r Reader) read_pex() ! {
 			d.object_name = r.read_string_ref() or { return err }
 			d.state_name = r.read_string_ref() or { return err }
 			d.function_name = r.read_string_ref() or { return err }
-			d.function_type = r.read[u8]()
+			raw_fn_type := r.read[u8]()
+			d.function_type = match raw_fn_type {
+				0 { DebugFunctionType.method }
+				1 { DebugFunctionType.getter }
+				2 { DebugFunctionType.setter }
+				else { return error("invalid debug function type: ${raw_fn_type}") }
+			}
 			instruction_line_numbers_len := r.read[u16]()
 
 			mut k := 0

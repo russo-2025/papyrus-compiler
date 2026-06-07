@@ -105,12 +105,18 @@ pub fn (file PexFile) user_flags_str() string {
 	return flags.str()
 }
 
+pub enum DebugFunctionType as u8 {
+	method = 0  // regular function or method
+	getter = 1  // property read handler
+	setter = 2  // property write handler
+}
+
 pub struct DebugFunction {
 pub mut:
 	object_name					StringId
 	state_name					StringId
 	function_name				StringId
-	function_type				u8 //valid values 0-3
+	function_type				DebugFunctionType
 	instruction_line_numbers	[]u16 //Maps instructions to their original lines in the source.
 }
 
