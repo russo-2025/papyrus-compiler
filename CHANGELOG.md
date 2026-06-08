@@ -5,12 +5,6 @@
 - Added support for multiple output directories - you can now specify multiple `-o` flags to copy compiled .pex files to multiple locations. #18
 - Added Nix flake (`flake.nix`) — the compiler can now be built and run as a Nix package. #15
 - Added `-no-debug-info` flag to exclude source line numbers and modification time from compiled .pex files. Debug info is included by default.
-- String literals now support C-style escape sequences inside double-quoted strings:
-  - `\"` produces a literal double quote (so `"He said: \"hi\""` becomes the string `He said: "hi"`).
-  - `\n` produces a newline.
-  - `\t` produces a tab.
-  - `\\` produces a single backslash (so `"C:\\Temp"` becomes the string `C:\Temp`, the common Windows-path form used throughout Skyrim mods).
-  - Any other `\X` sequence (for example `\r`, `\0`, `\'`, `\x`) is now reported as a scanner error.
 
 ### Improvements
 
@@ -19,6 +13,14 @@
 - Updated required V compiler version to [0.5.1](https://github.com/vlang/v/releases/tag/0.5.1) (previously `weekly.2025.48`).
 
 ### Fixes
+
+- String literals now support C-style escape sequences inside double-quoted strings:
+  - `\"` produces a literal double quote (so `"He said: \"hi\""` becomes the string `He said: "hi"`).
+  - `\n` produces a newline.
+  - `\t` produces a tab.
+  - `\\` produces a single backslash (so `"C:\\Temp"` becomes the string `C:\Temp`, the common Windows-path form used throughout Skyrim mods).
+  - Any other `\X` sequence (for example `\r`, `\0`, `\'`, `\x`) is now reported as a scanner error.
+- `\<LF>` inside a string literal now drops the backslash and the line break from the resulting string (for example `"foo \<LF>    bar"` becomes `foo     bar`, with the 4-space indent preserved), matching the Bethesda reference compiler.
 
 ### CI/CD
 
