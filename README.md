@@ -18,6 +18,7 @@ The compiler was created for the following purposes:
   - [Arguments for the `compile` command](#arguments-for-the-compile-command)
   - [Examples](#examples)
   - [Header/Import Files](#headerimport-files)
+- [Differences from the original compiler](#differences-from-the-original-compiler)
 - [Building](#building)
   - [Requirements](#requirements)
 - [Testing](#testing)
@@ -126,6 +127,36 @@ Function EquipItem(Form akItem, bool abPreventRemoval = false, bool abSilent = f
 By analyzing this file, the compiler learns about the existence of the `Actor` object, its inheritance from `ObjectReference`, and the presence of the `EquipItem` function with the corresponding arguments (some of which have default values). The `native` flag allows skipping the writing of the function body in the header file, as these scripts are used only for analysis. This significantly speeds up compilation.
 
 Scripts from the directory specified by the `-h "..."` argument will NOT be compiled and placed in the directory specified by `-o "..."`.
+
+## Differences from the original compiler
+
+This compiler intentionally differs from Bethesda's original Papyrus compiler in how it handles line breaks.
+
+### 1. Multi-line string literals
+
+A line break placed directly inside a string literal is kept as a newline in the resulting string. Both Unix (`LF`) and Windows (`CRLF`) line endings are accepted and stored as a single `LF`, so the string content is the same regardless of the source file's line-ending style:
+
+```papyrus
+string s = "first line
+second line"
+; -> "first line\nsecond line"
+```
+
+The original compiler does not allow a string literal to span multiple lines.
+
+### 2. Line breaks inside a statement
+
+Bethesda's compiler requires a trailing backslash `\` to continue a statement on the next line. This compiler accepts a statement split across several lines **both with and without** the trailing `\`:
+
+```papyrus
+Function Test()
+    if true || false || \
+        true || false
+
+        string a = "123"
+    endIf
+EndFunction
+```
 
 ## Building
 
