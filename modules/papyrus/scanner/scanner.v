@@ -105,7 +105,6 @@ fn (mut s Scanner) text_scan() token.Token {
 		}
 
 		match c {
-			`\'`, 
 			`"` {
 				ident_string := s.ident_string()
 				return s.new_token(.string, ident_string, ident_string.len + 2) // + two quotes
@@ -415,7 +414,8 @@ fn (mut s Scanner) ident_string() string {
 		return ''
 	}
 
-	mut result := []u8{}
+	// Most string literals are short; pre-sizing avoids the first few reallocations.
+	mut result := []u8{cap: 32}
 
 	for {
 		s.pos++
@@ -432,6 +432,13 @@ fn (mut s Scanner) ident_string() string {
 			break
 		}
 
+		// A string literal may not span multiple lines (matches the
+		// reference compiler). Use the \n escape to embed a newline.
+		if c == `\r` || c == `\n` {
+			s.error('string literal must be on a single line; use \\n to insert a line break')
+			return ''
+		}
+
 		if c == `\\` {
 			s.pos++
 			if s.pos >= s.text.len {
@@ -441,20 +448,21 @@ fn (mut s Scanner) ident_string() string {
 			next := s.text[s.pos]
 
 			match next {
-				`\\`{
+				`\\` {
 					result << `\\`
 				}
-				`"`{
+				`"` {
 					result << `"`
 				}
-				`n`{
+				`n` {
 					result << `\n`
-				} 
-				`t`{
+				}
+				`t` {
 					result << `\t`
 				}
-				`\n` {
-					s.inc_line_number()
+				`\r`, `\n` {
+					s.error('string literal must be on a single line; use \\n to insert a line break')
+					return ''
 				}
 				else {
 					s.error('unknown escape sequence in string literal: \\${next.ascii_str()}')
@@ -462,12 +470,6 @@ fn (mut s Scanner) ident_string() string {
 			}
 
 			continue
-		}
-
-		if c == `\r` {
-			continue
-		} else if c == `\n` {
-			s.inc_line_number()
 		}
 
 		result << c

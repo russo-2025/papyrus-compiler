@@ -20,7 +20,8 @@
   - `\t` produces a tab.
   - `\\` produces a single backslash (so `"C:\\Temp"` becomes the string `C:\Temp`, the common Windows-path form used throughout Skyrim mods).
   - Any other `\X` sequence (for example `\r`, `\0`, `\'`, `\x`) is now reported as a scanner error.
-- `\<LF>` inside a string literal now drops the backslash and the line break from the resulting string (for example `"foo \<LF>    bar"` becomes `foo     bar`, with the 4-space indent preserved), matching the Bethesda reference compiler.
+- A string literal may not span multiple source lines. A real line break inside `"..."` (with or without a preceding backslash) is now reported as a clear error instead of being silently accepted — use `\n` to insert a line break. This matches the Bethesda reference compiler, which rejects multi-line string literals.
+- Strings must be written with double quotes. A single quote is no longer accepted as a string delimiter; it now produces a clear `invalid character` error instead of being silently treated as the start of a string.
 
 ### CI/CD
 
