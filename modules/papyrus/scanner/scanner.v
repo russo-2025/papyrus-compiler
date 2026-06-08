@@ -6,7 +6,6 @@ import papyrus.token
 import papyrus.util
 import papyrus.errors
 
-const single_quote = `\'`
 const double_quote = `"`
 const b_lf = 10
 const b_cr = 13
@@ -411,20 +410,9 @@ fn (mut s Scanner) ident_number() string {
 @[direct_array_access]
 fn (mut s Scanner) ident_string() string {
 
-	q := s.text[s.pos]
-
-	if q != single_quote && q != double_quote {
+	if s.text[s.pos] != double_quote {
 		s.error('first quote not found')
 		return ''
-	}
-
-	mut quote := single_quote
-
-	if q == single_quote {
-		quote = single_quote
-	}
-	else {
-		quote = double_quote
 	}
 
 	mut result := []u8{}
@@ -439,7 +427,7 @@ fn (mut s Scanner) ident_string() string {
 
 		c := s.text[s.pos]
 
-		if c == quote {
+		if c == double_quote {
 			s.pos++
 			break
 		}
@@ -451,30 +439,38 @@ fn (mut s Scanner) ident_string() string {
 				return ''
 			}
 			next := s.text[s.pos]
-			if next == `\\` {
-				result << `\\`
-			} else if next == `"` {
-				result << `"`
-			} else if next == `n` {
-				result << `\n`
-			} else if next == `t` {
-				result << `\t`
-			} else if next == `\n` {
-				s.inc_line_number()
-			} else {
-				s.error('unknown escape sequence in string literal: \\${next.ascii_str()}')
+
+			match next {
+				`\\`{
+					result << `\\`
+				}
+				`"`{
+					result << `"`
+				}
+				`n`{
+					result << `\n`
+				} 
+				`t`{
+					result << `\t`
+				}
+				`\n` {
+					s.inc_line_number()
+				}
+				else {
+					s.error('unknown escape sequence in string literal: \\${next.ascii_str()}')
+				}
 			}
+
 			continue
 		}
 
 		if c == `\r` {
-			// skip CR characters (CRLF normalization)
+			continue
 		} else if c == `\n` {
 			s.inc_line_number()
-			result << c
-		} else {
-			result << c
 		}
+
+		result << c
 	}
 
 	return result.bytestr()
