@@ -144,20 +144,6 @@ second line"
 
 The original compiler does not allow a string literal to span multiple lines.
 
-### 2. Line breaks inside a statement
-
-Bethesda's compiler requires a trailing backslash `\` to continue a statement on the next line. This compiler accepts a statement split across several lines **both with and without** the trailing `\`:
-
-```papyrus
-Function Test()
-    if true || false || \
-        true || false
-
-        string a = "123"
-    endIf
-EndFunction
-```
-
 ## Building
 
 ### Requirements:
