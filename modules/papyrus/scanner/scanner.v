@@ -432,11 +432,17 @@ fn (mut s Scanner) ident_string() string {
 			break
 		}
 
-		// A string literal may not span multiple lines (matches the
-		// reference compiler). Use the \n escape to embed a newline.
-		if c == `\r` || c == `\n` {
-			s.error('string literal must be on a single line; use \\n to insert a line break')
-			return ''
+		// Physical line breaks placed in the source are kept in the
+		// resulting string. CRLF is normalized to a single LF (the CR
+		// is dropped), so string content is independent of the file's
+		// line-ending style. Line numbers are tracked on the LF.
+		if c == `\r` {
+			continue
+		}
+		if c == `\n` {
+			result << `\n`
+			s.inc_line_number()
+			continue
 		}
 
 		if c == `\\` {
@@ -459,10 +465,6 @@ fn (mut s Scanner) ident_string() string {
 				}
 				`t` {
 					result << `\t`
-				}
-				`\r`, `\n` {
-					s.error('string literal must be on a single line; use \\n to insert a line break')
-					return ''
 				}
 				else {
 					s.error('unknown escape sequence in string literal: \\${next.ascii_str()}')

@@ -1732,6 +1732,15 @@ fn test_string_escape_tab() {
 	assert pex_file.string_table.contains('a\tb'), 'escaped tab not decoded'
 }
 
+fn test_string_physical_newline() {
+	// Physical line breaks placed in the source (not via backslash)
+	// are kept in the string; CRLF is normalized to a single LF.
+	lf := compile('string s = "AAfoo\nBBbar"')
+	assert lf.string_table.contains('AAfoo\nBBbar'), 'physical LF not kept'
+	crlf := compile('string s = "CCfoo\r\nDDbar"')
+	assert crlf.string_table.contains('CCfoo\nDDbar'), 'physical CRLF not normalized to LF'
+}
+
 fn test_string_escape_matrix() {
 	// Distinct prefix/suffix per variant so a substring match can't
 	// accidentally satisfy another variant.
