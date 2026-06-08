@@ -1754,3 +1754,23 @@ fn test_string_escape_tab() {
 	pex_file := compile('string s = "a\\tb"')
 	assert pex_file.string_table.contains('a\tb'), 'escaped tab not decoded'
 }
+
+fn test_string_escape_matrix_with_indent() {
+	// Reference cases from the Bethesda compiler. Each variant has
+	// a distinct prefix and suffix so a substring match on one
+	// variant cannot accidentally satisfy another variant's
+	// assertion. Expected byte content per variant (matches the
+	// Bethesda reference compiler):
+	//   s1: \\n       -> <LF>                  (between "AA" and "BB")
+	//   s2: \<LF>     -> ""                    (line-continuation; 8 spaces of indent preserved)
+	//   s3: \\\\n     -> backslash + 'n'       (between "CC" and "DD")
+	//   s4: \\\<LF>   -> backslash             (single backslash; 8 spaces of indent preserved)
+	pex_file := compile('string s1 = "AA111111111foo' + '\\' + 'n        barBB"\n' +
+		'string s2 = "CC111111111foo' + '\\' + '\n        barDD"\n' +
+		'string s3 = "EE111111111foo' + '\\' + '\\' + 'n        barFF"\n' +
+		'string s4 = "GG111111111foo' + '\\' + '\\' + '\n        barHH"')
+	assert pex_file.string_table.contains('AA111111111foo\n        barBB'), 's1 mismatch'
+	assert pex_file.string_table.contains('CC111111111foo        barDD'), 's2 mismatch'
+	assert pex_file.string_table.contains('EE111111111foo\\n        barFF'), 's3 mismatch'
+	assert pex_file.string_table.contains('GG111111111foo\\\n        barHH'), 's4 mismatch'
+}
