@@ -130,7 +130,7 @@ Scripts from the directory specified by the `-h "..."` argument will NOT be comp
 
 ## Differences from the original compiler
 
-This compiler intentionally differs from Bethesda's original Papyrus compiler in how it handles line breaks.
+This compiler has a few known differences from Bethesda's original Papyrus compiler. Some differences are intentional, while others document behavior that is currently not reproduced exactly.
 
 ### 1. Multi-line string literals
 
@@ -143,6 +143,50 @@ second line"
 ```
 
 The original compiler does not allow a string literal to span multiple lines.
+
+### 2. String capitalization at runtime
+
+Bethesda's original compiler can change the capitalization of string literals while compiling a script. This is not visible in the `.psc` source file, but it can change the value that a variable receives at runtime.
+
+Papyrus does not distinguish letter case in variable names, function names, property names, and type names. The original compiler also reuses text it has already seen without checking whether the capitalization is different. Because of this, a string literal can accidentally take the capitalization of an earlier variable name or earlier string.
+
+For example:
+
+```papyrus
+Function Test()
+    string s1 = "FooBar"
+    string s2 = "foobar"
+    string barfoo = "BarFoo"
+    string s3 = "BarFoo"
+EndFunction
+```
+
+With the original compiler, the variables may receive these values:
+
+```text
+s1 == "FooBar"
+s2 == "FooBar" ; not "foobar"
+barfoo == "barfoo" ; not "BarFoo"
+s3 == "barfoo" ; not "BarFoo"
+```
+
+In this example, `"foobar"` is treated as the same text as the earlier `"FooBar"`, so the earlier capitalization wins. The `"BarFoo"` literal can also be affected by the local variable named `barfoo`, because the compiler has already seen that name and considers it the same text ignoring case.
+
+This compiler preserves the exact capitalization of string literals. The same script keeps the values written in the source code:
+
+```text
+s1 == "FooBar"
+s2 == "foobar"
+barfoo == "BarFoo"
+s3 == "BarFoo"
+```
+
+This affects:
+- scripts that compare strings with case-sensitive logic;
+- strings used as keys, tags, IDs, file names, JSON keys, UI text, or values passed to other tools and plugins;
+- debug output and logs where the exact spelling matters.
+
+For normal Papyrus code this usually does not matter, because Papyrus names are case-insensitive. It matters when a string is data and your script expects that string to keep exactly the capitalization written in the `.psc` file. In that case, this compiler is more predictable than the original compiler.
 
 ## Building
 
