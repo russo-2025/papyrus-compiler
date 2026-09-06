@@ -28,6 +28,9 @@ modules/
 │   └── ts_binding/     — TypeScript binding generator (secondary feature)
 ├── builder/            — Orchestrator: drives the full compile pipeline, caching, stats
 └── tests/              — Test suite (V's built-in test framework)
+    └── sources/        — Тестовые скрипты для прогона тестов
+test-files              - разные тестовые файлы, вывод pex файлов и прочий мусор
+vlib_docs               - доки по языку V (stdlib и прочее)
 ```
 
 ### Directories that should NOT be modified:

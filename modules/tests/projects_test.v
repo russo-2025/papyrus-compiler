@@ -83,6 +83,7 @@ const ostim = get_source_dir("OStimNG", "OStimAddon.psc")
 const sexlab = get_source_dir("SexLab", "SexLabFramework.psc")
 const requiem = get_source_dir("Requiem", "Req_VampireDustScript.psc")
 const ussep = get_source_dir("USSEP", "ussep_clearaliasonactivate.psc")
+const alternate_perspective = get_source_dir("Alternate Perspective-50307-4-1-0-1765368778", "APSkipIntro.psc")
 
 fn test_project_skyrim_deps_sources() {
 	prefs := get_prefs(skyrim_deps, [], get_output_dir("SkyrimDeps"))
@@ -302,6 +303,15 @@ fn test_project_ussep(){
 	prefs := get_prefs(ussep, [
 		skyrim_deps
 	], get_output_dir("USSEP"))
+
+	builder.compile(&prefs)
+}
+
+fn test_project_alternate_perspective(){
+	prefs := get_prefs(alternate_perspective, [
+		skyrim_deps,
+		jcontainers
+	], get_output_dir("AlternatePerspective"))
 
 	builder.compile(&prefs)
 }

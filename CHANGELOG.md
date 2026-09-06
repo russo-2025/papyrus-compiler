@@ -15,6 +15,7 @@
 
 ### Fixes
 
+- Header files (`.psc`) located in subfolders of a directory passed via `-h`/`-headers-dir` are now found. Previously only files directly in the directory root were used (except on Linux), so scripts extending such headers failed with `script with name X not found` and `undefined function` errors — for example, SKSE headers generated into subfolders. Header directories are searched in their configured order: the root of a directory first, then its subfolders, before moving on to the next directory.
 - String literals now support C-style escape sequences inside double-quoted strings:
   - `\"` produces a literal double quote (so `"He said: \"hi\""` becomes the string `He said: "hi"`).
   - `\n` produces a newline.

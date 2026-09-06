@@ -62,3 +62,41 @@ fn test_selective_headers_loading() {
 	}
 	*/
 }
+
+fn test_headers_in_subfolder_loading() {
+	src_file := os.real_path(os.join_path("modules", "tests", "psc", "TestHeaderSubfolder.psc"))
+	output_dir := os.real_path(os.join_path("test-files", "compiled"))
+
+	// Header file is placed in a subfolder: <header_root>/sub/Form.psc
+	header_root := os.real_path(os.join_path("modules", "tests", "psc_headers"))
+	if !os.is_file(os.join_path(header_root, "sub", "Form.psc")) {
+		assert false, "invalid header dir ${header_root}"
+	}
+
+	if !os.is_file(src_file) {
+		assert false, "invalid input file ${src_file}"
+	}
+
+	if !os.is_dir(output_dir) {
+		os.mkdir(output_dir, os.MkdirParams{}) or { assert false, "failed to create output folder" }
+	}
+
+	prefs := pref.Preferences {
+		paths: [ src_file ]
+		output_dirs: [ output_dir ]
+		mode: .compile
+		backend: .check
+		no_cache: true
+		header_dirs: [ header_root ]
+		output_mode: .silent
+	}
+
+	mut b := builder.new_builder(&prefs)
+	b.run()
+
+	if sym := b.table.find_type("form") {
+		assert sym.kind == .script, sym.name
+	} else {
+		assert false, "type `Form` was not loaded from subfolder"
+	}
+}

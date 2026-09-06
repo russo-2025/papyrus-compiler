@@ -16,7 +16,7 @@ const compiler_flags_path = os.real_path('./Original Compiler/TESV_Papyrus_Flags
 struct Builder {
 mut:
 	timers				map[string]time.StopWatch
-	header_from_name	map[string]string // only for linux
+	header_indexes		map[string]map[string]string // header dir → (lowercased script name → header file path)
 pub:
 	checker				checker.Checker
 pub mut:
@@ -48,7 +48,7 @@ pub fn new_builder(prefs &pref.Preferences) Builder{
 		}
 		global_scope: &ast.Scope{}
 		table: table
-		header_from_name: map[string]string{} 
+		header_indexes: map[string]map[string]string{}
 	}
 }
 
@@ -94,25 +94,43 @@ pub fn (mut b Builder) run() bool {
 
 @[inline]
 fn (mut b Builder) find_header(name string) ?string {
-	$if linux {
-		lname := name.to_lower()
-		if lname in b.header_from_name {
-			return b.header_from_name[name.to_lower()]
+	lname := name.to_lower()
+
+	for dir in b.pref.header_dirs {
+		// fast path: the root of the header dir
+		file := os.join_path(dir, name + ".psc")
+
+		if os.is_file(file) {
+			return file
 		}
 
-		return none
-	}
-	$else {
-		for dir in b.pref.header_dirs {
-			file := os.join_path(dir, name + ".psc")
-			
-			if os.is_file(file) {
-				return file
-			}
+		// slow path: subfolders of this header dir, indexed once per dir
+		if dir !in b.header_indexes {
+			b.header_indexes[dir] = walk_headers(dir)
 		}
-		
-		return none
+
+		if path := b.header_indexes[dir][lname] {
+			return path
+		}
 	}
+
+	return none
+}
+
+fn walk_headers(dir string) map[string]string {
+	mut index := map[string]string{}
+
+	// os.walk callbacks capture variables by value, so collect files with walk_ext instead
+	for path in os.walk_ext(dir, ".psc") {
+		low_name := os.file_name(path).all_before_last(".").to_lower()
+		if low_name in index {
+			continue
+		}
+
+		index[low_name] = path
+	}
+
+	return index
 }
 
 @[inline]
