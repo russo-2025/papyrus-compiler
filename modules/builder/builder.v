@@ -122,7 +122,7 @@ fn walk_headers(dir string) map[string]string {
 
 	// os.walk callbacks capture variables by value, so collect files with walk_ext instead
 	for path in os.walk_ext(dir, ".psc") {
-		low_name := os.file_name(path).all_before(".").to_lower()
+		low_name := os.file_name(path).all_before_last(".").to_lower()
 		if low_name in index {
 			continue
 		}
